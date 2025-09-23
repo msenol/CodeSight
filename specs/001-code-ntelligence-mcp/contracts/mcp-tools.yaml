@@ -1,0 +1,575 @@
+openapi: 3.0.0
+info:
+  title: Code Intelligence MCP Server - MCP Tools Contract
+  version: 1.0.0
+  description: Model Context Protocol tools for code intelligence operations
+
+paths:
+  /tools/search_code:
+    post:
+      operationId: searchCode
+      summary: Search code using natural language queries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+                - codebase_id
+              properties:
+                query:
+                  type: string
+                  description: Natural language query
+                  example: "where is user authentication implemented?"
+                codebase_id:
+                  type: string
+                  format: uuid
+                  description: ID of the codebase to search
+                context_lines:
+                  type: integer
+                  default: 3
+                  description: Number of context lines to include
+                max_results:
+                  type: integer
+                  default: 10
+                  description: Maximum number of results to return
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+                  query_intent:
+                    type: string
+                    enum: [find_function, explain_code, trace_flow, find_usage, security_audit]
+                  execution_time_ms:
+                    type: integer
+
+  /tools/explain_function:
+    post:
+      operationId: explainFunction
+      summary: Provide detailed analysis of a function
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entity_id
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                  description: ID of the code entity to explain
+                include_callers:
+                  type: boolean
+                  default: true
+                include_callees:
+                  type: boolean
+                  default: true
+                include_complexity:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Function explanation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FunctionExplanation'
+
+  /tools/find_references:
+    post:
+      operationId: findReferences
+      summary: Find all references to a code entity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entity_id
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                include_tests:
+                  type: boolean
+                  default: true
+                include_indirect:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: References found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  references:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reference'
+                  total_count:
+                    type: integer
+
+  /tools/trace_data_flow:
+    post:
+      operationId: traceDataFlow
+      summary: Trace data flow through the codebase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - start_point
+                - end_point
+              properties:
+                start_point:
+                  type: string
+                  description: Starting point (e.g., "REST API /users")
+                end_point:
+                  type: string
+                  description: End point (e.g., "database table users")
+                codebase_id:
+                  type: string
+                  format: uuid
+                max_depth:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          description: Data flow trace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataFlowTrace'
+
+  /tools/analyze_security:
+    post:
+      operationId: analyzeSecurity
+      summary: Analyze code for security vulnerabilities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - codebase_id
+              properties:
+                codebase_id:
+                  type: string
+                  format: uuid
+                patterns:
+                  type: array
+                  items:
+                    type: string
+                    enum: [sql_injection, xss, csrf, path_traversal, command_injection, all]
+                  default: [all]
+                severity_threshold:
+                  type: string
+                  enum: [low, medium, high, critical]
+                  default: low
+      responses:
+        '200':
+          description: Security analysis results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vulnerabilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vulnerability'
+                  summary:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      by_severity:
+                        type: object
+                        additionalProperties:
+                          type: integer
+
+  /tools/get_api_endpoints:
+    post:
+      operationId: getApiEndpoints
+      summary: Discover REST and GraphQL API endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - codebase_id
+              properties:
+                codebase_id:
+                  type: string
+                  format: uuid
+                filter_method:
+                  type: string
+                  enum: [GET, POST, PUT, DELETE, PATCH, all]
+                  default: all
+                include_schemas:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Discovered API endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  endpoints:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/APIEndpoint'
+                  total_count:
+                    type: integer
+
+  /tools/check_complexity:
+    post:
+      operationId: checkComplexity
+      summary: Check code complexity metrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entity_id
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                metric_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [cyclomatic, cognitive, lines_of_code, maintainability, all]
+                  default: [all]
+      responses:
+        '200':
+          description: Complexity metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplexityMetrics'
+
+  /tools/find_duplicates:
+    post:
+      operationId: findDuplicates
+      summary: Detect duplicate or similar code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - codebase_id
+              properties:
+                codebase_id:
+                  type: string
+                  format: uuid
+                similarity_threshold:
+                  type: number
+                  format: float
+                  minimum: 0.5
+                  maximum: 1.0
+                  default: 0.8
+                min_lines:
+                  type: integer
+                  default: 5
+                ignore_whitespace:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Duplicate code detection results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  duplicates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DuplicateGroup'
+                  total_duplicated_lines:
+                    type: integer
+
+  /tools/suggest_refactoring:
+    post:
+      operationId: suggestRefactoring
+      summary: Suggest code improvement opportunities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entity_id
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                refactoring_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [extract_method, rename, move, inline, simplify, all]
+                  default: [all]
+      responses:
+        '200':
+          description: Refactoring suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RefactoringSuggestion'
+
+components:
+  schemas:
+    SearchResult:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        file_path:
+          type: string
+        start_line:
+          type: integer
+        end_line:
+          type: integer
+        code_snippet:
+          type: string
+        relevance_score:
+          type: number
+          format: float
+        entity_type:
+          type: string
+          enum: [function, class, method, variable, import, type, interface, enum, constant]
+        context:
+          type: array
+          items:
+            type: string
+
+    FunctionExplanation:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+              description:
+                type: string
+        return_type:
+          type: string
+        complexity:
+          $ref: '#/components/schemas/ComplexityMetrics'
+        callers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeEntityReference'
+        callees:
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeEntityReference'
+
+    Reference:
+      type: object
+      properties:
+        referencing_entity_id:
+          type: string
+          format: uuid
+        file_path:
+          type: string
+        line_number:
+          type: integer
+        reference_type:
+          type: string
+          enum: [call, import, extend, implement, instantiate]
+        context:
+          type: string
+
+    DataFlowTrace:
+      type: object
+      properties:
+        path:
+          type: array
+          items:
+            type: object
+            properties:
+              entity_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              file_path:
+                type: string
+              line_number:
+                type: integer
+              transformation:
+                type: string
+        total_steps:
+          type: integer
+        confidence:
+          type: number
+          format: float
+
+    Vulnerability:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [sql_injection, xss, csrf, path_traversal, command_injection, other]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        entity_id:
+          type: string
+          format: uuid
+        file_path:
+          type: string
+        line_number:
+          type: integer
+        description:
+          type: string
+        recommendation:
+          type: string
+        code_snippet:
+          type: string
+
+    APIEndpoint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        path:
+          type: string
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, GraphQL]
+        handler_entity_id:
+          type: string
+          format: uuid
+        request_schema:
+          type: object
+        response_schema:
+          type: object
+        authentication_required:
+          type: boolean
+        file_path:
+          type: string
+        line_number:
+          type: integer
+
+    ComplexityMetrics:
+      type: object
+      properties:
+        cyclomatic_complexity:
+          type: integer
+        cognitive_complexity:
+          type: integer
+        lines_of_code:
+          type: integer
+        maintainability_index:
+          type: number
+          format: float
+        test_coverage:
+          type: number
+          format: float
+
+    DuplicateGroup:
+      type: object
+      properties:
+        instances:
+          type: array
+          items:
+            type: object
+            properties:
+              entity_id:
+                type: string
+                format: uuid
+              file_path:
+                type: string
+              start_line:
+                type: integer
+              end_line:
+                type: integer
+              code_snippet:
+                type: string
+        similarity:
+          type: number
+          format: float
+        total_lines:
+          type: integer
+
+    RefactoringSuggestion:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [extract_method, rename, move, inline, simplify]
+        description:
+          type: string
+        impact:
+          type: string
+          enum: [low, medium, high]
+        affected_lines:
+          type: array
+          items:
+            type: integer
+        suggested_code:
+          type: string
+
+    CodeEntityReference:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        file_path:
+          type: string
+        line_number:
+          type: integer
