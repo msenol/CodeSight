@@ -95,10 +95,16 @@ When creating this spec from a user prompt:
 
 ### Requirement Completeness
 - [ ] No [NEEDS CLARIFICATION] markers remain
-- [ ] Requirements are testable and unambiguous  
+- [ ] Requirements are testable and unambiguous
 - [ ] Success criteria are measurable
 - [ ] Scope is clearly bounded
 - [ ] Dependencies and assumptions identified
+
+### Constitutional Alignment
+- [ ] Privacy requirements specified (data handling, retention)
+- [ ] Performance targets defined (response times, scale)
+- [ ] No mandatory cloud service dependencies
+- [ ] Security requirements explicit
 
 ---
 

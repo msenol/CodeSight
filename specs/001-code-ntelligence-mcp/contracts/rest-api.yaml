@@ -1,0 +1,621 @@
+openapi: 3.0.0
+info:
+  title: Code Intelligence MCP Server - REST API
+  version: 1.0.0
+  description: REST API for code intelligence server management
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+  - url: https://api.codeintelligence.local/v1
+    description: Production server
+
+paths:
+  /codebases:
+    get:
+      operationId: listCodebases
+      summary: List all indexed codebases
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [unindexed, indexing, indexed, error, all]
+          default: all
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of codebases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  codebases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Codebase'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+    post:
+      operationId: createCodebase
+      summary: Add a new codebase for indexing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - path
+              properties:
+                name:
+                  type: string
+                path:
+                  type: string
+                  description: Absolute filesystem path
+                configuration_id:
+                  type: string
+                  format: uuid
+                auto_index:
+                  type: boolean
+                  default: true
+      responses:
+        '201':
+          description: Codebase created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Codebase'
+        '400':
+          description: Invalid request
+        '409':
+          description: Codebase already exists
+
+  /codebases/{id}:
+    get:
+      operationId: getCodebase
+      summary: Get codebase details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Codebase details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Codebase'
+        '404':
+          description: Codebase not found
+
+    delete:
+      operationId: deleteCodebase
+      summary: Remove a codebase and all its data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Codebase deleted
+        '404':
+          description: Codebase not found
+
+  /codebases/{id}/index:
+    post:
+      operationId: indexCodebase
+      summary: Start or restart indexing for a codebase
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                incremental:
+                  type: boolean
+                  default: false
+                  description: Perform incremental update instead of full reindex
+                priority:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                  default: 5
+      responses:
+        '202':
+          description: Indexing job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexJob'
+        '404':
+          description: Codebase not found
+        '409':
+          description: Indexing already in progress
+
+  /codebases/{id}/stats:
+    get:
+      operationId: getCodebaseStats
+      summary: Get statistics for a codebase
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Codebase statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodebaseStats'
+        '404':
+          description: Codebase not found
+
+  /queries:
+    post:
+      operationId: executeQuery
+      summary: Execute a code search query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+                - codebase_id
+              properties:
+                query:
+                  type: string
+                codebase_id:
+                  type: string
+                  format: uuid
+                query_type:
+                  type: string
+                  enum: [natural_language, structured, regex]
+                  default: natural_language
+                limit:
+                  type: integer
+                  default: 10
+                  maximum: 100
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '400':
+          description: Invalid query
+        '404':
+          description: Codebase not found
+
+  /jobs:
+    get:
+      operationId: listJobs
+      summary: List indexing jobs
+      parameters:
+        - name: codebase_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, completed, failed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IndexJob'
+                  total:
+                    type: integer
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      summary: Get job details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexJob'
+        '404':
+          description: Job not found
+
+    delete:
+      operationId: cancelJob
+      summary: Cancel a running or queued job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Job cancelled
+        '404':
+          description: Job not found
+        '409':
+          description: Job cannot be cancelled
+
+  /configurations:
+    get:
+      operationId: listConfigurations
+      summary: List available configurations
+      responses:
+        '200':
+          description: List of configurations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configurations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Configuration'
+
+    post:
+      operationId: createConfiguration
+      summary: Create a new configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationInput'
+      responses:
+        '201':
+          description: Configuration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '400':
+          description: Invalid configuration
+
+  /plugins:
+    get:
+      operationId: listPlugins
+      summary: List installed plugins
+      parameters:
+        - name: enabled
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of plugins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plugins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plugin'
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  version:
+                    type: string
+                  uptime_seconds:
+                    type: integer
+                  components:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                        message:
+                          type: string
+
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Get performance metrics (Prometheus format)
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  schemas:
+    Codebase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        path:
+          type: string
+        size_bytes:
+          type: integer
+          format: int64
+        file_count:
+          type: integer
+        language_stats:
+          type: object
+          additionalProperties:
+            type: integer
+        status:
+          type: string
+          enum: [unindexed, indexing, indexed, error]
+        last_indexed:
+          type: string
+          format: date-time
+        configuration_id:
+          type: string
+          format: uuid
+
+    CodebaseStats:
+      type: object
+      properties:
+        total_entities:
+          type: integer
+        entities_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        total_relationships:
+          type: integer
+        relationships_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        index_sizes:
+          type: object
+          additionalProperties:
+            type: integer
+        cache_stats:
+          type: object
+          properties:
+            hit_rate:
+              type: number
+            total_entries:
+              type: integer
+            total_size_bytes:
+              type: integer
+
+    IndexJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        codebase_id:
+          type: string
+          format: uuid
+        job_type:
+          type: string
+          enum: [full_index, incremental_update, reindex, analyze]
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        priority:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+        files_processed:
+          type: integer
+        files_total:
+          type: integer
+        progress_percentage:
+          type: number
+
+    QueryResponse:
+      type: object
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryResult'
+        total_results:
+          type: integer
+        execution_time_ms:
+          type: integer
+        cache_hit:
+          type: boolean
+        query_intent:
+          type: string
+
+    QueryResult:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        score:
+          type: number
+        file_path:
+          type: string
+        line_number:
+          type: integer
+        code_snippet:
+          type: string
+        highlights:
+          type: array
+          items:
+            type: object
+            properties:
+              start:
+                type: integer
+              end:
+                type: integer
+
+    Configuration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        profile:
+          type: string
+          enum: [default, performance, accuracy, minimal]
+        indexing_config:
+          type: object
+        search_config:
+          type: object
+        model_config:
+          type: object
+        storage_config:
+          type: object
+        cache_config:
+          type: object
+        privacy_config:
+          type: object
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ConfigurationInput:
+      type: object
+      required:
+        - name
+        - profile
+      properties:
+        name:
+          type: string
+        profile:
+          type: string
+          enum: [default, performance, accuracy, minimal]
+        indexing_config:
+          type: object
+        search_config:
+          type: object
+        model_config:
+          type: object
+        storage_config:
+          type: object
+        cache_config:
+          type: object
+        privacy_config:
+          type: object
+
+    Plugin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        version:
+          type: string
+        plugin_type:
+          type: string
+          enum: [language, analyzer, tool, formatter]
+        enabled:
+          type: boolean
+        capabilities:
+          type: array
+          items:
+            type: string
+        supported_languages:
+          type: array
+          items:
+            type: string
+        installed_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "Ref": {
+      "type": "http",
+      "url": "https://api.ref.tools/mcp?apiKey=ref-75b730285b20ae1533dd"
+    },
+    "web-search": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "BSA1DCl-D0yElN6YrHbJMz1w1MWc-x0"
+      }
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "X-Context7-API-Key": "ctx7sk-5f67f2b0-e607-472d-a24f-62dcc33bf59e"
+      }
+    },
+    "gorev": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@mehmetsenol/gorev-mcp-server@latest"]
+    },
+    "mcp-repl": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "mcp-repl@latest"]
+    },
+    "filesystem": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "F:\\Development\\Projects\\ProjectAra"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "memory": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    }
+  }
+}

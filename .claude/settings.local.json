@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell:*)",
+      "mcp__gorev__proje_olustur",
+      "mcp__gorev__aktif_proje_ayarla",
+      "mcp__gorev__gorev_batch_update",
+      "mcp__gorev__templateden_gorev_olustur",
+      "mcp__gorev__gorev_listele",
+      "mcp__gorev__ozet_goster",
+      "mcp__gorev__gorev_import",
+      "mcp__gorev__gorev_export",
+      "mcp__gorev__template_listele",
+      "mcp__gorev__gorev_altgorev_olustur",
+      "mcp__gorev__gorev_bagimlilik_ekle",
+      "mcp__gorev__gorev_hiyerarsi_goster"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enabledMcpjsonServers": [
+    "Ref",
+    "web-search",
+    "context7",
+    "gorev",
+    "mcp-repl",
+    "filesystem",
+    "memory",
+    "fetch",
+    "time",
+    "git"
+  ]
+}

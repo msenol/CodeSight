@@ -1,8 +1,8 @@
 
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Code Intelligence MCP Server
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `001-code-ntelligence-mcp` | **Date**: 2025-09-21 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `F:\Development\Projects\ProjectAra\specs\001-code-ntelligence-mcp\spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,27 +31,27 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+Develop a high-performance Code Intelligence MCP Server that enables AI assistants to understand and query codebases through natural language. The system must support 15+ programming languages, handle monorepos with 100K+ files, operate fully offline with local LLMs, and provide sub-second query responses through a hybrid Rust/TypeScript architecture.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Rust 1.75+ (core engine), TypeScript 5.3+/Node.js v20 LTS (MCP interface)
+**Primary Dependencies**: tokio, rayon, tree-sitter, tantivy (Rust); @modelcontextprotocol/sdk, fastify (TypeScript)
+**Storage**: SQLite (<10GB), PostgreSQL 16+ with pgvector (enterprise), DuckDB with VSS (vectors)
+**Testing**: cargo test, Criterion.rs (Rust); Vitest, Testcontainers (TypeScript)
+**Target Platform**: Linux/macOS/Windows, Docker containers, Kubernetes-ready
+**Project Type**: single (hybrid Rust/TypeScript architecture)
+**Performance Goals**: <50ms queries (small), <200ms (large), <500ms (monorepos), <20min indexing (100K+ files)
+**Constraints**: Zero telemetry, fully offline operation, respect .gitignore, air-gapped support
+**Scale/Scope**: Small (<1K files) to monorepos (>100K files), 15+ languages, MCP protocol compliant
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [ ] **Local-First**: No mandatory cloud dependencies, LLMs optional
-- [ ] **Performance**: <500ms operations, handles large codebases
-- [ ] **Language Agnostic**: No hardcoded language logic, tree-sitter based
-- [ ] **Privacy**: Zero telemetry, no external calls without consent
-- [ ] **Incremental**: Each intelligence layer independently valuable
+- [x] **Local-First**: No mandatory cloud dependencies, LLMs optional ✓ (llama.cpp, Ollama primary; cloud APIs as fallback only)
+- [x] **Performance**: <500ms operations, handles large codebases ✓ (Rust core, parallel processing, incremental indexing)
+- [x] **Language Agnostic**: No hardcoded language logic, tree-sitter based ✓ (15+ languages via tree-sitter grammars)
+- [x] **Privacy**: Zero telemetry, no external calls without consent ✓ (explicit in requirements, air-gapped support)
+- [x] **Incremental**: Each intelligence layer independently valuable ✓ (grep→AST→embeddings→LLM layers)
 
 ## Project Structure
 
@@ -103,7 +103,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Option 1 - Single project structure (hybrid Rust/TypeScript architecture)
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -165,17 +165,30 @@ ios/ or android/
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- MCP tools contract (9 tools) → 9 contract test tasks [P]
+- REST API contract (11 endpoints) → 11 endpoint test tasks [P]
+- Data model entities (12 entities) → 12 model creation tasks [P]
+- Core services → service implementation tasks
+- Integration scenarios from quickstart → 5 integration test tasks
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
+- TDD order: Tests before implementation
+- Layer order: Rust core → TypeScript MCP → REST API
+- Dependency order: Models → Services → API endpoints → MCP tools
 - Mark [P] for parallel execution (independent files)
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 50-60 numbered, ordered tasks in tasks.md
+
+**Task Categories**:
+1. **Setup Tasks** (T001-T005): Project structure, dependencies, build config
+2. **Rust Core Tests** (T006-T020): Parser tests, indexer tests, search tests
+3. **Data Model Tasks** (T021-T032): Entity implementations in Rust
+4. **Service Layer Tasks** (T033-T045): Core services, caching, storage
+5. **TypeScript MCP Tasks** (T046-T054): MCP tool implementations
+6. **REST API Tasks** (T055-T065): API endpoint implementations
+7. **Integration Tests** (T066-T070): End-to-end scenario tests
+8. **Performance Tasks** (T071-T075): Benchmarks, optimization
+9. **Documentation Tasks** (T076-T080): API docs, deployment guides
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -191,26 +204,27 @@ ios/ or android/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| None | N/A | N/A |
+
+*Note: Architecture fully complies with all constitutional principles. No violations require justification.*
 
 
 ## Progress Tracking
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented (none - fully compliant)
 
 ---
 *Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
