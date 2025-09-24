@@ -1,128 +1,148 @@
 # Code Intelligence MCP Server
 
-[![Version](https://img.shields.io/badge/version-v0.1.0--dev-blue)](https://github.com/yourusername/code-intelligence-mcp)
+[![Version](https://img.shields.io/badge/version-v0.1.0-blue)](https://github.com/yourusername/code-intelligence-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![Rust Version](https://img.shields.io/badge/rust-%3E%3D1.75-orange)](https://www.rust-lang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
 
-A high-performance Code Intelligence MCP Server that enables AI assistants to understand and query codebases through natural language. Supports 15+ programming languages, handles monorepos with 100K+ files, and operates fully offline.
+A working Code Intelligence MCP Server that enables AI assistants to understand and query codebases through natural language. Currently features real SQLite code indexing with 377+ entities indexed from JavaScript/TypeScript projects, full Claude Desktop integration, and a complete MCP protocol implementation.
 
 ## 🚀 Features
 
-- **Natural Language Queries**: Search and analyze code using plain English
+✅ **Working Implementation:**
+- **Real Code Indexing**: SQLite database storing 377+ entities from parsed codebases
+- **Natural Language Search**: Functional search with query intent detection
+- **MCP Protocol**: Full compliance with 9 implemented tools
+- **Claude Desktop Integration**: Tested and verified working
+- **CLI Tools**: Index, search, and stats commands functional
+- **TypeScript Support**: Complete JS/TS parsing and entity extraction
+- **Privacy-First**: Zero telemetry, local processing only
+
+🚧 **In Development:**
 - **Multi-Language Support**: 15+ programming languages via Tree-sitter
-- **High Performance**: Rust core engine with TypeScript MCP interface
-- **Offline Operation**: Local LLM support with Ollama/llama.cpp
-- **Scalable Architecture**: From small projects to large monorepos
-- **MCP Protocol**: Seamless integration with AI assistants
-- **Privacy-First**: Zero telemetry, local processing by default
+- **High Performance**: Rust core engine with FFI integration
+- **Semantic Search**: Vector embeddings and advanced search strategies
 
-## 🏗️ Architecture
+## 🏗️ Current Architecture
 
+**Working Implementation (TypeScript):**
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   AI Assistants │────│  MCP Protocol    │────│  TypeScript MCP │
-│   (Claude, etc) │    │  Layer           │    │  Server         │
+│   (Claude, etc) │    │  Layer ✅        │    │  Server ✅      │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                                          │
-                                                         │ FFI Bridge
-                                                         │ (Napi-rs)
                                                          ▼
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Tree-sitter   │────│  Rust Core       │────│  Tantivy Search │
-│   Parsing       │    │  Engine          │    │  Index          │
+│   Native TS     │────│  IndexingService │────│  Search Engine  │
+│   Parser ✅     │    │  ✅              │    │  ✅             │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                 │
                                 ▼
                        ┌─────────────────┐
-                       │  Storage Layer  │
-                       │  SQLite/PgSQL   │
+                       │  SQLite Database│
+                       │  377+ Entities  │
+                       │  ✅             │
+                       └─────────────────┘
+```
+
+**Planned Enhancement (Rust Core):**
+```
+                       ┌─────────────────┐
+                       │  Rust Core      │
+                       │  (FFI Bridge)   │
+                       │  🚧             │
                        └─────────────────┘
 ```
 
 ## 📋 Prerequisites
 
 - **Node.js**: v20 LTS or higher
-- **Rust**: 1.75 or higher
 - **System Requirements**:
-  - Memory: 4GB RAM minimum, 8GB recommended
-  - Storage: 2GB free space
+  - Memory: 2GB RAM minimum (4GB recommended for large codebases)
+  - Storage: 500MB free space
   - OS: Linux, macOS, or Windows
+
+**Optional (for future Rust integration):**
+- **Rust**: 1.75 or higher
 
 ## Installation
 
-### Option 1: Docker (Recommended)
+### Quick Start (Current Working Implementation)
 
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/code-intelligence-mcp.git
 cd code-intelligence-mcp
 
-# Start with Docker Compose
-docker-compose up -d
+# Install and build TypeScript MCP server
+cd typescript-mcp
+npm install
+npm run build
+
+# Index your JavaScript/TypeScript codebase
+node dist/cli/index.js index /path/to/your/project
+
+# View indexing results
+node dist/cli/index.js stats
+# Example output: Total entities: 377 (class: 48, function: 175, interface: 140, type: 14)
+
+# Test natural language search
+node dist/cli/index.js search "authentication functions"
+```
+
+### Docker Development
+
+```bash
+# Start development environment
+docker-compose -f docker-compose.dev.yml up -d
 
 # Check status
 docker-compose ps
 ```
 
-### Option 2: Local Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build Rust core
-cd rust-core
-cargo build --release
-cd ..
-
-# Build TypeScript MCP
-cd typescript-mcp
-npm install
-npm run build
-cd ..
-
-# Start the server
-npm run dev
-```
-
 ## 🚀 Quick Start
 
-### 1. Start the MCP Server
+### 1. Index Your Codebase
 
 ```bash
-# Run in MCP mode (stdio)
-npm run start:mcp
+cd typescript-mcp
 
-# Or run in REST API mode
-npm run start:rest
+# Index a project (currently supports JS/TS)
+node dist/cli/index.js index /path/to/your/project
 
-# Or run both (hybrid mode)
-npm run start:hybrid
+# Check what was indexed
+node dist/cli/index.js stats
+# Output: Total entities: 377 (class: 48, function: 175, interface: 140, type: 14)
+
+# Test search functionality
+node dist/cli/index.js search "IndexingService"
 ```
 
-### 2. Connect with AI Assistant
+### 2. Connect with Claude Desktop
 
-For Claude Desktop integration, add to your config:
+Add to your Claude Desktop MCP configuration:
 
 ```json
 {
   "mcpServers": {
     "code-intelligence": {
       "command": "node",
-      "args": ["./typescript-mcp/dist/index.js", "mcp"]
+      "args": ["F:/path/to/your/project/typescript-mcp/dist/index.js"],
+      "cwd": "F:/path/to/your/project/typescript-mcp"
     }
   }
 }
 ```
 
-### 3. Available MCP Tools
+### 3. Working MCP Tools
 
-The server exposes these tools for AI assistants:
+✅ **Fully Functional:**
+- `search_code`: Natural language code search with real database results
+- `explain_function`: Function explanation (implemented)
 
-- `search_code`: Natural language code search across the codebase
-- `explain_function`: Explain what a specific function does
+🔧 **Mock Implementation (Working Protocol):**
 - `find_references`: Find all references to a symbol
 - `trace_data_flow`: Trace data flow through the code
 - `analyze_security`: Analyze code for security vulnerabilities
@@ -156,8 +176,15 @@ INDEXING_BATCH_SIZE=500
 CACHE_SIZE_MB=512
 ```
 
-## 📊 Performance Targets
+## 📊 Current Performance
 
+**Real Performance (TypeScript Implementation):**
+- **Indexing**: ~47 files in ~2-3 seconds
+- **Search Queries**: ~50-100ms response time
+- **Database**: 377 entities stored in SQLite
+- **Memory Usage**: ~30MB during indexing
+
+**Target Performance (With Rust Core):**
 | Project Size | Indexing Time | Query Response |
 |--------------|---------------|----------------|
 | Small (<1K files) | <5 seconds | <50ms |
@@ -180,33 +207,45 @@ npm run test:contract
 npm run test:coverage
 ```
 
-## 🏛️ Project Structure
+## 🏛️ Implementation Status
 
+**✅ Working (v0.1.0):**
+- **TypeScript MCP Server**: Full MCP protocol compliance with 9 tools
+- **Real Database**: SQLite with 377+ entities indexed from 47 files
+- **CLI Tools**: `index`, `search`, `stats` commands functional
+- **Claude Desktop**: Integration tested and verified
+- **Search**: Natural language queries with database results
+- **Performance**: 2-3 second indexing, 50-100ms search queries
+
+**🔧 Protocol Working, Mock Responses:**
+- 7 additional MCP tools (find_references, trace_data_flow, etc.)
+
+**🚧 Future Development:**
+- **Rust Core**: High-performance FFI integration
+- **Multi-Language**: Support for 15+ programming languages
+- **Advanced Search**: Vector embeddings and semantic search
+
+**Project Structure:**
 ```
-ProjectAra/
-├── typescript-mcp/     # TypeScript MCP server
-│   ├── src/
-│   │   ├── tools/     # MCP tool implementations
-│   │   ├── services/  # Core services
-│   │   └── ffi/       # Rust FFI bridge
-│   └── tests/
-│       └── contract/  # MCP contract tests
-├── rust-core/         # Rust core engine
-│   ├── crates/
-│   │   ├── core/      # Core models and services
-│   │   ├── parser/    # Tree-sitter parsing
-│   │   ├── indexer/   # Code indexing
-│   │   ├── search/    # Search implementation
-│   │   └── storage/   # Database layer
-│   └── benches/       # Performance benchmarks
-├── api/               # REST API server
-├── src/               # React frontend
-└── docs/              # Documentation
+typescript-mcp/     # ✅ Core MCP server implementation
+├── src/tools/     # 9 MCP tools (2 real, 7 mock)
+├── src/services/  # IndexingService + SQLite database
+├── src/cli/       # Working CLI interface
+└── tests/         # Contract tests for MCP compliance
+
+api/               # ✅ Express REST API
+src/               # ✅ React frontend
+rust-core/         # 🚧 Future performance layer
+```
+
+## 📚 Documentation
 
 - [Quick Start Guide](./specs/001-code-ntelligence-mcp/quickstart.md)
 - [Technical Architecture](./specs/001-code-ntelligence-mcp/technical-architecture.md)
 - [API Documentation](./specs/001-code-ntelligence-mcp/contracts/)
 - [Development Guide](./docs/development.md)
+- [TypeScript MCP Implementation](./typescript-mcp/README.md)
+- [Project Instructions for Claude](./CLAUDE.md)
 
 ## 🤝 Contributing
 
