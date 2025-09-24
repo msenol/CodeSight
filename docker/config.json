@@ -1,0 +1,250 @@
+{
+  "$schema": "./config.schema.json",
+  "name": "code-intelligence-mcp",
+  "version": "0.1.0",
+  "description": "Code Intelligence MCP Server Docker Configuration",
+  "environment": "production",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 4000,
+    "mcp_port": 8080,
+    "cors": {
+      "enabled": true,
+      "origins": ["*"],
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      "headers": ["Content-Type", "Authorization", "X-Requested-With"]
+    },
+    "rate_limit": {
+      "enabled": true,
+      "max_requests": 100,
+      "window_ms": 60000,
+      "skip_successful_requests": false
+    },
+    "security": {
+      "helmet_enabled": true,
+      "jwt_secret": "${JWT_SECRET}",
+      "jwt_expires_in": "24h",
+      "bcrypt_rounds": 12
+    }
+  },
+  "storage": {
+    "backend": "${STORAGE_BACKEND:-sqlite}",
+    "sqlite": {
+      "database_path": "${DATA_DIR}/code_intelligence.db",
+      "wal_mode": true,
+      "synchronous": "NORMAL",
+      "journal_mode": "WAL",
+      "cache_size": 10000,
+      "temp_store": "MEMORY"
+    },
+    "postgres": {
+      "host": "${POSTGRES_HOST:-localhost}",
+      "port": "${POSTGRES_PORT:-5432}",
+      "database": "${POSTGRES_DB:-code_intelligence}",
+      "username": "${POSTGRES_USER:-postgres}",
+      "password": "${POSTGRES_PASSWORD}",
+      "ssl": "${POSTGRES_SSL:-false}",
+      "pool_size": 20,
+      "connection_timeout": 30000
+    },
+    "duckdb": {
+      "database_path": "${DATA_DIR}/code_intelligence.duckdb",
+      "memory_limit": "2GB",
+      "threads": 4
+    }
+  },
+  "cache": {
+    "backend": "${CACHE_BACKEND:-memory}",
+    "memory": {
+      "max_size_mb": 512,
+      "ttl_seconds": 3600,
+      "cleanup_interval_seconds": 300
+    },
+    "redis": {
+      "host": "${REDIS_HOST:-localhost}",
+      "port": "${REDIS_PORT:-6379}",
+      "password": "${REDIS_PASSWORD}",
+      "database": "${REDIS_DB:-0}",
+      "key_prefix": "code_intelligence:",
+      "ttl_seconds": 3600,
+      "max_retries": 3,
+      "retry_delay_ms": 1000
+    }
+  },
+  "indexing": {
+    "parallel_workers": "${INDEXING_WORKERS:-4}",
+    "batch_size": "${INDEXING_BATCH_SIZE:-500}",
+    "max_file_size_mb": 10,
+    "exclude_patterns": [
+      "node_modules",
+      "*.log",
+      "*.tmp",
+      "dist",
+      "build",
+      "target",
+      ".git",
+      ".svn",
+      ".hg",
+      "*.min.js",
+      "*.min.css",
+      "*.map",
+      "coverage",
+      "__pycache__",
+      "*.pyc",
+      "*.pyo",
+      "*.class",
+      "*.jar",
+      "*.war",
+      "*.ear",
+      "*.exe",
+      "*.dll",
+      "*.so",
+      "*.dylib",
+      "*.a",
+      "*.lib",
+      "*.o",
+      "*.obj"
+    ],
+    "supported_languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust",
+      "go",
+      "java",
+      "cpp",
+      "csharp",
+      "php",
+      "ruby",
+      "swift",
+      "kotlin",
+      "scala",
+      "dart",
+      "elixir"
+    ]
+  },
+  "search": {
+    "max_results": 50,
+    "context_lines": 3,
+    "fuzzy_threshold": 0.8,
+    "semantic_search_enabled": true,
+    "embedding_cache_enabled": true,
+    "query_timeout_ms": 5000
+  },
+  "embedding": {
+    "enabled": "${EMBEDDING_ENABLED:-true}",
+    "model_name": "${EMBEDDING_MODEL:-all-MiniLM-L6-v2}",
+    "model_path": "${DATA_DIR}/models",
+    "batch_size": 32,
+    "max_sequence_length": 512,
+    "device": "cpu",
+    "cache_embeddings": true
+  },
+  "llm": {
+    "provider": "${LLM_PROVIDER:-ollama}",
+    "ollama": {
+      "endpoint": "${OLLAMA_ENDPOINT:-http://localhost:11434}",
+      "model": "${OLLAMA_MODEL:-codellama:7b}",
+      "timeout_ms": 30000,
+      "max_tokens": 2048,
+      "temperature": 0.1
+    },
+    "openai": {
+      "api_key": "${OPENAI_API_KEY}",
+      "model": "${OPENAI_MODEL:-gpt-4}",
+      "max_tokens": 2048,
+      "temperature": 0.1,
+      "timeout_ms": 30000
+    },
+    "anthropic": {
+      "api_key": "${ANTHROPIC_API_KEY}",
+      "model": "${ANTHROPIC_MODEL:-claude-3-sonnet-20240229}",
+      "max_tokens": 2048,
+      "temperature": 0.1,
+      "timeout_ms": 30000
+    }
+  },
+  "logging": {
+    "level": "${LOG_LEVEL:-info}",
+    "format": "json",
+    "file": {
+      "enabled": true,
+      "path": "/app/logs/code-intelligence.log",
+      "max_size_mb": 100,
+      "max_files": 5,
+      "rotate_daily": true
+    },
+    "console": {
+      "enabled": true,
+      "colorize": false
+    },
+    "request_logging": {
+      "enabled": true,
+      "include_body": false,
+      "include_headers": false,
+      "exclude_paths": ["/health", "/metrics"]
+    }
+  },
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "endpoint": "/metrics",
+      "collect_default_metrics": true,
+      "collect_gc_metrics": true,
+      "collect_http_metrics": true
+    },
+    "health_check": {
+      "enabled": true,
+      "endpoint": "/health",
+      "include_details": true,
+      "timeout_ms": 5000
+    },
+    "tracing": {
+      "enabled": "${TRACING_ENABLED:-false}",
+      "service_name": "code-intelligence-mcp",
+      "jaeger_endpoint": "${JAEGER_ENDPOINT}",
+      "sample_rate": 0.1
+    }
+  },
+  "security": {
+    "authentication": {
+      "enabled": "${AUTH_ENABLED:-false}",
+      "providers": ["jwt", "api_key"],
+      "jwt_secret": "${JWT_SECRET}",
+      "jwt_expires_in": "24h",
+      "api_key_header": "X-API-Key"
+    },
+    "authorization": {
+      "enabled": "${AUTHZ_ENABLED:-false}",
+      "default_role": "user",
+      "admin_users": ["${ADMIN_USERS}"]
+    },
+    "data_protection": {
+      "encrypt_at_rest": "${ENCRYPT_AT_REST:-false}",
+      "encryption_key": "${ENCRYPTION_KEY}",
+      "anonymize_logs": true,
+      "data_retention_days": 90
+    }
+  },
+  "features": {
+    "web_dashboard": {
+      "enabled": "${WEB_DASHBOARD_ENABLED:-true}",
+      "path": "/dashboard"
+    },
+    "api_documentation": {
+      "enabled": "${API_DOCS_ENABLED:-true}",
+      "path": "/docs",
+      "swagger_ui": true
+    },
+    "plugin_system": {
+      "enabled": "${PLUGINS_ENABLED:-false}",
+      "plugin_dir": "${DATA_DIR}/plugins",
+      "auto_load": true
+    },
+    "experimental": {
+      "ai_code_generation": "${EXPERIMENTAL_AI_CODEGEN:-false}",
+      "advanced_analytics": "${EXPERIMENTAL_ANALYTICS:-false}",
+      "real_time_collaboration": "${EXPERIMENTAL_COLLAB:-false}"
+    }
+  }
+}
