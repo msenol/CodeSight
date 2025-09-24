@@ -1,0 +1,165 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.local
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildInfoFile
+.tmp/
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Rust
+rust-core/target/
+rust-core/**/*.rs.bk
+rust-core/Cargo.lock
+*.pdb
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# MCP Server
+typescript-mcp/dist/
+typescript-mcp/build/
+typescript-mcp/node_modules/
+typescript-mcp/.env
+typescript-mcp/coverage/
+typescript-mcp/*.log
+
+# Docker
+docker/data/
+*.dockerignore
+
+# K6 Load Testing
+k6-v0.47.0-windows-amd64/
+k6.zip
+tests/load/results/
+tests/load/*.html
+tests/load/*.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.cache
+.eslintcache
+.stylelintcache
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Documentation build
+docs/_build/
+docs/.docusaurus/
+docs/node_modules/
+docs/build/
+
+# Vercel
+.vercel/
+.vercel
+
+# Performance test results
+benchmarks/results/
+performance-results/
+
+# Memory profiling
+*.heapsnapshot
+*.heapprofile
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cer
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Editor workspaces
+.vscode-test/
+*.code-workspace
+
+# Trae specific
+.trae/cache/
+.trae/logs/
+.trae/tmp/
+
+# Code search index (temporary)
+code_search_index/
+
+# Public uploads
+public/uploads/
+
+# Generated API documentation
+api-docs/generated/
