@@ -104,10 +104,14 @@ export interface APIEndpoint {
 
 export interface DuplicateCode {
   id: string;
-  files: string[];
-  lines: number[];
-  content: string;
+  locations: Array<{
+    file: string;
+    startLine: number;
+    endLine: number;
+  }>;
   similarity: number;
+  linesAffected: number;
+  suggestion: string;
 }
 
 export interface DuplicationReport {

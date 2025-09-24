@@ -24,7 +24,20 @@ export const logger = winston.createLogger({
   ]
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.File({ filename: 'error.log', level: 'error' }));
-  logger.add(new winston.transports.File({ filename: 'combined.log' }));
-}
+// Always write logs to file for debugging
+const logDir = process.env.LOG_DIR || 'F:\\Development\\Projects\\ProjectAra\\typescript-mcp\\logs';
+logger.add(new winston.transports.File({
+  filename: `${logDir}/error.log`,
+  level: 'error',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  )
+}));
+logger.add(new winston.transports.File({
+  filename: `${logDir}/combined.log`,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  )
+}));
