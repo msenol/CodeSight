@@ -1,0 +1,41 @@
+[package]
+name = "code-intelligence-indexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "High-performance indexing engine for Code Intelligence MCP Server"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# Core dependencies
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+
+# Async runtime
+tokio.workspace = true
+rayon.workspace = true
+
+# Utilities
+walkdir.workspace = true
+notify.workspace = true
+sha2.workspace = true
+dashmap.workspace = true
+
+# Local dependencies
+code-intelligence-core = { path = "../core" }
+code-intelligence-parser = { path = "../parser" }
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true
+tokio-test.workspace = true
