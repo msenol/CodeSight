@@ -1,0 +1,73 @@
+# Rustfmt configuration for Code Intelligence MCP Server
+# Generated: 2025-01-27
+
+# Edition
+edition = "2021"
+
+# Line width
+max_width = 100
+
+# Hard tabs
+hard_tabs = false
+tab_spaces = 4
+
+# Newlines
+newline_style = "Unix"
+
+# Use small heuristics
+use_small_heuristics = "Default"
+
+# Indentation
+indent_style = "Block"
+
+# Imports
+reorder_imports = true
+reorder_modules = true
+reorder_impl_items = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
+imports_layout = "Mixed"
+
+# Functions
+fn_args_layout = "Tall"
+brace_style = "SameLineWhere"
+control_brace_style = "AlwaysSameLine"
+
+# Structs and enums
+struct_field_align_threshold = 0
+enum_discrim_align_threshold = 0
+
+# Comments and documentation
+comment_width = 80
+wrap_comments = true
+format_code_in_doc_comments = true
+doc_comment_code_block_width = 100
+
+# Strings
+format_strings = true
+format_macro_matchers = true
+format_macro_bodies = true
+
+# Misc
+remove_nested_parens = true
+normalize_comments = true
+normalize_doc_attributes = true
+license_template_path = ""
+merge_derives = true
+use_try_shorthand = true
+use_field_init_shorthand = true
+force_explicit_abi = true
+condense_wildcard_suffixes = true
+color = "Auto"
+required_version = "1.7.0"
+unstable_features = false
+disable_all_formatting = false
+skip_children = false
+hide_parse_errors = false
+error_on_line_overflow = false
+error_on_unformatted = false
+report_todo = "Never"
+report_fixme = "Never"
+ignore = []
+emit_mode = "Files"
+make_backup = false

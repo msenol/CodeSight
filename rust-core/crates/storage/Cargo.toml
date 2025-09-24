@@ -1,0 +1,38 @@
+[package]
+name = "code-intelligence-storage"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Storage layer for Code Intelligence MCP Server"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# Core dependencies
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+
+# Database (disabled for testing)
+# sqlx.workspace = true
+# duckdb.workspace = true
+# redis.workspace = true
+
+# Async runtime
+tokio.workspace = true
+
+# Local dependencies
+code-intelligence-core = { path = "../core" }
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true
+tokio-test.workspace = true

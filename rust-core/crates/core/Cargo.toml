@@ -1,0 +1,39 @@
+[package]
+name = "code-intelligence-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Core types and traits for Code Intelligence MCP Server"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+# Core dependencies
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+
+# Async runtime
+tokio.workspace = true
+
+# Additional dependencies
+num_cpus.workspace = true
+async-trait.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "memory_benchmarks"
+harness = false

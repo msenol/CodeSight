@@ -1,0 +1,46 @@
+[package]
+name = "code-intelligence-ffi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "FFI bindings for Code Intelligence MCP Server"
+keywords.workspace = true
+categories.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Core dependencies
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+
+# FFI
+napi.workspace = true
+napi-derive.workspace = true
+
+# Async runtime
+tokio.workspace = true
+
+# Local dependencies
+code-intelligence-core = { path = "../core" }
+code-intelligence-parser = { path = "../parser" }
+code-intelligence-indexer = { path = "../indexer" }
+code-intelligence-search = { path = "../search" }
+code-intelligence-embedding = { path = "../embedding" }
+code-intelligence-storage = { path = "../storage" }
+code-intelligence-cache = { path = "../cache" }
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true
+tokio-test.workspace = true
