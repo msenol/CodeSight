@@ -1,0 +1,119 @@
+{
+  "name": "code-intelligence-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Code Intelligence MCP Server - TypeScript Interface",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "code-intelligence-mcp": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:full": "tsc && napi build --platform --release",
+    "build:debug": "tsc && napi build --platform",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:contract": "vitest tests/contract",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write src/**/*.{ts,tsx,json}",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "code-intelligence",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "assistant",
+    "code-analysis",
+    "search",
+    "parsing"
+  ],
+  "author": "Code Intelligence Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/code-intelligence-mcp.git"
+  },
+  "homepage": "https://code-intelligence-mcp.com",
+  "bugs": {
+    "url": "https://github.com/your-org/code-intelligence-mcp/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/jwt": "^7.2.4",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/websocket": "^8.3.1",
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.52.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@typescript-eslint/typescript-estree": "^6.15.0",
+    "acorn": "^8.11.3",
+    "acorn-walk": "^8.3.2",
+    "bullmq": "^4.15.4",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "dotenv": "^16.3.1",
+    "fast-levenshtein": "^3.0.0",
+    "fastify": "^4.24.3",
+    "glob": "^10.3.10",
+    "inquirer": "^9.2.12",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "natural": "^6.12.0",
+    "ora": "^7.0.1",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.17.0",
+    "@types/inquirer": "^9.0.7",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.10.4",
+    "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/coverage-v8": "^1.0.4",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
+    "testcontainers": "^10.4.0",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  },
+  "napi": {
+    "name": "code-intelligence-core",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-gnu",
+        "i686-pc-windows-msvc",
+        "armv7-unknown-linux-gnueabihf",
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+        "aarch64-unknown-linux-musl"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "*.node",
+    "README.md",
+    "LICENSE"
+  ]
+}
