@@ -31,6 +31,11 @@ napi-derive.workspace = true
 # Async runtime
 tokio.workspace = true
 
+# File system and database
+walkdir = "2.4"
+rusqlite = { version = "0.30", features = ["bundled"] }
+regex = "1.10"
+
 # Local dependencies
 code-intelligence-core = { path = "../core" }
 code-intelligence-parser = { path = "../parser" }
