@@ -1,0 +1,586 @@
+{
+  "info": {
+    "name": "Code Intelligence MCP Server API",
+    "description": "Comprehensive API collection for the Code Intelligence MCP Server. This collection includes all endpoints for codebase management, indexing, searching, and MCP tool operations.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the API server"
+    },
+    {
+      "key": "api_key",
+      "value": "your-api-key-here",
+      "description": "API key for authentication"
+    },
+    {
+      "key": "codebase_id",
+      "value": "",
+      "description": "ID of the test codebase (will be set automatically)"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check the health status of the server and its services"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Codebase Management",
+      "item": [
+        {
+          "name": "List Codebases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases?limit=20&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Retrieve a paginated list of all indexed codebases"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Codebase",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('codebase_id', response.id);",
+                  "    console.log('Codebase ID set to:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Codebase\",\n  \"description\": \"A test codebase for API demonstration\",\n  \"repository_url\": \"https://github.com/example/test-repo\",\n  \"local_path\": \"/path/to/local/repo\",\n  \"language\": \"TypeScript\",\n  \"framework\": \"Node.js\",\n  \"auto_index\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases"]
+            },
+            "description": "Create a new codebase for indexing"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Codebase Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases/{{codebase_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases", "{{codebase_id}}"]
+            },
+            "description": "Get detailed information about a specific codebase"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Codebase",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description for the test codebase\",\n  \"language\": \"TypeScript\",\n  \"framework\": \"React\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases/{{codebase_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases", "{{codebase_id}}"]
+            },
+            "description": "Update codebase information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Codebase",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases/{{codebase_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases", "{{codebase_id}}"]
+            },
+            "description": "Delete a codebase and all associated data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Indexing Operations",
+      "item": [
+        {
+          "name": "Start Indexing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force_reindex\": false,\n  \"include_patterns\": [\"**/*.ts\", \"**/*.js\", \"**/*.py\"],\n  \"exclude_patterns\": [\"node_modules/**\", \"**/*.test.*\"],\n  \"parallel_workers\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases/{{codebase_id}}/index",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases", "{{codebase_id}}", "index"]
+            },
+            "description": "Start the indexing process for a codebase"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Codebase Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/codebases/{{codebase_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "codebases", "{{codebase_id}}", "stats"]
+            },
+            "description": "Get indexing and usage statistics for a codebase"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search Operations",
+      "item": [
+        {
+          "name": "Keyword Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"authentication function\",\n  \"codebase_id\": \"{{codebase_id}}\",\n  \"search_type\": \"keyword\",\n  \"limit\": 10,\n  \"include_context\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search"]
+            },
+            "description": "Perform keyword-based search"
+          },
+          "response": []
+        },
+        {
+          "name": "Semantic Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"How to validate user credentials?\",\n  \"codebase_id\": \"{{codebase_id}}\",\n  \"search_type\": \"semantic\",\n  \"limit\": 10,\n  \"include_context\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search"]
+            },
+            "description": "Perform semantic search using natural language"
+          },
+          "response": []
+        },
+        {
+          "name": "Hybrid Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"user login validation\",\n  \"codebase_id\": \"{{codebase_id}}\",\n  \"search_type\": \"hybrid\",\n  \"limit\": 20,\n  \"include_context\": true,\n  \"file_types\": [\"ts\", \"js\", \"py\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search"]
+            },
+            "description": "Perform hybrid search combining keyword and semantic approaches"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Query Management",
+      "item": [
+        {
+          "name": "Get Query History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/queries?codebase_id={{codebase_id}}&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "queries"],
+              "query": [
+                {
+                  "key": "codebase_id",
+                  "value": "{{codebase_id}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Get recent queries and their performance metrics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "MCP Protocol Tools",
+      "item": [
+        {
+          "name": "List Available Tools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/mcp/tools",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools"]
+            },
+            "description": "Get list of all available MCP tools and their schemas"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Code Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"query\": \"authentication middleware\",\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"search_type\": \"hybrid\",\n    \"limit\": 10\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/search_code",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "search_code"]
+            },
+            "description": "Execute the search_code MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Explain Function Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"function_name\": \"validateUser\",\n    \"file_path\": \"src/auth/validator.ts\",\n    \"codebase_id\": \"{{codebase_id}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/explain_function",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "explain_function"]
+            },
+            "description": "Execute the explain_function MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Find References Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"symbol\": \"UserService\",\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"include_definitions\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/find_references",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "find_references"]
+            },
+            "description": "Execute the find_references MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Trace Data Flow Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"variable\": \"userCredentials\",\n    \"file_path\": \"src/auth/login.ts\",\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"max_depth\": 5\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/trace_data_flow",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "trace_data_flow"]
+            },
+            "description": "Execute the trace_data_flow MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Security Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"scan_type\": \"comprehensive\",\n    \"include_dependencies\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/analyze_security",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "analyze_security"]
+            },
+            "description": "Execute the analyze_security MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Get API Endpoints Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"framework\": \"express\",\n    \"include_middleware\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/get_api_endpoints",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "get_api_endpoints"]
+            },
+            "description": "Execute the get_api_endpoints MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Complexity Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"file_path\": \"src/services/user-service.ts\",\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"metrics\": [\"cyclomatic\", \"cognitive\", \"halstead\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/check_complexity",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "check_complexity"]
+            },
+            "description": "Execute the check_complexity MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Duplicates Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"similarity_threshold\": 0.8,\n    \"min_lines\": 10\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/find_duplicates",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "find_duplicates"]
+            },
+            "description": "Execute the find_duplicates MCP tool"
+          },
+          "response": []
+        },
+        {
+          "name": "Suggest Refactoring Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arguments\": {\n    \"file_path\": \"src/utils/helpers.ts\",\n    \"codebase_id\": \"{{codebase_id}}\",\n    \"focus_areas\": [\"performance\", \"maintainability\", \"readability\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mcp/tools/suggest_refactoring",
+              "host": ["{{base_url}}"],
+              "path": ["mcp", "tools", "suggest_refactoring"]
+            },
+            "description": "Execute the suggest_refactoring MCP tool"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set timestamp for requests",
+          "pm.globals.set('timestamp', new Date().toISOString());",
+          "",
+          "// Log request details",
+          "console.log('Making request to:', pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response validation",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has valid JSON', function () {",
+          "    if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+          "        pm.response.to.have.jsonBody();",
+          "    }",
+          "});",
+          "",
+          "// Log response status",
+          "console.log('Response status:', pm.response.status, pm.response.statusText);"
+        ]
+      }
+    }
+  ]
+}
