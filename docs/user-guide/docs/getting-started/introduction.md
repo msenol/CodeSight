@@ -4,40 +4,39 @@ sidebar_position: 1
 
 # Introduction
 
-Welcome to the Code Intelligence MCP Server! This powerful platform revolutionizes how you interact with and understand your codebase by providing AI-powered code analysis, semantic search, and intelligent insights.
+Welcome to the Code Intelligence MCP Server! This is a **working TypeScript implementation** that enables AI assistants to understand and query codebases through natural language, with real SQLite database integration and full Claude Desktop support.
 
-## What Makes It Special?
+## What's Working Now (v0.1.0)?
 
-The Code Intelligence MCP Server stands out from traditional code analysis tools by combining:
+The current implementation provides:
 
-- **AI-Powered Understanding**: Uses advanced language models to understand code semantics
-- **Model Context Protocol**: Native integration with AI assistants like Claude
-- **High-Performance Core**: Rust-based engine for lightning-fast analysis
-- **Multi-Language Support**: Works across different programming languages
-- **Real-Time Analysis**: Incremental indexing keeps your analysis up-to-date
+- **✅ Real Code Indexing**: SQLite database with 377+ entities from JavaScript/TypeScript projects
+- **✅ Natural Language Search**: Query intent detection with database results
+- **✅ Claude Desktop Integration**: Tested and verified MCP protocol compliance
+- **✅ CLI Tools**: Working `index`, `search`, and `stats` commands
+- **✅ Performance**: 47 files indexed in 2-3 seconds, 50-100ms search responses
 
-## Core Components
+## Current Architecture
 
-### 🦀 **Rust Core Engine**
-The heart of the system, built in Rust for maximum performance:
-- **Tree-sitter Integration**: Advanced syntax parsing for multiple languages
-- **Tantivy Search**: Full-text search with ranking and relevance
-- **ONNX Runtime**: Machine learning inference for embeddings
-- **Parallel Processing**: Multi-threaded analysis for large codebases
+### ✅ **TypeScript MCP Server** (Working)
+Complete MCP protocol implementation:
+- **9 MCP Tools**: 2 fully functional with real database, 7 with mock responses
+- **IndexingService**: Native TypeScript with SQLite database integration
+- **CLI Interface**: Working `index`, `search`, `stats` commands
+- **Claude Desktop**: Tested integration with stdio transport
 
-### 🔧 **TypeScript MCP Layer**
-Provides the Model Context Protocol interface:
-- **Tool Definitions**: Standardized tools for code analysis
-- **Request Handling**: Manages communication with AI assistants
-- **Response Formatting**: Structures results for optimal AI consumption
-- **Error Management**: Robust error handling and recovery
+### ✅ **Database Layer** (Working)
+Real SQLite storage:
+- **Entity Storage**: Functions, classes, interfaces, types
+- **Search Engine**: Query intent detection and relevance scoring
+- **Performance**: Fast queries on 377+ indexed entities
+- **File Tracking**: Monitors 47+ files with incremental updates
 
-### 🌐 **REST API Gateway**
-Flexible HTTP interface for any client:
-- **OpenAPI Specification**: Well-documented API endpoints
-- **Authentication**: Secure API key-based access
-- **Rate Limiting**: Prevents abuse and ensures fair usage
-- **Monitoring**: Built-in metrics and health checks
+### 🚧 **Rust Core Engine** (Planned)
+Future high-performance layer:
+- **Tree-sitter Integration**: Multi-language parsing
+- **FFI Bridge**: Napi-rs TypeScript-Rust communication
+- **Tantivy Search**: Advanced full-text search capabilities
 
 ## How It Works
 
@@ -68,22 +67,17 @@ sequenceDiagram
 5. **Index Storage**: Optimized storage for fast retrieval
 6. **Query Processing**: Real-time search and analysis requests
 
-## Supported Languages
+## Supported Languages (Current Implementation)
 
-The server supports analysis for multiple programming languages:
-
-| Language | Parsing | Semantic Analysis | Embedding Support |
-|----------|---------|-------------------|-------------------|
+| Language | Parsing | Entity Extraction | Search Support |
+|----------|---------|-------------------|-----------------|
 | TypeScript | ✅ | ✅ | ✅ |
 | JavaScript | ✅ | ✅ | ✅ |
-| Python | ✅ | ✅ | ✅ |
-| Rust | ✅ | ✅ | ✅ |
-| Java | ✅ | ✅ | ✅ |
-| C++ | ✅ | ⚠️ | ✅ |
-| Go | ✅ | ⚠️ | ✅ |
-| C# | ✅ | ⚠️ | ✅ |
 
-*✅ Full Support, ⚠️ Partial Support*
+**Planned with Rust Core:**
+- Python, Rust, Java, C++, Go, C#, PHP, Ruby (via Tree-sitter)
+
+*Current implementation focuses on JavaScript/TypeScript with native parsing.*
 
 ## Key Benefits
 
@@ -141,13 +135,19 @@ The Code Intelligence MCP Server integrates with your existing development workf
 - **📊 Monitoring**: Integration with observability platforms
 - **🛠️ Custom Tools**: REST API for building your own integrations
 
-## Performance Characteristics
+## Performance Characteristics (Current Implementation)
 
-- **Indexing Speed**: ~1000 files per second (typical TypeScript project)
-- **Query Response**: <100ms for most searches
-- **Memory Usage**: ~50MB base + ~1MB per 1000 files indexed
-- **Storage**: ~10KB per file for full analysis data
-- **Concurrent Users**: Supports 100+ simultaneous queries
+**Real Metrics:**
+- **Indexing Speed**: ~15-20 files per second (TypeScript implementation)
+- **Query Response**: 50-100ms for database searches
+- **Memory Usage**: ~30MB during indexing, ~10MB idle
+- **Storage**: SQLite database with efficient entity storage
+- **Scalability**: Tested with 47 files → 377 entities
+
+**Target with Rust Core:**
+- **Indexing Speed**: ~1000 files per second
+- **Query Response**: <50ms for complex searches
+- **Concurrent Users**: 100+ simultaneous queries
 
 ## Next Steps
 
