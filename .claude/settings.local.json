@@ -183,7 +183,8 @@
       "Bash(cargo check:*)",
       "Bash(napi build:*)",
       "Bash(npx @napi-rs/cli build:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(cargo test:*)"
     ]
   },
   "enabledMcpjsonServers": [
