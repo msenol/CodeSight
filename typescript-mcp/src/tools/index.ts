@@ -4,13 +4,21 @@
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../services/logger.js';
-import { indexingService } from '../services/indexing-service.js';
+import { DefaultCodebaseService } from '../services/codebase-service.js';
+import { DatabaseSearchService } from '../services/database-search-service.js';
+import { SearchCodeTool } from './search-code.js';
 
 /**
  * Register all MCP tools with the server
  */
 export async function registerMCPTools(server: Server): Promise<void> {
   try {
+    // Initialize services
+    const codebaseService = new DefaultCodebaseService();
+    const searchService = new DatabaseSearchService();
+    const searchCodeTool = new SearchCodeTool(searchService, codebaseService);
+
+    console.log('[DEBUG] Services initialized for MCP tools');
     // Register list_tools handler
     server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
@@ -194,13 +202,25 @@ export async function registerMCPTools(server: Server): Promise<void> {
       try {
         switch (name) {
           case 'search_code': {
+            console.log('[DEBUG] search_code tool called with args:', args);
             const { query, codebase_id } = args as { query: string; codebase_id: string };
 
             try {
-              // Try to search using the indexing service
-              const results = indexingService.searchCode(query, 10);
+              console.log('[DEBUG] Calling SearchCodeTool with proper services');
+              // Use the proper SearchCodeTool with database integration
+              const searchResult = await searchCodeTool.call({
+                query,
+                codebase_id,
+                context_lines: 3,
+                max_results: 10,
+                include_tests: true,
+                file_types: undefined,
+                exclude_patterns: undefined
+              });
 
-              if (results.length === 0) {
+              console.log('[DEBUG] SearchCodeTool result:', searchResult);
+
+              if (searchResult.results.length === 0) {
                 return {
                   content: [
                     {
@@ -213,43 +233,28 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 };
               }
 
+              // Format results properly
+              const resultText = `Found ${searchResult.total_matches} matches for "${query}" in ${searchResult.execution_time_ms}ms:\n\n${
+                searchResult.results.map(r => `📄 ${r.file}:${r.line} (score: ${r.score.toFixed(2)})\n   ${r.content}`).join('\n\n')
+              }`;
+
               return {
                 content: [
                   {
                     type: 'text',
-                    text: `Found ${results.length} matches for "${query}":\n\n${
-                      results.map(r => `📄 ${r.file}:${r.line} (score: ${r.score.toFixed(2)})\n   Name: ${r.name}\n   ${r.content}`).join('\n\n')
-                    }`
+                    text: resultText
                   }
                 ]
               };
             } catch (error) {
+              console.error('[DEBUG] SearchCodeTool failed:', error);
               logger.error(`Search failed:`, error);
-
-              // Fallback to mock data if database not initialized
-              const results = [
-                {
-                  file: 'src/index.ts',
-                  line: 23,
-                  match: `function handleRequest() { ... }`,
-                  score: 0.95
-                },
-                {
-                  file: 'src/utils.ts',
-                  line: 45,
-                  match: `export function processData() { ... }`,
-                  score: 0.87
-                }
-              ];
 
               return {
                 content: [
                   {
                     type: 'text',
-                    text: `⚠️ Using mock data (database not ready):\n\n` +
-                          `Found ${results.length} matches for "${query}" in ${codebase_id}:\n\n${
-                            results.map(r => `📄 ${r.file}:${r.line} (score: ${r.score})\n   ${r.match}`).join('\n\n')
-                          }`
+                    text: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`
                   }
                 ]
               };

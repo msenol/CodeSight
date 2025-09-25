@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Mevcut bilgileri al
-EXPECTED_VERSION="v0.1.0-dev" # Başlangıç versiyonu
+EXPECTED_VERSION="v0.1.0" # Current stable version
 CURRENT_DATE=$(date +"%d %B %Y")
 CURRENT_MONTH=$(date +"%B %Y")
 
@@ -44,8 +44,8 @@ for file in "${MAIN_FILES[@]}"; do
                 echo -e "${GREEN}  ✅ $file: Version correct${NC}"
             fi
         else
-            # Diğer dosyalar için metin bazlı kontrol - v0.1.0-dev veya v0.1.0--dev formatını kabul et
-            if grep -qE "v0\.1\.0-{1,2}dev" "$file" 2>/dev/null; then
+            # Diğer dosyalar için metin bazlı kontrol - v0.1.0 formatını kabul et
+            if grep -qE "v0\.1\.0" "$file" 2>/dev/null; then
                 echo -e "${GREEN}  ✅ $file: Contains current version${NC}"
             else
                 echo -e "${YELLOW}  ⚠️  $file: May need version update${NC}"

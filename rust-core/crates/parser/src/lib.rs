@@ -10,10 +10,10 @@ use std::collections::HashMap;
 use std::path::Path;
 use uuid::Uuid;
 
-// pub mod languages;
-// pub mod parsers;
-// pub mod extractors;
-// pub mod utils;
+pub mod languages;
+pub mod parsers;
+pub mod extractors;
+pub mod utils;
 
 /// Supported programming languages
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -26,6 +26,21 @@ pub enum Language {
     Java,
     Cpp,
     CSharp,
+}
+
+impl std::fmt::Display for Language {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Language::TypeScript => write!(f, "TypeScript"),
+            Language::JavaScript => write!(f, "JavaScript"),
+            Language::Python => write!(f, "Python"),
+            Language::Rust => write!(f, "Rust"),
+            Language::Go => write!(f, "Go"),
+            Language::Java => write!(f, "Java"),
+            Language::Cpp => write!(f, "C++"),
+            Language::CSharp => write!(f, "C#"),
+        }
+    }
 }
 
 /// Code entity types that can be extracted
@@ -116,17 +131,17 @@ impl CodeParser {
     /// Create a new code parser with all supported languages
     pub fn new() -> Self {
         let mut parsers: HashMap<Language, Box<dyn LanguageParser>> = HashMap::new();
-        
-        // Initialize parsers for each language (TODO: implement)
-        // parsers.insert(Language::TypeScript, Box::new(parsers::TypeScriptParser::new()));
-        // parsers.insert(Language::JavaScript, Box::new(parsers::JavaScriptParser::new()));
-        // parsers.insert(Language::Python, Box::new(parsers::PythonParser::new()));
-        // parsers.insert(Language::Rust, Box::new(parsers::RustParser::new()));
-        // parsers.insert(Language::Go, Box::new(parsers::GoParser::new()));
-        // parsers.insert(Language::Java, Box::new(parsers::JavaParser::new()));
-        // parsers.insert(Language::Cpp, Box::new(parsers::CppParser::new()));
-        // parsers.insert(Language::CSharp, Box::new(parsers::CSharpParser::new()));
-        
+
+        // Initialize parsers for each language
+        parsers.insert(Language::TypeScript, Box::new(parsers::TypeScriptParser::new()));
+        parsers.insert(Language::JavaScript, Box::new(parsers::JavaScriptParser::new()));
+        parsers.insert(Language::Python, Box::new(parsers::PythonParser::new()));
+        parsers.insert(Language::Rust, Box::new(parsers::RustParser::new()));
+        parsers.insert(Language::Go, Box::new(parsers::GoParser::new()));
+        parsers.insert(Language::Java, Box::new(parsers::JavaParser::new()));
+        parsers.insert(Language::Cpp, Box::new(parsers::CppParser::new()));
+        parsers.insert(Language::CSharp, Box::new(parsers::CSharpParser::new()));
+
         Self { parsers }
     }
     
@@ -165,6 +180,20 @@ impl CodeParser {
     pub fn supported_languages(&self) -> Vec<Language> {
         self.parsers.keys().cloned().collect()
     }
+
+    /// Get all supported file extensions
+    pub fn all_supported_extensions() -> Vec<&'static str> {
+        vec![
+            "ts", "tsx",      // TypeScript
+            "js", "jsx", "mjs", // JavaScript
+            "py", "pyw",      // Python
+            "rs",             // Rust
+            "go",             // Go
+            "java",           // Java
+            "cpp", "cc", "cxx", "c++", "hpp", "h", // C++
+            "cs",             // C#
+        ]
+    }
 }
 
 impl Default for CodeParser {
@@ -196,17 +225,19 @@ mod tests {
     fn test_supported_languages() {
         let parser = CodeParser::new();
         let languages = parser.supported_languages();
-        
-        // Currently no parsers are initialized, so should be empty
-        assert_eq!(languages.len(), 0);
-        // TODO: Enable when parsers are implemented
-        // assert!(languages.contains(&Language::TypeScript));
-        // assert!(languages.contains(&Language::JavaScript));
-        // assert!(languages.contains(&Language::Python));
-        // assert!(languages.contains(&Language::Rust));
-        // assert!(languages.contains(&Language::Go));
-        // assert!(languages.contains(&Language::Java));
-        // assert!(languages.contains(&Language::Cpp));
-        // assert!(languages.contains(&Language::CSharp));
+
+        // All parsers should now be initialized
+        assert_eq!(languages.len(), 8);
+        assert!(languages.contains(&Language::TypeScript));
+        assert!(languages.contains(&Language::JavaScript));
+        assert!(languages.contains(&Language::Python));
+        assert!(languages.contains(&Language::Rust));
+        assert!(languages.contains(&Language::Go));
+        assert!(languages.contains(&Language::Java));
+        assert!(languages.contains(&Language::Cpp));
+        assert!(languages.contains(&Language::CSharp));
     }
 }
+
+// Re-export utility functions
+pub use languages::all_supported_extensions;

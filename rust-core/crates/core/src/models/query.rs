@@ -1,7 +1,7 @@
 //! Query model for search and filtering operations
 
-use crate::error::CoreError;
-use crate::traits::{Validate, Timestamped, JsonSerializable};
+use super::{ModelResult, Validate, Timestamped, JsonSerializable};
+use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -480,9 +480,7 @@ impl Timestamped for Query {
     }
 }
 
-impl JsonSerializable for Query {}
-impl JsonSerializable for QueryResult {}
-impl JsonSerializable for QueryResponse {}
+// JsonSerializable is automatically implemented for all types via the blanket impl in mod.rs
 
 #[cfg(test)]
 mod tests {

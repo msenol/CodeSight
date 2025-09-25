@@ -71,7 +71,7 @@ docs/
 
 ## Version Management
 
-### Current Version: v0.1.0-dev
+### Current Version: v0.1.0
 
 Version format: `vMAJOR.MINOR.PATCH[-SUFFIX]`
 

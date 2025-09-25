@@ -3,7 +3,7 @@ import { z } from 'zod';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
-import { DefaultSearchService } from './search-service.js';
+import { DatabaseSearchService } from './database-search-service.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as acorn from 'acorn';
 
@@ -23,10 +23,10 @@ export interface CodebaseService {
 
 export class DefaultCodebaseService implements CodebaseService {
   private codebases = new Map<string, CodebaseInfo>();
-  private searchService: DefaultSearchService;
+  private searchService: DatabaseSearchService;
 
   constructor() {
-    this.searchService = new DefaultSearchService();
+    this.searchService = new DatabaseSearchService();
   }
 
   async addCodebase(name: string, path: string, languages: string[]): Promise<string> {
@@ -51,7 +51,54 @@ export class DefaultCodebaseService implements CodebaseService {
   }
 
   async getCodebase(id: string): Promise<CodebaseInfo | null> {
-    return this.codebases.get(id) || null;
+    // Check if we have it in memory
+    const memoryCodebase = this.codebases.get(id);
+    if (memoryCodebase) {
+      return memoryCodebase;
+    }
+
+    // Handle "default" codebase ID - use current working directory
+    if (id === 'default' || id === 'Default') {
+      const defaultPath = process.cwd();
+      console.log(`[DEBUG] Using default codebase path:`, defaultPath);
+
+      const codebase: CodebaseInfo = {
+        id: 'default',
+        name: 'Default Project',
+        path: defaultPath,
+        languages: ['typescript', 'javascript'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fileCount: 0,
+        indexedAt: new Date().toISOString(),
+        status: 'indexed'
+      };
+      this.codebases.set('default', codebase);
+      return codebase;
+    }
+
+    // For backward compatibility, accept file paths as codebase IDs
+    try {
+      await fs.access(id);
+      // Create a temporary codebase info for the path
+      const codebase: CodebaseInfo = {
+        id,
+        name: path.basename(id),
+        path: id,
+        languages: ['typescript', 'javascript'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fileCount: 0,
+        indexedAt: new Date().toISOString(),
+        status: 'indexed'
+      };
+      this.codebases.set(id, codebase);
+      return codebase;
+    } catch {
+      // Not a valid path, check memory only
+      console.log(`[DEBUG] Codebase not found for ID:`, id);
+      return null;
+    }
   }
 
   async listCodebases(): Promise<CodebaseInfo[]> {

@@ -13,8 +13,6 @@ pub mod cache_entry;
 pub mod plugin;
 pub mod configuration;
 pub mod index_job;
-pub mod code_metric;
-pub mod api_endpoint;
 
 // Re-export all models for convenience
 pub use codebase::*;
@@ -27,11 +25,9 @@ pub use cache_entry::*;
 pub use plugin::*;
 pub use configuration::*;
 pub use index_job::*;
-pub use code_metric::*;
-pub use api_endpoint::*;
 
 /// Common result type used throughout the models
-pub type ModelResult<T> = Result<T, crate::error::CodeIntelligenceError>;
+pub type ModelResult<T> = Result<T, crate::errors::CoreError>;
 
 /// Trait for models that can be validated
 pub trait Validate {

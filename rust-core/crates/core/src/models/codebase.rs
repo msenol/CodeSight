@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use super::{ModelResult, Timestamped, Validate};
-use crate::error::CodeIntelligenceError;
+use crate::errors::CoreError;
 
 /// Status of a codebase in the indexing system
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -147,20 +147,20 @@ impl Codebase {
 impl Validate for Codebase {
     fn validate(&self) -> ModelResult<()> {
         if self.name.trim().is_empty() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Codebase name cannot be empty".to_string(),
             ));
         }
 
         if self.path.trim().is_empty() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Codebase path cannot be empty".to_string(),
             ));
         }
 
         // Validate that path is absolute
         if !std::path::Path::new(&self.path).is_absolute() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Codebase path must be absolute".to_string(),
             ));
         }
@@ -168,7 +168,7 @@ impl Validate for Codebase {
         // Validate that file count matches language stats
         let total_files: u32 = self.language_stats.values().sum();
         if total_files > self.file_count {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Language statistics exceed total file count".to_string(),
             ));
         }

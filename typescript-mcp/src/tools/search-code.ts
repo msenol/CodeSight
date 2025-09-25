@@ -1,12 +1,13 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { SearchService } from '../services/search-service.js';
 import type { CodebaseService } from '../services/codebase-service.js';
+import type { SearchResult } from '../types/index.js';
 import { z } from 'zod';
 
 // Input validation schema
 const SearchCodeInputSchema = z.object({
   query: z.string().min(1, 'Query cannot be empty'),
-  codebase_id: z.string().uuid('Invalid codebase ID'),
+  codebase_id: z.string().min(1, 'Codebase ID cannot be empty'),
   context_lines: z.number().int().min(0).max(10).default(3),
   max_results: z.number().int().min(1).max(100).default(10),
   include_tests: z.boolean().default(true),
@@ -16,7 +17,7 @@ const SearchCodeInputSchema = z.object({
 
 type SearchCodeInput = z.infer<typeof SearchCodeInputSchema>;
 
-interface SearchResult {
+interface InternalSearchResult {
   entity_id: string;
   file_path: string;
   start_line: number;
@@ -92,17 +93,21 @@ export class SearchCodeTool {
 
   async call(args: unknown): Promise<SearchCodeResult> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input
       const input = SearchCodeInputSchema.parse(args);
-      
+
+      console.log(`[DEBUG] Search input:`, JSON.stringify(input, null, 2));
+
       // Verify codebase exists and is indexed
       const codebase = await this.codebaseService.getCodebase(input.codebase_id);
+      console.log(`[DEBUG] Found codebase:`, JSON.stringify(codebase, null, 2));
+
       if (!codebase) {
         throw new Error(`Codebase with ID ${input.codebase_id} not found`);
       }
-      
+
       if (codebase.status !== 'indexed') {
         throw new Error(`Codebase ${codebase.name} is not indexed. Current status: ${codebase.status}`);
       }
@@ -111,13 +116,17 @@ export class SearchCodeTool {
       const queryIntent = this.detectQueryIntent(input.query);
       
       // Perform search based on intent and query complexity
+      console.log(`[DEBUG] Starting search with query: "${input.query}", intent: ${queryIntent}`);
       const searchResults = await this.performSearch(input, queryIntent);
-      
+      console.log(`[DEBUG] Raw search results:`, searchResults.length, JSON.stringify(searchResults.slice(0, 2), null, 2));
+
       // Format results with context
       const formattedResults = await this.formatResults(searchResults, input);
-      
+      console.log(`[DEBUG] Formatted results:`, formattedResults.length, JSON.stringify(formattedResults.slice(0, 2), null, 2));
+
       const executionTime = Date.now() - startTime;
-      
+      console.log(`[DEBUG] Search completed in ${executionTime}ms`);
+
       return {
         results: formattedResults,
         query_intent: queryIntent,
@@ -128,11 +137,12 @@ export class SearchCodeTool {
       
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      
+      console.log(`[DEBUG] Search error:`, error);
+
       if (error instanceof z.ZodError) {
         throw new Error(`Invalid input: ${error.errors.map(e => e.message).join(', ')}`);
       }
-      
+
       throw new Error(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -241,43 +251,38 @@ export class SearchCodeTool {
    */
   private async formatResults(results: any[], input: SearchCodeInput): Promise<SearchResult[]> {
     const formatted: SearchResult[] = [];
-    
+
     for (const result of results) {
       try {
         // Get code snippet with context
         const snippet = await this.searchService.getCodeSnippet(
-          result.file_path,
-          result.start_line,
+          result.file,
+          result.line,
           input.context_lines
         );
-        
+
         // Get surrounding context lines
         const context = await this.searchService.getContextLines(
-          result.file_path,
-          result.start_line,
+          result.file,
+          result.line,
           input.context_lines
         );
-        
+
         formatted.push({
-          entity_id: result.entity_id || result.id,
-          file_path: result.file_path,
-          start_line: result.start_line,
-          end_line: result.end_line,
-          code_snippet: snippet,
-          relevance_score: result.relevance_score || result.score || 1.0,
-          entity_type: result.entity_type || 'unknown',
-          context: context,
-          language: result.language || this.detectLanguage(result.file_path),
-          qualified_name: result.qualified_name || result.name || ''
+          file: result.file,
+          line: result.line,
+          column: result.column || 1,
+          content: snippet,
+          score: result.score || 1.0
         });
       } catch (error) {
         // Skip results that can't be formatted
         console.warn(`Failed to format search result: ${error}`);
       }
     }
-    
-    // Sort by relevance score
-    return formatted.sort((a, b) => b.relevance_score - a.relevance_score);
+
+    // Sort by score
+    return formatted.sort((a, b) => b.score - a.score);
   }
 
   /**

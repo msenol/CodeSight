@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:full": "tsc && napi build --platform --release",
+    "build:full": "tsc && cd ../rust-core && cargo build --release",
     "build:debug": "tsc && napi build --platform",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
@@ -99,7 +99,7 @@
     "vitest": "^1.0.4"
   },
   "napi": {
-    "name": "code-intelligence-core",
+    "name": "code-intelligence-native",
     "triples": {
       "defaults": true,
       "additional": [
