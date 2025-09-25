@@ -1,6 +1,6 @@
 # TypeScript MCP Server
 
-The TypeScript implementation of the Code Intelligence MCP Server with **real code indexing and search functionality**. Features a complete SQLite database integration, JavaScript/TypeScript parsing, functional CLI tools, and a sophisticated NAPI-RS FFI bridge with multi-language Tree-sitter support.
+The TypeScript implementation of the CodeSight MCP Server with **real code indexing and search functionality**. Features a complete SQLite database integration, JavaScript/TypeScript parsing, functional CLI tools, and a sophisticated NAPI-RS FFI bridge with multi-language Tree-sitter support.
 
 ## Overview
 
@@ -135,7 +135,7 @@ node dist/index.js
 ```json
 {
   "mcpServers": {
-    "code-intelligence": {
+    "codesight": {
       "command": "node",
       "args": ["F:/path/to/project/typescript-mcp/dist/index.js"],
       "cwd": "F:/path/to/project/typescript-mcp"
@@ -182,7 +182,7 @@ FFI_TIMEOUT=5000
 MAX_CONCURRENT_FFI_CALLS=10
 
 # Database
-DATABASE_URL=sqlite://./data/code_intelligence.db
+DATABASE_URL=sqlite://./data/codesight.db
 
 # Performance
 INDEXING_PARALLEL_WORKERS=4

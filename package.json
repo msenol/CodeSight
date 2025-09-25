@@ -1,8 +1,8 @@
 {
-  "name": "code-intelligence-mcp",
+  "name": "codesight-mcp",
   "private": true,
   "version": "0.1.0",
-  "description": "Code Intelligence MCP Server - Working TypeScript implementation with real SQLite indexing and Claude Desktop integration",
+  "description": "CodeSight MCP Server - Working TypeScript implementation with real SQLite indexing and Claude Desktop integration",
   "type": "module",
   "scripts": {
     "client:dev": "vite",

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Code Intelligence MCP Server implements a sophisticated **hybrid architecture** that combines TypeScript's ecosystem flexibility with Rust's performance capabilities. The FFI (Foreign Function Interface) bridge enables seamless communication between the TypeScript MCP server and the Rust core engine, providing significant performance improvements while maintaining graceful fallback capabilities.
+The CodeSight MCP Server implements a sophisticated **hybrid architecture** that combines TypeScript's ecosystem flexibility with Rust's performance capabilities. The FFI (Foreign Function Interface) bridge enables seamless communication between the TypeScript MCP server and the Rust core engine, providing significant performance improvements while maintaining graceful fallback capabilities.
 
 ## Architecture
 

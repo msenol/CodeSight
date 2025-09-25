@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * CLI for Code Intelligence MCP Server
+ * CLI for CodeSight MCP Server
  */
 
 import { Command } from 'commander';
@@ -13,8 +13,8 @@ import * as path from 'path';
 const program = new Command();
 
 program
-  .name('code-intelligence')
-  .description('Code Intelligence MCP Server CLI')
+  .name('codesight')
+  .description('CodeSight MCP Server CLI')
   .version('0.1.0');
 
 program

@@ -1,8 +1,8 @@
 
-# Implementation Plan: Code Intelligence MCP Server
+# Implementation Plan: CodeSight MCP Server
 
 **Branch**: `001-code-ntelligence-mcp` | **Date**: 2025-09-21 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `F:\Development\Projects\ProjectAra\specs\001-code-ntelligence-mcp\spec.md`
+**Input**: Feature specification from `F:\Development\Projects\ProjectAra\specs\codesight-mcp\spec.md`
 
 ## Execution Flow (/plan command scope)
 ```

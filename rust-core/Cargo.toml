@@ -15,12 +15,12 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.75"
-authors = ["Code Intelligence Team"]
+authors = ["CodeSight Team"]
 license = "MIT"
-repository = "https://github.com/your-org/code-intelligence-mcp"
-homepage = "https://code-intelligence-mcp.com"
-description = "High-performance Code Intelligence MCP Server core engine"
-keywords = ["code-intelligence", "mcp", "search", "parsing", "ai"]
+repository = "https://github.com/your-org/codesight-mcp"
+homepage = "https://codesight-mcp.com"
+description = "High-performance CodeSight MCP Server core engine"
+keywords = ["codesight", "mcp", "search", "parsing", "ai"]
 categories = ["development-tools", "parsing", "text-processing"]
 
 [workspace.dependencies]

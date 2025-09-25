@@ -1,7 +1,7 @@
 {
-  "name": "code-intelligence-mcp-docs",
+  "name": "codesight-mcp-docs",
   "version": "1.0.0",
-  "description": "User guide and documentation for Code Intelligence MCP Server",
+  "description": "User guide and documentation for CodeSight MCP Server",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",

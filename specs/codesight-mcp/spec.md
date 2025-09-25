@@ -1,9 +1,9 @@
-# Feature Specification: Code Intelligence MCP Server
+# Feature Specification: CodeSight MCP Server
 
 **Feature Branch**: `001-code-ntelligence-mcp`
 **Created**: 2025-09-21
 **Status**: Implemented
-**Input**: User description: "Develop a high-performance Code Intelligence MCP Server that enables AI assistants to understand and query codebases through natural language."
+**Input**: User description: "Develop a high-performance CodeSight MCP Server that enables AI assistants to understand and query codebases through natural language."
 
 ## Execution Flow (main)
 ```

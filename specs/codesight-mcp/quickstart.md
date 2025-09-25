@@ -1,4 +1,4 @@
-# Quick Start Guide: Code Intelligence MCP Server
+# Quick Start Guide: CodeSight MCP Server
 
 **Version**: v0.1.0-dev (Current Implementation)
 **Updated**: September 2025
@@ -28,8 +28,8 @@
 ### 1. Clone and Build
 
 ```bash
-git clone https://github.com/your-org/code-intelligence-mcp.git
-cd code-intelligence-mcp/typescript-mcp
+git clone https://github.com/your-org/codesight-mcp.git
+cd codesight-mcp/typescript-mcp
 npm install
 npm run build
 ```
@@ -55,7 +55,7 @@ Add to your Claude Desktop MCP configuration:
 ```json
 {
   "mcpServers": {
-    "code-intelligence": {
+    "codesight": {
       "command": "node",
       "args": ["F:/path/to/your/project/typescript-mcp/dist/index.js"],
       "cwd": "F:/path/to/your/project/typescript-mcp"
