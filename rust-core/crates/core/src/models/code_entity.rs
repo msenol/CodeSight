@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::{ModelResult, Timestamped, Validate};
-use crate::error::CodeIntelligenceError;
+use super::{ModelResult, Timestamped, Validate, JsonSerializable};
+use crate::errors::CoreError;
 
 /// Type of code entity
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -243,50 +243,50 @@ impl CodeEntity {
 impl Validate for CodeEntity {
     fn validate(&self) -> ModelResult<()> {
         if self.name.trim().is_empty() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Entity name cannot be empty".to_string(),
             ));
         }
 
         if self.qualified_name.trim().is_empty() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Qualified name cannot be empty".to_string(),
             ));
         }
 
         if self.file_path.trim().is_empty() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "File path cannot be empty".to_string(),
             ));
         }
 
         if self.language.trim().is_empty() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Language cannot be empty".to_string(),
             ));
         }
 
         if self.start_line == 0 {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Start line must be greater than 0".to_string(),
             ));
         }
 
         if self.end_line == 0 {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "End line must be greater than 0".to_string(),
             ));
         }
 
         if self.start_line > self.end_line {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Start line cannot be greater than end line".to_string(),
             ));
         }
 
         // Validate file path is relative
         if std::path::Path::new(&self.file_path).is_absolute() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "File path must be relative to codebase root".to_string(),
             ));
         }

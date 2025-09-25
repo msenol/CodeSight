@@ -24,12 +24,15 @@ tracing.workspace = true
 # Async runtime
 tokio.workspace = true
 rayon.workspace = true
+futures = "0.3"
+async-trait.workspace = true
 
 # Utilities
 walkdir.workspace = true
 notify.workspace = true
 sha2.workspace = true
 dashmap.workspace = true
+num_cpus.workspace = true
 
 # Local dependencies
 code-intelligence-core = { path = "../core" }

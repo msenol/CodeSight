@@ -1,7 +1,7 @@
 //! Cache entry model for storing and retrieving cached data
 
-use crate::error::CoreError;
-use crate::traits::{Validate, Timestamped, JsonSerializable};
+use super::{ModelResult, Validate, Timestamped, JsonSerializable};
+use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -426,7 +426,7 @@ impl CacheEntry {
 
     /// Get human-readable size
     pub fn size_human_readable(&self) -> String {
-        crate::utils::format_bytes(self.size_bytes as u64)
+        format!("{} bytes", self.size_bytes)
     }
 
     /// Check if entry matches any of the given tags
@@ -545,9 +545,7 @@ impl Timestamped for CacheEntry {
     }
 }
 
-impl JsonSerializable for CacheEntry {}
-impl JsonSerializable for CacheStats {}
-impl JsonSerializable for CacheOperation {}
+// JsonSerializable is automatically implemented for all types via the blanket impl in mod.rs
 
 #[cfg(test)]
 mod tests {

@@ -52,6 +52,24 @@ rust-core/**/*.rs.bk
 rust-core/Cargo.lock
 *.pdb
 
+# NAPI-RS Native Modules
+typescript-mcp/*.node
+typescript-mcp/native/
+*.node
+
+# FFI Bridge Build Artifacts
+*.dylib
+*.so
+*.dll
+*.exp
+*.lib
+*.def
+*.manifest
+
+# NAPI-RS Build Files
+.napi-rs/
+node_modules/.cache/@napi-rs/
+
 # Logs
 logs/
 *.log
@@ -85,6 +103,17 @@ tests/load/*.json
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+data/
+*.data
+
+# SQLite databases used by FFI bridge
+code_intelligence.db
+*.index.db
+search_index.db
+embedding_cache.db
 
 # Cache
 .cache/
@@ -124,6 +153,18 @@ docs/build/
 benchmarks/results/
 performance-results/
 
+# FFI Bridge Development
+ffi-logs/
+ffi-debug/
+*.ffi.log
+bridge-logs/
+
+# Tree-sitter Parsers
+tree-sitter-parsers/
+*.so.tree-sitter
+*.dylib.tree-sitter
+*.dll.tree-sitter
+
 # Memory profiling
 *.heapsnapshot
 *.heapprofile
@@ -162,4 +203,4 @@ code_search_index/
 public/uploads/
 
 # Generated API documentation
-api-docs/generated/
+api-docs/generated/target/

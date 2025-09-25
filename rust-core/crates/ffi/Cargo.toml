@@ -38,12 +38,6 @@ regex = "1.10"
 
 # Local dependencies
 code-intelligence-core = { path = "../core" }
-code-intelligence-parser = { path = "../parser" }
-code-intelligence-indexer = { path = "../indexer" }
-code-intelligence-search = { path = "../search" }
-code-intelligence-embedding = { path = "../embedding" }
-code-intelligence-storage = { path = "../storage" }
-code-intelligence-cache = { path = "../cache" }
 
 [dev-dependencies]
 tempfile.workspace = true

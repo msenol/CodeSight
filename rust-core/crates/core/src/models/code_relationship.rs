@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::{ModelResult, Timestamped, Validate};
-use crate::error::CodeIntelligenceError;
+use crate::errors::CoreError;
 
 /// Type of relationship between code entities
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RelationshipType {
     /// One entity imports another
@@ -212,13 +212,13 @@ impl CodeRelationship {
 impl Validate for CodeRelationship {
     fn validate(&self) -> ModelResult<()> {
         if self.source_entity_id == self.target_entity_id {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Source and target entities cannot be the same".to_string(),
             ));
         }
 
         if !(0.0..=1.0).contains(&self.confidence) {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Confidence must be between 0.0 and 1.0".to_string(),
             ));
         }
@@ -226,7 +226,7 @@ impl Validate for CodeRelationship {
         // Validate context if present
         if let Some(ref context) = self.context {
             if context.len() > 1000 {
-                return Err(CodeIntelligenceError::ValidationError(
+                return Err(CoreError::ValidationError(
                     "Context cannot exceed 1000 characters".to_string(),
                 ));
             }

@@ -4,6 +4,7 @@ pub mod types;
 pub mod traits;
 pub mod errors;
 pub mod config;
+pub mod models;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

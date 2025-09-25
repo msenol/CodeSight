@@ -1,0 +1,39 @@
+[package]
+name = "code-intelligence-native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Core dependencies from the FFI crate
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+thiserror = "1.0"
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+
+# NAPI-RS dependencies
+napi = { version = "2.16", features = ["full"] }
+napi-derive = "2.16"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# File system and database
+walkdir = "2.4"
+rusqlite = { version = "0.30", features = ["bundled"] }
+regex = "1.10"
+
+# Local dependencies - use the sophisticated parsers
+code-intelligence-core = { path = "../rust-core/crates/core" }
+code-intelligence-parser = { path = "../rust-core/crates/parser" }
+
+[build-dependencies]
+napi-build = "2.1"
+
+[profile.release]
+lto = true

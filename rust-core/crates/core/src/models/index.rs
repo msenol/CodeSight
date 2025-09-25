@@ -8,10 +8,10 @@ use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
 use super::{ModelResult, Timestamped, Validate};
-use crate::error::CodeIntelligenceError;
+use crate::errors::CoreError;
 
 /// Type of search index
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum IndexType {
     /// Keyword-based full-text search index
@@ -25,7 +25,7 @@ pub enum IndexType {
 }
 
 /// Status of an index
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum IndexStatus {
     /// Index is currently being built
@@ -234,20 +234,20 @@ impl Index {
 impl Validate for Index {
     fn validate(&self) -> ModelResult<()> {
         if self.entry_count > 0 && self.size_bytes == 0 {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Index cannot have entries but zero size".to_string(),
             ));
         }
 
         if self.created_at > self.updated_at {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Created timestamp cannot be after updated timestamp".to_string(),
             ));
         }
 
         // Validate metadata is an object
         if !self.metadata.is_object() {
-            return Err(CodeIntelligenceError::ValidationError(
+            return Err(CoreError::ValidationError(
                 "Metadata must be a JSON object".to_string(),
             ));
         }

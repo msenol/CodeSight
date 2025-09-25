@@ -7,24 +7,34 @@ use thiserror::Error;
 pub enum CoreError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
-    
+
     #[error("Database error: {0}")]
     Database(String),
-    
+
     #[error("Parse error: {0}")]
     Parse(String),
-    
+
     #[error("Configuration error: {0}")]
     Config(String),
-    
+
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+}
+
+/// Legacy error type for backwards compatibility
+#[derive(Error, Debug)]
+pub enum CodeIntelligenceError {
+    #[error("Validation error: {0}")]
+    ValidationError(String),
 }
 
 /// Result type alias

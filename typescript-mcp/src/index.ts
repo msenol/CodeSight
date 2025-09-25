@@ -15,7 +15,7 @@ import { createFastifyServer } from './server.js';
 import { logger } from './services/logger.js';
 import { config } from './config.js';
 import { registerMCPTools } from './tools/index.js';
-import { initializeRustCore } from './ffi/rust-bridge.js';
+import { rustBridge } from './rust-bridge.js';
 
 /**
  * Initialize the MCP Server
@@ -82,9 +82,13 @@ async function main() {
   try {
     logger.info('Starting Code Intelligence MCP Server...');
     
-    // Initialize Rust core
-    await initializeRustCore();
-    logger.info('Rust core initialized successfully');
+    // Initialize Rust core (if available)
+    try {
+      await rustBridge.initialize();
+      logger.info('Rust core initialized successfully');
+    } catch (error) {
+      logger.warn('Rust core not available, falling back to TypeScript implementation:', error);
+    }
 
     // Determine mode based on command line arguments
     const args = process.argv.slice(2);
