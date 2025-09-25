@@ -1,6 +1,6 @@
 # Rust Core Engine
 
-High-performance code parsing, indexing, and search engine for the Code Intelligence MCP Server.
+High-performance code parsing, indexing, and search engine for the CodeSight MCP Server.
 
 ## Overview
 
@@ -218,7 +218,7 @@ valgrind --tool=massif target/release/benchmark
 
 ```toml
 [database]
-url = "sqlite:./data/code_intelligence.db"
+url = "sqlite:./data/codesight.db"
 pool_size = 5
 ```
 
@@ -226,7 +226,7 @@ pool_size = 5
 
 ```toml
 [database]
-url = "postgresql://user:pass@localhost/code_intelligence"
+url = "postgresql://user:pass@localhost/codesight"
 pool_size = 20
 ```
 

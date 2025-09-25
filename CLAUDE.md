@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Code Intelligence MCP Server - A **hybrid TypeScript/Rust implementation** with real SQLite database integration and sophisticated NAPI-RS FFI bridge:
+CodeSight MCP Server - A **hybrid TypeScript/Rust implementation** with real SQLite database integration and sophisticated NAPI-RS FFI bridge:
 - **✅ TypeScript MCP Server** (`typescript-mcp/`): Full MCP protocol, 377+ entities indexed in SQLite
 - **✅ React Frontend** (`src/`): Web UI with Vite and TypeScript
 - **✅ Express API** (`api/`): REST API server
@@ -56,7 +56,7 @@ node dist/cli/index.js test-ffi
 ```json
 {
   "mcpServers": {
-    "code-intelligence": {
+    "codesight": {
       "command": "node",
       "args": ["F:/path/to/typescript-mcp/dist/index.js"],
       "cwd": "F:/path/to/typescript-mcp"
@@ -140,7 +140,7 @@ src/                  # ✅ React frontend
 ```bash
 NODE_ENV=development
 PORT=4000
-DATABASE_URL=sqlite://./data/code_intelligence.db
+DATABASE_URL=sqlite://./data/codesight.db
 RUST_FFI_PATH=../rust-core/target/release
 ENABLE_RUST_FFI=true
 ```
@@ -148,7 +148,7 @@ ENABLE_RUST_FFI=true
 **Production:**
 ```bash
 NODE_ENV=production
-DATABASE_URL=postgresql://postgres:password@postgres:5432/code_intelligence
+DATABASE_URL=postgresql://postgres:password@postgres:5432/codesight
 REDIS_URL=redis://redis:6379
 RUST_FFI_PATH=./rust-core/target/release
 ENABLE_RUST_FFI=true
@@ -172,7 +172,7 @@ Always use latest stable versions. Avoid beta/alpha releases.
 ### 5. **DRY Principle** (CRITICAL)
 Never duplicate code. Extract common logic into reusable utilities/components.
 
-### 6. **FFI Bridge Development** (NEW CRITICAL)
+### 6. **FFI Bridge Development** (CRITICAL)
 **Rust/TypeScript Integration Best Practices:**
 - Always implement graceful fallback when calling Rust functions from TypeScript
 - Use proper error handling across FFI boundaries (Result<T, Error> types)
@@ -190,37 +190,44 @@ Never duplicate code. Extract common logic into reusable utilities/components.
 4. Test both integrated and fallback scenarios
 5. Profile performance and optimize critical paths
 
+### 7. **English-Only Documentation** (CRITICAL)
+**Documentation Standards:**
+- All documentation, code comments, and commit messages MUST be in English
+- This is a non-negotiable requirement for project consistency
+- All files, including README, documentation, and inline code comments must use English
+- No exceptions allowed for any documentation or code artifacts
+- Ensure all technical communication and materials maintain English-only standards
 
-### 15. **Problem Çözme Yaklaşımı & DRY Prensibi**
+### 15. **Problem Solving Approach & DRY Principle**
 
-Zero errors/warnings (Kural 15) ve kod tekrarını önleme
+Zero errors/warnings and code duplication prevention
 
-- **Temel Kural**: Hiçbir durumda kısayol bulma, kolaya kaçma, çevresinden dolaşma yapılmamalı
+- **Fundamental Rule**: Never take shortcuts, find easy ways around, or circumvent proper implementation
 - **DRY (Don't Repeat Yourself)**:
-  - Kod tekrarı tespit edildiğinde MUTLAKA refactor edilmeli
-  - Ortak logic'ler shared utility/component/hook olarak çıkarılmalı
-  - Copy-paste yerine reusable abstraction'lar oluşturulmalı
-  - İlerde hata yapma riski yüksek pattern'ler Claude hooks'a eklenmeli
+  - When code duplication is detected, it MUST be refactored
+  - Common logic MUST be extracted into shared utilities/components/hooks
+  - Create reusable abstractions instead of copy-paste solutions
+  - High-risk error patterns should be added to Claude hooks configuration
 - **Dependency & CI Management**:
-  - Major dependency updates yapılırken breaking change impact analysis
-  - CI pipeline conflicts çözümünde root cause analysis yaklaşımı
-  - Test dependencies (JwtService vb.) proper injection pattern'leri
+  - Breaking change impact analysis for major dependency updates
+  - Root cause analysis approach for CI pipeline conflict resolution
+  - Proper injection patterns for test dependencies (JwtService, etc.)
   - Package version conflicts resolution strategy
-- **Hook Çalışmasında**: PreToolUse hook'u hata verdiğinde hook'u atlama veya devre dışı bırakma yaklaşımları yasak
-- **Teknik Problemlerde**: ESLint v9 hatası, build problemi, dependency çakışması gibi durumlarda geçici workaround'lar yasak
-- **Doğru Yaklaşım**:
-  - Problemin kök nedenini bul ve düzelt
-  - Proper configuration ve implementation uygula
-  - Best practices'e uygun çözümler geliştir
-  - Sistem bütünlüğünü koru
-  - Tekrarlayan hataları Claude hooks config'e ekle
-- **Yasak Yaklaşımlar**:
-  - "Şimdilik devre dışı bırak, sonra düzeltiriz"
-  - "Basit bir workaround yapalım"
-  - "Hook'u atlatalım, önemli değil"
-  - "Hızlı bir düzeltme yapalım"
-  - "Copy-paste yapalım, sonra düzeltiriz"
-- **Özet**: Her problem için kapsamlı, doğru, kalıcı ve DRY-compliant çözüm üret
+- **Hook Operations**: Approaches that skip or disable PreToolUse hooks when they error are prohibited
+- **Technical Issues**: Temporary workarounds for ESLint v9 errors, build problems, dependency conflicts are prohibited
+- **Correct Approach**:
+  - Find and fix the root cause of problems
+  - Apply proper configuration and implementation
+  - Develop solutions that follow best practices
+  - Maintain system integrity
+  - Add recurring errors to Claude hooks configuration
+- **Prohibited Approaches**:
+  - "Disable it for now, we'll fix it later"
+  - "Create a simple workaround"
+  - "Skip the hook, it's not important"
+  - "Make a quick fix"
+  - "Copy-paste, we'll refactor later"
+- **Summary**: Produce comprehensive, correct, permanent, and DRY-compliant solutions for every problem
 
 **Prohibited Approaches:**
 - Temporary workarounds

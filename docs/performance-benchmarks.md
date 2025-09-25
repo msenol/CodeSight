@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides comprehensive performance benchmarks and metrics for the Code Intelligence MCP Server, comparing the original TypeScript-only implementation with the current hybrid TypeScript/Rust implementation using NAPI-RS FFI bridge.
+This document provides comprehensive performance benchmarks and metrics for the CodeSight MCP Server, comparing the original TypeScript-only implementation with the current hybrid TypeScript/Rust implementation using NAPI-RS FFI bridge.
 
 ## Summary of Achievements
 

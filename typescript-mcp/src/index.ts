@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Code Intelligence MCP Server - TypeScript Interface
- * 
- * This is the main entry point for the Code Intelligence MCP Server.
+ * CodeSight MCP Server - TypeScript Interface
+ *
+ * This is the main entry point for the CodeSight MCP Server.
  * It provides both MCP protocol support and REST API endpoints.
  */
 
@@ -22,7 +22,7 @@ import { rustBridge } from './rust-bridge.js';
  */
 async function initializeMCPServer(): Promise<Server> {
   const server = new Server({
-    name: 'code-intelligence-mcp',
+    name: 'codesight-mcp',
     version: '0.1.0',
   });
 
@@ -80,7 +80,7 @@ async function initializeRESTServer() {
  */
 async function main() {
   try {
-    logger.info('Starting Code Intelligence MCP Server...');
+    logger.info('Starting CodeSight MCP Server...');
     
     // Initialize Rust core (if available)
     try {

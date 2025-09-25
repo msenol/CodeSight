@@ -10,7 +10,7 @@ export const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  defaultMeta: { service: 'code-intelligence-mcp' },
+  defaultMeta: { service: 'codesight-mcp' },
   transports: [
     new winston.transports.Console({
       stderrLevels: ['error', 'warn', 'info', 'verbose', 'debug', 'silly'],

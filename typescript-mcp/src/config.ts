@@ -12,7 +12,7 @@ export const config = {
     host: process.env.HOST || '0.0.0.0'
   },
   database: {
-    url: process.env.DATABASE_URL || 'sqlite:./data/code-intelligence.db'
+    url: process.env.DATABASE_URL || 'sqlite:./data/codesight.db'
   },
   llm: {
     provider: process.env.LLM_PROVIDER || 'mock',

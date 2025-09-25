@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "code-intelligence": {
+    "codesight": {
       "command": "node",
       "args": [
         "F:\\Development\\Projects\\ProjectAra\\typescript-mcp\\dist\\index.js"
@@ -8,7 +8,7 @@
       "env": {
         "LOG_LEVEL": "debug",
         "LOG_DIR": "F:\\Development\\Projects\\ProjectAra\\typescript-mcp\\logs",
-        "DATABASE_PATH": "F:\\Development\\Projects\\ProjectAra\\typescript-mcp\\code-intelligence.db"
+        "DATABASE_PATH": "F:\\Development\\Projects\\ProjectAra\\typescript-mcp\\codesight.db"
       }
     }
   }

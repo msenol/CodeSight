@@ -1,6 +1,6 @@
-# Tasks: Code Intelligence MCP Server
+# Tasks: CodeSight MCP Server
 
-**Input**: Design documents from `/specs/001-code-ntelligence-mcp/`
+**Input**: Design documents from `/specs/codesight-mcp/`
 **Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
 
 ## Execution Flow (main)

@@ -1,13 +1,13 @@
 {
-  "name": "code-intelligence-mcp",
+  "name": "codesight-mcp",
   "version": "0.1.0",
   "type": "module",
-  "description": "Working MCP Server implementation with real SQLite code indexing, natural language search, and Claude Desktop integration",
+  "description": "CodeSight MCP Server - Working MCP Server implementation with real SQLite code indexing, natural language search, and Claude Desktop integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "code-intelligence": "dist/cli/index.js",
-    "code-intelligence-mcp": "dist/index.js"
+    "codesight": "dist/cli/index.js",
+    "codesight-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -27,7 +27,7 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
-    "code-intelligence",
+    "codesight",
     "mcp",
     "model-context-protocol",
     "ai",
@@ -36,15 +36,15 @@
     "search",
     "parsing"
   ],
-  "author": "Code Intelligence Team",
+  "author": "CodeSight Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/code-intelligence-mcp.git"
+    "url": "https://github.com/your-org/codesight-mcp.git"
   },
-  "homepage": "https://code-intelligence-mcp.com",
+  "homepage": "https://codesight-mcp.com",
   "bugs": {
-    "url": "https://github.com/your-org/code-intelligence-mcp/issues"
+    "url": "https://github.com/your-org/codesight-mcp/issues"
   },
   "engines": {
     "node": ">=20.0.0",
@@ -99,7 +99,7 @@
     "vitest": "^1.0.4"
   },
   "napi": {
-    "name": "code-intelligence-native",
+    "name": "codesight-native",
     "triples": {
       "defaults": true,
       "additional": [
