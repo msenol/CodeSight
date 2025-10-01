@@ -1,18 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
 /**
- * MCP Tools registration
+ * MCP Tools registration - Rule 15: Removed ESLint disable comments
  */
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../services/logger.js';
-import { DefaultCodebaseService } from '../services/codebase-service.js';
-import { DatabaseSearchService } from '../services/database-search-service.js';
 import { SearchCodeTool } from './search-code.js';
-import type { FindReferencesInput } from './find-references.js';
 
 /**
  * Register all MCP tools with the server
@@ -20,11 +12,9 @@ import type { FindReferencesInput } from './find-references.js';
 export async function registerMCPTools(server: Server): Promise<void> {
   try {
     // Initialize services
-    const codebaseService = new DefaultCodebaseService();
-    const searchService = new DatabaseSearchService();
-    const searchCodeTool = new SearchCodeTool(searchService, codebaseService);
+    const searchCodeTool = new SearchCodeTool();
 
-    console.log('[DEBUG] Services initialized for MCP tools');
+    logger.debug('[DEBUG] Services initialized for MCP tools');
     // Register list_tools handler
     server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
@@ -209,15 +199,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
       try {
         switch (name) {
           case 'search_code': {
-            console.log('[DEBUG] search_code tool called with args:', args);
+            logger.debug('[DEBUG] search_code tool called with args:', args);
             // codebase_id reserved for future use
 
             try {
-              console.log('[DEBUG] Calling SearchCodeTool with proper services');
+              logger.debug('[DEBUG] Calling SearchCodeTool with proper services');
               // Use the proper SearchCodeTool with database integration
               const searchResult = await searchCodeTool.call({
-                query,
-                codebase_id,
+                query: (args as { query: string }).query,
+                codebase_id: (args as { codebase_id: string }).codebase_id,
                 context_lines: 3,
                 max_results: 10,
                 include_tests: true,
@@ -225,7 +215,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 exclude_patterns: undefined,
               });
 
-              console.log('[DEBUG] SearchCodeTool result:', searchResult);
+              logger.debug('[DEBUG] SearchCodeTool result:', searchResult);
 
               if (searchResult.results.length === 0) {
                 return {
@@ -233,7 +223,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                     {
                       type: 'text',
                       text:
-                        `No results found for "${query}" in ${codebase_id}.\n\n` +
+                        `No results found for "${(args as { query: string }).query}" in ${(args as { codebase_id: string }).codebase_id}.\n\n` +
                         '💡 Tip: Make sure the codebase has been indexed first.\n' +
                         '   You can index it by running: index_codebase tool',
                     },
@@ -242,6 +232,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
               }
 
               // Format results properly
+              const query = (args as { query: string }).query;
               const resultText = `Found ${searchResult.total_matches} matches for "${query}" in ${searchResult.execution_time_ms}ms:\n\n${searchResult.results
                 .map(r => `📄 ${r.file}:${r.line} (score: ${r.score.toFixed(2)})\n   ${r.content}`)
                 .join('\n\n')}`;
@@ -255,7 +246,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 ],
               };
             } catch (error) {
-              console.error('[DEBUG] SearchCodeTool failed:', error);
+              logger.error('[DEBUG] SearchCodeTool failed:', error);
               logger.error('Search failed:', error);
 
               return {
@@ -271,7 +262,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'explain_function': {
             // codebase_id reserved for future use
-            const { function_name, codebase_id } = input as {
+            const { function_name, codebase_id } = args as {
               function_name: string;
               codebase_id: string;
             };
@@ -294,7 +285,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'find_references': {
-            const { symbol_name, codebase_id } = input as {
+            const { symbol_name, codebase_id } = args as {
               symbol_name: string;
               codebase_id: string;
             };
@@ -316,7 +307,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'trace_data_flow': {
             // codebase_id reserved for future use
-            const { variable_name, file_path, codebase_id } = input as {
+            const { variable_name, file_path, codebase_id } = args as {
               variable_name: string;
               file_path: string;
               codebase_id: string;
@@ -339,7 +330,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'analyze_security': {
             // codebase_id reserved for future use
-            const { file_path, codebase_id } = input as {
+            const { file_path, codebase_id } = args as {
               file_path?: string;
               codebase_id: string;
             };
@@ -366,7 +357,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'get_api_endpoints': {
-            // codebase_id reserved for future use
+            const { codebase_id, framework } = args as { codebase_id: string; framework?: string };
             return {
               content: [
                 {
@@ -388,7 +379,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'check_complexity': {
-            // codebase_id reserved for future use
+            const { file_path } = args as { file_path: string };
             return {
               content: [
                 {
@@ -412,7 +403,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'find_duplicates': {
             // codebase_id reserved for future use
-            const { file_path, min_lines, codebase_id } = input as {
+            const { file_path, min_lines, codebase_id } = args as {
               file_path?: string;
               min_lines?: number;
               codebase_id: string;
@@ -439,7 +430,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'suggest_refactoring': {
-            // codebase_id reserved for future use
+            const { file_path } = args as { file_path: string };
             return {
               content: [
                 {

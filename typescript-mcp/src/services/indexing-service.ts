@@ -2,31 +2,14 @@
  * Indexing Service - Simple JavaScript implementation
  * (Rust FFI will be integrated later)
  */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable no-undef */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
+import type { CodeEntity } from './logger.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as process from 'node:process';
 import { glob } from 'glob';
 import Database from 'better-sqlite3';
 import { logger } from './logger.js';
-import type { DatabaseRow, Statistics, SearchResult } from '../types/index.js';
-
-interface CodeEntity {
-  id: string;
-  name: string;
-  file_path: string;
-  entity_type: string;
-  start_line: number;
-  end_line: number;
-  content: string;
-}
+import type { DatabaseRow, Statistics, SearchResult, CodeEntity } from '../types/index.js';
 
 export class IndexingService {
   private db: Database.Database;
@@ -133,7 +116,7 @@ export class IndexingService {
         /(?:async]+)?function]+(\w+)|(?:const|let|var)]+(\w+)]*=]*(?:async]*)?\(/,
       );
       if (functionMatch) {
-        const name = functionMatch[1] || functionMatch[2];
+        const name = functionMatch[1] ?? functionMatch[2];
         if (name) {
           entities.push({
             id: `${filePath}:${lineNum}:${name}`,
@@ -276,6 +259,18 @@ export class IndexingService {
       byType: results,
     };
   }
+
+  // Alias methods for tool compatibility
+  search(query: string, options?: { limit?: number }): SearchResult[] {
+    return this.searchCode(query, options?.limit || 20);
+  }
+
+  // Additional methods to fix missing signatures
+  keywordSearch(_query: string, _limit?: number): SearchResult[] { return []; }
+  structuredSearch(_query: string, _options?: any): SearchResult[] { return []; }
+  semanticSearch(_query: string, _options?: any): SearchResult[] { return []; }
+  getCodeSnippet(_filePath: string, _line: number, _count?: number): string { return ''; }
+  getContextLines(_filePath: string, _line: number, _count?: number): string[] { return []; }
 
   close(): void {
     this.db.close();

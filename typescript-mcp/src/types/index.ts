@@ -12,6 +12,25 @@ export interface CodebaseInfo {
   fileCount: number;
   indexedAt: string | null;
   status: 'active' | 'inactive' | 'indexed' | 'indexing' | 'error';
+  // Additional properties for tool compatibility
+  repository_url?: string;
+  local_path?: string;
+  language?: string;
+  framework?: string;
+  description?: string;
+  last_indexed?: string;
+  tags?: string[];
+  indexing_status?: string;
+  statistics?: {
+    totalFiles: number;
+    totalEntities: number;
+    entity_count?: number;
+  };
+  recent_entities?: Array<{
+    id: string;
+    name: string;
+    type: string;
+  }>;
 }
 
 export interface FileInfo {
@@ -25,9 +44,10 @@ export interface FileInfo {
 export interface SearchResult {
   file: string;
   line: number;
-  column: number;
+  column?: number;
   content: string;
   score: number;
+  name?: string;
 }
 
 export interface SecurityIssue {
@@ -237,6 +257,8 @@ export interface QueryResult {
 }
 
 export interface Statistics {
+  total: number;
+  byType: Array<{ entity_type: string; count: number }>;
   totalFiles: number;
   totalEntities: number;
   totalLines: number;
@@ -250,7 +272,7 @@ export interface Statistics {
 export interface ASTNode {
   type: string;
   name?: string;
-  id?: string;
+  id?: string | { name: string };
   start?: number;
   end?: number;
   loc?: {
@@ -262,14 +284,12 @@ export interface ASTNode {
 
 export interface FunctionNode extends ASTNode {
   type: 'FunctionDeclaration' | 'FunctionExpression' | 'ArrowFunctionExpression';
-  id?: { name: string };
   params: Array<{ name: string }>;
   body?: ASTNode;
 }
 
 export interface ClassNode extends ASTNode {
   type: 'ClassDeclaration' | 'ClassExpression';
-  id?: { name: string };
   body?: {
     body: Array<{
       type: string;
@@ -400,7 +420,7 @@ export interface TestHttpRequest extends HttpRequest {
 }
 
 export interface MockResponse<T = unknown> {
-  status: number;
+  statusCode: number;
   json: () => Promise<T>;
   send: (data?: unknown) => void;
   status: (code: number) => MockResponse<T>;

@@ -24,8 +24,8 @@ declare const process: {
 
 
 declare const console: {
-  log: () => void;
-  error: () => void;
+  log: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
 };
 
 const program = new Command();
