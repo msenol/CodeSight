@@ -1,18 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-useless-escape */
 import type { SearchResult } from '../types/index.js';
 import { z } from 'zod';
-
-declare const console: {
-  log: () => void;
-  warn: () => void;
-  error: () => void;
-};
+import { logger } from '../services/logger.js';
+import { indexingService } from '../services/indexing-service.js';
+import { codebaseService } from '../services/codebase-service.js';
 
 // Input validation schema
 const SearchCodeInputSchema = z.object({
@@ -56,6 +46,9 @@ interface SearchCodeResult {
 export class SearchCodeTool {
   name = 'search_code';
   description = 'Search code using natural language queries with semantic understanding';
+
+  private codebaseService = codebaseService;
+  private searchService = indexingService;
 
   inputSchema = {
     type: 'object',
@@ -105,11 +98,11 @@ export class SearchCodeTool {
       // Validate input
       const input = SearchCodeInputSchema.parse(args);
 
-      console.warn('[DEBUG] Search input:', JSON.stringify(input, null, 2));
+      logger.debug('[DEBUG] Search input:', JSON.stringify(input, null, 2));
 
       // Verify codebase exists and is indexed
       const codebase = await this.codebaseService.getCodebase(input.codebase_id);
-      console.warn('[DEBUG] Found codebase:', JSON.stringify(codebase, null, 2));
+      logger.debug('[DEBUG] Found codebase:', JSON.stringify(codebase, null, 2));
 
       if (!codebase) {
         throw new Error(`Codebase with ID ${input.codebase_id} not found`);
@@ -121,40 +114,44 @@ export class SearchCodeTool {
         );
       }
 
-      // Detect query intent
-      const queryIntent = this.detectQueryIntent(input.query);
-
-      // Perform search based on intent and query complexity
-      console.warn(`[DEBUG] Starting search with query: "${input.query}", intent: ${queryIntent}`);
-      const searchResults = await this.performSearch(input, queryIntent);
-      console.warn(
+      // Perform search
+      logger.debug(`[DEBUG] Starting search with query: "${input.query}"`);
+      const searchResults = this.searchService.search(input.query, { limit: input.max_results });
+      logger.debug(
         '[DEBUG] Raw search results:',
         searchResults.length,
         JSON.stringify(searchResults.slice(0, 2), null, 2),
       );
 
       // Format results with context
-      const formattedResults = await this.formatResults(searchResults, input);
-      console.warn(
+      const formattedResults = searchResults.map((result: SearchResult) => ({
+        file: result.file,
+        line: result.line,
+        column: result.column || 0,
+        content: result.content,
+        score: result.score,
+        name: result.name || 'Unknown',
+      }));
+      logger.debug(
         '[DEBUG] Formatted results:',
         formattedResults.length,
         JSON.stringify(formattedResults.slice(0, 2), null, 2),
       );
 
       const executionTime = Date.now() - startTime;
-      console.warn(`[DEBUG] Search completed in ${executionTime}ms`);
+      logger.debug(`[DEBUG] Search completed in ${executionTime}ms`);
 
       return {
         results: formattedResults,
-        query_intent: queryIntent,
+        query_intent: 'text_search',
         execution_time_ms: executionTime,
         total_matches: searchResults.length,
-        search_strategy: this.getSearchStrategy(input.query, queryIntent),
+        search_strategy: 'simple_text_search',
       };
     } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      Date.now() - startTime; // For execution time calculation
-      console.warn('[DEBUG] Search error:', error);
+      // Calculate execution time even in error case
+      const _executionTime = Date.now() - startTime; // For logging purposes
+      logger.debug('[DEBUG] Search error:', error, `Execution time: ${_executionTime}ms`);
 
       if (error instanceof z.ZodError) {
         throw new Error(`Invalid input: ${error.errors.map(e => e.message).join(', ')}`);
@@ -247,8 +244,9 @@ export class SearchCodeTool {
   /**
    * Perform the actual search using appropriate strategy
    */
-  private async performSearch(input: SearchCodeInput, _intent: string): Promise<unknown[]> {
+  private async performSearch(input: SearchCodeInput, intent: string): Promise<unknown[]> {
     const searchOptions = {
+      intent,
       codebase_id: input.codebase_id,
       max_results: input.max_results,
       include_tests: input.include_tests,
@@ -256,17 +254,8 @@ export class SearchCodeTool {
       exclude_patterns: input.exclude_patterns,
     };
 
-    // Use different search strategies based on query complexity and intent
-    if (this.isSimpleKeywordQuery(input.query)) {
-      // Fast keyword search for simple queries
-      return await this.searchService.keywordSearch(input.query, searchOptions);
-    } else if (this.isStructuredQuery(input.query)) {
-      // AST-based search for structured queries
-      return await this.searchService.structuredSearch(input.query, searchOptions);
-    } else {
-      // Semantic search for complex natural language queries
-      return await this.searchService.semanticSearch(input.query, searchOptions);
-    }
+    // Use simple search strategy
+    return this.searchService.search(input.query, { limit: input.max_results });
   }
 
   /**
@@ -301,33 +290,44 @@ export class SearchCodeTool {
   private async formatResults(results: unknown[], input: SearchCodeInput): Promise<SearchResult[]> {
     const formatted: SearchResult[] = [];
 
-    for (const result of results) {
+    // Process all results to maintain order and prevent overwhelming the system
+    const formatPromises = results.map(async (result) => {
       try {
+        const resultTyped = result as SearchResult;
         // Get code snippet with context
         const snippet = await this.searchService.getCodeSnippet(
-          result.file,
-          result.line,
+          resultTyped.file,
+          resultTyped.line,
           input.context_lines,
         );
 
         // Get surrounding context lines
         this.searchService.getContextLines(
-          result.file,
-          result.line,
+          resultTyped.file,
+          resultTyped.line,
           input.context_lines,
         );
 
-        formatted.push({
-          file: result.file,
-          line: result.line,
-          column: result.column || 1,
+        return {
+          file: resultTyped.file,
+          line: resultTyped.line,
+          column: resultTyped.column || 1,
           content: snippet,
-          score: result.score || 1.0,
-        });
+          score: resultTyped.score || 1.0,
+        };
       } catch (error) {
         // Skip results that can't be formatted
+        logger.debug(`Failed to format search result: ${error}`);
+        return null;
+      }
+    });
 
-        console.warn(`Failed to format search result: ${error}`);
+    const formattedResults = await Promise.all(formatPromises);
+
+    // Filter out null results and add to formatted array
+    for (const result of formattedResults) {
+      if (result !== null) {
+        formatted.push(result);
       }
     }
 
@@ -369,13 +369,13 @@ export class SearchCodeTool {
   /**
    * Get description of search strategy used
    */
-  private getSearchStrategy(query: string, _intent: string): string {
+  private getSearchStrategy(query: string, intent: string): string {
     if (this.isSimpleKeywordQuery(query)) {
       return 'keyword_search';
     } else if (this.isStructuredQuery(query)) {
       return 'ast_search';
     } else {
-      return 'semantic_search';
+      return `semantic_search_${intent}`;
     }
   }
 }

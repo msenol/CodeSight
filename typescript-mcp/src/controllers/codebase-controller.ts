@@ -6,7 +6,8 @@ import { z } from 'zod';
 // Rule 15: Global declarations for Node.js environment
 
 declare const console: {
-  error: () => void;
+  message: (...args: unknown[]) => void;
+  log: (...args: unknown[]) => void;
 };
 
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
@@ -16,6 +17,11 @@ interface CodebaseOptions {
   status?: string;
   language?: string;
   include_stats?: boolean;
+  search?: string;
+  include_entities?: boolean;
+  include_trends?: boolean;
+  type?: string;
+  recent_entities?: Record<string, unknown>[];
 }
 
 interface CodebaseData {
@@ -33,8 +39,16 @@ interface CodebaseData {
   tags?: string[];
   repository_url?: string;
   local_path?: string;
-  statistics?: Record<string, unknown>;
-  recent_entities?: Record<string, unknown>[];
+  statistics?: {
+    totalFiles: number;
+    totalEntities: number;
+    entity_count?: number;
+  };
+  recent_entities?: Array<{
+    id: string;
+    name: string;
+    type: string;
+  }>;
 }
 
 interface IndexingOptions {
@@ -142,7 +156,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -193,7 +207,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -224,7 +238,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -234,7 +248,7 @@ export class CodebaseController {
       if (!result.success) {
         res.status(404).json({
           success: false,
-          error: result.error || 'Codebase not found',
+          message: result.error || 'Codebase not found',
         });
         return;
       }
@@ -260,7 +274,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -290,7 +304,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -318,7 +332,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -349,7 +363,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -389,7 +403,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -421,7 +435,7 @@ export class CodebaseController {
     try {
       const { id } = req.params;
       const {
-        format = 'json',
+        format = 'json' as 'json' | 'csv' | 'xml',
         include_entities = true,
         include_analysis = false,
         compress = false,
@@ -430,7 +444,7 @@ export class CodebaseController {
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
           success: false,
-          error: 'Valid codebase ID is required',
+          message: 'Valid codebase ID is required',
         });
         return;
       }
@@ -519,15 +533,7 @@ export class CodebaseController {
     const endIndex = startIndex + options.limit;
     const paginatedResults = filtered.slice(startIndex, endIndex);
 
-    return {
-      codebases: paginatedResults,
-      pagination: {
-        current_page: options.page,
-        total_pages: Math.ceil(total / options.limit),
-        total_items: total,
-        items_per_page: options.limit,
-      },
-    };
+    return paginatedResults;
   }
 
   private async fetchCodebaseById(id: string, options: CodebaseOptions): Promise<CodebaseData> {
@@ -586,9 +592,12 @@ export class CodebaseController {
   private async createNewCodebase(data: z.infer<typeof CreateCodebaseRequestSchema>): Promise<CodebaseData> {
     // This would typically create in a database
     // For now, return mock created codebase
-    const newCodebase = {
+    const newCodebase: CodebaseData = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      ...data,
+      name: data.name || 'Untitled Codebase',
+      description: data.description,
+      language: data.language || 'typescript',
+      framework: data.framework,
       status: 'active',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -619,7 +628,7 @@ export class CodebaseController {
     const codebase = await this.fetchCodebaseById(id, {});
 
     if (!force && codebase.status === 'active') {
-      return { success: false, error: 'Cannot delete active codebase without force flag' };
+      return { success: false, message: 'Cannot delete active codebase without force flag' };
     }
 
     return { success: true };
@@ -844,13 +853,13 @@ export class CodebaseController {
     return uuidRegex.test(uuid);
   }
 
-  private handleError(error: unknown, res: Response, defaultMessage: string): void {
+  private handleError(message: unknown, res: Response, defaultMessage: string): void {
     console.error('CodebaseController Error:', error);
 
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        error: 'Validation failed',
+        message: 'Validation failed',
         details: error.errors.map(e => ({
           field: e.path.join('.'),
           message: e.message,
@@ -865,7 +874,7 @@ export class CodebaseController {
 
     res.status(statusCode).json({
       success: false,
-      error: message,
+      message: message,
       timestamp: new Date().toISOString(),
     });
   }

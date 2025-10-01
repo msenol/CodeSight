@@ -5,6 +5,7 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-useless-escape */
 import { z } from 'zod';
+import { codebaseService } from '../services/codebase-service.js';
 
 // Input validation schema
 const TraceDataFlowInputSchema = z.object({
@@ -121,6 +122,14 @@ export class TraceDataFlowTool {
   name = 'trace_data_flow';
   description =
     'Trace data flow through the codebase with detailed analysis of transformations and security';
+
+  private codebaseService = codebaseService;
+  private analysisService = {
+    findApiEndpoints: async (codebaseId: string, options: any) => [],
+    searchEntities: async (codebaseId: string, options: any) => [],
+    findCallees: async (functionName: string) => [],
+    findCallers: async (functionName: string) => [],
+  };
 
   inputSchema = {
     type: 'object',
