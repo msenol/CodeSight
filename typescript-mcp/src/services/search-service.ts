@@ -1,9 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
+import { logger } from './logger.js';
 import type { SearchResult } from '../types/index.js';
 import { glob } from 'glob';
 import * as fs from 'fs/promises';
@@ -77,7 +72,7 @@ export class DefaultSearchService implements SearchService {
           }
         }
       } catch (error) {
-        console.warn(`Error reading file ${filePath}:`, error);
+        logger.warn(`Error reading file ${filePath}:`, error);
       }
     }
 
@@ -116,7 +111,7 @@ export class DefaultSearchService implements SearchService {
           }
         }
       } catch (error) {
-        console.warn(`Error reading file ${filePath}:`, error);
+        logger.warn(`Error reading file ${filePath}:`, error);
       }
     }
 
@@ -140,7 +135,7 @@ export class DefaultSearchService implements SearchService {
           await this.searchGenericStructures(filePath, content, query, results);
         }
       } catch (error) {
-        console.warn(`Error parsing file ${filePath}:`, error);
+        logger.warn(`Error parsing file ${filePath}:`, error);
       }
     }
 
@@ -174,7 +169,7 @@ export class DefaultSearchService implements SearchService {
             }
           }
         } catch (error) {
-          console.warn(`Error reading file ${filePath}:`, error);
+          logger.warn(`Error reading file ${filePath}:`, error);
         }
       }
     } catch (error) {
@@ -215,7 +210,7 @@ export class DefaultSearchService implements SearchService {
           }
         }
       } catch (error) {
-        console.warn(`Error reading file ${filePath}:`, error);
+        logger.warn(`Error reading file ${filePath}:`, error);
       }
     }
 
@@ -326,7 +321,7 @@ export class DefaultSearchService implements SearchService {
           },
         });
       } catch (acornError) {
-        console.warn(`Failed to parse ${filePath} with both TypeScript and Acorn parsers`);
+        logger.warn(`Failed to parse ${filePath} with both TypeScript and Acorn parsers`);
       }
     }
   }

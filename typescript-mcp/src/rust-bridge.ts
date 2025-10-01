@@ -1,23 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-promise-executor-return */
 // ! TypeScript wrapper for Rust FFI bridge
 
 import { createRequire } from 'module';
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from './services/logger.js';
 
-declare const console: {
-  log: () => void;
-  warn: () => void;
-};
 
 // __dirname will be defined by the import statement below
 
@@ -54,17 +42,17 @@ for (const path of possiblePaths) {
   if (existsSync(path)) {
     try {
       nativeModule = require(path);
-      console.warn(`Loaded Rust FFI module from: ${path}`);
+      logger.warn(`Loaded Rust FFI module from: ${path}`);
       break;
     } catch (error) {
-      console.warn(`Failed to load Rust FFI module from ${path}:`, error);
+      logger.warn(`Failed to load Rust FFI module from ${path}:`, error);
     }
   }
 }
 
 if (!nativeModule) {
   // Fallback to mock implementation for development
-  console.warn('Rust FFI module not found, using mock implementation');
+  logger.warn('Rust FFI module not found, using mock implementation');
   nativeModule = createMockModule();
 }
 
@@ -72,12 +60,11 @@ if (!nativeModule) {
 function createMockModule() {
   return {
     initEngine: () => {
-          console.warn('[MOCK] Initializing Rust engine');
+          logger.warn('[MOCK] Initializing Rust engine');
       return Promise.resolve();
     },
-    parseFile: (_filePath: string, _content: string) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        console.warn(`[MOCK] Parsing file: ${_filePath}`);
+    parseFile: (_filePath: string, content: string) => {
+        logger.warn(`[MOCK] Parsing file: ${_filePath}, content length: ${content.length}`);
       return Promise.resolve([
         {
           id: `${_filePath}:1:mock_function`,
@@ -91,9 +78,8 @@ function createMockModule() {
       ]);
       /* eslint-enable */
     },
-    searchCode: (query: string, _codebasePath?: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      console.warn(`[MOCK] Searching for: ${query}`);
+    searchCode: (query: string, codebasePath?: string) => {
+      logger.warn(`[MOCK] Searching for: ${query} in ${codebasePath ?? 'default path'}`);
       return Promise.resolve([
         {
           file: 'mock.ts',
@@ -105,7 +91,7 @@ function createMockModule() {
       /* eslint-enable */
     },
     generateEmbedding: (text: string) => {
-      console.warn(`[MOCK] Generating embedding for: ${text}`);
+      logger.warn(`[MOCK] Generating embedding for: ${text}`);
       // Return mock 384-dimensional embedding
       const embedding = new Float32Array(384);
       for (let i = 0; i < 384; i++) {
@@ -114,7 +100,7 @@ function createMockModule() {
       return Promise.resolve(embedding);
     },
     indexCodebase: (path: string) => {
-      console.warn(`[MOCK] Indexing codebase: ${path}`);
+      logger.warn(`[MOCK] Indexing codebase: ${path}`);
       return Promise.resolve(`Indexed 1 files in ${path}`);
     },
   };
@@ -183,10 +169,13 @@ export interface EngineConfig {
 export class RustFFIBridge {
   private isInitialized: boolean = false;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-useless-constructor
-  constructor(_config: EngineConfig = {}) {
+  constructor(config: EngineConfig = {}) {
+    // Store configuration for future use
     // Rule 15: Constructor with dependency injection is necessary
+    this.config = config;
   }
+
+  private config: EngineConfig;
 
   /**
    * Initialize the Rust engine
@@ -199,9 +188,9 @@ export class RustFFIBridge {
     try {
       await nativeModule.initEngine();
       this.isInitialized = true;
-      console.warn('Rust FFI bridge initialized successfully');
+      logger.warn('Rust FFI bridge initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Rust FFI bridge:', error);
+      logger.error('Failed to initialize Rust FFI bridge:', error);
       throw error;
     }
   }
@@ -216,7 +205,7 @@ export class RustFFIBridge {
       const entities = await nativeModule.parseFile(filePath, content);
       return entities.map(this.normalizeEntity);
     } catch (error) {
-      console.error(`Failed to parse file ${filePath}:`, error);
+      logger.error(`Failed to parse file ${filePath}:`, error);
       throw error;
     }
   }
@@ -231,7 +220,7 @@ export class RustFFIBridge {
       const results = await nativeModule.searchCode(query, codebasePath);
       return results.map(this.normalizeSearchResult);
     } catch (error) {
-      console.error(`Failed to search for "${query}":`, error);
+      logger.error(`Failed to search for "${query}":`, error);
       throw error;
     }
   }
@@ -245,7 +234,7 @@ export class RustFFIBridge {
     try {
       return await nativeModule.generateEmbedding(text);
     } catch (error) {
-      console.error('Failed to generate embedding:', error);
+      logger.error('Failed to generate embedding:', error);
       throw error;
     }
   }
@@ -259,7 +248,7 @@ export class RustFFIBridge {
     try {
       return await nativeModule.indexCodebase(path);
     } catch (error) {
-      console.error(`Failed to index codebase ${path}:`, error);
+      logger.error(`Failed to index codebase ${path}:`, error);
       throw error;
     }
   }
@@ -283,7 +272,7 @@ export class RustFFIBridge {
         }
       );
     } catch (error) {
-      console.error('Failed to get statistics:', error);
+      logger.error('Failed to get statistics:', error);
       throw error;
     }
   }
@@ -297,7 +286,7 @@ export class RustFFIBridge {
     try {
       await nativeModule.clear?.();
     } catch (error) {
-      console.error('Failed to clear indexed data:', error);
+      logger.error('Failed to clear indexed data:', error);
       throw error;
     }
   }
@@ -342,10 +331,10 @@ export class RustFFIBridge {
       signature: entityData.signature as string | undefined,
       documentation: entityData.documentation as string | undefined,
       visibility: entityData.visibility as string | undefined,
-      parameters: (entityData.parameters as Record<string, unknown>[]) || [],
+      parameters: Array.isArray(entityData.parameters) ? entityData.parameters as Record<string, unknown>[] : [],
       return_type: entityData.return_type as string | undefined,
-      dependencies: (entityData.dependencies as string[]) || [],
-      metadata: (entityData.metadata as Record<string, string>) || {},
+      dependencies: Array.isArray(entityData.dependencies) ? entityData.dependencies as string[] : [],
+      metadata: (entityData.metadata && typeof entityData.metadata === 'object') ? entityData.metadata as Record<string, string> : {},
     };
   }
 
@@ -356,7 +345,7 @@ export class RustFFIBridge {
       line: resultData.line as number,
       content: resultData.content as string,
       score: resultData.score as number,
-      highlights: (resultData.highlights as string[]) || [],
+      highlights: Array.isArray(resultData.highlights) ? resultData.highlights as string[] : [],
     };
   }
 }

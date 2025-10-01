@@ -5,11 +5,11 @@ import { FunctionExplanation, ComplexityMetrics, CodeEntityReference } from '../
 
 /**
  * Contract Test for explain_function MCP Tool
- * 
+ *
  * This test validates that the explain_function tool implementation
  * conforms to the MCP Tools Contract specification defined in:
  * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
- * 
+ *
  * Test Coverage:
  * - Request/Response schema validation
  * - Required field validation
@@ -35,13 +35,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
   describe('Request Schema Validation', () => {
     it('should accept valid request with required fields only', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -52,13 +52,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
         entity_id: testEntityId,
         include_callers: true,
         include_callees: true,
-        include_complexity: true
+        include_complexity: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequestWithOptionals
+        payload: validRequestWithOptionals,
       });
 
       expect(response.statusCode).toBe(200);
@@ -69,13 +69,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
         entity_id: testEntityId,
         include_callers: false,
         include_callees: false,
-        include_complexity: false
+        include_complexity: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequestWithFalseOptionals
+        payload: validRequestWithFalseOptionals,
       });
 
       expect(response.statusCode).toBe(200);
@@ -87,7 +87,7 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -97,13 +97,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
 
     it('should reject request with invalid entity_id format', async () => {
       const invalidRequest = {
-        entity_id: 'invalid-uuid-format'
+        entity_id: 'invalid-uuid-format',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -114,13 +114,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should reject request with invalid include_callers type', async () => {
       const invalidRequest = {
         entity_id: testEntityId,
-        include_callers: 'invalid'
+        include_callers: 'invalid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -129,13 +129,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should reject request with invalid include_callees type', async () => {
       const invalidRequest = {
         entity_id: testEntityId,
-        include_callees: 'invalid'
+        include_callees: 'invalid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -144,13 +144,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should reject request with invalid include_complexity type', async () => {
       const invalidRequest = {
         entity_id: testEntityId,
-        include_complexity: 'invalid'
+        include_complexity: 'invalid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -163,13 +163,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
         entity_id: testEntityId,
         include_callers: true,
         include_callees: true,
-        include_complexity: true
+        include_complexity: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -202,13 +202,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
 
     it('should validate parameter objects structure', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -219,7 +219,7 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
           expect(param).toHaveProperty('name');
           expect(param).toHaveProperty('type');
           expect(param).toHaveProperty('description');
-          
+
           expect(typeof param.name).toBe('string');
           expect(typeof param.type).toBe('string');
           expect(typeof param.description).toBe('string');
@@ -230,13 +230,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should validate ComplexityMetrics structure', async () => {
       const validRequest = {
         entity_id: testEntityId,
-        include_complexity: true
+        include_complexity: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -270,13 +270,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should validate CodeEntityReference structure for callers', async () => {
       const validRequest = {
         entity_id: testEntityId,
-        include_callers: true
+        include_callers: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -307,13 +307,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should validate CodeEntityReference structure for callees', async () => {
       const validRequest = {
         entity_id: testEntityId,
-        include_callees: true
+        include_callees: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -345,13 +345,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
   describe('Optional Parameter Behavior', () => {
     it('should use default values for optional parameters', async () => {
       const requestWithDefaults = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: requestWithDefaults
+        payload: requestWithDefaults,
       });
 
       expect(response.statusCode).toBe(200);
@@ -359,10 +359,10 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
 
       // Default include_callers = true
       expect(explanation.callers).toBeDefined();
-      
+
       // Default include_callees = true
       expect(explanation.callees).toBeDefined();
-      
+
       // Default include_complexity = true
       expect(explanation.complexity).toBeDefined();
     });
@@ -370,13 +370,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should exclude callers when include_callers is false', async () => {
       const requestWithoutCallers = {
         entity_id: testEntityId,
-        include_callers: false
+        include_callers: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: requestWithoutCallers
+        payload: requestWithoutCallers,
       });
 
       expect(response.statusCode).toBe(200);
@@ -387,13 +387,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should exclude callees when include_callees is false', async () => {
       const requestWithoutCallees = {
         entity_id: testEntityId,
-        include_callees: false
+        include_callees: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: requestWithoutCallees
+        payload: requestWithoutCallees,
       });
 
       expect(response.statusCode).toBe(200);
@@ -404,18 +404,18 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should exclude complexity when include_complexity is false', async () => {
       const requestWithoutComplexity = {
         entity_id: testEntityId,
-        include_complexity: false
+        include_complexity: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: requestWithoutComplexity
+        payload: requestWithoutComplexity,
       });
 
       expect(response.statusCode).toBe(200);
       const explanation: FunctionExplanation = JSON.parse(response.body);
-      
+
       // When complexity is excluded, it should be null or have default/empty values
       if (explanation.complexity) {
         expect(explanation.complexity.cyclomatic_complexity).toBe(0);
@@ -431,13 +431,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should return 404 for non-existent entity', async () => {
       const nonExistentEntityId = '00000000-0000-0000-0000-000000000000';
       const validRequest = {
-        entity_id: nonExistentEntityId
+        entity_id: nonExistentEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(404);
@@ -449,13 +449,13 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
       // Assuming we have a test entity that exists but is not a function
       const nonFunctionEntityId = '550e8400-e29b-41d4-a716-446655440002';
       const validRequest = {
-        entity_id: nonFunctionEntityId
+        entity_id: nonFunctionEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect([400, 422]).toContain(response.statusCode);
@@ -467,36 +467,36 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
   describe('Business Logic Validation', () => {
     it('should provide meaningful function description', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const explanation: FunctionExplanation = JSON.parse(response.body);
-      
+
       expect(explanation.description.length).toBeGreaterThan(10);
       expect(explanation.name.length).toBeGreaterThan(0);
     });
 
     it('should correctly identify function parameters', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const explanation: FunctionExplanation = JSON.parse(response.body);
-      
+
       // Parameters should be properly parsed
       explanation.parameters.forEach(param => {
         expect(param.name).not.toBe('');
@@ -508,19 +508,19 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should provide accurate complexity metrics', async () => {
       const validRequest = {
         entity_id: testEntityId,
-        include_complexity: true
+        include_complexity: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const explanation: FunctionExplanation = JSON.parse(response.body);
       const complexity = explanation.complexity;
-      
+
       // Complexity metrics should be realistic
       expect(complexity.cyclomatic_complexity).toBeLessThan(100);
       expect(complexity.cognitive_complexity).toBeLessThan(200);
@@ -531,23 +531,24 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
       const validRequest = {
         entity_id: testEntityId,
         include_callers: true,
-        include_callees: true
+        include_callees: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const explanation: FunctionExplanation = JSON.parse(response.body);
-      
+
       // Callers and callees should not include the function itself
-      const selfReferences = [...explanation.callers, ...explanation.callees]
-        .filter(ref => ref.entity_id === testEntityId);
+      const selfReferences = [...explanation.callers, ...explanation.callees].filter(
+        ref => ref.entity_id === testEntityId,
+      );
       expect(selfReferences.length).toBe(0);
-      
+
       // All references should have valid file paths
       [...explanation.callers, ...explanation.callees].forEach(ref => {
         expect(ref.file_path).toMatch(/\.(ts|js|py|java|cpp|c|rs|go)$/);
@@ -561,19 +562,19 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
         entity_id: testEntityId,
         include_callers: true,
         include_callees: true,
-        include_complexity: true
+        include_complexity: true,
       };
 
       const startTime = Date.now();
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
       const endTime = Date.now();
 
       expect(response.statusCode).toBe(200);
-      
+
       // Should complete within 3 seconds for complex analysis
       const executionTime = endTime - startTime;
       expect(executionTime).toBeLessThan(3000);
@@ -582,18 +583,18 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
     it('should handle functions with many callers efficiently', async () => {
       const validRequest = {
         entity_id: testEntityId,
-        include_callers: true
+        include_callers: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/explain_function',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const explanation: FunctionExplanation = JSON.parse(response.body);
-      
+
       // Should handle large numbers of callers without timeout
       // (This assumes the test function might have many callers)
       expect(explanation.callers.length).toBeGreaterThanOrEqual(0);

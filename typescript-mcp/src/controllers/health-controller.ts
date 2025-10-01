@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+// Rule 15: Removed ESLint disable comments
 import type { Request, Response } from 'express';
+import { setTimeout } from 'node:timers/promises';
 // Rule 15: Zod import reserved for future schema implementation
 // import { z } from 'zod';
 
@@ -31,7 +31,6 @@ declare const process: {
 };
 
 
-declare const setTimeout: () => void;
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -405,7 +404,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate MCP server check
-      await new Promise<void>(resolve => { setTimeout(resolve, 10); });
+      await setTimeout(10);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -428,7 +427,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate REST API check
-      await new Promise<void>(resolve => { setTimeout(resolve, 5); });
+      await setTimeout(5);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -451,7 +450,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate search service check
-      await new Promise<void>(resolve => { setTimeout(resolve, 15); });
+      await setTimeout(15);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -474,7 +473,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate analysis service check
-      await new Promise<void>(resolve => { setTimeout(resolve, 20); });
+      await setTimeout(20);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -497,7 +496,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate Rust core check
-      await new Promise<void>(resolve => { setTimeout(resolve, 25); });
+      await setTimeout(25);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -523,7 +522,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate database check
-      await new Promise<void>(resolve => { setTimeout(resolve, 30); });
+      await setTimeout(30);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -549,7 +548,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate file system check
-      await new Promise<void>(resolve => { setTimeout(resolve, 10); });
+      await setTimeout(10);
       const responseTime = Date.now() - startTime;
 
       return {
@@ -574,7 +573,7 @@ export class HealthController {
     try {
       const startTime = Date.now();
       // Simulate LLM service check
-      await new Promise<void>(resolve => { setTimeout(resolve, 50); });
+      await setTimeout(50);
       const responseTime = Date.now() - startTime;
 
       return {

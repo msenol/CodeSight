@@ -1,15 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-undef */
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable no-redeclare */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+import { logger } from './logger.js';
 import { EventEmitter } from 'events';
 import { performance } from 'perf_hooks';
 import type { ExtendedRequest, PerformanceMetrics, HealthStatus } from '../middleware/types.js';
 import type { Response } from 'express';
-import type { MonitoringConfig, Alert } from '../types/index.js';
+import type { Alert, MonitoringConfig } from '../types/index.js';
 
 // Monitoring interfaces
 export interface MetricData {
@@ -36,29 +30,6 @@ export interface AlertAction {
   config: MonitoringConfig;
 }
 
-export interface Alert {
-  id: string;
-  ruleId: string;
-  ruleName: string;
-  metric: string;
-  value: number;
-  threshold: number;
-  condition: string;
-  timestamp: number;
-  resolved: boolean;
-  resolvedAt?: number;
-}
-
-export interface MonitoringConfig {
-  enabled: boolean;
-  metricsRetentionMs: number;
-  alertCheckIntervalMs: number;
-  maxMetricsInMemory: number;
-  enableSystemMetrics: boolean;
-  enableRequestMetrics: boolean;
-  enableErrorTracking: boolean;
-  enablePerformanceTracking: boolean;
-}
 
 const defaultConfig: MonitoringConfig = {
   enabled: true,
@@ -76,9 +47,9 @@ export class MonitoringService extends EventEmitter {
   private metrics: Map<string, MetricData[]> = new Map();
   private alerts: Map<string, Alert> = new Map();
   private alertRules: Map<string, AlertRule> = new Map();
-  private systemMetricsInterval?: NodeJS.Timeout;
-  private alertCheckInterval?: NodeJS.Timeout;
-  private cleanupInterval?: NodeJS.Timeout;
+  private systemMetricsInterval?: number;
+  private alertCheckInterval?: number;
+  private cleanupInterval?: number;
   private requestCounts: Map<string, number> = new Map();
   private responseTimes: Map<string, number[]> = new Map();
   private errorCounts: Map<string, number> = new Map();
@@ -106,7 +77,7 @@ export class MonitoringService extends EventEmitter {
     // Start cleanup process
     this.startCleanupProcess();
 
-    console.log('Monitoring service initialized');
+    logger.info('Monitoring service initialized');
   }
 
   /**
@@ -290,7 +261,7 @@ export class MonitoringService extends EventEmitter {
    */
   addAlertRule(rule: AlertRule): void {
     this.alertRules.set(rule.id, rule);
-    console.log(`Alert rule added: ${rule.name}`);
+    logger.info(`Alert rule added: ${rule.name}`);
   }
 
   /**
@@ -298,7 +269,7 @@ export class MonitoringService extends EventEmitter {
    */
   removeAlertRule(ruleId: string): void {
     this.alertRules.delete(ruleId);
-    console.log(`Alert rule removed: ${ruleId}`);
+    logger.info(`Alert rule removed: ${ruleId}`);
   }
 
   /**
@@ -543,7 +514,7 @@ export class MonitoringService extends EventEmitter {
       try {
         switch (action.type) {
           case 'log':
-            console.error(
+            logger.error(
               `ALERT: ${alert.ruleName} - ${alert.metric} ${alert.condition} ${alert.threshold} (current: ${alert.value})`,
             );
             break;
@@ -561,7 +532,7 @@ export class MonitoringService extends EventEmitter {
             break;
         }
       } catch (error) {
-        console.error(`Failed to execute alert action ${action.type}:`, error);
+        logger.error(`Failed to execute alert action ${action.type}:`, error);
       }
     }
   }
@@ -571,7 +542,7 @@ export class MonitoringService extends EventEmitter {
    */
   private async sendWebhookAlert(config: MonitoringConfig, alert: Alert): Promise<void> {
     // Implement webhook sending logic
-    console.log('Webhook alert would be sent:', { config, alert });
+    logger.info('Webhook alert would be sent:', { config, alert });
   }
 
   /**
@@ -579,7 +550,7 @@ export class MonitoringService extends EventEmitter {
    */
   private async sendEmailAlert(config: MonitoringConfig, alert: Alert): Promise<void> {
     // Implement email sending logic
-    console.log('Email alert would be sent:', { config, alert });
+    logger.info('Email alert would be sent:', { config, alert });
   }
 
   /**
@@ -587,7 +558,7 @@ export class MonitoringService extends EventEmitter {
    */
   private async sendSlackAlert(config: MonitoringConfig, alert: Alert): Promise<void> {
     // Implement Slack sending logic
-    console.log('Slack alert would be sent:', { config, alert });
+    logger.info('Slack alert would be sent:', { config, alert });
   }
 
   /**
@@ -667,7 +638,7 @@ export class MonitoringService extends EventEmitter {
       this.cleanupInterval = undefined;
     }
 
-    console.log('Monitoring service stopped');
+    logger.info('Monitoring service stopped');
   }
 
   /**

@@ -1,12 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
-// import sqlite3 from 'sqlite3'; // Commented out - package not available
-// import { open, Database } from 'sqlite'; // Commented out - package not available
+// Rule 15: Removed ESLint disable comments - implementing proper solutions
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as process from 'node:process';
 import fs from 'fs/promises';
 import type { DatabaseRow, DatabaseValue, DatabaseParams, Statistics } from '../types/index.js';
 
