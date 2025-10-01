@@ -2,7 +2,7 @@
   "env": {
     "BASH_DEFAULT_TIMEOUT_MS": "600000",
     "BASH_MAX_TIMEOUT_MS": "9000000",
-    "ANTHROPIC_MODEL": "glm-4.5"
+    "ANTHROPIC_MODEL": "glm-4.6"
   },
   "includeCoAuthoredBy": false,
   "permissions": {
@@ -184,7 +184,10 @@
       "Bash(napi build:*)",
       "Bash(npx @napi-rs/cli build:*)",
       "Bash(sqlite3:*)",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "mcp__filesystem__read_multiple_files",
+      "Bash(npm ls:*)",
+      "Bash(docker-compose:*)"
     ]
   },
   "enabledMcpjsonServers": [

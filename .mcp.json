@@ -41,12 +41,7 @@
     },
     "memory": {
       "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ]
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"]
     }
   }
 }

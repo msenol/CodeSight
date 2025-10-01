@@ -205,12 +205,80 @@ The Code Intelligence MCP Server provides 9 specialized tools for code analysis 
 
 **Returns:** Complexity metrics including cyclomatic and cognitive complexity
 
+**Implementation Status:** 🔧 **Protocol Ready**
+- Complete MCP protocol implementation
+- Mock data responses for testing
+- Ready for real implementation
+- Enhanced with Rust performance optimization
+
 **Example Usage:**
 ```json
 {
   "tool": "check_complexity",
   "arguments": {
   "entity_id": "550e8400-e29b-41d4-a716-446655440001"
+}
+}
+```
+
+---
+
+### find_duplicates
+
+**Description:** Detect duplicate code patterns across the codebase
+
+**Parameters:**
+- `codebase_id`: UUID of the codebase to analyze
+- `similarity_threshold`: Minimum similarity threshold (0.0-1.0)
+- `min_lines`: Minimum lines of code to consider
+- `exclude_tests`: Exclude test files from analysis (optional)
+
+**Returns:** List of duplicate code patterns with similarity scores and locations
+
+**Implementation Status:** 🔧 **Protocol Ready**
+- Complete MCP protocol implementation
+- Mock data responses for testing
+- Ready for real implementation
+- Optimized for large codebase analysis
+
+**Example Usage:**
+```json
+{
+  "tool": "find_duplicates",
+  "arguments": {
+  "codebase_id": "550e8400-e29b-41d4-a716-446655440000",
+  "similarity_threshold": 0.8,
+  "min_lines": 10
+}
+}
+```
+
+---
+
+### suggest_refactoring
+
+**Description:** Provide AI-powered refactoring suggestions
+
+**Parameters:**
+- `entity_id`: UUID of the code entity to analyze
+- `analysis_type`: Type of analysis (performance, maintainability, security)
+- `target_complexity`: Target complexity score (optional)
+
+**Returns:** Refactoring suggestions with priority and implementation steps
+
+**Implementation Status:** 🔧 **Protocol Ready**
+- Complete MCP protocol implementation
+- Mock data responses for testing
+- Ready for real implementation
+- Enhanced with AI integration capabilities
+
+**Example Usage:**
+```json
+{
+  "tool": "suggest_refactoring",
+  "arguments": {
+  "entity_id": "550e8400-e29b-41d4-a716-446655440001",
+  "analysis_type": "maintainability"
 }
 }
 ```
