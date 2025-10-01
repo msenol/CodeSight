@@ -1,0 +1,228 @@
+# Prometheus Configuration for CodeSight
+# This configuration monitors the CodeSight application and infrastructure
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'rules/*.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # CodeSight MCP Server
+  - job_name: 'codesight-mcp'
+    static_configs:
+      - targets: ['codesight-mcp:4000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # CodeSight API Server
+  - job_name: 'codesight-api'
+    static_configs:
+      - targets: ['codesight-api:4001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # CodeSight Frontend
+  - job_name: 'codesight-frontend'
+    static_configs:
+      - targets: ['codesight-frontend:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 5s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 15s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+
+  # Docker metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+  # Node Exporter (system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # Nginx metrics (if used)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 15s
+
+# Custom recording rules for better visualization
+recording_rules:
+  # Rate of search queries
+  - record: job:codesight_search_queries:rate5m
+    expr: rate(codesight_search_queries_total[5m])
+
+  # Average search duration
+  - record: job:codesight_search_duration_seconds:avg5m
+    expr: rate(codesight_search_duration_seconds_sum[5m]) / rate(codesight_search_duration_seconds_count[5m])
+
+  # P95 search duration
+  - record: job:codesight_search_duration_seconds:p95
+    expr: histogram_quantile(0.95, rate(codesight_search_duration_seconds_bucket[5m]))
+
+  # Error rate
+  - record: job:codesight_errors:rate5m
+    expr: rate(codesight_errors_total[5m])
+
+  # Request rate by endpoint
+  - record: job:codesight_requests:rate5m
+    expr: sum(rate(codesight_requests_total[5m])) by (endpoint)
+
+  # Active connections
+  - record: job:codesight_active_connections
+    expr: codesight_active_connections
+
+  # Database connection pool usage
+  - record: job:codesight_db_connections:active
+    expr: codesight_db_connections_active
+
+  # Memory usage
+  - record: job:codesight_memory_usage_bytes
+    expr: codesight_memory_usage_bytes
+
+  # CPU usage
+  - record: job:codesight_cpu_usage_percent
+    expr: codesight_cpu_usage_percent
+
+  # Disk usage
+  - record: job:codesight_disk_usage_bytes
+    expr: codesight_disk_usage_bytes
+
+  # Network traffic
+  - record: job:codesight_network_receive_bytes:rate5m
+    expr: rate(codesight_network_receive_bytes[5m])
+
+  - record: job:codesight_network_transmit_bytes:rate5m
+    expr: rate(codesight_network_transmit_bytes[5m])
+
+# Alerting rules
+alerting_rules:
+  groups:
+    - name: codesight_alerts
+      rules:
+        # High error rate
+        - alert: HighErrorRate
+          expr: job:codesight_errors:rate5m > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'High error rate detected'
+            description: 'CodeSight is experiencing a high error rate of {{ $value }} errors per second'
+
+        # High search latency
+        - alert: HighSearchLatency
+          expr: job:codesight_search_duration_seconds:p95 > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'High search latency detected'
+            description: '95th percentile search latency is {{ $value }} seconds'
+
+        # High memory usage
+        - alert: HighMemoryUsage
+          expr: job:codesight_memory_usage_bytes / 1024 / 1024 / 1024 > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'High memory usage detected'
+            description: 'CodeSight is using {{ $value }} GB of memory'
+
+        # High CPU usage
+        - alert: HighCPUUsage
+          expr: job:codesight_cpu_usage_percent > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'High CPU usage detected'
+            description: 'CodeSight is using {{ $value }}% CPU'
+
+        # Database connection issues
+        - alert: DatabaseConnectionIssues
+          expr: job:codesight_db_connections:active > 80
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Database connection pool exhausted'
+            description: 'Database connection pool is {{ $value }}% full'
+
+        # Low disk space
+        - alert: LowDiskSpace
+          expr: (job:codesight_disk_usage_bytes / job:codesight_disk_total_bytes) > 0.85
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Low disk space detected'
+            description: 'Disk usage is {{ $value | humanizePercentage }}'
+
+        # Service down
+        - alert: ServiceDown
+          expr: up{job=~"codesight-.*"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Service is down'
+            description: 'Service {{ $labels.job }} is not responding'
+
+        # High request rate
+        - alert: HighRequestRate
+          expr: job:codesight_requests:rate5m > 100
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'High request rate detected'
+            description: 'Request rate is {{ $value }} requests per second'
+
+        # Failed health checks
+        - alert: FailedHealthChecks
+          expr: codesight_health_checks_failed_total > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Health checks failing'
+            description: 'Health checks are failing for CodeSight'
+
+# Storage configuration
+storage:
+  tsdb:
+    retention.time: 15d
+    retention.size: 1GB

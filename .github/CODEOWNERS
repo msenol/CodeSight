@@ -1,0 +1,71 @@
+# Global Code Owners for CodeSight Repository
+# This file defines ownership rules for code review requirements
+
+# Default owner for all files
+* @msenol
+
+# Core MCP Server (TypeScript)
+typescript-mcp/src/ @msenol
+typescript-mcp/src/tools/ @msenol
+typescript-mcp/src/services/ @msenol
+typescript-mcp/src/cli/ @msenol
+typescript-mcp/src/ffi/ @msenol
+
+# Rust Core
+rust-core/ @msenol
+rust-core/src/ @msenol
+rust-core/crates/ @msenol
+
+# API Server
+api/ @msenol
+api/src/ @msenol
+
+# Frontend
+src/ @msenol
+src/components/ @msenol
+src/pages/ @msenol
+src/services/ @msenol
+
+# Documentation
+*.md @msenol
+docs/ @msenol
+specs/ @msenol
+
+# Configuration Files
+.github/ @msenol
+.github/workflows/ @msenol
+.github/ISSUE_TEMPLATE/ @msenol
+
+# Build and Package Files
+package.json @msenol
+Cargo.toml @msenol
+Cargo.lock @msenol
+tsconfig.json @msenol
+
+# Docker Files
+Dockerfile* @msenol
+docker-compose*.yml @msenol
+
+# CI/CD
+*.yml @msenol
+*.yaml @msenol
+
+# Critical Security Files
+**/*.env.example @msenol
+**/.env @msenol
+**/secrets.* @msenol
+
+# Test Files
+**/*.test.* @msenol
+**/*.spec.* @msenol
+tests/ @msenol
+**/test*/ @msenol
+
+# Build Outputs
+dist/ @msenol
+build/ @msenol
+target/ @msenol
+
+# Optional: Emergency override for specific files
+# Use this sparingly for critical security fixes
+**/emergency-fix.ts @msenol

@@ -1,0 +1,303 @@
+# Alert Rules for CodeSight Monitoring
+# These rules define when alerts should be triggered
+
+groups:
+  - name: codesight.health
+    rules:
+      # Service availability
+      - alert: ServiceDown
+        expr: up{job=~"codesight-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: 'Service {{ $labels.job }} is down'
+          description: 'Service {{ $labels.job }} has been down for more than 1 minute'
+
+      - alert: HealthCheckFailed
+        expr: codesight_health_check_failed_total > 0
+        for: 30s
+        labels:
+          severity: critical
+          component: health
+        annotations:
+          summary: 'Health check failed'
+          description: 'Health check failed for {{ $labels.instance }}'
+
+  - name: codesight.performance
+    rules:
+      # Response time alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(codesight_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: 'High response time detected'
+          description: '95th percentile response time is {{ $value }} seconds'
+
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, rate(codesight_request_duration_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          component: performance
+        annotations:
+          summary: 'Critical response time detected'
+          description: '95th percentile response time is {{ $value }} seconds'
+
+      # Search performance
+      - alert: SlowSearchQueries
+        expr: histogram_quantile(0.95, rate(codesight_search_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: search
+        annotations:
+          summary: 'Slow search queries detected'
+          description: '95th percentile search duration is {{ $value }} seconds'
+
+      - alert: CriticalSlowSearchQueries
+        expr: histogram_quantile(0.95, rate(codesight_search_duration_seconds_bucket[5m])) > 3
+        for: 2m
+        labels:
+          severity: critical
+          component: search
+        annotations:
+          summary: 'Critical slow search queries'
+          description: '95th percentile search duration is {{ $value }} seconds'
+
+  - name: codesight.errors
+    rules:
+      # Error rate alerts
+      - alert: HighErrorRate
+        expr: rate(codesight_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: errors
+        annotations:
+          summary: 'High error rate detected'
+          description: 'Error rate is {{ $value }} errors per second'
+
+      - alert: CriticalErrorRate
+        expr: rate(codesight_errors_total[5m]) > 0.5
+        for: 1m
+        labels:
+          severity: critical
+          component: errors
+        annotations:
+          summary: 'Critical error rate detected'
+          description: 'Error rate is {{ $value }} errors per second'
+
+      # 5xx errors
+      - alert: HTTP5xxErrors
+        expr: rate(codesight_http_requests_total{status=~"5.."}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: http
+        annotations:
+          summary: 'HTTP 5xx errors detected'
+          description: 'HTTP 5xx error rate is {{ $value }} errors per second'
+
+      # 4xx errors
+      - alert: HTTP4xxErrors
+        expr: rate(codesight_http_requests_total{status=~"4.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: http
+        annotations:
+          summary: 'HTTP 4xx errors detected'
+          description: 'HTTP 4xx error rate is {{ $value }} errors per second'
+
+  - name: codesight.resources
+    rules:
+      # Memory usage
+      - alert: HighMemoryUsage
+        expr: (codesight_memory_usage_bytes / codesight_memory_limit_bytes) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: memory
+        annotations:
+          summary: 'High memory usage detected'
+          description: 'Memory usage is {{ $value | humanizePercentage }}'
+
+      - alert: CriticalMemoryUsage
+        expr: (codesight_memory_usage_bytes / codesight_memory_limit_bytes) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          component: memory
+        annotations:
+          summary: 'Critical memory usage detected'
+          description: 'Memory usage is {{ $value | humanizePercentage }}'
+
+      # CPU usage
+      - alert: HighCPUUsage
+        expr: codesight_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: cpu
+        annotations:
+          summary: 'High CPU usage detected'
+          description: 'CPU usage is {{ $value }}%'
+
+      - alert: CriticalCPUUsage
+        expr: codesight_cpu_usage_percent > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: cpu
+        annotations:
+          summary: 'Critical CPU usage detected'
+          description: 'CPU usage is {{ $value }}%'
+
+      # Disk usage
+      - alert: HighDiskUsage
+        expr: (codesight_disk_usage_bytes / codesight_disk_total_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: disk
+        annotations:
+          summary: 'High disk usage detected'
+          description: 'Disk usage is {{ $value | humanizePercentage }}'
+
+      - alert: CriticalDiskUsage
+        expr: (codesight_disk_usage_bytes / codesight_disk_total_bytes) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          component: disk
+        annotations:
+          summary: 'Critical disk usage detected'
+          description: 'Disk usage is {{ $value | humanizePercentage }}'
+
+  - name: codesight.database
+    rules:
+      # Database connections
+      - alert: HighDatabaseConnections
+        expr: codesight_database_connections_active / codesight_database_connections_max > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'High database connections detected'
+          description: 'Database connection pool is {{ $value | humanizePercentage }} full'
+
+      - alert: CriticalDatabaseConnections
+        expr: codesight_database_connections_active / codesight_database_connections_max > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: 'Critical database connections detected'
+          description: 'Database connection pool is {{ $value | humanizePercentage }} full'
+
+      # Database query performance
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(codesight_database_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'Slow database queries detected'
+          description: '95th percentile query duration is {{ $value }} seconds'
+
+      - alert: CriticalSlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(codesight_database_query_duration_seconds_bucket[5m])) > 3
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: 'Critical slow database queries detected'
+          description: '95th percentile query duration is {{ $value }} seconds'
+
+  - name: codesight.business
+    rules:
+      # Search volume
+      - alert: LowSearchVolume
+        expr: rate(codesight_search_queries_total[1h]) < 1
+        for: 1h
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: 'Low search volume detected'
+          description: 'Search volume is less than 1 query per hour'
+
+      - alert: HighSearchVolume
+        expr: rate(codesight_search_queries_total[1h]) > 100
+        for: 5m
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: 'High search volume detected'
+          description: 'Search volume is {{ $value }} queries per hour'
+
+      # Indexing performance
+      - alert: SlowIndexing
+        expr: codesight_indexing_duration_seconds > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: indexing
+        annotations:
+          summary: 'Slow indexing detected'
+          description: 'Indexing operation took {{ $value }} seconds'
+
+      - alert: CriticalSlowIndexing
+        expr: codesight_indexing_duration_seconds > 30
+        for: 1m
+        labels:
+          severity: critical
+          component: indexing
+        annotations:
+          summary: 'Critical slow indexing detected'
+          description: 'Indexing operation took {{ $value }} seconds'
+
+      # Failed indexing operations
+      - alert: IndexingFailures
+        expr: rate(codesight_indexing_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: indexing
+        annotations:
+          summary: 'Indexing failures detected'
+          description: 'Indexing failure rate is {{ $value }} failures per minute'
+
+  - name: codesight.network
+    rules:
+      # Network traffic
+      - alert: HighNetworkTraffic
+        expr: rate(codesight_network_bytes_total[5m]) > 1000000000 # 1GB/s
+        for: 5m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: 'High network traffic detected'
+          description: 'Network traffic is {{ $value | humanizeBytes }} per second'
+
+      # Connection errors
+      - alert: ConnectionErrors
+        expr: rate(codesight_connection_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: 'Connection errors detected'
+          description: 'Connection error rate is {{ $value }} errors per second'

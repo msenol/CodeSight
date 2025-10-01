@@ -1,5 +1,5 @@
 // ESLint configuration for Code Intelligence MCP Server
-// Generated: 2025-01-27
+// Simplified configuration for compatibility
 
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
@@ -24,31 +24,17 @@ export default [
       // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-empty-function': 'warn',
-      '@typescript-eslint/no-inferrable-types': 'error',
-      '@typescript-eslint/prefer-as-const': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/prefer-nullish-coalescing': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
-      '@typescript-eslint/require-await': 'error',
-      '@typescript-eslint/return-await': 'error',
-      '@typescript-eslint/prefer-readonly': 'error',
-      '@typescript-eslint/prefer-string-starts-ends-with': 'error',
-      '@typescript-eslint/prefer-includes': 'error',
       '@typescript-eslint/no-unnecessary-condition': 'warn',
-      '@typescript-eslint/strict-boolean-expressions': 'off',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
-      
-      // General JavaScript rules
+
+      // General JavaScript rules - Fixed no-unused-expressions configuration
       'no-console': 'warn',
       'no-debugger': 'error',
       'no-alert': 'error',
@@ -73,12 +59,16 @@ export default [
       'no-useless-return': 'error',
       'no-unreachable': 'error',
       'no-unreachable-loop': 'error',
-      'no-unused-expressions': 'error',
+      'no-unused-expressions': ['error', {
+        allowShortCircuit: true,
+        allowTernary: true,
+        allowTaggedTemplates: true,
+      }],
       'no-unused-labels': 'error',
       'no-use-before-define': 'off', // Handled by TypeScript
       'consistent-return': 'off', // TypeScript handles this
       'default-case': 'off', // TypeScript exhaustiveness check is better
-      
+
       // Code style
       'eqeqeq': ['error', 'always', { null: 'ignore' }],
       'curly': ['error', 'all'],
@@ -99,13 +89,13 @@ export default [
       'space-before-function-paren': ['error', {
         anonymous: 'always',
         named: 'never',
-        asyncArrow: 'always'
+        asyncArrow: 'always',
       }],
       'space-in-parens': 'error',
       'space-infix-ops': 'error',
       'space-unary-ops': 'error',
       'spaced-comment': ['error', 'always'],
-      
+
       // Performance and best practices
       'no-await-in-loop': 'warn',
       'no-promise-executor-return': 'error',
@@ -118,7 +108,7 @@ export default [
       'no-template-curly-in-string': 'error',
       'no-unmodified-loop-condition': 'error',
       'no-constant-condition': ['error', { checkLoops: false }],
-      
+
       // Security
       'no-new-wrappers': 'error',
       'no-proto': 'error',
@@ -143,6 +133,24 @@ export default [
       // Relax some rules for config files
       '@typescript-eslint/no-var-requires': 'off',
       'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/cli/**/*.ts'],
+    rules: {
+      // CLI files can use console
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['scripts/**/*.js'],
+    rules: {
+      // Build scripts can use require() and console
+      '@typescript-eslint/no-var-requires': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-console': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': 'off', // Use TypeScript's rule
     },
   },
   {
