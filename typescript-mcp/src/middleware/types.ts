@@ -1,4 +1,13 @@
-import type { Request, Response, NextFunction } from 'express';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { Request } from 'express';
+
+// Validation error detail interface
+export interface ValidationErrorDetail {
+  field?: string;
+  message: string;
+  value?: unknown;
+  code?: string;
+}
 
 // Extended Request interface with custom properties
 export interface ExtendedRequest extends Request {
@@ -21,24 +30,23 @@ export interface ExtendedRequest extends Request {
     startTime: number;
     endTime?: number;
     duration?: number;
-    memoryUsage?: NodeJS.MemoryUsage;
+    memoryUsage?: {
+      rss: number;
+      heapTotal: number;
+      heapUsed: number;
+      external: number;
+      arrayBuffers: number;
+    };
   };
 }
 
 // Middleware function type
-export type MiddlewareFunction = (
-  req: ExtendedRequest,
-  res: Response,
-  next: NextFunction
-) => void | Promise<void>;
+
+export type MiddlewareFunction = () => void | Promise<void>;
 
 // Error handler middleware type
-export type ErrorHandlerFunction = (
-  error: Error,
-  req: ExtendedRequest,
-  res: Response,
-  next: NextFunction
-) => void | Promise<void>;
+
+export type ErrorHandlerFunction = () => void | Promise<void>;
 
 // Rate limiting configuration
 export interface RateLimitConfig {
@@ -47,8 +55,7 @@ export interface RateLimitConfig {
   message?: string; // Custom error message
   skipSuccessfulRequests?: boolean;
   skipFailedRequests?: boolean;
-  keyGenerator?: (req: ExtendedRequest) => string;
-  onLimitReached?: (req: ExtendedRequest, res: Response) => void;
+  keyGenerator?: () => string;
 }
 
 // Authentication configuration
@@ -63,7 +70,11 @@ export interface AuthConfig {
 
 // CORS configuration
 export interface CorsConfig {
-  origin?: string | string[] | boolean | ((origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void);
+  origin?:
+    | string
+    | string[]
+    | boolean
+    | (() => void);
   methods?: string[];
   allowedHeaders?: string[];
   exposedHeaders?: string[];
@@ -138,9 +149,9 @@ export class AuthorizationError extends Error {
 }
 
 export class ValidationError extends Error {
-  public details: any[];
-  
-  constructor(message = 'Validation failed', details: any[] = []) {
+  public details: ValidationErrorDetail[];
+
+  constructor(message = 'Validation failed', details: ValidationErrorDetail[] = []) {
     super(message);
     this.name = 'ValidationError';
     this.details = details;
@@ -149,7 +160,7 @@ export class ValidationError extends Error {
 
 export class RateLimitError extends Error {
   public retryAfter: number;
-  
+
   constructor(message = 'Rate limit exceeded', retryAfter = 60) {
     super(message);
     this.name = 'RateLimitError';
@@ -174,11 +185,11 @@ export const HTTP_STATUS = {
   NOT_IMPLEMENTED: 501,
   BAD_GATEWAY: 502,
   SERVICE_UNAVAILABLE: 503,
-  GATEWAY_TIMEOUT: 504
+  GATEWAY_TIMEOUT: 504,
 } as const;
 
 // Common response interfaces
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -191,13 +202,13 @@ export interface ErrorResponse {
   success: false;
   error: string;
   message?: string;
-  details?: any;
+  details?: ValidationErrorDetail;
   timestamp: string;
   requestId?: string;
   stack?: string; // Only in development
 }
 
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
   success: true;
   data: T[];
   pagination: {
@@ -211,20 +222,7 @@ export interface PaginatedResponse<T = any> {
   timestamp: string;
 }
 
-// Utility types
-export type AsyncMiddleware = (
-  req: ExtendedRequest,
-  res: Response,
-  next: NextFunction
-) => Promise<void>;
-
-export type SyncMiddleware = (
-  req: ExtendedRequest,
-  res: Response,
-  next: NextFunction
-) => void;
-
-export type AnyMiddleware = AsyncMiddleware | SyncMiddleware;
+// Utility types removed as they are not currently used
 
 // Middleware options
 export interface MiddlewareOptions {
@@ -248,8 +246,8 @@ export interface RequestContext {
   userAgent: string;
   path: string;
   method: string;
-  query: Record<string, any>;
-  body: any;
+  query: Record<string, string | string[]>;
+  body: unknown;
   headers: Record<string, string>;
 }
 

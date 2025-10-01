@@ -14,7 +14,6 @@ use code_intelligence_core::CodeEntity;
 /// Main indexing engine
 pub struct IndexingEngine {
     engine: Arc<RwLock<engine::Engine>>,
-    workers: Vec<worker::Worker>,
     config: IndexingConfig,
 }
 
@@ -80,11 +79,9 @@ impl IndexingEngine {
     /// Create a new indexing engine with custom configuration
     pub fn with_config(config: IndexingConfig) -> Self {
         let engine = Arc::new(RwLock::new(engine::Engine::new(config.clone())));
-        let workers = Vec::new();
 
         Self {
             engine,
-            workers,
             config,
         }
     }
@@ -183,20 +180,34 @@ impl IndexingEngine {
         use futures::stream::{self, StreamExt};
 
         let batch_size = self.config.batch_size;
+        let engine = Arc::clone(&self.engine);
+
         let mut stream = stream::iter(files.chunks(batch_size))
-            .map(|batch| async {
-                let mut results = Vec::new();
-                for file in batch {
-                    match self.process_single_file(file).await {
-                        Ok(entities) => {
-                            results.push((file.clone(), Ok(entities)));
-                        }
-                        Err(e) => {
-                            results.push((file.clone(), Err(e)));
+            .map(move |batch| {
+                let engine = Arc::clone(&engine);
+                async move {
+                    let mut results = Vec::new();
+                    for file in batch {
+                        let content = match tokio::fs::read_to_string(&file).await {
+                            Ok(content) => content,
+                            Err(e) => {
+                                results.push((file.clone(), Err(anyhow::anyhow!("Failed to read file {}: {}", file.display(), e))));
+                                continue;
+                            }
+                        };
+
+                        let engine_instance = engine.write().await;
+                        match engine_instance.process_file(&file, &content).await {
+                            Ok(entities) => {
+                                results.push((file.clone(), Ok(entities)));
+                            }
+                            Err(e) => {
+                                results.push((file.clone(), Err(e)));
+                            }
                         }
                     }
+                    results
                 }
-                results
             })
             .buffer_unordered(self.config.max_workers);
 
@@ -226,7 +237,7 @@ impl IndexingEngine {
         let content = tokio::fs::read_to_string(file_path).await
             .map_err(|e| anyhow::anyhow!("Failed to read file {}: {}", file_path.display(), e))?;
 
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         engine.process_file(file_path, &content).await
     }
 
@@ -243,18 +254,18 @@ impl IndexingEngine {
     /// Get current indexing progress
     pub async fn get_progress(&self) -> Result<IndexingProgress> {
         let engine = self.engine.read().await;
-        Ok(engine.get_progress().clone())
+        Ok(engine.get_progress().await)
     }
 
     /// Stop indexing process
     pub async fn stop(&self) -> Result<()> {
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         engine.stop().await
     }
 
     /// Clear all indexed data
     pub async fn clear(&self) -> Result<()> {
-        let mut engine = self.engine.write().await;
+        let engine = self.engine.write().await;
         engine.clear().await
     }
 

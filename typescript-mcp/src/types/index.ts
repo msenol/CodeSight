@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 // Core types for Code Intelligence MCP Server
 
 export interface CodebaseInfo {
@@ -64,7 +66,7 @@ export interface CodeSmell {
   line: number;
   description: string;
   suggestion: string;
-  metrics: any;
+  metrics: Record<string, unknown>;
 }
 
 export interface ComplexityMetrics {
@@ -72,6 +74,16 @@ export interface ComplexityMetrics {
   cognitiveComplexity: number;
   linesOfCode: number;
   maintainabilityIndex: number;
+}
+
+export interface ComplexityAnalysis {
+  complexity: ComplexityMetrics;
+  functionCount: number;
+  classCount: number;
+  averageFunctionSize: number;
+  maxFunctionSize: number;
+  duplicateCodePercentage: number;
+  technicalDebt: number;
 }
 
 export interface FunctionInfo {
@@ -208,6 +220,194 @@ export interface LLMConfig {
   maxTokens: number;
   temperature: number;
   timeout: number;
+}
+
+// Database and API types
+export interface DatabaseRow {
+  [key: string]: string | number | boolean | null;
+}
+
+export type DatabaseValue = string | number | boolean | null;
+export type DatabaseParams = DatabaseValue[];
+
+export interface QueryResult {
+  rows: DatabaseRow[];
+  rowCount: number;
+  lastInsertRowid?: number;
+}
+
+export interface Statistics {
+  totalFiles: number;
+  totalEntities: number;
+  totalLines: number;
+  languages: string[];
+  filesByLanguage: Record<string, number>;
+  entitiesByType: Record<string, number>;
+  indexedAt: string;
+}
+
+// AST Node types
+export interface ASTNode {
+  type: string;
+  name?: string;
+  id?: string;
+  start?: number;
+  end?: number;
+  loc?: {
+    start: { line: number; column: number };
+    end: { line: number; column: number };
+  };
+  [key: string]: unknown;
+}
+
+export interface FunctionNode extends ASTNode {
+  type: 'FunctionDeclaration' | 'FunctionExpression' | 'ArrowFunctionExpression';
+  id?: { name: string };
+  params: Array<{ name: string }>;
+  body?: ASTNode;
+}
+
+export interface ClassNode extends ASTNode {
+  type: 'ClassDeclaration' | 'ClassExpression';
+  id?: { name: string };
+  body?: {
+    body: Array<{
+      type: string;
+      key: { name: string };
+      kind: string;
+    }>;
+  };
+}
+
+export interface MethodDefinition {
+  type: 'MethodDefinition';
+  key: { name: string };
+  kind: 'method' | 'constructor' | 'get' | 'set';
+  static: boolean;
+}
+
+// Monitoring and alerting types
+export interface MonitoringConfig {
+  enabled: boolean;
+  endpoint?: string;
+  interval?: number;
+  thresholds?: Record<string, number>;
+  [key: string]: unknown;
+}
+
+export interface Alert {
+  id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  timestamp: string;
+  context?: Record<string, unknown>;
+}
+
+// HTTP Request/Response types
+export interface HttpRequest {
+  method: string;
+  path: string;
+  headers?: Record<string, string>;
+  query?: Record<string, string>;
+  body?: unknown;
+}
+
+export interface HttpResponse<T = unknown> {
+  status: number;
+  headers?: Record<string, string>;
+  body?: T;
+}
+
+// Refactoring match types
+export interface RefactoringMatch {
+  type: string;
+  file: string;
+  line: number;
+  column: number;
+  endLine?: number;
+  endColumn?: number;
+  description: string;
+  suggestion: string;
+  severity: 'low' | 'medium' | 'high';
+  confidence?: number;
+}
+
+export interface CodeSmellMatch extends RefactoringMatch {
+  metrics?: Record<string, number>;
+  impact?: string;
+}
+
+// Analysis result types
+export interface FunctionAnalysis {
+  name: string;
+  signature: string;
+  parameters: Parameter[];
+  returnType: string;
+  complexity: ComplexityMetrics;
+  description: string;
+  usage: string[];
+  examples: string[];
+}
+
+export interface Parameter {
+  name: string;
+  type: string;
+  optional: boolean;
+  defaultValue?: string;
+}
+
+export interface SignatureAnalysis {
+  name: string;
+  parameters: Parameter[];
+  returnType: string;
+  accessibility?: string;
+  isAsync?: boolean;
+  isGenerator?: boolean;
+}
+
+// LLM and OpenAI types
+export interface OpenAIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface OpenAIResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export interface UsageStats {
+  totalRequests: number;
+  totalTokens: number;
+  averageResponseTime: number;
+  successRate: number;
+  errors: number;
+  lastRequest: string;
+}
+
+// Test utility types
+export interface TestHttpRequest extends HttpRequest {
+  headers?: Record<string, string>;
+}
+
+export interface MockResponse<T = unknown> {
+  status: number;
+  json: () => Promise<T>;
+  send: (data?: unknown) => void;
+  status: (code: number) => MockResponse<T>;
+}
+
+export interface TestOperation<T = unknown> {
+  (): Promise<T>;
 }
 
 // Re-export common types

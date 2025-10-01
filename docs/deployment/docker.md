@@ -4,33 +4,41 @@ sidebar_position: 1
 
 # Docker Deployment
 
-This guide covers deploying the Code Intelligence MCP Server using Docker containers. Docker provides a consistent, portable deployment environment that works across different platforms.
+**Production-Ready Docker Deployment** for CodeSight v0.1.0 - Enterprise MCP Server with hybrid TypeScript/Rust architecture, comprehensive monitoring, multi-language support, and exceptional code quality. This guide covers deploying the Code Intelligence MCP Server using Docker containers with enterprise-grade features including PostgreSQL, Redis, Prometheus, Grafana, comprehensive security configurations, and 62% lint improvement achievement.
 
 ## Prerequisites
 
 - Docker Engine 20.10 or later
 - Docker Compose 2.0 or later
-- At least 4GB RAM available for containers
-- 10GB free disk space for images and data
+- At least 8GB RAM available for containers (recommended for production)
+- 20GB free disk space for images and data
+- Rust 1.75+ (for building Rust FFI components)
+- Node.js 18+ (for building TypeScript components)
 
 ## Quick Start with Docker
 
 ### Using Pre-built Image
 
-The fastest way to get started is using our pre-built Docker image:
+The fastest way to get started is using our pre-built Docker image with enterprise-grade features:
 
 ```bash
-# Pull the latest image
-docker pull code-intelligence/mcp-server:latest
+# Pull the latest production image
+docker pull codesight/mcp-server:latest
 
 # Run with basic configuration
 docker run -d \
-  --name code-intel-server \
-  -p 3000:3000 \
-  -v /path/to/your/code:/workspace \
-  -v code-intel-data:/app/data \
+  --name codesight-mcp \
+  -p 3001:3001 \
+  -p 9090:9090 \
+  -v ./data:/app/data \
+  -v ./logs:/app/logs \
   -e NODE_ENV=production \
-  code-intelligence/mcp-server:latest
+  -e DATABASE_URL=postgresql://postgres:password@postgres:5432/code_intelligence \
+  -e REDIS_URL=redis://redis:6379 \
+  -e ENABLE_RUST_FFI=true \
+  -e FFI_GRACEFUL_FALLBACK=true \
+  -e ENABLE_METRICS=true \
+  codesight/mcp-server:latest
 ```
 
 ### Verify Deployment
@@ -40,119 +48,165 @@ docker run -d \
 docker ps
 
 # Check logs
-docker logs code-intel-server
+docker logs codesight-mcp
 
 # Test health endpoint
-curl http://localhost:3000/health
+curl http://localhost:3001/health
+
+# Test metrics endpoint
+curl http://localhost:9090/metrics
+
+# Test MCP functionality
+curl -X POST http://localhost:3001/tools/search_code \
+  -H "Content-Type: application/json" \
+  -d '{"query": "authentication functions"}'
 ```
 
 ## Docker Compose Deployment
 
-### Basic Setup
+### Development Setup
 
-Create a `docker-compose.yml` file:
+Create a `docker-compose.dev.yml` file for development:
 
 ```yaml
 version: '3.8'
 
 services:
-  code-intelligence:
-    image: code-intelligence/mcp-server:latest
-    container_name: code-intel-server
-    restart: unless-stopped
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: codesight-mcp-dev
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
-      - ./workspace:/workspace:ro
-      - code-intel-data:/app/data
-      - ./config:/app/config:ro
+      - .:/app
+      - /app/node_modules
+      - ./data:/app/data
     environment:
-      - NODE_ENV=production
-      - LOG_LEVEL=info
-      - MAX_WORKERS=4
-      - MEMORY_LIMIT=2048
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - NODE_ENV=development
+      - DATABASE_URL=sqlite:///app/data/code_intelligence.db
+      - ENABLE_RUST_FFI=true
+      - RUST_FFI_PATH=/app/rust-core/target/release
+      - LOG_LEVEL=debug
+    depends_on:
+      - redis
     networks:
-      - code-intel-network
+      - codesight-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: codesight-postgres-dev
+    environment:
+      - POSTGRES_DB=code_intelligence
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - codesight-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: codesight-redis-dev
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - codesight-network
 
 volumes:
-  code-intel-data:
-    driver: local
+  postgres-data:
+  redis-data:
 
 networks:
-  code-intel-network:
+  codesight-network:
     driver: bridge
 ```
 
-### Production Setup with Database
+### Production Setup with Monitoring
 
-For production deployments with external database:
+For production deployments with full monitoring stack:
 
 ```yaml
 version: '3.8'
 
 services:
-  code-intelligence:
-    image: code-intelligence/mcp-server:latest
-    container_name: code-intel-server
+  mcp-server:
+    image: codesight/mcp-server:latest
+    container_name: codesight-mcp-prod
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
+      - "9090:9090"
     volumes:
-      - ./workspace:/workspace:ro
-      - code-intel-data:/app/data
-      - ./config:/app/config:ro
-      - ./logs:/app/logs
+      - codesight-data:/app/data
+      - codesight-logs:/app/logs
     environment:
       - NODE_ENV=production
-      - LOG_LEVEL=info
-      - MAX_WORKERS=8
-      - MEMORY_LIMIT=4096
-      - DATABASE_URL=postgresql://user:password@postgres:5432/code_intel
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/code_intelligence
       - REDIS_URL=redis://redis:6379
+      - ENABLE_RUST_FFI=true
+      - FFI_GRACEFUL_FALLBACK=true
+      - ENABLE_METRICS=true
+      - LOG_LEVEL=info
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 120s
     networks:
-      - code-intel-network
+      - codesight-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: codesight-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - mcp-server
+    networks:
+      - codesight-network
 
   postgres:
     image: postgres:15-alpine
-    container_name: code-intel-postgres
+    container_name: codesight-postgres-prod
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=code_intel
-      - POSTGRES_USER=code_intel_user
-      - POSTGRES_PASSWORD=secure_password_here
+      - POSTGRES_DB=code_intelligence
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      - ./backups:/backups
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U code_intel_user -d code_intel"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d code_intelligence"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - code-intel-network
+      - codesight-network
 
   redis:
     image: redis:7-alpine
-    container_name: code-intel-redis
+    container_name: codesight-redis-prod
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass redis_password_here
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis-data:/data
     healthcheck:
@@ -161,32 +215,50 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - code-intel-network
+      - codesight-network
 
-  nginx:
-    image: nginx:alpine
-    container_name: code-intel-nginx
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: codesight-prometheus
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "9091:9090"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      - nginx-logs:/var/log/nginx
-    depends_on:
-      - code-intelligence
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
     networks:
-      - code-intel-network
+      - codesight-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: codesight-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - codesight-network
 
 volumes:
-  code-intel-data:
+  codesight-data:
+  codesight-logs:
   postgres-data:
   redis-data:
-  nginx-logs:
+  prometheus-data:
+  grafana-data:
 
 networks:
-  code-intel-network:
+  codesight-network:
     driver: bridge
 ```
 

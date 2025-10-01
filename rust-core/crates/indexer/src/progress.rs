@@ -3,6 +3,24 @@
 use std::time::{Duration, Instant};
 use serde::{Serialize, Deserialize};
 
+/// Module for serializing Instant types
+mod instant_serde {
+    use super::*;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(instant: &Instant, serializer: S) -> Result<S::Ok, S::Error> {
+        // For simplicity, serialize as duration since now
+        let elapsed = instant.elapsed();
+        serializer.serialize_u64(elapsed.as_nanos() as u64)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Instant, D::Error> {
+        let elapsed_nanos: u64 = Deserialize::deserialize(deserializer)?;
+        let elapsed = Duration::from_nanos(elapsed_nanos);
+        Ok(Instant::now() - elapsed)
+    }
+}
+
 /// Detailed progress information for indexing operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProgressTracker {
@@ -11,12 +29,15 @@ pub struct ProgressTracker {
     pub total_entities: usize,
     pub current_file: Option<String>,
     pub errors: Vec<ProgressError>,
+    #[serde(with = "instant_serde")]
     pub start_time: Instant,
+    #[serde(with = "instant_serde")]
     pub last_update: Instant,
     pub estimated_time_remaining: Option<Duration>,
     pub throughput: f64, // files per second
     pub status: ProgressStatus,
 }
+
 
 /// Progress status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -35,6 +56,7 @@ pub enum ProgressStatus {
 pub struct ProgressError {
     pub file_path: String,
     pub error_message: String,
+    #[serde(with = "instant_serde")]
     pub timestamp: Instant,
     pub error_type: ErrorType,
 }

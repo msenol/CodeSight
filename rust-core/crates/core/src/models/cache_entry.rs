@@ -1,6 +1,6 @@
 //! Cache entry model for storing and retrieving cached data
 
-use super::{ModelResult, Validate, Timestamped, JsonSerializable};
+use super::{Validate, Timestamped};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

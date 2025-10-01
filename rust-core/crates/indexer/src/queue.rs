@@ -3,7 +3,7 @@
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex as TokioMutex};
 use anyhow::Result;
 
 use code_intelligence_core::CodeEntity;
@@ -48,7 +48,7 @@ pub struct TaskQueue {
 }
 
 /// Queue metrics
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct QueueMetrics {
     pub tasks_added: u64,
     pub tasks_completed: u64,
@@ -86,11 +86,11 @@ impl TaskQueue {
         };
 
         let mut queue = self.queue.lock().unwrap();
-        queue.push_back(task);
+        queue.push_back(task.clone());
         queue.make_contiguous().sort_by(|a, b| b.priority.cmp(&a.priority));
 
         // Send to processor
-        if let Err(_) = self.task_sender.send(task.clone()) {
+        if let Err(_) = self.task_sender.send(task) {
             return Err(anyhow::anyhow!("Failed to send task to processor"));
         }
 
@@ -114,7 +114,7 @@ impl TaskQueue {
     /// Get the next task from the queue
     pub async fn next_task(&mut self) -> Option<IndexingTask> {
         if let Some(receiver) = &mut self.task_receiver {
-            receiver.recv().await.ok()
+            receiver.recv().await
         } else {
             None
         }
@@ -172,7 +172,7 @@ impl TaskQueue {
     /// Get the next result
     pub async fn next_result(&mut self) -> Option<TaskResult> {
         if let Some(receiver) = &mut self.result_receiver {
-            receiver.recv().await.ok()
+            receiver.recv().await
         } else {
             None
         }
@@ -215,40 +215,43 @@ impl Default for TaskQueue {
 
 /// Task processor for handling indexing tasks
 pub struct TaskProcessor {
-    queue: Arc<Mutex<TaskQueue>>,
-    running: Arc<Mutex<bool>>,
+    queue: Arc<TokioMutex<TaskQueue>>,
+    running: Arc<TokioMutex<bool>>,
 }
 
 impl TaskProcessor {
     /// Create a new task processor
-    pub fn new(queue: Arc<Mutex<TaskQueue>>) -> Self {
+    pub fn new(queue: Arc<TokioMutex<TaskQueue>>) -> Self {
         Self {
             queue,
-            running: Arc::new(Mutex::new(false)),
+            running: Arc::new(TokioMutex::new(false)),
         }
     }
 
     /// Start processing tasks
     pub async fn start(&self) -> Result<()> {
-        let mut running = self.running.lock().unwrap();
-        *running = true;
-        drop(running);
+        {
+            let mut running = self.running.lock().await;
+            *running = true;
+        }
 
         let queue = Arc::clone(&self.queue);
         let running = Arc::clone(&self.running);
 
         tokio::spawn(async move {
-            while *running.lock().unwrap() {
-                let mut queue_guard = queue.lock().unwrap();
-                if let Some(task) = queue_guard.next_task().await {
-                    drop(queue_guard); // Release lock while processing
+            while *running.lock().await {
+                let task = {
+                    let mut queue_guard = queue.lock().await;
+                    queue_guard.next_task().await
+                };
 
+                if let Some(task) = task {
                     let start_time = std::time::Instant::now();
-                    let result = self.process_task(task).await;
-                    let duration = start_time.elapsed();
+                    let result = Self::process_task_static(task).await;
+                    let _duration = start_time.elapsed();
 
                     // Send result back
-                    if let Ok(mut queue_guard) = queue.try_lock() {
+                    if let Ok(queue_guard) = queue.try_lock() {
                         let _ = queue_guard.send_result(result);
                     }
                 } else {
@@ -263,13 +266,13 @@ impl TaskProcessor {
 
     /// Stop processing tasks
     pub async fn stop(&self) -> Result<()> {
-        let mut running = self.running.lock().unwrap();
+        let mut running = self.running.lock().await;
         *running = false;
         Ok(())
     }
 
-    /// Process a single task
-    async fn process_task(&self, task: IndexingTask) -> TaskResult {
+    /// Process a single task (static method for async spawn)
+    async fn process_task_static(task: IndexingTask) -> TaskResult {
         let start_time = std::time::Instant::now();
 
         // In a real implementation, this would use the parser to extract entities
@@ -284,9 +287,10 @@ impl TaskProcessor {
         }
     }
 
+  
     /// Check if the processor is running
     pub async fn is_running(&self) -> bool {
-        *self.running.lock().unwrap()
+        *self.running.lock().await
     }
 }
 
@@ -336,7 +340,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_task_processor() {
-        let queue = Arc::new(Mutex::new(TaskQueue::new()));
+        let queue = Arc::new(TokioMutex::new(TaskQueue::new()));
         let processor = TaskProcessor::new(Arc::clone(&queue));
 
         // Start processor

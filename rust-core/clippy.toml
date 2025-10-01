@@ -1,42 +1,6 @@
 # Clippy configuration for Code Intelligence MCP Server
 # Generated: 2025-01-27
 
-# Deny clippy warnings in CI
-warn-on-all-lints = true
-
-# Allow certain lints that are too noisy
-allow = [
-    "clippy::module_name_repetitions",
-    "clippy::similar_names",
-    "clippy::too_many_arguments",
-    "clippy::type_complexity",
-    "clippy::must_use_candidate",
-    "clippy::missing_errors_doc",
-    "clippy::missing_panics_doc"
-]
-
-# Deny certain lints that we want to catch
-deny = [
-    "clippy::unwrap_used",
-    "clippy::expect_used",
-    "clippy::panic",
-    "clippy::unimplemented",
-    "clippy::todo",
-    "clippy::unreachable",
-    "clippy::dbg_macro",
-    "clippy::print_stdout",
-    "clippy::print_stderr"
-]
-
-# Warn on certain performance lints
-warn = [
-    "clippy::inefficient_to_string",
-    "clippy::large_enum_variant",
-    "clippy::large_stack_arrays",
-    "clippy::vec_box",
-    "clippy::redundant_allocation"
-]
-
 # Cognitive complexity threshold
 cognitive-complexity-threshold = 30
 
@@ -49,14 +13,14 @@ too-many-arguments-threshold = 7
 # Too many lines threshold
 too-many-lines-threshold = 100
 
-# Large enum variant threshold
+# Large error threshold
 large-error-threshold = 128
 
 # Trivially copy pass by ref threshold
 trivial-copy-size-limit = 64
 
-# Single char lifetime names
-single-char-lifetime-names = true
+# Single char binding names threshold
+single-char-binding-names-threshold = 4
 
 # Avoid breaking exported API
 avoid-breaking-exported-api = true

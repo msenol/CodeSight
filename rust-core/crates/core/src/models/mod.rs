@@ -21,8 +21,9 @@ pub use code_relationship::*;
 pub use index::*;
 pub use query::*;
 pub use embedding::*;
-pub use cache_entry::*;
-pub use plugin::*;
+// Use specific imports to avoid name conflicts
+pub use cache_entry::{CacheEntry, EvictionPolicy as CacheEvictionPolicy, CacheConfig};
+pub use plugin::{Plugin, PluginConfig, PluginConfigValue, PluginStatus};
 pub use configuration::*;
 pub use index_job::*;
 

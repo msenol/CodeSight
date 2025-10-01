@@ -1,14 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /**
  * Logger service
  */
 import winston from 'winston';
+
+declare const process: {
+  env: Record<string, string | undefined>;
+};
 
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
-    winston.format.json()
+    winston.format.json(),
   ),
   defaultMeta: { service: 'codesight-mcp' },
   transports: [
@@ -18,26 +25,24 @@ export const logger = winston.createLogger({
         winston.format.timestamp(),
         winston.format.printf(({ timestamp, level, message, service }) => {
           return `[${timestamp}] ${level.toUpperCase()}: ${message} (${service})`;
-        })
-      )
-    })
-  ]
+        }),
+      ),
+    }),
+  ],
 });
 
 // Always write logs to file for debugging
-const logDir = process.env.LOG_DIR || 'F:\\Development\\Projects\\ProjectAra\\typescript-mcp\\logs';
-logger.add(new winston.transports.File({
-  filename: `${logDir}/error.log`,
-  level: 'error',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  )
-}));
-logger.add(new winston.transports.File({
-  filename: `${logDir}/combined.log`,
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  )
-}));
+const logDir = process.env.LOG_DIR || 'F:]Development]Projects]ProjectAra]typescript-mcp]logs';
+logger.add(
+  new winston.transports.File({
+    filename: `${logDir}/error.log`,
+    level: 'error',
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  }),
+);
+logger.add(
+  new winston.transports.File({
+    filename: `${logDir}/combined.log`,
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  }),
+);

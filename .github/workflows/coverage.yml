@@ -1,0 +1,434 @@
+name: Testing and Coverage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # Every Monday at 6:00 AM
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20, 22]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: typescript-mcp
+        run: npm run test:unit
+
+      - name: Generate coverage report
+        working-directory: typescript-mcp
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./typescript-mcp/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.os }}-${{ matrix.node-version }}
+          path: typescript-mcp/coverage/
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: needs.unit-tests.result == 'success'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test-suite: [mcp-protocol, cli-commands, ffi-bridge, api-integration]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Build project
+        working-directory: typescript-mcp
+        run: npm run build
+
+      - name: Run integration tests - ${{ matrix.test-suite }}
+        working-directory: typescript-mcp
+        run: npm run test:integration:${{ matrix.test-suite }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results-${{ matrix.test-suite }}
+          path: typescript-mcp/test-results/
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: needs.integration-tests.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Build project
+        working-directory: typescript-mcp
+        run: npm run build
+
+      - name: Build Docker image
+        run: |
+          docker build -t codesight-test:latest .
+
+      - name: Start test environment
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+
+      - name: Run E2E tests
+        working-directory: typescript-mcp
+        run: npm run test:e2e
+
+      - name: Stop test environment
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: typescript-mcp/e2e-results/
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: needs.integration-tests.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Build project
+        working-directory: typescript-mcp
+        run: npm run build
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust benchmarks
+        working-directory: rust-core
+        run: |
+          cargo bench
+
+      - name: Run Node.js performance tests
+        working-directory: typescript-mcp
+        run: npm run test:performance
+
+      - name: Generate performance report
+        working-directory: typescript-mcp
+        run: |
+          npm run test:performance:report
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results
+          path: |
+            rust-core/target/criterion/
+            typescript-mcp/performance-results/
+
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: needs.unit-tests.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Build project
+        working-directory: typescript-mcp
+        run: npm run build
+
+      - name: Run contract tests
+        working-directory: typescript-mcp
+        run: npm run test:contract
+
+      - name: Upload contract test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-test-results
+          path: typescript-mcp/contract-test-results/
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: needs.integration-tests.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Run OWASP ZAP scan
+        uses: zaproxy/action-baseline@v0.11.0
+        with:
+          target: 'http://localhost:4000'
+          rules_file_name: '.zap/rules.tsv'
+
+      - name: Run security tests
+        working-directory: typescript-mcp
+        run: npm run test:security
+
+      - name: Upload security test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-results
+          path: typescript-mcp/security-test-results/
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs:
+      [unit-tests, integration-tests, e2e-tests, performance-tests, contract-tests, security-tests]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate comprehensive coverage report
+        run: |
+          echo "## 🧪 Testing and Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Tests**: ${{ needs.unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Integration Tests**: ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E Tests**: ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Performance Tests**: ${{ needs.performance-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Contract Tests**: ${{ needs.contract-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Tests**: ${{ needs.security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Overall Test Status" >> $GITHUB_STEP_SUMMARY
+          ALL_SUCCESS=true
+          for job in unit-tests integration-tests e2e-tests performance-tests contract-tests security-tests; do
+            if [[ "${{ needs.$job.result }}" != "success" ]]; then
+              ALL_SUCCESS=false
+            fi
+          done
+
+          if [[ "$ALL_SUCCESS" == "true" ]]; then
+            echo "🎉 **All tests passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some tests failed - review details above**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Coverage Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Test Coverage**: See individual coverage reports" >> $GITHUB_STEP_SUMMARY
+          echo "- **Integration Coverage**: See integration test results" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E Coverage**: See E2E test results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rust Benchmarks**: Available in performance-test-results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node.js Performance**: Available in performance-test-results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage reports for all test types" >> $GITHUB_STEP_SUMMARY
+          echo "- Test results and logs" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance benchmark results" >> $GITHUB_STEP_SUMMARY
+          echo "- Security scan results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review any failed tests and address issues" >> $GITHUB_STEP_SUMMARY
+          echo "2. Monitor coverage trends and improve where needed" >> $GITHUB_STEP_SUMMARY
+          echo "3. Track performance metrics and optimize bottlenecks" >> $GITHUB_STEP_SUMMARY
+          echo "4. Address any security vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          echo "5. Maintain test quality and coverage standards" >> $GITHUB_STEP_SUMMARY
+
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, contract-tests]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check quality gates
+        id: quality
+        run: |
+          # Define quality thresholds
+          MIN_COVERAGE=80
+          MAX_FAILED_TESTS=0
+          MAX_PERFORMANCE_REGRESSION=10
+
+          # Initialize quality status
+          COVERAGE_PASSED=true
+          TESTS_PASSED=true
+          PERFORMANCE_PASSED=true
+
+          echo "## 🎯 Quality Gates Assessment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Coverage Threshold" >> $GITHUB_STEP_SUMMARY
+          echo "- **Minimum Required**: ${MIN_COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${COVERAGE_PASSED && '✅ Passed' || '❌ Failed'}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Test Success Rate" >> $GITHUB_STEP_SUMMARY
+          echo "- **Maximum Allowed Failures**: ${MAX_FAILED_TESTS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${TESTS_PASSED && '✅ Passed' || '❌ Failed'}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Performance Regression" >> $GITHUB_STEP_SUMMARY
+          echo "- **Maximum Regression**: ${MAX_PERFORMANCE_REGRESSION}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${PERFORMANCE_PASSED && '✅ Passed' || '❌ Failed'}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall quality status
+          if [[ "$COVERAGE_PASSED" == "true" && "$TESTS_PASSED" == "true" && "$PERFORMANCE_PASSED" == "true" ]]; then
+            echo "### 🎉 All Quality Gates Passed!" >> $GITHUB_STEP_SUMMARY
+            echo "The codebase meets all quality standards and is ready for release." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ Quality Gates Not Met" >> $GITHUB_STEP_SUMMARY
+            echo "Please address the failed quality gates before proceeding with release." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Action Items" >> $GITHUB_STEP_SUMMARY
+          if [[ "$COVERAGE_PASSED" != "true" ]]; then
+            echo "- [ ] Improve test coverage to meet minimum threshold" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "$TESTS_PASSED" != "true" ]]; then
+            echo "- [ ] Fix failing tests before proceeding" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "$PERFORMANCE_PASSED" != "true" ]]; then
+            echo "- [ ] Address performance regression issues" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Block release if quality gates fail
+        if: steps.quality.outputs.quality_status != 'passed'
+        run: |
+          echo "## 🚫 Release Blocked" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release cannot proceed due to failed quality gates." >> $GITHUB_STEP_SUMMARY
+          echo "Please address the issues above and re-run the tests." >> $GITHUB_STEP_SUMMARY
+          exit 1
+
+  test-trends:
+    name: Test Trends Analysis
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Analyze test trends
+        run: |
+          echo "## 📈 Test Trends Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Recent Test Performance" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Tests**: ${{ needs.unit-tests.result == 'success' && '✅ Stable' || '⚠️ Unstable' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Integration Tests**: ${{ needs.integration-tests.result == 'success' && '✅ Stable' || '⚠️ Unstable' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E Tests**: ${{ needs.e2e-tests.result == 'success' && '✅ Stable' || '⚠️ Unstable' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Trends to Monitor" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Duration**: Track execution time trends" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage**: Monitor coverage percentage changes" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flakiness**: Identify unreliable tests" >> $GITHUB_STEP_SUMMARY
+          echo "- **Performance**: Benchmark performance over time" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "1. Set up automated test trend monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "2. Implement alerts for coverage drops" >> $GITHUB_STEP_SUMMARY
+          echo "3. Track and reduce test flakiness" >> $GITHUB_STEP_SUMMARY
+          echo "4. Optimize slow-running tests" >> $GITHUB_STEP_SUMMARY
+          echo "5. Regular performance baseline updates" >> $GITHUB_STEP_SUMMARY

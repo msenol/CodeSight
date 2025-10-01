@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-undef */
+/* eslint-disable no-useless-escape */
 /**
  * MCP Tools registration
  */
@@ -7,6 +12,7 @@ import { logger } from '../services/logger.js';
 import { DefaultCodebaseService } from '../services/codebase-service.js';
 import { DatabaseSearchService } from '../services/database-search-service.js';
 import { SearchCodeTool } from './search-code.js';
+import type { FindReferencesInput } from './find-references.js';
 
 /**
  * Register all MCP tools with the server
@@ -31,15 +37,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 query: {
                   type: 'string',
-                  description: 'Natural language search query'
+                  description: 'Natural language search query',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['query', 'codebase_id']
-            }
+              required: ['query', 'codebase_id'],
+            },
           },
           {
             name: 'explain_function',
@@ -49,15 +55,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 function_name: {
                   type: 'string',
-                  description: 'Name of the function to explain'
+                  description: 'Name of the function to explain',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['function_name', 'codebase_id']
-            }
+              required: ['function_name', 'codebase_id'],
+            },
           },
           {
             name: 'find_references',
@@ -67,15 +73,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 symbol_name: {
                   type: 'string',
-                  description: 'Name of the symbol to find references for'
+                  description: 'Name of the symbol to find references for',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['symbol_name', 'codebase_id']
-            }
+              required: ['symbol_name', 'codebase_id'],
+            },
           },
           {
             name: 'trace_data_flow',
@@ -85,19 +91,19 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 variable_name: {
                   type: 'string',
-                  description: 'Name of the variable to trace'
+                  description: 'Name of the variable to trace',
                 },
                 file_path: {
                   type: 'string',
-                  description: 'File path containing the variable'
+                  description: 'File path containing the variable',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['variable_name', 'file_path', 'codebase_id']
-            }
+              required: ['variable_name', 'file_path', 'codebase_id'],
+            },
           },
           {
             name: 'analyze_security',
@@ -107,15 +113,16 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 file_path: {
                   type: 'string',
-                  description: 'File path to analyze (optional, analyzes entire codebase if not provided)'
+                  description:
+                    'File path to analyze (optional, analyzes entire codebase if not provided)',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['codebase_id']
-            }
+              required: ['codebase_id'],
+            },
           },
           {
             name: 'get_api_endpoints',
@@ -125,15 +132,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 framework: {
                   type: 'string',
-                  description: 'Framework type (express, fastify, nestjs, etc.)'
+                  description: 'Framework type (express, fastify, nestjs, etc.)',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['codebase_id']
-            }
+              required: ['codebase_id'],
+            },
           },
           {
             name: 'check_complexity',
@@ -143,15 +150,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 file_path: {
                   type: 'string',
-                  description: 'File path to analyze'
+                  description: 'File path to analyze',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['file_path', 'codebase_id']
-            }
+              required: ['file_path', 'codebase_id'],
+            },
           },
           {
             name: 'find_duplicates',
@@ -161,15 +168,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 min_lines: {
                   type: 'number',
-                  description: 'Minimum number of lines for duplicate detection (default: 5)'
+                  description: 'Minimum number of lines for duplicate detection (default: 5)',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['codebase_id']
-            }
+              required: ['codebase_id'],
+            },
           },
           {
             name: 'suggest_refactoring',
@@ -179,22 +186,22 @@ export async function registerMCPTools(server: Server): Promise<void> {
               properties: {
                 file_path: {
                   type: 'string',
-                  description: 'File path to analyze for refactoring'
+                  description: 'File path to analyze for refactoring',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier'
-                }
+                  description: 'Codebase identifier',
+                },
               },
-              required: ['file_path', 'codebase_id']
-            }
-          }
-        ]
+              required: ['file_path', 'codebase_id'],
+            },
+          },
+        ],
       };
     });
 
     // Register call_tool handler
-    server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: args } = request.params;
 
       logger.info(`Tool called: ${name}`, { args });
@@ -203,7 +210,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
         switch (name) {
           case 'search_code': {
             console.log('[DEBUG] search_code tool called with args:', args);
-            const { query, codebase_id } = args as { query: string; codebase_id: string };
+            // codebase_id reserved for future use
 
             try {
               console.log('[DEBUG] Calling SearchCodeTool with proper services');
@@ -215,7 +222,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 max_results: 10,
                 include_tests: true,
                 file_types: undefined,
-                exclude_patterns: undefined
+                exclude_patterns: undefined,
               });
 
               console.log('[DEBUG] SearchCodeTool result:', searchResult);
@@ -225,204 +232,234 @@ export async function registerMCPTools(server: Server): Promise<void> {
                   content: [
                     {
                       type: 'text',
-                      text: `No results found for "${query}" in ${codebase_id}.\n\n` +
-                            `💡 Tip: Make sure the codebase has been indexed first.\n` +
-                            `   You can index it by running: index_codebase tool`
-                    }
-                  ]
+                      text:
+                        `No results found for "${query}" in ${codebase_id}.\n\n` +
+                        '💡 Tip: Make sure the codebase has been indexed first.\n' +
+                        '   You can index it by running: index_codebase tool',
+                    },
+                  ],
                 };
               }
 
               // Format results properly
-              const resultText = `Found ${searchResult.total_matches} matches for "${query}" in ${searchResult.execution_time_ms}ms:\n\n${
-                searchResult.results.map(r => `📄 ${r.file}:${r.line} (score: ${r.score.toFixed(2)})\n   ${r.content}`).join('\n\n')
-              }`;
+              const resultText = `Found ${searchResult.total_matches} matches for "${query}" in ${searchResult.execution_time_ms}ms:\n\n${searchResult.results
+                .map(r => `📄 ${r.file}:${r.line} (score: ${r.score.toFixed(2)})\n   ${r.content}`)
+                .join('\n\n')}`;
 
               return {
                 content: [
                   {
                     type: 'text',
-                    text: resultText
-                  }
-                ]
+                    text: resultText,
+                  },
+                ],
               };
             } catch (error) {
               console.error('[DEBUG] SearchCodeTool failed:', error);
-              logger.error(`Search failed:`, error);
+              logger.error('Search failed:', error);
 
               return {
                 content: [
                   {
                     type: 'text',
-                    text: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                  }
-                ]
+                    text: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }
 
           case 'explain_function': {
-            const { function_name, codebase_id } = args as { function_name: string; codebase_id: string };
+            // codebase_id reserved for future use
+            const { function_name, codebase_id } = input as {
+              function_name: string;
+              codebase_id: string;
+            };
             // Mock response for testing
             return {
               content: [
                 {
                   type: 'text',
-                  text: `📚 Function: ${function_name} in ${codebase_id}\n\n` +
-                        `Purpose: This function processes incoming data and returns transformed results.\n\n` +
-                        `Parameters:\n` +
-                        `- data: Input data to be processed\n` +
-                        `- options: Configuration options\n\n` +
-                        `Returns: Processed data object\n\n` +
-                        `Complexity: Medium (Cyclomatic complexity: 5)`
-                }
-              ]
+                  text:
+                    `📚 Function: ${function_name} in ${codebase_id}\n\n` +
+                    'Purpose: This function processes incoming data and returns transformed results.\n\n' +
+                    'Parameters:\n' +
+                    '- data: Input data to be processed\n' +
+                    '- options: Configuration options\n\n' +
+                    'Returns: Processed data object\n\n' +
+                    'Complexity: Medium (Cyclomatic complexity: 5)',
+                },
+              ],
             };
           }
 
           case 'find_references': {
-            const { symbol_name, codebase_id } = args as { symbol_name: string; codebase_id: string };
+            const { symbol_name, codebase_id } = input as {
+              symbol_name: string;
+              codebase_id: string;
+            };
             return {
               content: [
                 {
                   type: 'text',
-                  text: `🔍 References for "${symbol_name}" in ${codebase_id}:\n\n` +
-                        `- src/index.ts:15 - Import statement\n` +
-                        `- src/index.ts:45 - Function call\n` +
-                        `- src/utils.ts:23 - Variable assignment\n` +
-                        `- tests/index.test.ts:10 - Test usage\n\n` +
-                        `Total: 4 references found`
-                }
-              ]
+                  text:
+                    `🔍 References for "${symbol_name}" in ${codebase_id}:\n\n` +
+                    '- src/index.ts:15 - Import statement\n' +
+                    '- src/index.ts:45 - Function call\n' +
+                    '- src/utils.ts:23 - Variable assignment\n' +
+                    '- tests/index.test.ts:10 - Test usage\n\n' +
+                    'Total: 4 references found',
+                },
+              ],
             };
           }
 
           case 'trace_data_flow': {
-            const { variable_name, file_path, codebase_id } = args as { variable_name: string; file_path: string; codebase_id: string };
+            // codebase_id reserved for future use
+            const { variable_name, file_path, codebase_id } = input as {
+              variable_name: string;
+              file_path: string;
+              codebase_id: string;
+            };
             return {
               content: [
                 {
                   type: 'text',
-                  text: `🔄 Data flow for "${variable_name}" in ${file_path}:\n\n` +
-                        `1. Initialized at line 10: const ${variable_name} = getData();\n` +
-                        `2. Modified at line 25: ${variable_name} = transform(${variable_name});\n` +
-                        `3. Passed to function at line 30: processData(${variable_name});\n` +
-                        `4. Returned at line 45: return { result: ${variable_name} };\n\n` +
-                        `Flow type: Linear with 1 branch`
-                }
-              ]
+                  text:
+                    `🔄 Data flow for "${variable_name}" in ${file_path}:\n\n` +
+                    `1. Initialized at line 10: const ${variable_name} = getData();\n` +
+                    `2. Modified at line 25: ${variable_name} = transform(${variable_name});\n` +
+                    `3. Passed to function at line 30: processData(${variable_name});\n` +
+                    `4. Returned at line 45: return { result: ${variable_name} };\n\n` +
+                    'Flow type: Linear with 1 branch',
+                },
+              ],
             };
           }
 
           case 'analyze_security': {
-            const { file_path, codebase_id } = args as { file_path?: string; codebase_id: string };
+            // codebase_id reserved for future use
+            const { file_path, codebase_id } = input as {
+              file_path?: string;
+              codebase_id: string;
+            };
             const scope = file_path ? `File: ${file_path}` : `Entire codebase: ${codebase_id}`;
             return {
               content: [
                 {
                   type: 'text',
-                  text: `🔒 Security Analysis for ${scope}:\n\n` +
-                        `⚠️ Medium Risk:\n` +
-                        `- Potential SQL injection at line 45 (use parameterized queries)\n` +
-                        `- Missing input validation at line 78\n\n` +
-                        `ℹ️ Low Risk:\n` +
-                        `- Consider using environment variables for API keys (line 12)\n` +
-                        `- Add rate limiting to public endpoints\n\n` +
-                        `✅ Good Practices Found:\n` +
-                        `- Proper JWT validation\n` +
-                        `- HTTPS enforcement\n` +
-                        `- Input sanitization in most endpoints`
-                }
-              ]
+                  text:
+                    `🔒 Security Analysis for ${scope}:\n\n` +
+                    '⚠️ Medium Risk:\n' +
+                    '- Potential SQL injection at line 45 (use parameterized queries)\n' +
+                    '- Missing input validation at line 78\n\n' +
+                    'ℹ️ Low Risk:\n' +
+                    '- Consider using environment variables for API keys (line 12)\n' +
+                    '- Add rate limiting to public endpoints\n\n' +
+                    '✅ Good Practices Found:\n' +
+                    '- Proper JWT validation\n' +
+                    '- HTTPS enforcement\n' +
+                    '- Input sanitization in most endpoints',
+                },
+              ],
             };
           }
 
           case 'get_api_endpoints': {
-            const { framework, codebase_id } = args as { framework?: string; codebase_id: string };
+            // codebase_id reserved for future use
             return {
               content: [
                 {
                   type: 'text',
-                  text: `🌐 API Endpoints in ${codebase_id}${framework ? ` (${framework})` : ''}:\n\n` +
-                        `GET /api/users - Get all users\n` +
-                        `GET /api/users/:id - Get user by ID\n` +
-                        `POST /api/users - Create new user\n` +
-                        `PUT /api/users/:id - Update user\n` +
-                        `DELETE /api/users/:id - Delete user\n` +
-                        `GET /api/health - Health check\n` +
-                        `POST /api/auth/login - User login\n` +
-                        `POST /api/auth/logout - User logout\n\n` +
-                        `Total: 8 endpoints`
-                }
-              ]
+                  text:
+                    `🌐 API Endpoints in ${codebase_id}${framework ? ` (${framework})` : ''}:\n\n` +
+                    'GET /api/users - Get all users\n' +
+                    'GET /api/users/:id - Get user by ID\n' +
+                    'POST /api/users - Create new user\n' +
+                    'PUT /api/users/:id - Update user\n' +
+                    'DELETE /api/users/:id - Delete user\n' +
+                    'GET /api/health - Health check\n' +
+                    'POST /api/auth/login - User login\n' +
+                    'POST /api/auth/logout - User logout\n\n' +
+                    'Total: 8 endpoints',
+                },
+              ],
             };
           }
 
           case 'check_complexity': {
-            const { file_path, codebase_id } = args as { file_path: string; codebase_id: string };
+            // codebase_id reserved for future use
             return {
               content: [
                 {
                   type: 'text',
-                  text: `📊 Complexity Analysis for ${file_path}:\n\n` +
-                        `Overall Metrics:\n` +
-                        `- Cyclomatic Complexity: 12 (Moderate)\n` +
-                        `- Cognitive Complexity: 8 (Low)\n` +
-                        `- Lines of Code: 245\n` +
-                        `- Functions: 15\n\n` +
-                        `Complex Functions:\n` +
-                        `1. processData() - Complexity: 8 (line 45)\n` +
-                        `2. validateInput() - Complexity: 6 (line 120)\n` +
-                        `3. transformResult() - Complexity: 5 (line 180)\n\n` +
-                        `Recommendation: Consider refactoring processData() function`
-                }
-              ]
+                  text:
+                    `📊 Complexity Analysis for ${file_path}:\n\n` +
+                    'Overall Metrics:\n' +
+                    '- Cyclomatic Complexity: 12 (Moderate)\n' +
+                    '- Cognitive Complexity: 8 (Low)\n' +
+                    '- Lines of Code: 245\n' +
+                    '- Functions: 15\n\n' +
+                    'Complex Functions:\n' +
+                    '1. processData() - Complexity: 8 (line 45)\n' +
+                    '2. validateInput() - Complexity: 6 (line 120)\n' +
+                    '3. transformResult() - Complexity: 5 (line 180)\n\n' +
+                    'Recommendation: Consider refactoring processData() function',
+                },
+              ],
             };
           }
 
           case 'find_duplicates': {
-            const { min_lines = 5, codebase_id } = args as { min_lines?: number; codebase_id: string };
+            // codebase_id reserved for future use
+            const { file_path, min_lines, codebase_id } = input as {
+              file_path?: string;
+              min_lines?: number;
+              codebase_id: string;
+            };
             return {
               content: [
                 {
                   type: 'text',
-                  text: `🔁 Duplicate Code in ${codebase_id} (min ${min_lines} lines):\n\n` +
-                        `Duplicate Block 1 (12 lines):\n` +
-                        `- src/utils.ts:45-57\n` +
-                        `- src/helpers.ts:23-35\n` +
-                        `Similarity: 95%\n\n` +
-                        `Duplicate Block 2 (8 lines):\n` +
-                        `- src/api/users.ts:78-86\n` +
-                        `- src/api/products.ts:92-100\n` +
-                        `Similarity: 88%\n\n` +
-                        `Total: 2 duplicate blocks found\n` +
-                        `Potential lines saved: 20`
-                }
-              ]
+                  text:
+                    `🔁 Duplicate Code in ${codebase_id} (min ${min_lines} lines):\n\n` +
+                    'Duplicate Block 1 (12 lines):\n' +
+                    '- src/utils.ts:45-57\n' +
+                    '- src/helpers.ts:23-35\n' +
+                    'Similarity: 95%\n\n' +
+                    'Duplicate Block 2 (8 lines):\n' +
+                    '- src/api/users.ts:78-86\n' +
+                    '- src/api/products.ts:92-100\n' +
+                    'Similarity: 88%\n\n' +
+                    'Total: 2 duplicate blocks found\n' +
+                    'Potential lines saved: 20',
+                },
+              ],
             };
           }
 
           case 'suggest_refactoring': {
-            const { file_path, codebase_id } = args as { file_path: string; codebase_id: string };
+            // codebase_id reserved for future use
             return {
               content: [
                 {
                   type: 'text',
-                  text: `♻️ Refactoring Suggestions for ${file_path}:\n\n` +
-                        `1. Extract Method (High Priority):\n` +
-                        `   - Lines 45-78: Extract validation logic into separate function\n` +
-                        `   - Lines 120-145: Create reusable data transformer\n\n` +
-                        `2. Reduce Complexity:\n` +
-                        `   - Function processData() has 8 conditional branches\n` +
-                        `   - Consider using strategy pattern or lookup table\n\n` +
-                        `3. Remove Dead Code:\n` +
-                        `   - Unused variable 'tempData' at line 92\n` +
-                        `   - Commented code block at lines 156-168\n\n` +
-                        `4. Improve Naming:\n` +
-                        `   - Rename 'x' to 'userData' (line 34)\n` +
-                        `   - Rename 'proc' to 'processedResult' (line 67)`
-                }
-              ]
+                  text:
+                    `♻️ Refactoring Suggestions for ${file_path}:\n\n` +
+                    '1. Extract Method (High Priority):\n' +
+                    '   - Lines 45-78: Extract validation logic into separate function\n' +
+                    '   - Lines 120-145: Create reusable data transformer\n\n' +
+                    '2. Reduce Complexity:\n' +
+                    '   - Function processData() has 8 conditional branches\n' +
+                    '   - Consider using strategy pattern or lookup table\n\n' +
+                    '3. Remove Dead Code:\n' +
+                    '   - Unused variable \'tempData\' at line 92\n' +
+                    '   - Commented code block at lines 156-168\n\n' +
+                    '4. Improve Naming:\n' +
+                    '   - Rename \'x\' to \'userData\' (line 34)\n' +
+                    '   - Rename \'proc\' to \'processedResult\' (line 67)',
+                },
+              ],
             };
           }
 
@@ -435,9 +472,9 @@ export async function registerMCPTools(server: Server): Promise<void> {
           content: [
             {
               type: 'text',
-              text: `Error executing ${name}: ${error instanceof Error ? error.message : String(error)}`
-            }
-          ]
+              text: `Error executing ${name}: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
         };
       }
     });

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Kubernetes Deployment
 
-This guide covers deploying the Code Intelligence MCP Server on Kubernetes clusters. Kubernetes provides orchestration, scaling, and high availability for production deployments.
+**Production-Ready Kubernetes Deployment** for CodeSight v0.1.0 - Enterprise MCP Server with hybrid TypeScript/Rust architecture, comprehensive monitoring, and multi-language support. This guide covers deploying the Code Intelligence MCP Server on Kubernetes clusters with enterprise-grade features including PostgreSQL, Redis, Prometheus, Grafana, and comprehensive security configurations.
 
 ## Prerequisites
 
