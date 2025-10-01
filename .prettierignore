@@ -1,0 +1,107 @@
+# Prettier ignore file for CodeSight Project
+# Generated: 2025-01-27
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+*.d.ts
+*.min.js
+*.min.css
+
+# Native modules
+*.node
+codesight-native.node
+**/*.node
+
+# Rust outputs
+rust-core/target/
+rust-core/**/*.rs.bk
+**/target/
+
+# Cache and temporary files
+.cache/
+.temp/
+.tmp/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Environment and configuration files
+.env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation
+docs/
+*.md
+README*
+CHANGELOG*
+LICENSE*
+
+# Package manager lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Tool configuration files
+vite.config.ts
+webpack.config.js
+rollup.config.js
+eslint.config.js
+.eslintrc*
+.prettierrc*
+
+# Test data
+test-data/
+fixtures/
+mocks/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.docker/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Coverage reports
+coverage/
+.nyc_output/
+htmlcov/
+lcov.info
+
+# Temporary build files
+*.tsbuildinfo

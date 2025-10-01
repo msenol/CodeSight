@@ -1,0 +1,281 @@
+name: Repository Branch Protection
+
+# Branch Protection Rules for CodeSight Repository
+# This configuration protects the main branch and ensures code quality
+
+branches:
+  main:
+    # Required status checks before merging
+    required_status_checks:
+      # Contexts that must pass before PR can be merged
+      contexts:
+        - CI / Build and Test (ubuntu-latest, 20, node)
+        - CI / Build and Test (ubuntu-latest, 20, rust)
+        - CI / Security Scan (CodeQL)
+        - CI / Rust Format Check
+        - CI / TypeScript Format Check
+        - CI / Build and Test (windows-latest, 20, node)
+        - CI / Build and Test (macos-latest, 20, node)
+
+      # Require branches to be up to date before merging
+      strict: true
+
+      # Require new status checks to pass for PRs
+      require_new_status_checks: true
+
+    # Require pull request reviews before merging
+    required_pull_request_reviews:
+      # Number of required approvals
+      required_approving_review_count: 1
+
+      # Dismiss stale pull request approvals when new commits are pushed
+      dismiss_stale_reviews: true
+
+      # Require review from Code Owners
+      require_code_owner_reviews: true
+
+      # Restr who can dismiss pull request reviews
+      dismissal_restrictions:
+        users: []
+        teams: []
+
+      # Allow users to approve their own PRs
+      allow_self_approval: false
+
+    # Enforce admin restrictions
+    enforce_admins: true
+
+    # Restrict who can push to this branch
+    restrictions:
+      users: []
+      teams: []
+      apps: []
+
+    # Require conversation resolution before merging
+    require_conversation_resolution: true
+
+    # Require linear history
+    require_linear_history: true
+
+    # Prevent force pushes
+    allow_force_pushes: false
+    allow_deletions: false
+
+    # Require signed commits
+    require_signed_commits: false
+
+    # Block force pushes for matching branches
+    block_force_pushes: true
+
+# Feature branch protection
+feature-branches:
+  pattern: 'feature/*'
+  protections:
+    required_status_checks:
+      contexts:
+        - CI / Build and Test (ubuntu-latest, 20, node)
+        - CI / TypeScript Format Check
+      strict: false
+      require_new_status_checks: true
+
+    required_pull_request_reviews:
+      required_approving_review_count: 1
+      dismiss_stale_reviews: false
+      require_code_owner_reviews: false
+      allow_self_approval: true
+
+    enforce_admins: false
+    restrictions:
+      users: []
+      teams: []
+
+    require_conversation_resolution: false
+    require_linear_history: false
+    allow_force_pushes: true
+    allow_deletions: true
+
+# Hotfix branch protection
+hotfix-branches:
+  pattern: 'hotfix/*'
+  protections:
+    required_status_checks:
+      contexts:
+        - CI / Build and Test (ubuntu-latest, 20, node)
+        - CI / Security Scan (CodeQL)
+        - CI / TypeScript Format Check
+      strict: true
+      require_new_status_checks: true
+
+    required_pull_request_reviews:
+      required_approving_review_count: 2
+      dismiss_stale_reviews: false
+      require_code_owner_reviews: true
+      allow_self_approval: false
+
+    enforce_admins: true
+    restrictions:
+      users: []
+      teams: []
+
+    require_conversation_resolution: true
+    require_linear_history: true
+    allow_force_pushes: false
+    allow_deletions: false
+
+# Release branch protection
+release-branches:
+  pattern: 'release/*'
+  protections:
+    required_status_checks:
+      contexts:
+        - CI / Build and Test (ubuntu-latest, 20, node)
+        - CI / Build and Test (ubuntu-latest, 20, rust)
+        - CI / Security Scan (CodeQL)
+        - CI / Rust Format Check
+        - CI / TypeScript Format Check
+      strict: true
+      require_new_status_checks: true
+
+    required_pull_request_reviews:
+      required_approving_review_count: 2
+      dismiss_stale_reviews: true
+      require_code_owner_reviews: true
+      allow_self_approval: false
+
+    enforce_admins: true
+    restrictions:
+      users: []
+      teams: []
+
+    require_conversation_resolution: true
+    require_linear_history: true
+    allow_force_pushes: false
+    allow_deletions: false
+
+# Default branch protection settings
+default-branch: main
+
+# Branch protection summary
+protection-summary:
+  - Branch: main
+    Status Checks: Required (7 checks)
+    PR Reviews: Required (1 approval, code owners, no self-approval)
+    Admin Enforced: Yes
+    Force Pushes: Blocked
+    Deletions: Blocked
+    Conversation Resolution: Required
+    Linear History: Required
+
+  - Branch: feature/*
+    Status Checks: Required (2 checks)
+    PR Reviews: Required (1 approval, no code owners, self-allowed)
+    Admin Enforced: No
+    Force Pushes: Allowed
+    Deletions: Allowed
+
+  - Branch: hotfix/*
+    Status Checks: Required (3 checks)
+    PR Reviews: Required (2 approvals, code owners, no self-approval)
+    Admin Enforced: Yes
+    Force Pushes: Blocked
+    Deletions: Blocked
+
+  - Branch: release/*
+    Status Checks: Required (5 checks)
+    PR Reviews: Required (2 approvals, code owners, no self-approval)
+    Admin Enforced: Yes
+    Force Pushes: Blocked
+    Deletions: Blocked
+
+# Code Owners configuration reference
+code-owners:
+  # Owners for specific directories
+  'typescript-mcp/src/tools/*': '@msenol'
+  'typescript-mcp/src/services/*': '@msenol'
+  'rust-core/crates/*': '@msenol'
+  'api/*': '@msenol'
+  'src/*': '@msenol'
+
+  # Default owners
+  '*': '@msenol'
+
+# Branch naming conventions
+branch-naming:
+  - pattern: 'feature/*'
+    description: 'New features and enhancements'
+    example: 'feature/user-authentication'
+
+  - pattern: 'bugfix/*'
+    description: 'Bug fixes and corrections'
+    example: 'bugfix/login-validation'
+
+  - pattern: 'hotfix/*'
+    description: 'Critical fixes for production issues'
+    example: 'hotfix/security-vulnerability'
+
+  - pattern: 'release/*'
+    description: 'Release preparation and stabilization'
+    example: 'release/v1.0.0'
+
+  - pattern: 'docs/*'
+    description: 'Documentation updates'
+    example: 'docs/api-endpoints'
+
+  - pattern: 'test/*'
+    description: 'Test improvements and additions'
+    example: 'test/integration-coverage'
+
+# Protected file patterns
+protected-files:
+  - '.github/workflows/'
+  - 'typescript-mcp/src/'
+  - 'rust-core/src/'
+  - 'api/src/'
+  - 'src/'
+  - 'README.md'
+  - 'CLAUDE.md'
+  - 'CONTRIBUTING.md'
+  - 'package.json'
+  - 'Cargo.toml'
+  - 'docker-compose.yml'
+
+# Automated checks
+automated-checks:
+  # Prevent merging if PR has unresolved conversations
+  block_unresolved_conversations: true
+
+  # Prevent merging if PR has no description
+  require_pr_description: true
+
+  # Prevent merging if PR title doesn't follow conventional commits
+  require_conventional_commits: true
+
+  # Prevent merging if PR is too large
+  max_pr_changes: 500
+
+  # Prevent merging if PR has too many files
+  max_pr_files: 50
+
+  # Require PRs to have labels
+  require_pr_labels: true
+
+  # Automatically close stale PRs and issues
+  auto_close_stale:
+    days_until_stale: 30
+    days_until_close: 7
+    stale_message: 'This has been marked as stale due to inactivity'
+    close_message: 'This has been closed due to inactivity'
+
+# Security settings
+security-settings:
+  # Require secret scanning
+  secret_scanning: true
+
+  # Require dependency review
+  dependency_review: true
+
+  # Require code scanning alerts
+  code_scanning_alerts: true
+
+  # Prevent token leaks
+  token_leak_protection: true

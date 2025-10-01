@@ -1,0 +1,36 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Test specific configuration
+    "noEmit": true,
+    "isolatedModules": false,
+
+    // More permissive type checking for tests
+    "strict": false,
+    "noImplicitAny": true,
+    "strictNullChecks": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "allowUnusedLabels": true,
+    "allowUnreachableCode": true,
+
+    // Test specific type definitions
+    "types": ["node", "vitest/globals", "@types/jest", "@vitest/coverage-v8"],
+
+    // Source maps for debugging
+    "sourceMap": true,
+    "inlineSourceMap": true,
+    "inlineSources": true
+  },
+  "include": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.tsx",
+    "**/*.spec.tsx",
+    "tests/**/*",
+    "typescript-mcp/tests/**/*"
+  ],
+  "exclude": ["node_modules", "dist", "build", "coverage"]
+}

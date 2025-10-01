@@ -1,0 +1,92 @@
+name: 📚 Documentation
+description: Report issues or suggest improvements for documentation
+title: '[DOCS] '
+labels: ['documentation']
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the CodeSight documentation! Please provide details about the documentation issue or suggestion.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation are you referring to?
+      options:
+        - README.md
+        - CONTRIBUTING.md
+        - API Documentation
+        - Installation Guide
+        - User Guide
+        - Developer Guide
+        - Security Policy
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What type of documentation issue is this?
+      options:
+        - Error/Inaccuracy
+        - Unclear/Confusing
+        - Missing Information
+        - Outdated Content
+        - Formatting Issue
+        - Broken Links
+        - New Content Suggestion
+        - Translation Issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where in the documentation is the issue?
+      placeholder: |
+        File: README.md
+        Section: Installation
+        Link: https://github.com/msenol/CodeSight/blob/main/README.md#installation
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please describe the issue or suggestion in detail
+      placeholder: The documentation says X but should say Y...
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: Suggested Fix
+      description: If you have suggestions for how to fix this, please describe them
+      placeholder: You could fix this by updating the section to say...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context or screenshots about the documentation issue
+      placeholder: Additional information...
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have checked the current documentation for this information
+          required: true
+        - label: I have provided specific details about the issue location
+          required: true
+        - label: I am willing to help improve the documentation if needed
+          required: false
