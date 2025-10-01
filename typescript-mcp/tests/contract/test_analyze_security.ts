@@ -5,11 +5,11 @@ import { Vulnerability } from '../../src/types/mcp';
 
 /**
  * Contract Test for analyze_security MCP Tool
- * 
+ *
  * This test validates that the analyze_security tool implementation
  * conforms to the MCP Tools Contract specification defined in:
  * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
- * 
+ *
  * Test Coverage:
  * - Request/Response schema validation
  * - Required field validation
@@ -36,13 +36,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
   describe('Request Schema Validation', () => {
     it('should accept valid request with required fields only', async () => {
       const validRequest = {
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -52,13 +52,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequestWithOptionals = {
         codebase_id: testCodebaseId,
         patterns: ['sql_injection', 'xss', 'csrf'],
-        severity_threshold: 'medium'
+        severity_threshold: 'medium',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequestWithOptionals
+        payload: validRequestWithOptionals,
       });
 
       expect(response.statusCode).toBe(200);
@@ -68,13 +68,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequestSinglePattern = {
         codebase_id: testCodebaseId,
         patterns: ['sql_injection'],
-        severity_threshold: 'high'
+        severity_threshold: 'high',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequestSinglePattern
+        payload: validRequestSinglePattern,
       });
 
       expect(response.statusCode).toBe(200);
@@ -84,13 +84,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequestAllPatterns = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'low'
+        severity_threshold: 'low',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequestAllPatterns
+        payload: validRequestAllPatterns,
       });
 
       expect(response.statusCode).toBe(200);
@@ -102,7 +102,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -112,13 +112,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
     it('should reject request with invalid codebase_id format', async () => {
       const invalidRequest = {
-        codebase_id: 'invalid-uuid-format'
+        codebase_id: 'invalid-uuid-format',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -129,13 +129,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should reject request with invalid patterns enum', async () => {
       const invalidRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['invalid_pattern']
+        patterns: ['invalid_pattern'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -146,13 +146,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should reject request with invalid severity_threshold enum', async () => {
       const invalidRequest = {
         codebase_id: testCodebaseId,
-        severity_threshold: 'invalid_severity'
+        severity_threshold: 'invalid_severity',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -163,13 +163,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should reject request with non-array patterns', async () => {
       const invalidRequest = {
         codebase_id: testCodebaseId,
-        patterns: 'sql_injection'
+        patterns: 'sql_injection',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -178,13 +178,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should reject request with empty patterns array', async () => {
       const invalidRequest = {
         codebase_id: testCodebaseId,
-        patterns: []
+        patterns: [],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -196,13 +196,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequest = {
         codebase_id: testCodebaseId,
         patterns: ['sql_injection', 'xss'],
-        severity_threshold: 'low'
+        severity_threshold: 'low',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -227,13 +227,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequest = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'low'
+        severity_threshold: 'low',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -263,7 +263,14 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
         expect(typeof vulnerability.code_snippet).toBe('string');
 
         // Validate type enum
-        const validTypes = ['sql_injection', 'xss', 'csrf', 'path_traversal', 'command_injection', 'other'];
+        const validTypes = [
+          'sql_injection',
+          'xss',
+          'csrf',
+          'path_traversal',
+          'command_injection',
+          'other',
+        ];
         expect(validTypes).toContain(vulnerability.type);
 
         // Validate severity enum
@@ -278,7 +285,9 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
         expect(vulnerability.line_number).toBeGreaterThan(0);
 
         // Validate file path format
-        expect(vulnerability.file_path).toMatch(/\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/);
+        expect(vulnerability.file_path).toMatch(
+          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+        );
 
         // Validate content is not empty
         expect(vulnerability.description.length).toBeGreaterThan(0);
@@ -290,13 +299,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should validate summary statistics', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['all']
+        patterns: ['all'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -308,10 +317,10 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
       // Validate by_severity breakdown
       expect(typeof summary.by_severity).toBe('object');
-      
+
       const severityKeys = Object.keys(summary.by_severity);
       const validSeverities = ['low', 'medium', 'high', 'critical'];
-      
+
       severityKeys.forEach(severity => {
         expect(validSeverities).toContain(severity);
         expect(typeof summary.by_severity[severity]).toBe('number');
@@ -319,7 +328,10 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       });
 
       // Validate severity counts sum to total
-      const severitySum = Object.values(summary.by_severity).reduce((sum: number, count: any) => sum + count, 0);
+      const severitySum = Object.values(summary.by_severity).reduce(
+        (sum: number, count: any) => sum + count,
+        0,
+      );
       expect(severitySum).toBe(summary.total);
     });
 
@@ -327,22 +339,24 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const cleanCodebaseId = '550e8400-e29b-41d4-a716-446655440099';
       const validRequest = {
         codebase_id: cleanCodebaseId,
-        patterns: ['sql_injection']
+        patterns: ['sql_injection'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect([200, 404]).toContain(response.statusCode);
-      
+
       if (response.statusCode === 200) {
         const body = JSON.parse(response.body);
         expect(body.vulnerabilities).toEqual([]);
         expect(body.summary.total).toBe(0);
-        expect(Object.values(body.summary.by_severity).every((count: any) => count === 0)).toBe(true);
+        expect(Object.values(body.summary.by_severity).every((count: any) => count === 0)).toBe(
+          true,
+        );
       }
     });
   });
@@ -350,13 +364,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
   describe('Optional Parameter Behavior', () => {
     it('should use default values for optional parameters', async () => {
       const requestWithDefaults = {
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: requestWithDefaults
+        payload: requestWithDefaults,
       });
 
       expect(response.statusCode).toBe(200);
@@ -371,13 +385,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should filter by specific patterns', async () => {
       const requestWithSpecificPatterns = {
         codebase_id: testCodebaseId,
-        patterns: ['sql_injection']
+        patterns: ['sql_injection'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: requestWithSpecificPatterns
+        payload: requestWithSpecificPatterns,
       });
 
       expect(response.statusCode).toBe(200);
@@ -393,13 +407,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const requestWithHighSeverity = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'high'
+        severity_threshold: 'high',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: requestWithHighSeverity
+        payload: requestWithHighSeverity,
       });
 
       expect(response.statusCode).toBe(200);
@@ -416,13 +430,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const requestWithMediumSeverity = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'medium'
+        severity_threshold: 'medium',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: requestWithMediumSeverity
+        payload: requestWithMediumSeverity,
       });
 
       expect(response.statusCode).toBe(200);
@@ -438,13 +452,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should handle multiple specific patterns', async () => {
       const requestWithMultiplePatterns = {
         codebase_id: testCodebaseId,
-        patterns: ['sql_injection', 'xss', 'csrf']
+        patterns: ['sql_injection', 'xss', 'csrf'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: requestWithMultiplePatterns
+        payload: requestWithMultiplePatterns,
       });
 
       expect(response.statusCode).toBe(200);
@@ -462,13 +476,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should return 404 for non-existent codebase', async () => {
       const nonExistentCodebaseId = '00000000-0000-0000-0000-000000000000';
       const validRequest = {
-        codebase_id: nonExistentCodebaseId
+        codebase_id: nonExistentCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(404);
@@ -478,13 +492,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
     it('should handle malformed UUID gracefully', async () => {
       const malformedRequest = {
-        codebase_id: 'not-a-uuid'
+        codebase_id: 'not-a-uuid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: malformedRequest
+        payload: malformedRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -498,23 +512,32 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequest = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'low'
+        severity_threshold: 'low',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
 
       if (body.vulnerabilities.length > 0) {
-        const vulnerabilityTypes = new Set(body.vulnerabilities.map((vuln: Vulnerability) => vuln.type));
-        
+        const vulnerabilityTypes = new Set(
+          body.vulnerabilities.map((vuln: Vulnerability) => vuln.type),
+        );
+
         // Should only contain valid vulnerability types
-        const validTypes = ['sql_injection', 'xss', 'csrf', 'path_traversal', 'command_injection', 'other'];
+        const validTypes = [
+          'sql_injection',
+          'xss',
+          'csrf',
+          'path_traversal',
+          'command_injection',
+          'other',
+        ];
         vulnerabilityTypes.forEach(type => {
           expect(validTypes).toContain(type);
         });
@@ -524,13 +547,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should provide meaningful descriptions and recommendations', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['sql_injection', 'xss']
+        patterns: ['sql_injection', 'xss'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -540,11 +563,11 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
         // Description should be meaningful
         expect(vuln.description.length).toBeGreaterThan(10);
         expect(vuln.description).not.toBe('vulnerability found');
-        
+
         // Recommendation should be actionable
         expect(vuln.recommendation.length).toBeGreaterThan(10);
         expect(vuln.recommendation).not.toBe('fix this issue');
-        
+
         // Code snippet should contain actual code
         expect(vuln.code_snippet.length).toBeGreaterThan(5);
         expect(vuln.code_snippet.trim()).not.toBe('');
@@ -554,13 +577,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should assign appropriate severity levels', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['all']
+        patterns: ['all'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -571,7 +594,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
         if (vuln.type === 'sql_injection' || vuln.type === 'command_injection') {
           expect(['medium', 'high', 'critical']).toContain(vuln.severity);
         }
-        
+
         if (vuln.type === 'xss') {
           expect(['low', 'medium', 'high']).toContain(vuln.severity);
         }
@@ -581,13 +604,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should provide relevant code snippets', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['sql_injection']
+        patterns: ['sql_injection'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -596,17 +619,18 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       body.vulnerabilities.forEach((vuln: Vulnerability) => {
         // Code snippet should contain relevant code
         expect(vuln.code_snippet).not.toMatch(/^\s*$/);
-        
+
         // For SQL injection, might contain SQL-related keywords
         if (vuln.type === 'sql_injection') {
           const snippet = vuln.code_snippet.toLowerCase();
-          const hasSqlKeywords = snippet.includes('select') || 
-                                snippet.includes('insert') || 
-                                snippet.includes('update') || 
-                                snippet.includes('delete') ||
-                                snippet.includes('query') ||
-                                snippet.includes('sql');
-          
+void 0; // hasSqlKeywords reserved for future use
+            snippet.includes('select') ||
+            snippet.includes('insert') ||
+            snippet.includes('update') ||
+            snippet.includes('delete') ||
+            snippet.includes('query') ||
+            snippet.includes('sql');
+
           // Not all SQL injections will have these keywords, but many will
           // This is a heuristic check
         }
@@ -617,13 +641,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequest = {
         codebase_id: testCodebaseId,
         patterns: ['sql_injection'],
-        severity_threshold: 'medium'
+        severity_threshold: 'medium',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -632,12 +656,11 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       // Should not flag parameterized queries or prepared statements as vulnerabilities
       body.vulnerabilities.forEach((vuln: Vulnerability) => {
         const snippet = vuln.code_snippet.toLowerCase();
-        
+
         // These patterns should generally be safe
-        const hasSafePatterns = snippet.includes('prepared') || 
-                               snippet.includes('parameter') ||
-                               snippet.includes('bind');
-        
+        const hasSafePatterns =
+          snippet.includes('prepared') || snippet.includes('parameter') || snippet.includes('bind');
+
         // If safe patterns are present, severity should not be critical
         if (hasSafePatterns) {
           expect(vuln.severity).not.toBe('critical');
@@ -651,19 +674,19 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const validRequest = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'low'
+        severity_threshold: 'low',
       };
 
       const startTime = Date.now();
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
       const endTime = Date.now();
 
       expect(response.statusCode).toBe(200);
-      
+
       // Should complete within 10 seconds for comprehensive security analysis
       const executionTime = endTime - startTime;
       expect(executionTime).toBeLessThan(10000);
@@ -672,18 +695,18 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should handle large codebases efficiently', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['all']
+        patterns: ['all'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      
+
       // Should handle large numbers of vulnerabilities without timeout
       expect(body.summary.total).toBeGreaterThanOrEqual(0);
       expect(body.vulnerabilities.length).toBeLessThanOrEqual(10000); // Reasonable limit
@@ -695,17 +718,17 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const cleanCodebaseId = '550e8400-e29b-41d4-a716-446655440098';
       const validRequest = {
         codebase_id: cleanCodebaseId,
-        patterns: ['all']
+        patterns: ['all'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect([200, 404]).toContain(response.statusCode);
-      
+
       if (response.statusCode === 200) {
         const body = JSON.parse(response.body);
         expect(body.vulnerabilities).toEqual([]);
@@ -716,13 +739,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
     it('should handle mixed language codebases', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
-        patterns: ['all']
+        patterns: ['all'],
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -734,9 +757,9 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
           body.vulnerabilities.map((vuln: Vulnerability) => {
             const match = vuln.file_path.match(/\.(\w+)$/);
             return match ? match[1] : '';
-          })
+          }),
         );
-        
+
         // Should support multiple file types
         expect(fileExtensions.size).toBeGreaterThanOrEqual(1);
       }
@@ -746,13 +769,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const criticalRequest = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
-        severity_threshold: 'critical'
+        severity_threshold: 'critical',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/analyze_security',
-        payload: criticalRequest
+        payload: criticalRequest,
       });
 
       expect(response.statusCode).toBe(200);

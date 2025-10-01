@@ -5,11 +5,11 @@ import { Reference } from '../../src/types/mcp';
 
 /**
  * Contract Test for find_references MCP Tool
- * 
+ *
  * This test validates that the find_references tool implementation
  * conforms to the MCP Tools Contract specification defined in:
  * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
- * 
+ *
  * Test Coverage:
  * - Request/Response schema validation
  * - Required field validation
@@ -35,13 +35,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
   describe('Request Schema Validation', () => {
     it('should accept valid request with required fields only', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -51,13 +51,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const validRequestWithOptionals = {
         entity_id: testEntityId,
         include_tests: true,
-        include_indirect: false
+        include_indirect: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequestWithOptionals
+        payload: validRequestWithOptionals,
       });
 
       expect(response.statusCode).toBe(200);
@@ -67,13 +67,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const validRequestWithFalseOptionals = {
         entity_id: testEntityId,
         include_tests: false,
-        include_indirect: true
+        include_indirect: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequestWithFalseOptionals
+        payload: validRequestWithFalseOptionals,
       });
 
       expect(response.statusCode).toBe(200);
@@ -85,7 +85,7 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -95,13 +95,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
     it('should reject request with invalid entity_id format', async () => {
       const invalidRequest = {
-        entity_id: 'invalid-uuid-format'
+        entity_id: 'invalid-uuid-format',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -112,13 +112,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should reject request with invalid include_tests type', async () => {
       const invalidRequest = {
         entity_id: testEntityId,
-        include_tests: 'invalid'
+        include_tests: 'invalid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -127,13 +127,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should reject request with invalid include_indirect type', async () => {
       const invalidRequest = {
         entity_id: testEntityId,
-        include_indirect: 'invalid'
+        include_indirect: 'invalid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -145,13 +145,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const validRequest = {
         entity_id: testEntityId,
         include_tests: true,
-        include_indirect: false
+        include_indirect: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -173,13 +173,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should return Reference objects conforming to schema', async () => {
       const validRequest = {
         entity_id: testEntityId,
-        include_tests: true
+        include_tests: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -214,7 +214,9 @@ describe('MCP Tool: find_references - Contract Tests', () => {
         expect(reference.line_number).toBeGreaterThan(0);
 
         // Validate file path format
-        expect(reference.file_path).toMatch(/\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/);
+        expect(reference.file_path).toMatch(
+          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+        );
 
         // Validate context is not empty
         expect(reference.context.length).toBeGreaterThan(0);
@@ -224,17 +226,17 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should handle empty results gracefully', async () => {
       const orphanEntityId = '00000000-0000-0000-0000-000000000001';
       const validRequest = {
-        entity_id: orphanEntityId
+        entity_id: orphanEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect([200, 404]).toContain(response.statusCode);
-      
+
       if (response.statusCode === 200) {
         const body = JSON.parse(response.body);
         expect(body.references).toEqual([]);
@@ -246,13 +248,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
   describe('Optional Parameter Behavior', () => {
     it('should use default values for optional parameters', async () => {
       const requestWithDefaults = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: requestWithDefaults
+        payload: requestWithDefaults,
       });
 
       expect(response.statusCode).toBe(200);
@@ -267,13 +269,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should exclude test references when include_tests is false', async () => {
       const requestWithoutTests = {
         entity_id: testEntityId,
-        include_tests: false
+        include_tests: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: requestWithoutTests
+        payload: requestWithoutTests,
       });
 
       expect(response.statusCode).toBe(200);
@@ -281,7 +283,9 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
       // Should not include references from test files
       body.references.forEach((ref: Reference) => {
-        expect(ref.file_path).not.toMatch(/\.(test|spec)\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/);
+        expect(ref.file_path).not.toMatch(
+          /\.(test|spec)\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+        );
         expect(ref.file_path).not.toMatch(/\/tests?\//i);
         expect(ref.file_path).not.toMatch(/\/test\//i);
         expect(ref.file_path).not.toMatch(/\/spec\//i);
@@ -291,13 +295,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should include indirect references when include_indirect is true', async () => {
       const requestWithIndirect = {
         entity_id: testEntityId,
-        include_indirect: true
+        include_indirect: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: requestWithIndirect
+        payload: requestWithIndirect,
       });
 
       expect(response.statusCode).toBe(200);
@@ -311,13 +315,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should exclude indirect references when include_indirect is false', async () => {
       const requestWithoutIndirect = {
         entity_id: testEntityId,
-        include_indirect: false
+        include_indirect: false,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: requestWithoutIndirect
+        payload: requestWithoutIndirect,
       });
 
       expect(response.statusCode).toBe(200);
@@ -333,13 +337,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
     it('should return 404 for non-existent entity', async () => {
       const nonExistentEntityId = '00000000-0000-0000-0000-000000000000';
       const validRequest = {
-        entity_id: nonExistentEntityId
+        entity_id: nonExistentEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(404);
@@ -349,13 +353,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
     it('should handle malformed UUID gracefully', async () => {
       const malformedRequest = {
-        entity_id: 'not-a-uuid'
+        entity_id: 'not-a-uuid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: malformedRequest
+        payload: malformedRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -369,13 +373,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const validRequest = {
         entity_id: testEntityId,
         include_tests: true,
-        include_indirect: true
+        include_indirect: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -383,7 +387,7 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
       if (body.references.length > 0) {
         const referenceTypes = new Set(body.references.map((ref: Reference) => ref.reference_type));
-        
+
         // Should only contain valid reference types
         const validTypes = ['call', 'import', 'extend', 'implement', 'instantiate'];
         referenceTypes.forEach(type => {
@@ -394,13 +398,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
     it('should provide meaningful context for each reference', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -410,7 +414,7 @@ describe('MCP Tool: find_references - Contract Tests', () => {
         // Context should contain meaningful code snippet
         expect(ref.context.length).toBeGreaterThan(5);
         expect(ref.context.trim()).not.toBe('');
-        
+
         // Context should not be just whitespace
         expect(ref.context.trim().length).toBeGreaterThan(0);
       });
@@ -418,13 +422,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
     it('should not include self-references', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -438,13 +442,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
     it('should return references sorted by relevance or file path', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -454,14 +458,14 @@ describe('MCP Tool: find_references - Contract Tests', () => {
         // References should be sorted (either by file path or by some relevance metric)
         const filePaths = body.references.map((ref: Reference) => ref.file_path);
         const sortedFilePaths = [...filePaths].sort();
-        
+
         // Either sorted by file path or by some other consistent ordering
         const isSortedByPath = JSON.stringify(filePaths) === JSON.stringify(sortedFilePaths);
         const hasConsistentOrdering = filePaths.every((path, index) => {
-          if (index === 0) return true;
+          if (index === 0) {return true;}
           return path >= filePaths[index - 1] || true; // Allow any consistent ordering
         });
-        
+
         expect(isSortedByPath || hasConsistentOrdering).toBe(true);
       }
     });
@@ -472,19 +476,19 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const validRequest = {
         entity_id: testEntityId,
         include_tests: true,
-        include_indirect: true
+        include_indirect: true,
       };
 
       const startTime = Date.now();
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
       const endTime = Date.now();
 
       expect(response.statusCode).toBe(200);
-      
+
       // Should complete within 2 seconds for reference search
       const executionTime = endTime - startTime;
       expect(executionTime).toBeLessThan(2000);
@@ -494,18 +498,18 @@ describe('MCP Tool: find_references - Contract Tests', () => {
       const validRequest = {
         entity_id: testEntityId,
         include_tests: true,
-        include_indirect: true
+        include_indirect: true,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      
+
       // Should handle large numbers of references without timeout
       expect(body.total_count).toBeGreaterThanOrEqual(0);
       expect(body.references.length).toBeLessThanOrEqual(1000); // Reasonable limit
@@ -515,13 +519,13 @@ describe('MCP Tool: find_references - Contract Tests', () => {
   describe('Edge Cases', () => {
     it('should handle entities in different languages', async () => {
       const validRequest = {
-        entity_id: testEntityId
+        entity_id: testEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -529,24 +533,26 @@ describe('MCP Tool: find_references - Contract Tests', () => {
 
       // Should handle cross-language references
       body.references.forEach((ref: Reference) => {
-        expect(ref.file_path).toMatch(/\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/);
+        expect(ref.file_path).toMatch(
+          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+        );
       });
     });
 
     it('should handle entities with no references', async () => {
       const isolatedEntityId = '550e8400-e29b-41d4-a716-446655440099';
       const validRequest = {
-        entity_id: isolatedEntityId
+        entity_id: isolatedEntityId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/find_references',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect([200, 404]).toContain(response.statusCode);
-      
+
       if (response.statusCode === 200) {
         const body = JSON.parse(response.body);
         expect(body.references).toEqual([]);

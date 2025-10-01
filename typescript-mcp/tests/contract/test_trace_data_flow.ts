@@ -5,11 +5,11 @@ import { DataFlowTrace } from '../../src/types/mcp';
 
 /**
  * Contract Test for trace_data_flow MCP Tool
- * 
+ *
  * This test validates that the trace_data_flow tool implementation
  * conforms to the MCP Tools Contract specification defined in:
  * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
- * 
+ *
  * Test Coverage:
  * - Request/Response schema validation
  * - Required field validation
@@ -37,13 +37,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'REST API /users',
         end_point: 'database table users',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -54,13 +54,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'API endpoint /api/users/create',
         end_point: 'PostgreSQL users table',
         codebase_id: testCodebaseId,
-        max_depth: 15
+        max_depth: 15,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequestWithOptionals
+        payload: validRequestWithOptionals,
       });
 
       expect(response.statusCode).toBe(200);
@@ -69,13 +69,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
     it('should accept request without codebase_id (optional)', async () => {
       const validRequestWithoutCodebase = {
         start_point: 'function getUserData',
-        end_point: 'Redis cache'
+        end_point: 'Redis cache',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequestWithoutCodebase
+        payload: validRequestWithoutCodebase,
       });
 
       expect(response.statusCode).toBe(200);
@@ -84,13 +84,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
     it('should reject request missing required start_point field', async () => {
       const invalidRequest = {
         end_point: 'database table users',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -101,13 +101,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
     it('should reject request missing required end_point field', async () => {
       const invalidRequest = {
         start_point: 'REST API /users',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -119,13 +119,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const invalidRequest = {
         start_point: 'REST API /users',
         end_point: 'database table users',
-        codebase_id: 'invalid-uuid-format'
+        codebase_id: 'invalid-uuid-format',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -138,13 +138,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'REST API /users',
         end_point: 'database table users',
         codebase_id: testCodebaseId,
-        max_depth: 'invalid'
+        max_depth: 'invalid',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -155,13 +155,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'REST API /users',
         end_point: 'database table users',
         codebase_id: testCodebaseId,
-        max_depth: -1
+        max_depth: -1,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -171,13 +171,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const invalidRequest = {
         start_point: '',
         end_point: 'database table users',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -187,13 +187,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const invalidRequest = {
         start_point: 'REST API /users',
         end_point: '',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(400);
@@ -206,13 +206,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'API /users/create',
         end_point: 'database users table',
         codebase_id: testCodebaseId,
-        max_depth: 10
+        max_depth: 10,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -240,13 +240,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'controller method createUser',
         end_point: 'database insert operation',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -276,7 +276,9 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
           expect(step.line_number).toBeGreaterThan(0);
 
           // Validate file path format
-          expect(step.file_path).toMatch(/\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/);
+          expect(step.file_path).toMatch(
+            /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+          );
 
           // Validate name and transformation are not empty
           expect(step.name.length).toBeGreaterThan(0);
@@ -289,13 +291,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const unreachableRequest = {
         start_point: 'isolated function',
         end_point: 'unreachable destination',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: unreachableRequest
+        payload: unreachableRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -311,13 +313,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
     it('should use default max_depth when not specified', async () => {
       const requestWithDefaults = {
         start_point: 'API endpoint',
-        end_point: 'database table'
+        end_point: 'database table',
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: requestWithDefaults
+        payload: requestWithDefaults,
       });
 
       expect(response.statusCode).toBe(200);
@@ -334,13 +336,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'API endpoint /users',
         end_point: 'database users table',
         codebase_id: testCodebaseId,
-        max_depth: customDepth
+        max_depth: customDepth,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: requestWithCustomDepth
+        payload: requestWithCustomDepth,
       });
 
       expect(response.statusCode).toBe(200);
@@ -356,13 +358,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const requestWithSmallDepth = {
         start_point: 'function call',
         end_point: 'return value',
-        max_depth: smallDepth
+        max_depth: smallDepth,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: requestWithSmallDepth
+        payload: requestWithSmallDepth,
       });
 
       expect(response.statusCode).toBe(200);
@@ -377,13 +379,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const requestWithLargeDepth = {
         start_point: 'API endpoint',
         end_point: 'database table',
-        max_depth: largeDepth
+        max_depth: largeDepth,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: requestWithLargeDepth
+        payload: requestWithLargeDepth,
       });
 
       expect(response.statusCode).toBe(200);
@@ -400,13 +402,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'API endpoint',
         end_point: 'database table',
-        codebase_id: nonExistentCodebaseId
+        codebase_id: nonExistentCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(404);
@@ -418,18 +420,18 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const invalidRequest = {
         start_point: 'non-existent-entity',
         end_point: 'database table',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const trace: DataFlowTrace = JSON.parse(response.body);
-      
+
       // Should return empty path for invalid start point
       expect(trace.path).toEqual([]);
       expect(trace.total_steps).toBe(0);
@@ -440,18 +442,18 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const invalidRequest = {
         start_point: 'API endpoint /users',
         end_point: 'non-existent-destination',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: invalidRequest
+        payload: invalidRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const trace: DataFlowTrace = JSON.parse(response.body);
-      
+
       // Should return empty or partial path for invalid end point
       expect(trace.confidence).toBeLessThan(1.0);
     });
@@ -462,13 +464,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'REST API /users/create',
         end_point: 'database users table',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -477,7 +479,7 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       if (trace.path.length > 0) {
         // Path should represent logical flow
         const transformations = trace.path.map(step => step.transformation);
-        
+
         // Should contain meaningful transformation descriptions
         transformations.forEach(transformation => {
           expect(transformation.length).toBeGreaterThan(5);
@@ -490,13 +492,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'user input validation',
         end_point: 'database persistence',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -513,13 +515,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'API controller method',
         end_point: 'database table',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -538,13 +540,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'recursive function A',
         end_point: 'recursive function A',
         codebase_id: testCodebaseId,
-        max_depth: 5
+        max_depth: 5,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: circularRequest
+        payload: circularRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -559,13 +561,13 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const validRequest = {
         start_point: 'HTTP request body',
         end_point: 'SQL INSERT statement',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
 
       expect(response.statusCode).toBe(200);
@@ -574,18 +576,19 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       if (trace.path.length > 1) {
         // Should identify different transformation types
         const transformations = trace.path.map(step => step.transformation.toLowerCase());
-        
+
         // Common transformation patterns
-        const hasValidTransformation = transformations.some(t => 
-          t.includes('parse') || 
-          t.includes('validate') || 
-          t.includes('transform') || 
-          t.includes('map') || 
-          t.includes('convert') ||
-          t.includes('serialize') ||
-          t.includes('deserialize')
+        const hasValidTransformation = transformations.some(
+          t =>
+            t.includes('parse') ||
+            t.includes('validate') ||
+            t.includes('transform') ||
+            t.includes('map') ||
+            t.includes('convert') ||
+            t.includes('serialize') ||
+            t.includes('deserialize'),
         );
-        
+
         expect(hasValidTransformation).toBe(true);
       }
     });
@@ -597,19 +600,19 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
         start_point: 'API endpoint /complex/operation',
         end_point: 'database complex_table',
         codebase_id: testCodebaseId,
-        max_depth: 10
+        max_depth: 10,
       };
 
       const startTime = Date.now();
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: validRequest
+        payload: validRequest,
       });
       const endTime = Date.now();
 
       expect(response.statusCode).toBe(200);
-      
+
       // Should complete within 5 seconds for complex tracing
       const executionTime = endTime - startTime;
       expect(executionTime).toBeLessThan(5000);
@@ -619,18 +622,18 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const deepRequest = {
         start_point: 'entry point',
         end_point: 'deep destination',
-        max_depth: 20
+        max_depth: 20,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: deepRequest
+        payload: deepRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const trace: DataFlowTrace = JSON.parse(response.body);
-      
+
       // Should handle deep traces without performance issues
       expect(trace.total_steps).toBeLessThanOrEqual(20);
     });
@@ -641,18 +644,18 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const samePointRequest = {
         start_point: 'function processData',
         end_point: 'function processData',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: samePointRequest
+        payload: samePointRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const trace: DataFlowTrace = JSON.parse(response.body);
-      
+
       // Should handle identity case
       expect(trace.total_steps).toBeLessThanOrEqual(1);
       expect(trace.confidence).toBeGreaterThan(0.8);
@@ -662,25 +665,25 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const crossLanguageRequest = {
         start_point: 'TypeScript API endpoint',
         end_point: 'Python data processor',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: crossLanguageRequest
+        payload: crossLanguageRequest,
       });
 
       expect(response.statusCode).toBe(200);
       const trace: DataFlowTrace = JSON.parse(response.body);
-      
+
       // Should handle cross-language flows
       if (trace.path.length > 0) {
         const fileExtensions = trace.path.map(step => {
           const match = step.file_path.match(/\.(\w+)$/);
           return match ? match[1] : '';
         });
-        
+
         // May contain different file extensions for cross-language flows
         expect(fileExtensions.length).toBeGreaterThan(0);
       }
@@ -691,17 +694,17 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
       const longPointRequest = {
         start_point: longDescription + 'start',
         end_point: longDescription + 'end',
-        codebase_id: testCodebaseId
+        codebase_id: testCodebaseId,
       };
 
       const response = await app.inject({
         method: 'POST',
         url: '/tools/trace_data_flow',
-        payload: longPointRequest
+        payload: longPointRequest,
       });
 
       expect([200, 400]).toContain(response.statusCode);
-      
+
       if (response.statusCode === 200) {
         const trace: DataFlowTrace = JSON.parse(response.body);
         expect(trace).toHaveProperty('path');

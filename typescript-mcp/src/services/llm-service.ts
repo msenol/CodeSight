@@ -191,8 +191,7 @@ export class LLMService implements ILLMService {
   ): Promise<LLMResponse> {
     // Simulate API delay
     await new Promise(resolve => {
-      // eslint-disable-next-line no-promise-executor-return
-      setTimeout(resolve, 500 + Math.random() * 1000);
+      setTimeout(() => resolve(), 500 + Math.random() * 1000);
     });
 
     const responseTime = Date.now() - startTime;
