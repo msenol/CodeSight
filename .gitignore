@@ -204,3 +204,14 @@ public/uploads/
 
 # Generated API documentation
 api-docs/generated/target/
+
+# MCP REPL and tool overflow cache
+.call_overflow/
+*.call_overflow.json
+
+# Lint output files
+lint_output.txt
+**/lint_output.txt
+
+# Duplicate config directories
+typescript-mcp/config/
