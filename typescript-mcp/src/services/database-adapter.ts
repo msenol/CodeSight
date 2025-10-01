@@ -1,8 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable no-undef */
+/* eslint-disable no-useless-escape */
 // import sqlite3 from 'sqlite3'; // Commented out - package not available
 // import { open, Database } from 'sqlite'; // Commented out - package not available
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import type { DatabaseRow, DatabaseValue, DatabaseParams, Statistics } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,8 +85,20 @@ export interface DatabaseConfig {
   ssl?: boolean;
 }
 
+export interface DatabaseConnection {
+  executeQuery: (sql: string, params?: DatabaseParams) => Promise<DatabaseRow[]>;
+  executeCommand: (sql: string, params?: DatabaseParams) => Promise<DatabaseCommandResult>;
+  close: () => Promise<void>;
+}
+
+export interface DatabaseCommandResult {
+  affectedRows: number;
+  insertId?: number;
+  changes?: number;
+}
+
 export class DatabaseAdapter {
-  private db: any | null = null;
+  private db: DatabaseConnection | null = null;
   private config: DatabaseConfig;
   private isInitialized = false;
   private isConnected = false;
@@ -91,12 +109,16 @@ export class DatabaseAdapter {
 
   private async establishConnection(): Promise<void> {
     // Mock connection establishment
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => {
+      setTimeout(resolve, 100);
+    });
   }
 
   private async closeConnection(): Promise<void> {
     // Mock connection closure
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => {
+      setTimeout(resolve, 50);
+    });
   }
 
   private validateSQL(sql: string): void {
@@ -105,14 +127,12 @@ export class DatabaseAdapter {
     }
   }
 
-  private async executeQuery(sql: string, params?: any[]): Promise<any[]> {
+  private async executeQuery(sql: string, params?: DatabaseParams): Promise<DatabaseRow[]> {
     // Mock query execution
-    return [
-      { id: 1, name: 'Sample Record', created_at: new Date() }
-    ];
+    return [{ id: 1, name: 'Sample Record', created_at: new Date() }];
   }
 
-  private async executeCommand(sql: string, params?: any[]): Promise<any> {
+  private async executeCommand(sql: string, params?: DatabaseParams): Promise<DatabaseCommandResult> {
     // Mock command execution
     return { affectedRows: 1, insertId: 123 };
   }
@@ -123,7 +143,7 @@ export class DatabaseAdapter {
         console.log('Already connected to database');
         return;
       }
-      
+
       // Simulate connection logic
       await this.establishConnection();
       this.isConnected = true;
@@ -140,7 +160,7 @@ export class DatabaseAdapter {
         console.log('Already disconnected from database');
         return;
       }
-      
+
       await this.closeConnection();
       this.isConnected = false;
       console.log('Successfully disconnected from database');
@@ -150,18 +170,18 @@ export class DatabaseAdapter {
     }
   }
 
-  async query(sql: string, params?: any[]): Promise<any[]> {
+  async query(sql: string, params?: DatabaseParams): Promise<DatabaseRow[]> {
     try {
       if (!this.isConnected) {
         throw new Error('Database not connected');
       }
-      
+
       // Validate SQL
       this.validateSQL(sql);
-      
+
       // Execute query
       const result = await this.executeQuery(sql, params);
-      
+
       console.log(`Query executed: ${sql.substring(0, 100)}...`);
       return result;
     } catch (error) {
@@ -170,18 +190,18 @@ export class DatabaseAdapter {
     }
   }
 
-  async execute(sql: string, params?: any[]): Promise<any> {
+  async execute(sql: string, params?: DatabaseParams): Promise<DatabaseCommandResult> {
     try {
       if (!this.isConnected) {
         throw new Error('Database not connected');
       }
-      
+
       // Validate SQL
       this.validateSQL(sql);
-      
+
       // Execute command
       const result = await this.executeCommand(sql, params);
-      
+
       console.log(`Command executed: ${sql.substring(0, 100)}...`);
       return result;
     } catch (error) {
@@ -197,7 +217,7 @@ export class DatabaseAdapter {
       } else {
         throw new Error(`Database type ${this.config.type} not yet implemented`);
       }
-      
+
       await this.createTables();
       this.isInitialized = true;
       console.log('Database adapter initialized successfully (mock mode)');
@@ -218,13 +238,13 @@ export class DatabaseAdapter {
       },
       run: async () => ({ changes: 1 }),
       get: async () => ({}),
-      all: async () => ([]),
-      close: async () => {}
+      all: async () => [],
+      close: async () => {},
     };
   }
 
   private async createTables(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     // Codebases table
     await this.db.exec(`
@@ -310,7 +330,7 @@ export class DatabaseAdapter {
   }
 
   private async createIndexes(): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {return;}
 
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_entities_codebase_id ON entities (codebase_id)',
@@ -324,7 +344,7 @@ export class DatabaseAdapter {
       'CREATE INDEX IF NOT EXISTS idx_refactoring_entity_id ON refactoring_suggestions (entity_id)',
       'CREATE INDEX IF NOT EXISTS idx_refactoring_status ON refactoring_suggestions (status)',
       'CREATE INDEX IF NOT EXISTS idx_codebases_status ON codebases (status)',
-      'CREATE INDEX IF NOT EXISTS idx_codebases_language ON codebases (language)'
+      'CREATE INDEX IF NOT EXISTS idx_codebases_language ON codebases (language)',
     ];
 
     for (const indexSql of indexes) {
@@ -333,44 +353,59 @@ export class DatabaseAdapter {
   }
 
   // Codebase operations
-  async createCodebase(codebase: Omit<CodebaseRecord, 'created_at' | 'updated_at'>): Promise<CodebaseRecord> {
-    if (!this.db) throw new Error('Database not initialized');
+  async createCodebase(
+    codebase: Omit<CodebaseRecord, 'created_at' | 'updated_at'>,
+  ): Promise<CodebaseRecord> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const now = new Date().toISOString();
     const record: CodebaseRecord = {
       ...codebase,
       created_at: now,
-      updated_at: now
+      updated_at: now,
     };
 
     await this.db.run(
       `INSERT INTO codebases (id, name, description, repository_url, local_path, language, framework, status, created_at, updated_at, last_indexed, tags)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [record.id, record.name, record.description, record.repository_url, record.local_path,
-       record.language, record.framework, record.status, record.created_at, record.updated_at,
-       record.last_indexed, record.tags]
+      [
+        record.id,
+        record.name,
+        record.description,
+        record.repository_url,
+        record.local_path,
+        record.language,
+        record.framework,
+        record.status,
+        record.created_at,
+        record.updated_at,
+        record.last_indexed,
+        record.tags,
+      ],
     );
 
     return record;
   }
 
   async getCodebase(id: string): Promise<CodebaseRecord | null> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const row = await this.db.get('SELECT * FROM codebases WHERE id = ?', [id]);
     return row || null;
   }
 
-  async getCodebases(options: {
-    status?: string;
-    language?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<CodebaseRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getCodebases(
+    options: {
+      status?: string;
+      language?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ): Promise<CodebaseRecord[]> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     let sql = 'SELECT * FROM codebases WHERE 1=1';
-    const params: any[] = [];
+    const params: DatabaseParams = [];
 
     if (options.status) {
       sql += ' AND status = ?';
@@ -387,7 +422,7 @@ export class DatabaseAdapter {
     if (options.limit) {
       sql += ' LIMIT ?';
       params.push(options.limit);
-      
+
       if (options.offset) {
         sql += ' OFFSET ?';
         params.push(options.offset);
@@ -398,15 +433,18 @@ export class DatabaseAdapter {
     return rows;
   }
 
-  async updateCodebase(id: string, updates: Partial<CodebaseRecord>): Promise<CodebaseRecord | null> {
-    if (!this.db) throw new Error('Database not initialized');
+  async updateCodebase(
+    id: string,
+    updates: Partial<CodebaseRecord>,
+  ): Promise<CodebaseRecord | null> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const setClause = Object.keys(updates)
       .filter(key => key !== 'id' && key !== 'created_at')
       .map(key => `${key} = ?`)
       .join(', ');
 
-    if (!setClause) return this.getCodebase(id);
+    if (!setClause) {return this.getCodebase(id);}
 
     const values = Object.entries(updates)
       .filter(([key]) => key !== 'id' && key !== 'created_at')
@@ -415,59 +453,72 @@ export class DatabaseAdapter {
     values.push(new Date().toISOString()); // updated_at
     values.push(id);
 
-    await this.db.run(
-      `UPDATE codebases SET ${setClause}, updated_at = ? WHERE id = ?`,
-      values
-    );
+    await this.db.run(`UPDATE codebases SET ${setClause}, updated_at = ? WHERE id = ?`, values);
 
     return this.getCodebase(id);
   }
 
   async deleteCodebase(id: string): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const result = await this.db.run('DELETE FROM codebases WHERE id = ?', [id]);
     return (result.changes || 0) > 0;
   }
 
   // Entity operations
-  async createEntity(entity: Omit<EntityRecord, 'created_at' | 'updated_at'>): Promise<EntityRecord> {
-    if (!this.db) throw new Error('Database not initialized');
+  async createEntity(
+    entity: Omit<EntityRecord, 'created_at' | 'updated_at'>,
+  ): Promise<EntityRecord> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const now = new Date().toISOString();
     const record: EntityRecord = {
       ...entity,
       created_at: now,
-      updated_at: now
+      updated_at: now,
     };
 
     await this.db.run(
       `INSERT INTO entities (id, codebase_id, name, entity_type, file_path, start_line, end_line, signature, documentation, complexity, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [record.id, record.codebase_id, record.name, record.entity_type, record.file_path,
-       record.start_line, record.end_line, record.signature, record.documentation,
-       record.complexity, record.created_at, record.updated_at]
+      [
+        record.id,
+        record.codebase_id,
+        record.name,
+        record.entity_type,
+        record.file_path,
+        record.start_line,
+        record.end_line,
+        record.signature,
+        record.documentation,
+        record.complexity,
+        record.created_at,
+        record.updated_at,
+      ],
     );
 
     return record;
   }
 
   async getEntity(id: string): Promise<EntityRecord | null> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const row = await this.db.get('SELECT * FROM entities WHERE id = ?', [id]);
     return row || null;
   }
 
-  async getEntitiesByCodebase(codebaseId: string, options: {
-    type?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<EntityRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getEntitiesByCodebase(
+    codebaseId: string,
+    options: {
+      type?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ): Promise<EntityRecord[]> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     let sql = 'SELECT * FROM entities WHERE codebase_id = ?';
-    const params: any[] = [codebaseId];
+    const params: DatabaseParams = [codebaseId];
 
     if (options.type) {
       sql += ' AND entity_type = ?';
@@ -479,7 +530,7 @@ export class DatabaseAdapter {
     if (options.limit) {
       sql += ' LIMIT ?';
       params.push(options.limit);
-      
+
       if (options.offset) {
         sql += ' OFFSET ?';
         params.push(options.offset);
@@ -491,24 +542,24 @@ export class DatabaseAdapter {
   }
 
   async getEntitiesByFile(filePath: string): Promise<EntityRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const rows = await this.db.all(
       'SELECT * FROM entities WHERE file_path = ? ORDER BY start_line',
-      [filePath]
+      [filePath],
     );
     return rows;
   }
 
   async updateEntity(id: string, updates: Partial<EntityRecord>): Promise<EntityRecord | null> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const setClause = Object.keys(updates)
       .filter(key => key !== 'id' && key !== 'created_at')
       .map(key => `${key} = ?`)
       .join(', ');
 
-    if (!setClause) return this.getEntity(id);
+    if (!setClause) {return this.getEntity(id);}
 
     const values = Object.entries(updates)
       .filter(([key]) => key !== 'id' && key !== 'created_at')
@@ -517,16 +568,13 @@ export class DatabaseAdapter {
     values.push(new Date().toISOString()); // updated_at
     values.push(id);
 
-    await this.db.run(
-      `UPDATE entities SET ${setClause}, updated_at = ? WHERE id = ?`,
-      values
-    );
+    await this.db.run(`UPDATE entities SET ${setClause}, updated_at = ? WHERE id = ?`, values);
 
     return this.getEntity(id);
   }
 
   async deleteEntity(id: string): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const result = await this.db.run('DELETE FROM entities WHERE id = ?', [id]);
     return (result.changes || 0) > 0;
@@ -534,26 +582,33 @@ export class DatabaseAdapter {
 
   // Analysis operations
   async saveAnalysisResult(analysis: Omit<AnalysisRecord, 'created_at'>): Promise<AnalysisRecord> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const record: AnalysisRecord = {
       ...analysis,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await this.db.run(
       'INSERT INTO analysis_results (id, entity_id, analysis_type, result, score, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [record.id, record.entity_id, record.analysis_type, record.result, record.score, record.created_at]
+      [
+        record.id,
+        record.entity_id,
+        record.analysis_type,
+        record.result,
+        record.score,
+        record.created_at,
+      ],
     );
 
     return record;
   }
 
   async getAnalysisResults(entityId: string, analysisType?: string): Promise<AnalysisRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     let sql = 'SELECT * FROM analysis_results WHERE entity_id = ?';
-    const params: any[] = [entityId];
+    const params: DatabaseParams = [entityId];
 
     if (analysisType) {
       sql += ' AND analysis_type = ?';
@@ -567,54 +622,75 @@ export class DatabaseAdapter {
   }
 
   // Search history operations
-  async saveSearchHistory(search: Omit<SearchHistoryRecord, 'created_at'>): Promise<SearchHistoryRecord> {
-    if (!this.db) throw new Error('Database not initialized');
+  async saveSearchHistory(
+    search: Omit<SearchHistoryRecord, 'created_at'>,
+  ): Promise<SearchHistoryRecord> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const record: SearchHistoryRecord = {
       ...search,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await this.db.run(
       'INSERT INTO search_history (id, codebase_id, query, search_type, results_count, response_time_ms, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [record.id, record.codebase_id, record.query, record.search_type, record.results_count, record.response_time_ms, record.created_at]
+      [
+        record.id,
+        record.codebase_id,
+        record.query,
+        record.search_type,
+        record.results_count,
+        record.response_time_ms,
+        record.created_at,
+      ],
     );
 
     return record;
   }
 
   async getSearchHistory(codebaseId: string, limit = 50): Promise<SearchHistoryRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const rows = await this.db.all(
       'SELECT * FROM search_history WHERE codebase_id = ? ORDER BY created_at DESC LIMIT ?',
-      [codebaseId, limit]
+      [codebaseId, limit],
     );
     return rows;
   }
 
   // Refactoring operations
-  async saveRefactoringSuggestion(refactoring: Omit<RefactoringRecord, 'created_at'>): Promise<RefactoringRecord> {
-    if (!this.db) throw new Error('Database not initialized');
+  async saveRefactoringSuggestion(
+    refactoring: Omit<RefactoringRecord, 'created_at'>,
+  ): Promise<RefactoringRecord> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const record: RefactoringRecord = {
       ...refactoring,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
     await this.db.run(
       'INSERT INTO refactoring_suggestions (id, entity_id, refactoring_type, description, status, impact_score, created_at, applied_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [record.id, record.entity_id, record.refactoring_type, record.description, record.status, record.impact_score, record.created_at, record.applied_at]
+      [
+        record.id,
+        record.entity_id,
+        record.refactoring_type,
+        record.description,
+        record.status,
+        record.impact_score,
+        record.created_at,
+        record.applied_at,
+      ],
     );
 
     return record;
   }
 
   async getRefactoringSuggestions(entityId: string, status?: string): Promise<RefactoringRecord[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     let sql = 'SELECT * FROM refactoring_suggestions WHERE entity_id = ?';
-    const params: any[] = [entityId];
+    const params: DatabaseParams = [entityId];
 
     if (status) {
       sql += ' AND status = ?';
@@ -628,21 +704,22 @@ export class DatabaseAdapter {
   }
 
   async updateRefactoringStatus(id: string, status: string, appliedAt?: string): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
 
     const result = await this.db.run(
       'UPDATE refactoring_suggestions SET status = ?, applied_at = ? WHERE id = ?',
-      [status, appliedAt, id]
+      [status, appliedAt, id],
     );
 
     return (result.changes || 0) > 0;
   }
 
   // Statistics and analytics
-  async getCodebaseStatistics(codebaseId: string): Promise<any> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getCodebaseStatistics(codebaseId: string): Promise<Statistics> {
+    if (!this.db) {throw new Error('Database not initialized');}
 
-    const stats = await this.db.get(`
+    const stats = await this.db.get(
+      `
       SELECT 
         COUNT(*) as total_entities,
         COUNT(CASE WHEN entity_type = 'function' THEN 1 END) as functions,
@@ -654,18 +731,24 @@ export class DatabaseAdapter {
         COUNT(DISTINCT file_path) as total_files
       FROM entities 
       WHERE codebase_id = ?
-    `, [codebaseId]);
+    `,
+      [codebaseId],
+    );
 
-    const searchStats = await this.db.get(`
+    const searchStats = await this.db.get(
+      `
       SELECT 
         COUNT(*) as total_searches,
         AVG(response_time_ms) as avg_response_time,
         AVG(results_count) as avg_results_count
       FROM search_history 
       WHERE codebase_id = ?
-    `, [codebaseId]);
+    `,
+      [codebaseId],
+    );
 
-    const refactoringStats = await this.db.get(`
+    const refactoringStats = await this.db.get(
+      `
       SELECT 
         COUNT(*) as total_suggestions,
         COUNT(CASE WHEN status = 'applied' THEN 1 END) as applied_suggestions,
@@ -673,36 +756,38 @@ export class DatabaseAdapter {
       FROM refactoring_suggestions rs
       JOIN entities e ON rs.entity_id = e.id
       WHERE e.codebase_id = ?
-    `, [codebaseId]);
+    `,
+      [codebaseId],
+    );
 
     return {
       entities: stats,
       search: searchStats,
-      refactoring: refactoringStats
+      refactoring: refactoringStats,
     };
   }
 
   // Utility methods
   // executeQuery method already exists above
 
-  async executeUpdate(sql: string, params: any[] = []): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
+  async executeUpdate(sql: string, params: DatabaseParams = []): Promise<number> {
+    if (!this.db) {throw new Error('Database not initialized');}
     const result = await this.db.run(sql, params);
     return result.changes || 0;
   }
 
   async beginTransaction(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
     await this.db.exec('BEGIN TRANSACTION');
   }
 
   async commitTransaction(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
     await this.db.exec('COMMIT');
   }
 
   async rollbackTransaction(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {throw new Error('Database not initialized');}
     await this.db.exec('ROLLBACK');
   }
 
@@ -731,7 +816,7 @@ export function createDatabaseAdapter(config: DatabaseConfig): DatabaseAdapter {
 // Default configuration
 export const defaultDatabaseConfig: DatabaseConfig = {
   type: 'sqlite',
-  path: path.join(process.cwd(), 'data', 'code_intelligence.db')
+  path: path.join(process.cwd(), 'data', 'code_intelligence.db'),
 };
 
 // Export default instance

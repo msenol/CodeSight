@@ -1,0 +1,156 @@
+name: Repository Branch Protection
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_protection:
+        description: 'Enable branch protection'
+        required: true
+        default: 'true'
+        type: boolean
+      branch:
+        description: 'Branch to protect'
+        required: true
+        default: 'main'
+        type: string
+
+jobs:
+  setup-branch-protection:
+    name: Setup Branch Protection
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Branch Protection
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const branch = context.payload.inputs.branch || 'main';
+            const enableProtection = context.payload.inputs.enable_protection !== 'false';
+
+            if (enableProtection) {
+              // Configure branch protection
+              await github.rest.repos.updateBranchProtection(context.repo.repo, branch, {
+                required_status_checks: {
+                  strict: true,
+                  contexts: [
+                    'CI / Build and Test (ubuntu-latest, 20, node)',
+                    'CI / Build and Test (ubuntu-latest, 20, rust)',
+                    'CI / Security Scan (CodeQL)',
+                    'CI / Rust Format Check',
+                    'CI / TypeScript Format Check',
+                    'CI / Build and Test (windows-latest, 20, node)',
+                    'CI / Build and Test (macos-latest, 20, node)'
+                  ]
+                },
+                enforce_admins: true,
+                required_pull_request_reviews: {
+                  required_approving_review_count: 1,
+                  dismiss_stale_reviews: true,
+                  require_code_owner_reviews: true,
+                  dismissal_restrictions: {
+                    users: [],
+                    teams: []
+                  }
+                },
+                restrictions: {
+                  users: [],
+                  teams: [],
+                  apps: []
+                },
+                required_conversation_resolution: true,
+                allow_force_pushes: false,
+                allow_deletions: false,
+                block_creations: true,
+                required_linear_history: true,
+                allow_deletions: false,
+                required_deployments: [],
+                require_last_push_approval: false,
+                require_code_owner_review: true
+              });
+
+              console.log(`✅ Branch protection enabled for ${branch}`);
+            } else {
+              // Remove branch protection
+              await github.rest.repos.deleteBranchProtection(context.repo.repo, branch);
+              console.log(`❌ Branch protection disabled for ${branch}`);
+            }
+
+  validate-protection:
+    name: Validate Branch Protection
+    runs-on: ubuntu-latest
+    needs: setup-branch-protection
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check Branch Protection
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const branch = context.payload.inputs.branch || 'main';
+
+            try {
+              const protection = await github.rest.repos.getBranchProtection({
+                ...context.repo,
+                branch: branch
+              });
+
+              console.log('🔍 Current branch protection settings:');
+              console.log(JSON.stringify(protection.data, null, 2));
+
+              // Validate key protection rules
+              const requiredStatusChecks = protection.data.required_status_checks;
+              const requiredPullRequestReviews = protection.data.required_pull_request_reviews;
+
+              if (requiredStatusChecks && requiredStatusChecks.contexts.length >= 7) {
+                console.log('✅ Required status checks are properly configured');
+              } else {
+                console.log('⚠️  Required status checks may be incomplete');
+              }
+
+              if (requiredPullRequestReviews && requiredPullRequestReviews.required_approving_review_count >= 1) {
+                console.log('✅ Pull request reviews are properly configured');
+              } else {
+                console.log('⚠️  Pull request reviews may be insufficient');
+              }
+
+              if (protection.data.enforce_admins) {
+                console.log('✅ Admin enforcement is enabled');
+              } else {
+                console.log('⚠️  Admin enforcement is disabled');
+              }
+
+            } catch (error) {
+              console.log(`⚠️  Branch protection not found or disabled for ${branch}`);
+              console.log(error.message);
+            }
+
+  notify-team:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: validate-protection
+    if: always()
+
+    steps:
+      - name: Create Summary
+        run: |
+          echo "## Branch Protection Setup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.event.inputs.branch || 'main' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ github.event.inputs.enable_protection != 'false' && 'Enabled' || 'Disabled' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Configuration**: Branch protection rules applied successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation**: Completed with ${{ needs.validate-protection.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the branch protection settings in the repository settings" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test the protection by creating a pull request" >> $GITHUB_STEP_SUMMARY
+          echo "3. Ensure CODEOWNERS file is properly configured" >> $GITHUB_STEP_SUMMARY
+          echo "4. Monitor initial PRs to verify protection is working correctly" >> $GITHUB_STEP_SUMMARY

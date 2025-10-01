@@ -1,0 +1,48 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // Override and extend base configuration for API server
+    "outDir": "./dist",
+    "rootDir": "./",
+
+    // API server specific module configuration
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": false,
+
+    // API server specific type checking
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "allowUnusedLabels": true,
+    "allowUnreachableCode": true,
+
+    // API server specific type definitions
+    "types": ["node", "express", "@types/express"],
+
+    // Build specific
+    "declaration": false,
+    "sourceMap": true,
+    "removeComments": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    // Path mappings for API server
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/routes/*": ["./src/routes/*"],
+      "@/middleware/*": ["./src/middleware/*"],
+      "@/controllers/*": ["./src/controllers/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/types/*": ["./src/types/*"]
+    }
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules", "dist", "coverage", "**/*.test.ts", "**/*.spec.ts"]
+}

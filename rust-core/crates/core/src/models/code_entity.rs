@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::{ModelResult, Timestamped, Validate, JsonSerializable};
+use super::{ModelResult, Timestamped, Validate};
 use crate::errors::CoreError;
 
 /// Type of code entity

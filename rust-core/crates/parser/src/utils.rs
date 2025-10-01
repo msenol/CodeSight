@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use std::path::{Path, PathBuf};
-use crate::{Language, all_supported_extensions};
+use crate::all_supported_extensions;
 
 /// Check if a file should be ignored based on common ignore patterns
 pub fn should_ignore_file(file_path: &Path) -> bool {

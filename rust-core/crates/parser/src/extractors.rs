@@ -62,7 +62,7 @@ impl EntityExtractor {
 
         let mut entities = Vec::new();
         let codebase_id = Uuid::new_v4();
-        let now = Utc::now();
+        let _now = Utc::now();
 
         // Extract functions
         for pattern in &patterns.function {

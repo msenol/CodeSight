@@ -1,0 +1,559 @@
+name: Release Management
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*[a-z0-9]*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+      prerelease_id:
+        description: 'Prerelease identifier (e.g., beta, rc)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Install semantic-release tools
+        run: |
+          npm install -g semantic-release
+          npm install -g @semantic-release/git
+          npm install -g @semantic-release/changelog
+          npm install -g @semantic-release/npm
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Determine next version
+        id: version
+        working-directory: typescript-mcp
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Determine next version based on release type
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          PRERELEASE_ID="${{ github.event.inputs.prerelease_id }}"
+
+          # Parse current version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Remove prerelease suffix if present
+          MAJOR=$(echo "$MAJOR" | sed 's/-.*//')
+          MINOR=$(echo "$MINOR" | sed 's/-.*//')
+          PATCH=$(echo "$PATCH" | sed 's/-.*//')
+
+          case "$RELEASE_TYPE" in
+            "major")
+              NEXT_MAJOR=$((MAJOR + 1))
+              NEXT_VERSION="$NEXT_MAJOR.0.0"
+              ;;
+            "minor")
+              NEXT_MINOR=$((MINOR + 1))
+              NEXT_VERSION="$MAJOR.$NEXT_MINOR.0"
+              ;;
+            "patch")
+              NEXT_PATCH=$((PATCH + 1))
+              NEXT_VERSION="$MAJOR.$MINOR.$NEXT_PATCH"
+              ;;
+            "premajor")
+              NEXT_MAJOR=$((MAJOR + 1))
+              NEXT_VERSION="$NEXT_MAJOR.0.0-${PRERELEASE_ID:-beta}.0"
+              ;;
+            "preminor")
+              NEXT_MINOR=$((MINOR + 1))
+              NEXT_VERSION="$MAJOR.$NEXT_MINOR.0-${PRERELEASE_ID:-beta}.0"
+              ;;
+            "prepatch")
+              NEXT_PATCH=$((PATCH + 1))
+              NEXT_VERSION="$MAJOR.$MINOR.$NEXT_PATCH-${PRERELEASE_ID:-beta}.0"
+              ;;
+            "prerelease")
+              # Increment prerelease version
+              if [[ "$CURRENT_VERSION" == *-* ]]; then
+                # Existing prerelease - increment it
+                BASE_VERSION="${CURRENT_VERSION%-*}"
+                PRERELEASE="${CURRENT_VERSION#*-}"
+                PRERELEASE_TYPE="${PRERELEASE%%[0-9]*}"
+                PRERELEASE_NUM="${PRERELEASE#$PRERELEASE_TYPE}"
+                NEXT_PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
+                NEXT_VERSION="$BASE_VERSION-${PRERELEASE_TYPE:-${PRERELEASE_ID:-beta}}.$NEXT_PRERELEASE_NUM"
+              else
+                # New prerelease
+                NEXT_VERSION="$MAJOR.$MINOR.$PATCH-${PRERELEASE_ID:-beta}.0"
+              fi
+              ;;
+          esac
+
+          echo "Next version: $NEXT_VERSION"
+          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "IS_PRERELEASE=$(echo "$NEXT_VERSION" | grep -q '\-' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Update version in package.json
+        working-directory: typescript-mcp
+        run: |
+          npm version ${{ steps.version.outputs.NEXT_VERSION }} --no-git-tag-version
+
+      - name: Update CHANGELOG
+        run: |
+          # Create or update CHANGELOG.md
+          cat > CHANGELOG.md << 'EOF'
+          # Changelog
+
+          All notable changes to this project will be documented in this file.
+
+          The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+          and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+          ## [Unreleased]
+
+          ### Added
+          -
+
+          ### Changed
+          -
+
+          ### Fixed
+          -
+
+          ### Removed
+          -
+
+          EOF
+
+          # Add new version entry if not prerelease
+          if [ "${{ steps.version.outputs.IS_PRERELEASE }}" != "true" ]; then
+            sed -i "s/## \[Unreleased\]/## [${{ steps.version.outputs.NEXT_VERSION }}] - $(date +%Y-%m-%d)\n\n### Added\n- \n\n### Changed\n- \n\n### Fixed\n- \n\n### Removed\n- \n\n## [Unreleased]/" CHANGELOG.md
+          fi
+
+      - name: Commit version changes
+        run: |
+          git add typescript-mcp/package.json CHANGELOG.md
+          git commit -m "chore: release version ${{ steps.version.outputs.NEXT_VERSION }}"
+
+      - name: Create release tag
+        run: |
+          git tag "v${{ steps.version.outputs.NEXT_VERSION }}"
+
+      - name: Push changes and tag
+        run: |
+          git push origin main --follow-tags
+
+      - name: Create release notes
+        run: |
+          cat > RELEASE_NOTES.md << EOF
+          # Release ${{ steps.version.outputs.NEXT_VERSION }}
+
+          ## Installation
+          \`\`\`bash
+          npm install codesight-mcp@${{ steps.version.outputs.NEXT_VERSION }}
+          \`\`\`
+
+          ## What's Changed
+
+          This release includes various improvements and bug fixes.
+
+          ### Highlights
+          - Performance improvements
+          - Enhanced security features
+          - Better documentation
+
+          ### Full Changelog
+          See the [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+
+          ## Support
+          - 📚 [Documentation](https://github.com/msenol/CodeSight/blob/main/README.md)
+          - 🐛 [Report Issues](https://github.com/msenol/CodeSight/issues)
+          - 💬 [Community Discussions](https://github.com/msenol/CodeSight/discussions)
+
+          EOF
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}
+    needs: prepare-release
+    if: always()
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20, 22]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Run tests
+        working-directory: typescript-mcp
+        run: npm test
+
+      - name: Build project
+        working-directory: typescript-mcp
+        run: npm run build
+
+      - name: Run linting
+        working-directory: typescript-mcp
+        run: npm run lint
+
+      - name: Run type checking
+        working-directory: typescript-mcp
+        run: npm run type-check
+
+  build-rust:
+    name: Build Rust Components
+    runs-on: ${{ matrix.os }}
+    needs: prepare-release
+    if: always()
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Rust components
+        working-directory: rust-core
+        run: cargo build --release
+
+      - name: Run Rust tests
+        working-directory: rust-core
+        run: cargo test
+
+      - name: Check formatting
+        working-directory: rust-core
+        run: cargo fmt --check
+
+      - name: Run clippy
+        working-directory: rust-core
+        run: cargo clippy -- -D warnings
+
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: msenol/codesight
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish-npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-rust, build-docker]
+    if: always() && (github.event_name == 'push' || needs.prepare-release.result == 'success')
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Build project
+        working-directory: typescript-mcp
+        run: npm run build
+
+      - name: Get version from package.json
+        id: version
+        working-directory: typescript-mcp
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "IS_PRERELEASE=$(echo "$VERSION" | grep -q '\-' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Publish to NPM
+        working-directory: typescript-mcp
+        run: |
+          if [ "${{ steps.version.outputs.IS_PRERELEASE }}" == "true" ]; then
+            npm publish --tag next
+          else
+            npm publish
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-rust, build-docker, publish-npm]
+    if: always() && (github.event_name == 'push' || needs.prepare-release.result == 'success')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=$(node -p "require('./typescript-mcp/package.json').version")
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "IS_PRERELEASE=$(echo "$VERSION" | grep -q '\-' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        run: |
+          # Generate changelog from git history
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PREV_VERSION=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          cat > CHANGELOG_RELEASE.md << EOF
+          # CodeSight $VERSION
+
+          ## What's Changed
+
+          EOF
+
+          if [ -n "$PREV_VERSION" ]; then
+            git log --pretty=format:"* %s (%h)" $PREV_VERSION..HEAD >> CHANGELOG_RELEASE.md
+          else
+            git log --pretty=format:"* %s (%h)" >> CHANGELOG_RELEASE.md
+          fi
+
+          echo "" >> CHANGELOG_RELEASE.md
+          echo "## Installation" >> CHANGELOG_RELEASE.md
+          echo "" >> CHANGELOG_RELEASE.md
+          echo "\`\`\`bash" >> CHANGELOG_RELEASE.md
+          echo "npm install codesight-mcp@$VERSION" >> CHANGELOG_RELEASE.md
+          echo "\`\`\`" >> CHANGELOG_RELEASE.md
+          echo "" >> CHANGELOG_RELEASE.md
+          echo "## Docker" >> CHANGELOG_RELEASE.md
+          echo "" >> CHANGELOG_RELEASE.md
+          echo "\`\`\`bash" >> CHANGELOG_RELEASE.md
+          echo "docker pull msenol/codesight:$VERSION" >> CHANGELOG_RELEASE.md
+          echo "\`\`\`" >> CHANGELOG_RELEASE.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'v${{ steps.version.outputs.VERSION }}'
+          name: 'CodeSight ${{ steps.version.outputs.VERSION }}'
+          body_path: CHANGELOG_RELEASE.md
+          draft: false
+          prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
+          files: |
+            typescript-mcp/dist/**/*
+            rust-core/target/release/*
+            Dockerfile*
+            docker-compose*.yml
+            LICENSE
+            README.md
+            CHANGELOG.md
+          generate_release_notes: true
+
+  post-release:
+    name: Post Release Tasks
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    if: always() && needs.create-github-release.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Update development version
+        if: ${{ steps.version.outputs.IS_PRERELEASE }} != 'true'
+        run: |
+          cd typescript-mcp
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          # Extract major.minor for dev version
+          MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
+
+          # Set next development version
+          DEV_VERSION="$MAJOR.$((MINOR + 1)).0-dev"
+
+          # Update package.json
+          npm version "$DEV_VERSION" --no-git-tag-version
+
+          git add package.json
+          git commit -m "chore: start development cycle $DEV_VERSION"
+          git push origin main
+
+      - name: Notify release completion
+        run: |
+          echo "## 🎉 Release Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: ${{ steps.version.outputs.IS_PRERELEASE == 'true' && 'Prerelease' || 'Stable' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM Package**: Published ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Image**: Built and pushed ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Release**: Created ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/msenol/CodeSight/releases/tag/v${{ steps.version.outputs.VERSION }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [NPM Package](https://www.npmjs.com/package/codesight-mcp)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Docker Hub](https://hub.docker.com/r/msenol/codesight)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Monitor release adoption and feedback" >> $GITHUB_STEP_SUMMARY
+          echo "2. Address any reported issues promptly" >> $GITHUB_STEP_SUMMARY
+          echo "3. Plan next development cycle" >> $GITHUB_STEP_SUMMARY
+          echo "4. Continue community engagement" >> $GITHUB_STEP_SUMMARY
+
+  rollback-release:
+    name: Rollback Release
+    runs-on: ubuntu-latest
+    needs: create-github-release
+    if: failure() && needs.create-github-release.result == 'success'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=$(node -p "require('./typescript-mcp/package.json').version")
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Delete GitHub Release
+        run: |
+          gh release delete "v${{ steps.version.outputs.VERSION }}" || true
+          git push --delete origin "v${{ steps.version.outputs.VERSION }}" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify rollback
+        run: |
+          echo "## ⚠️ Release Rolled Back" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The release for v${{ steps.version.outputs.VERSION }} has been rolled back due to build failures." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Actions Taken" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Release deleted" >> $GITHUB_STEP_SUMMARY
+          echo "- Release tag deleted" >> $GITHUB_STEP_SUMMARY
+          echo "- Rollback notification sent" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Investigate and fix build failures" >> $GITHUB_STEP_SUMMARY
+          echo "2. Manually recreate release when ready" >> $GITHUB_STEP_SUMMARY
+          echo "3. Test release process thoroughly" >> $GITHUB_STEP_SUMMARY

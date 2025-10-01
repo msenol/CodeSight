@@ -1,8 +1,6 @@
 //! Core types for Code Intelligence
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use uuid::Uuid;
 
 /// Language types
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

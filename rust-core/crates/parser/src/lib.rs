@@ -56,7 +56,7 @@ pub enum EntityType {
     Export,
 }
 
-/// Parsed code entity
+/// Parsed code entity (simplified version for parsing)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeEntity {
     pub id: Uuid,
@@ -239,5 +239,41 @@ mod tests {
     }
 }
 
+// Conversion traits for interoperability with core module
+impl From<ParserEntityType> for CoreEntityType {
+    fn from(entity_type: ParserEntityType) -> Self {
+        match entity_type {
+            ParserEntityType::Function => CoreEntityType::Function,
+            ParserEntityType::Class => CoreEntityType::Class,
+            ParserEntityType::Interface => CoreEntityType::Interface,
+            ParserEntityType::Variable => CoreEntityType::Variable,
+            ParserEntityType::Constant => CoreEntityType::Constant,
+            ParserEntityType::Module => CoreEntityType::Type, // Map Module to Type
+            ParserEntityType::Import => CoreEntityType::Import,
+            ParserEntityType::Export => CoreEntityType::Import, // Map Export to Import
+        }
+    }
+}
+
+impl From<CoreEntityType> for ParserEntityType {
+    fn from(entity_type: CoreEntityType) -> Self {
+        match entity_type {
+            CoreEntityType::Function => ParserEntityType::Function,
+            CoreEntityType::Class => ParserEntityType::Class,
+            CoreEntityType::Method => ParserEntityType::Function, // Map Method to Function
+            CoreEntityType::Variable => ParserEntityType::Variable,
+            CoreEntityType::Import => ParserEntityType::Import,
+            CoreEntityType::Type => ParserEntityType::Module, // Map Type to Module
+            CoreEntityType::Interface => ParserEntityType::Interface,
+            CoreEntityType::Enum => ParserEntityType::Class, // Map Enum to Class
+            CoreEntityType::Constant => ParserEntityType::Constant,
+        }
+    }
+}
+
 // Re-export utility functions
 pub use languages::all_supported_extensions;
+
+// Type aliases for clarity
+pub type ParserEntityType = EntityType;
+pub use code_intelligence_core::models::code_entity::{EntityType as CoreEntityType, CodeEntity as CoreCodeEntity};

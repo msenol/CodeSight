@@ -3,7 +3,7 @@
 use napi_derive::napi;
 use napi::{Result, Error};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use walkdir::WalkDir;
 use rusqlite::{Connection, params};
 use serde::{Serialize, Deserialize};
@@ -120,7 +120,7 @@ pub fn parse_file(file_path: String, content: String) -> Result<Vec<CodeEntity>>
 
 /// Search for code entities
 #[napi]
-pub fn search_code(query: String, codebase_path: Option<String>) -> Result<Vec<SearchResult>> {
+pub fn search_code(query: String, _codebase_path: Option<String>) -> Result<Vec<SearchResult>> {
     let db_path = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "sqlite:///tmp/code-intelligence.db".to_string())
         .replace("sqlite://", "");

@@ -7,8 +7,8 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::{IndexingConfig, IndexingProgress};
-use code_intelligence_core::CodeEntity;
-use code_intelligence_parser::{CodeParser, Language, ParseResult};
+use code_intelligence_core::{CodeEntity, EntityType as CoreEntityType};
+use code_intelligence_parser::{CodeParser, CodeEntity as ParserCodeEntity};
 
 /// Core indexing engine
 pub struct Engine {
@@ -44,31 +44,71 @@ impl Engine {
         let parse_result = self.parser.parse_file(file_path, content)?;
 
         let mut entities = Vec::new();
-        for mut entity in parse_result.entities {
-            // Set file path
-            entity.file_path = file_path.to_string_lossy().to_string();
+        for parser_entity in parse_result.entities {
+            // Convert parser entity to core entity
+            let core_entity = self.convert_parser_to_core_entity(parser_entity, file_path);
 
             // Store the entity
             let mut indexed_entities = self.indexed_entities.write().await;
-            indexed_entities.insert(entity.id, entity.clone());
+            indexed_entities.insert(core_entity.id, core_entity.clone());
 
-            entities.push(entity);
+            entities.push(core_entity);
         }
 
         Ok(entities)
     }
 
+    /// Convert parser entity type to core entity type
+    fn convert_entity_type(&self, parser_type: code_intelligence_parser::EntityType) -> CoreEntityType {
+        match parser_type {
+            code_intelligence_parser::EntityType::Function => CoreEntityType::Function,
+            code_intelligence_parser::EntityType::Class => CoreEntityType::Class,
+            code_intelligence_parser::EntityType::Interface => CoreEntityType::Interface,
+            code_intelligence_parser::EntityType::Variable => CoreEntityType::Variable,
+            code_intelligence_parser::EntityType::Constant => CoreEntityType::Constant,
+            code_intelligence_parser::EntityType::Module => CoreEntityType::Module,
+            code_intelligence_parser::EntityType::Import => CoreEntityType::Import,
+            code_intelligence_parser::EntityType::Export => CoreEntityType::Import, // Map Export to Import
+        }
+    }
+
+    /// Convert parser entity to core entity
+    fn convert_parser_to_core_entity(&self, parser_entity: ParserCodeEntity, file_path: &Path) -> CodeEntity {
+        // Convert parser entity to core entity using the simpler structure
+        CodeEntity {
+            id: Uuid::new_v4(),
+            name: parser_entity.name,
+            entity_type: self.convert_entity_type(parser_entity.entity_type),
+            file_path: file_path.to_string_lossy().to_string(),
+            start_line: parser_entity.start_line,
+            end_line: parser_entity.end_line,
+            content: parser_entity.content,
+            metadata: {
+                let mut metadata = std::collections::HashMap::new();
+                if let Some(signature) = parser_entity.signature {
+                    metadata.insert("signature".to_string(), signature);
+                }
+                if let Some(documentation) = parser_entity.documentation {
+                    metadata.insert("documentation".to_string(), documentation);
+                }
+                metadata.insert("start_column".to_string(), parser_entity.start_column.to_string());
+                metadata.insert("end_column".to_string(), parser_entity.end_column.to_string());
+                metadata
+            },
+        }
+    }
+
     /// Get current progress
-    pub fn get_progress(&self) -> &IndexingProgress {
-        // This is a simplified version - in real implementation would use proper locking
-        &IndexingProgress {
-            total_files: 0,
-            processed_files: 0,
-            total_entities: 0,
-            current_file: None,
-            errors: Vec::new(),
-            start_time: std::time::Instant::now(),
-            estimated_time_remaining: None,
+    pub async fn get_progress(&self) -> IndexingProgress {
+        let progress = self.progress.read().await;
+        IndexingProgress {
+            total_files: progress.total_files,
+            processed_files: progress.processed_files,
+            total_entities: progress.total_entities,
+            current_file: progress.current_file.clone(),
+            errors: progress.errors.clone(),
+            start_time: progress.start_time,
+            estimated_time_remaining: progress.estimated_time_remaining,
         }
     }
 

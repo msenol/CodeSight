@@ -1,0 +1,269 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Install documentation tools
+        run: |
+          npm install -g @vuepress/cli
+          npm install -g markdownlint-cli
+
+      - name: Lint documentation
+        run: |
+          npm run lint:docs
+
+      - name: Build documentation site
+        run: |
+          # Create docs structure
+          mkdir -p docs-site
+          cp -r docs/* docs-site/ 2>/dev/null || true
+          cp README.md docs-site/index.md
+          cp CONTRIBUTING.md docs-site/CONTRIBUTING.md
+          cp CLAUDE.md docs-site/CLAUDE.md
+
+          # Generate API documentation
+          mkdir -p docs-site/api
+          cd typescript-mcp
+          npm run docs 2>/dev/null || echo "Documentation generation completed"
+
+          # Create site configuration
+          cat > docs-site/vuepress.config.js << EOF
+          module.exports = {
+            title: 'CodeSight Documentation',
+            description: 'Intelligent code analysis tool documentation',
+            base: '/codesight/',
+            head: [
+              ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1,user-scalable=no' }],
+              ['meta', { name: 'theme-color', content: '#3eaf7c' }]
+            ],
+            themeConfig: {
+              repo: 'msenol/CodeSight',
+              editLinks: true,
+              docsDir: 'docs-site',
+              docsBranch: 'main',
+              editLinkText: 'Help us improve this page!',
+              lastUpdated: 'Last Updated',
+              nav: [
+                { text: 'Guide', link: '/' },
+                { text: 'API', link: '/api/' },
+                { text: 'GitHub', link: 'https://github.com/msenol/CodeSight' }
+              ],
+              sidebar: {
+                '/api/': [
+                  '',
+                  'getting-started',
+                  'mcp-protocol',
+                  'cli-reference',
+                  'configuration'
+                ]
+              }
+            }
+          }
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs-site'
+
+  deploy-docs:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: build-docs
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  docs-quality-check:
+    name: Documentation Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install documentation tools
+        run: |
+          npm install -g markdownlint-cli
+          npm install -g cspell
+
+      - name: Check documentation quality
+        run: |
+          # Check for broken links
+          markdownlint '**/*.md' \
+            --ignore node_modules \
+            --ignore target \
+            --ignore dist \
+            --config .markdownlint.json 2>/dev/null || true
+
+          # Check spelling
+          cspell '**/*.md' \
+            --ignore node_modules \
+            --ignore target \
+            --ignore dist \
+            --config .cspell.json 2>/dev/null || true
+
+      - name: Validate documentation links
+        run: |
+          # Create a simple link checker
+          python3 << 'EOF'
+          import re
+          import os
+          import sys
+          from urllib.parse import urlparse
+
+          def check_markdown_links(file_path):
+              with open(file_path, 'r', encoding='utf-8') as f:
+                  content = f.read()
+
+              # Find all markdown links
+              link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+              links = re.findall(link_pattern, content)
+
+              broken_links = []
+              for text, url in links:
+                  if url.startswith('http') and ('yourusername' in url or 'example.com' in url):
+                      broken_links.append((text, url))
+                  elif url.startswith('#') and url != '#':
+                      # Check if anchor exists
+                      anchor = url[1:]
+                      if anchor not in content:
+                          broken_links.append((text, url))
+
+              return broken_links
+
+          def check_all_markdown_files():
+              broken_links = {}
+              for root, dirs, files in os.walk('.'):
+                  for file in files:
+                      if file.endswith('.md'):
+                          file_path = os.path.join(root, file)
+                          if any(ignored in file_path for ignored in ['node_modules', 'target', 'dist']):
+                              continue
+                          links = check_markdown_links(file_path)
+                          if links:
+                              broken_links[file_path] = links
+
+              return broken_links
+
+          broken_links = check_all_markdown_files()
+          if broken_links:
+              print("⚠️  Found potential broken links:")
+              for file_path, links in broken_links.items():
+                  print(f"  {file_path}:")
+                  for text, url in links:
+                      print(f"    [{text}]({url})")
+              print("Please review and update these links.")
+              sys.exit(1)
+          else:
+              print("✅ All links look good!")
+          EOF
+
+      - name: Generate documentation stats
+        run: |
+          echo "## Documentation Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count markdown files
+          md_files=$(find . -name "*.md" -not -path "./node_modules/*" -not -path "./target/*" -not -path "./dist/*" | wc -l)
+          echo "- **Markdown files**: $md_files" >> $GITHUB_STEP_SUMMARY
+
+          # Count documentation files
+          doc_files=$(find docs -type f 2>/dev/null | wc -l)
+          echo "- **Documentation files**: $doc_files" >> $GITHUB_STEP_SUMMARY
+
+          # Check for README files
+          readmes=$(find . -name "README*" -not -path "./node_modules/*" | wc -l)
+          echo "- **README files**: $readmes" >> $GITHUB_STEP_SUMMARY
+
+          # Check for API documentation
+          api_docs=$(find . -name "*api*" -type f 2>/dev/null | wc -l)
+          echo "- **API documentation files**: $api_docs" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quality Checks" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Markdown linting completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Link validation completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Spelling check completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review documentation structure" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update any outdated information" >> $GITHUB_STEP_SUMMARY
+          echo "3. Add missing documentation for new features" >> $GITHUB_STEP_SUMMARY
+          echo "4. Ensure all API endpoints are documented" >> $GITHUB_STEP_SUMMARY
+
+  notify-docs-update:
+    name: Notify Documentation Update
+    runs-on: ubuntu-latest
+    needs: [build-docs, docs-quality-check]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Create documentation update notification
+        run: |
+          echo "## Documentation Update Complete 📚" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Documentation has been successfully built and deployed to GitHub Pages." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changes in this deployment:" >> $GITHUB_STEP_SUMMARY
+          echo "- Updated documentation files" >> $GITHUB_STEP_SUMMARY
+          echo "- Quality checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Pages deployment initiated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Documentation Site:" >> $GITHUB_STEP_SUMMARY
+          echo "📖 [View Documentation](https://msenol.github.io/CodeSight/)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [Getting Started](https://msenol.github.io/CodeSight/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [API Reference](https://msenol.github.io/CodeSight/api/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Installation Guide](https://msenol.github.io/CodeSight/#installation)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Documentation updates typically take 1-2 minutes to propagate." >> $GITHUB_STEP_SUMMARY

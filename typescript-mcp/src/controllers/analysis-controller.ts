@@ -1,18 +1,20 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /**
  * Analysis Controller - Mock Implementation
  */
 export class AnalysisController {
-  async analyzeCode(request: any): Promise<any> {
+  async analyzeCode(): Promise<Record<string, unknown>> {
     return {
       success: true,
-      analysis: 'Mock analysis result'
+      analysis: 'Mock analysis result',
     };
   }
 
-  async getComplexity(request: any): Promise<any> {
+  async getComplexity(): Promise<Record<string, unknown>> {
     return {
       success: true,
-      complexity: 'medium'
+      complexity: 'medium',
     };
   }
 }

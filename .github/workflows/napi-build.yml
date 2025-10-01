@@ -1,0 +1,489 @@
+# NAPI-RS Build Pipeline for CodeSight MCP Server
+# Generated: 2025-01-27
+
+name: NAPI-RS Build Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  NODE_VERSION: '20'
+  RUST_VERSION: '1.75'
+
+jobs:
+  # Build NAPI-RS native modules for all platforms
+  build-native-modules:
+    name: Build Native Modules (${{ matrix.triple }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Linux x64
+          - triple: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            binary-name: codesight-native.linux-x64.node
+          - triple: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            binary-name: codesight-native.linux-x64-musl.node
+          # Linux ARM64
+          - triple: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            binary-name: codesight-native.linux-arm64.node
+          - triple: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            binary-name: codesight-native.linux-arm64-musl.node
+          # macOS x64
+          - triple: x86_64-apple-darwin
+            os: macos-latest
+            binary-name: codesight-native.darwin-x64.node
+          # macOS ARM64
+          - triple: aarch64-apple-darwin
+            os: macos-latest
+            binary-name: codesight-native.darwin-arm64.node
+          # Windows x64
+          - triple: x86_64-pc-windows-msvc
+            os: windows-latest
+            binary-name: codesight-native.win32-x64.node
+          # Windows ARM64
+          - triple: aarch64-pc-windows-msvc
+            os: windows-latest
+            binary-name: codesight-native.win32-arm64.node
+          # Linux ARM32
+          - triple: armv7-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            binary-name: codesight-native.linux-arm.node
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+          targets: ${{ matrix.triple }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: typescript-mcp/package-lock.json
+
+      - name: Install NAPI-RS CLI
+        run: npm install -g @napi-rs/cli
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            rust-core/target/
+          key: ${{ runner.os }}-cargo-napi-${{ matrix.triple }}-${{ hashFiles('rust-core/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-napi-${{ matrix.triple }}-
+            ${{ runner.os }}-cargo-
+
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev build-essential
+
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install openssl
+
+      - name: Install system dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Windows dependencies are typically handled by the Rust toolchain
+
+      - name: Build NAPI-RS module
+        working-directory: rust-core
+        run: |
+          # Build for specific target
+          cargo build --release --target ${{ matrix.triple }}
+
+      - name: Package NAPI-RS module
+        working-directory: rust-core
+        run: |
+          # Use NAPI-RS CLI to package the built module
+          napi build --platform --target ${{ matrix.triple }}
+
+      - name: Rename binary
+        working-directory: rust-core
+        run: |
+          # Rename the binary to match the expected naming convention
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            mv target/${{ matrix.triple }}/release/code_intelligence_ffi.node typescript-mcp/${{ matrix.binary-name }}
+          else
+            mv target/${{ matrix.triple }}/release/libcode_intelligence_ffi.so typescript-mcp/${{ matrix.binary-name }}
+          fi
+
+      - name: Upload NAPI-RS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: napi-${{ matrix.triple }}
+          path: typescript-mcp/${{ matrix.binary-name }}
+          retention-days: 30
+
+      - name: Upload to GitHub Release (if tagged)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: typescript-mcp/${{ matrix.binary-name }}
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build and test hybrid TypeScript + Rust integration
+  test-hybrid-integration:
+    name: Test Hybrid Integration
+    runs-on: ubuntu-latest
+    needs: build-native-modules
+    if: github.event_name != 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: typescript-mcp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Download Linux x64 NAPI module
+        uses: actions/download-artifact@v4
+        with:
+          name: napi-x86_64-unknown-linux-gnu
+          path: typescript-mcp/
+
+      - name: Rename NAPI module for local testing
+        working-directory: typescript-mcp
+        run: |
+          mv codesight-native.linux-x64.node codesight-native.node
+
+      - name: Build TypeScript project
+        working-directory: typescript-mcp
+        run: |
+          npm run build
+
+      - name: Run hybrid tests
+        working-directory: typescript-mcp
+        run: |
+          npm test -- tests/basic.test.ts
+
+      - name: Test NAPI-RS integration
+        working-directory: typescript-mcp
+        run: |
+          # Test that the NAPI module can be loaded
+          node -e "
+            try {
+              const native = require('./codesight-native.node');
+              console.log('NAPI-RS module loaded successfully');
+              console.log('Available exports:', Object.keys(native));
+            } catch (error) {
+              console.error('Failed to load NAPI-RS module:', error);
+              process.exit(1);
+            }
+          "
+
+  # Create unified package with all native modules
+  package-native-modules:
+    name: Package Native Modules
+    runs-on: ubuntu-latest
+    needs: [build-native-modules, test-hybrid-integration]
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: typescript-mcp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Download all NAPI-RS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: typescript-mcp/
+
+      - name: Organize downloaded modules
+        working-directory: typescript-mcp
+        run: |
+          # Create a structure for all downloaded modules
+          mkdir -p native-modules
+          mv napi-*/*.node native-modules/
+
+          # List all downloaded modules
+          echo "Downloaded NAPI-RS modules:"
+          ls -la native-modules/
+
+      - name: Create platform-specific install script
+        working-directory: typescript-mcp
+        run: |
+          cat > scripts/install-native.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const os = require('os');
+
+          // Determine the correct binary for the current platform
+          function getPlatformBinary() {
+            const platform = os.platform();
+            const arch = os.arch();
+
+            const binaryMap = {
+              'darwin x64': 'codesight-native.darwin-x64.node',
+              'darwin arm64': 'codesight-native.darwin-arm64.node',
+              'linux x64': 'codesight-native.linux-x64.node',
+              'linux arm64': 'codesight-native.linux-arm64.node',
+              'linux arm': 'codesight-native.linux-arm.node',
+              'win32 x64': 'codesight-native.win32-x64.node',
+              'win32 arm64': 'codesight-native.win32-arm64.node',
+            };
+
+            const key = `${platform} ${arch}`;
+            return binaryMap[key];
+          }
+
+          function installNativeModule() {
+            const binaryName = getPlatformBinary();
+            if (!binaryName) {
+              console.error(`Unsupported platform: ${os.platform()} ${os.arch()}`);
+              process.exit(1);
+            }
+
+            const sourcePath = path.join(__dirname, '..', 'native-modules', binaryName);
+            const targetPath = path.join(__dirname, '..', binaryName.replace(/\.node$/, ''));
+
+            if (fs.existsSync(sourcePath)) {
+              fs.copyFileSync(sourcePath, targetPath + '.node');
+              console.log(`Successfully installed ${binaryName}`);
+            } else {
+              console.error(`Native module not found: ${binaryName}`);
+              process.exit(1);
+            }
+          }
+
+          if (require.main === module) {
+            installNativeModule();
+          }
+
+          module.exports = { installNativeModule, getPlatformBinary };
+          EOF
+
+      - name: Update package.json scripts
+        working-directory: typescript-mcp
+        run: |
+          # Add install-native script to package.json
+          npm pkg set scripts.install-native="node scripts/install-native.js"
+
+      - name: Create native module manifest
+        working-directory: typescript-mcp
+        run: |
+          cat > native-modules.json << 'EOF'
+          {
+            "name": "codesight-native-modules",
+            "version": "0.1.0",
+            "description": "Multi-platform NAPI-RS native modules for CodeSight MCP Server",
+            "modules": [
+              {
+                "platform": "linux-x64",
+                "file": "codesight-native.linux-x64.node",
+                "triple": "x86_64-unknown-linux-gnu"
+              },
+              {
+                "platform": "linux-x64-musl",
+                "file": "codesight-native.linux-x64-musl.node",
+                "triple": "x86_64-unknown-linux-musl"
+              },
+              {
+                "platform": "linux-arm64",
+                "file": "codesight-native.linux-arm64.node",
+                "triple": "aarch64-unknown-linux-gnu"
+              },
+              {
+                "platform": "linux-arm64-musl",
+                "file": "codesight-native.linux-arm64-musl.node",
+                "triple": "aarch64-unknown-linux-musl"
+              },
+              {
+                "platform": "linux-arm",
+                "file": "codesight-native.linux-arm.node",
+                "triple": "armv7-unknown-linux-gnueabihf"
+              },
+              {
+                "platform": "darwin-x64",
+                "file": "codesight-native.darwin-x64.node",
+                "triple": "x86_64-apple-darwin"
+              },
+              {
+                "platform": "darwin-arm64",
+                "file": "codesight-native.darwin-arm64.node",
+                "triple": "aarch64-apple-darwin"
+              },
+              {
+                "platform": "win32-x64",
+                "file": "codesight-native.win32-x64.node",
+                "triple": "x86_64-pc-windows-msvc"
+              },
+              {
+                "platform": "win32-arm64",
+                "file": "codesight-native.win32-arm64.node",
+                "triple": "aarch64-pc-windows-msvc"
+              }
+            ],
+            "installScript": "scripts/install-native.js",
+            "minimumNodeVersion": "18.0.0"
+          }
+          EOF
+
+      - name: Upload packaged modules
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-native-modules
+          path: |
+            typescript-mcp/native-modules/
+            typescript-mcp/scripts/
+            typescript-mcp/native-modules.json
+          retention-days: 30
+
+      - name: Create release archive
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: typescript-mcp
+        run: |
+          tar -czf codesight-native-modules-${{ github.ref_name }}.tar.gz \
+            native-modules/ \
+            scripts/ \
+            native-modules.json
+
+      - name: Upload release archive
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: typescript-mcp/codesight-native-modules-${{ github.ref_name }}.tar.gz
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Performance benchmarks for NAPI-RS modules
+  benchmark-native-modules:
+    name: Benchmark Native Modules
+    runs-on: ubuntu-latest
+    needs: build-native-modules
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: typescript-mcp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: typescript-mcp
+        run: npm ci
+
+      - name: Download Linux x64 NAPI module
+        uses: actions/download-artifact@v4
+        with:
+          name: napi-x86_64-unknown-linux-gnu
+          path: typescript-mcp/
+
+      - name: Rename NAPI module
+        working-directory: typescript-mcp
+        run: |
+          mv codesight-native.linux-x64.node codesight-native.node
+
+      - name: Run performance benchmarks
+        working-directory: typescript-mcp
+        run: |
+          # Create a benchmark script
+          cat > benchmark-native.js << 'EOF'
+          const { performance } = require('perf_hooks');
+
+          try {
+            const native = require('./codesight-native.node');
+            console.log('Running NAPI-RS performance benchmarks...');
+
+            // Benchmark function call overhead
+            const iterations = 100000;
+            const start = performance.now();
+
+            for (let i = 0; i < iterations; i++) {
+              // Test available functions
+              if (typeof native.testFunction === 'function') {
+                native.testFunction();
+              }
+            }
+
+            const end = performance.now();
+            const avgTime = (end - start) / iterations;
+
+            console.log(`Average function call time: ${avgTime.toFixed(4)}ms`);
+            console.log(`Total calls: ${iterations}`);
+            console.log(`Total time: ${(end - start).toFixed(2)}ms`);
+
+            // Generate benchmark report
+            const report = {
+              timestamp: new Date().toISOString(),
+              platform: process.platform,
+              arch: process.arch,
+              nodeVersion: process.version,
+              benchmarks: {
+                functionCallOverhead: {
+                  iterations,
+                  totalTime: end - start,
+                  averageTime: avgTime,
+                  callsPerSecond: Math.round(iterations / ((end - start) / 1000))
+                }
+              }
+            };
+
+            console.log('Benchmark report:', JSON.stringify(report, null, 2));
+
+          } catch (error) {
+            console.error('Benchmark failed:', error);
+            process.exit(1);
+          }
+          EOF
+
+          node benchmark-native.js
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: typescript-mcp/benchmark-results.json
+          retention-days: 7

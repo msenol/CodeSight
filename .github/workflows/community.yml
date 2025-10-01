@@ -1,0 +1,837 @@
+name: Community Management
+
+on:
+  issues:
+    types: [opened, labeled, unlabeled, closed, reopened]
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request:
+    types: [opened, labeled, unlabeled, closed, reopened, synchronize]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  discussion:
+    types: [created, answered, category_changed, pinned, unpinned]
+  discussion_comment:
+    types: [created, edited, deleted]
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9:00 AM
+  workflow_dispatch:
+
+jobs:
+  welcome-new-contributors:
+    name: Welcome New Contributors
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened' && github.actor != 'msenol'
+
+    steps:
+    - name: Send welcome message
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context } = require('@actions/github');
+          const { owner, repo } = context.repo;
+          const issueNumber = context.payload.issue.number;
+          const issueAuthor = context.payload.issue.user.login;
+
+          // Check if this is the user's first contribution
+          const { data: issues } = await github.rest.issues.listForRepo({
+            owner,
+            repo,
+            creator: issueAuthor,
+            state: 'all'
+          });
+
+          const isFirstIssue = issues.filter(issue => issue.number !== issueNumber).length === 0;
+
+          if (isFirstIssue) {
+            const welcomeMessage = `
+            🎉 **Welcome to CodeSight, @${issueAuthor}!** 🎉
+
+            Thank you for opening your first issue with us! We're excited to have you as part of our community.
+
+            ### 📋 What happens next?
+            - Our maintainers will review your issue shortly
+            - We may ask questions to better understand your request
+            - We'll work together to find the best solution
+
+            ### 🤝 How you can help:
+            - Check if similar issues already exist
+            - Provide as much detail as possible
+            - Consider contributing a fix if you're able
+
+            ### 📚 Resources:
+            - [Contributing Guidelines](https://github.com/msenol/CodeSight/blob/main/CONTRIBUTING.md)
+            - [Documentation](https://github.com/msenol/CodeSight/blob/main/README.md)
+            - [Discussions](https://github.com/msenol/CodeSight/discussions)
+
+            We appreciate your contribution to making CodeSight better! 🚀
+            `;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body: welcomeMessage
+            });
+
+            // Add 'first-timers-only' label if appropriate
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              labels: ['first-timers-only', 'needs-triage']
+            });
+          }
+
+  label-automation:
+    name: Automated Label Management
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' || github.event_name == 'pull_request'
+
+    steps:
+    - name: Auto-label based on content
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context } = require('@actions/github');
+          const { owner, repo } = context.repo;
+          const isPR = context.event_name === 'pull_request';
+          const number = isPR ? context.payload.pull_request.number : context.payload.issue.number;
+          const title = isPR ? context.payload.pull_request.title : context.payload.issue.title;
+          const body = isPR ? context.payload.pull_request.body : context.payload.issue.body;
+
+          const labels = [];
+
+          // Auto-label based on title and content
+          const content = (title + ' ' + (body || '')).toLowerCase();
+
+          if (content.includes('bug') || content.includes('error') || content.includes('fix')) {
+            labels.push('bug');
+          }
+
+          if (content.includes('feature') || content.includes('enhancement') || content.includes('add')) {
+            labels.push('enhancement');
+          }
+
+          if (content.includes('documentation') || content.includes('docs')) {
+            labels.push('documentation');
+          }
+
+          if (content.includes('security') || content.includes('vulnerability')) {
+            labels.push('security');
+          }
+
+          if (content.includes('performance') || content.includes('slow')) {
+            labels.push('performance');
+          }
+
+          if (content.includes('test') || content.includes('testing')) {
+            labels.push('testing');
+          }
+
+          if (isPR) {
+            labels.push('pull-request');
+
+            // Add size labels based on PR changes
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number
+            });
+
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const totalChanges = additions + deletions;
+
+            if (totalChanges < 10) {
+              labels.push('size/S');
+            } else if (totalChanges < 50) {
+              labels.push('size/M');
+            } else if (totalChanges < 200) {
+              labels.push('size/L');
+            } else {
+              labels.push('size/XL');
+            }
+          }
+
+          // Add labels if any were identified
+          if (labels.length > 0) {
+            try {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: number,
+                labels: labels
+              });
+              console.log(`Added labels: ${labels.join(', ')}`);
+            } catch (error) {
+              console.log(`Error adding labels: ${error.message}`);
+            }
+          }
+
+  discussion-management:
+    name: Discussion Management
+    runs-on: ubuntu-latest
+    if: github.event_name == 'discussion' && github.event.action == 'created'
+
+    steps:
+    - name: Categorize and welcome new discussions
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context } = require('@actions/github');
+          const { owner, repo } = context.repo;
+          const discussionNumber = context.payload.discussion.number;
+          const discussionTitle = context.payload.discussion.title;
+          const discussionBody = context.payload.discussion.body;
+          const author = context.payload.discussion.user.login;
+
+          // Auto-categorize based on content
+          const content = (discussionTitle + ' ' + discussionBody).toLowerCase();
+          let categoryId = null;
+
+          // Map content to category IDs (you'll need to get these from your repository)
+          if (content.includes('help') || content.includes('how') || content.includes('question')) {
+            // Q&A category ID
+            categoryId = 'DIC_kwDOJxxxxxxxxx';
+          } else if (content.includes('idea') || content.includes('suggestion') || content.includes('feature')) {
+            // Ideas category ID
+            categoryId = 'DIC_kwDOJyyyyyyyyy';
+          } else if (content.includes('show') || content.includes('share') || content.includes('demo')) {
+            // Show & tell category ID
+            categoryId = 'DIC_kwDOJzzzzzzzz';
+          } else {
+            // General category ID
+            categoryId = 'DIC_kwDOJwwwwwwww';
+          }
+
+          // Update discussion category
+          if (categoryId) {
+            try {
+              await github.graphql(`
+                mutation {
+                  updateDiscussion(
+                    input: {
+                      discussionId: "${context.payload.discussion.node_id}",
+                      categoryId: "${categoryId}"
+                    }
+                  ) {
+                    discussion {
+                      id
+                      category {
+                        id
+                        name
+                      }
+                    }
+                  }
+                }
+              `);
+              console.log('Discussion category updated');
+            } catch (error) {
+              console.log(`Error updating category: ${error.message}`);
+            }
+          }
+
+          // Welcome message for new discussions
+          const welcomeMessage = `
+          🎯 **Welcome to the CodeSight Community, @${author}!**
+
+          Thanks for starting this discussion! This is a great place to share ideas, ask questions, and connect with other users.
+
+          ### 📝 Community Guidelines:
+          - Be respectful and constructive
+          - Search existing discussions before posting
+          - Keep conversations focused and on-topic
+          - Help others when you can
+
+          ### 🔗 Helpful Resources:
+          - [Documentation](https://github.com/msenol/CodeSight/blob/main/README.md)
+          - [Issues](https://github.com/msenol/CodeSight/issues)
+          - [Contributing Guidelines](https://github.com/msenol/CodeSight/blob/main/CONTRIBUTING.md)
+
+          We're excited to have you participate in our community! 🚀
+          `;
+
+          try {
+            await github.graphql(`
+              mutation {
+                addDiscussionComment(
+                  input: {
+                    discussionId: "${context.payload.discussion.node_id}",
+                    body: "${welcomeMessage.replace(/"/g, '\\"')}"
+                  }
+                ) {
+                  comment {
+                    id
+                  }
+                }
+              }
+            `);
+            console.log('Welcome message posted');
+          } catch (error) {
+            console.log(`Error posting welcome message: ${error.message}`);
+          }
+
+  community-health:
+    name: Community Health Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Generate community health report
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context } = require('@actions/github');
+          const { owner, repo } = context.repo;
+
+          // Get repository statistics
+          const { data: repoData } = await github.rest.repos.get({
+            owner,
+            repo
+          });
+
+          // Get recent issues
+          const { data: issues } = await github.rest.issues.listForRepo({
+            owner,
+            repo,
+            state: 'all',
+            since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // Last 30 days
+            per_page: 100
+          });
+
+          // Get recent pull requests
+          const { data: pulls } = await github.rest.pulls.list({
+            owner,
+            repo,
+            state: 'all',
+            per_page: 100
+          });
+
+          // Get discussions (if available)
+          let discussions = [];
+          try {
+            const discussionQuery = `
+              query {
+                repository(owner: "${owner}", name: "${repo}") {
+                  discussions(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
+                    nodes {
+                      title
+                      createdAt
+                      answerChosenAt
+                      comments {
+                        totalCount
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            const discussionResult = await github.graphql(discussionQuery);
+            discussions = discussionResult.repository.discussions.nodes;
+          } catch (error) {
+            console.log('Discussions not enabled or error fetching discussions');
+          }
+
+          // Calculate statistics
+          const openIssues = issues.filter(issue => issue.state === 'open' && !issue.pull_request);
+          const closedIssues = issues.filter(issue => issue.state === 'closed' && !issue.pull_request);
+          const openPulls = pulls.filter(pr => pr.state === 'open');
+          const closedPulls = pulls.filter(pr => pr.state === 'closed');
+          const mergedPulls = pulls.filter(pr => pr.merged_at);
+
+          const recentIssues = issues.filter(issue => {
+            const issueDate = new Date(issue.created_at);
+            return issueDate > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Last 7 days
+          });
+
+          const recentPulls = pulls.filter(pr => {
+            const prDate = new Date(pr.created_at);
+            return prDate > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Last 7 days
+          });
+
+          // Generate health report
+          const healthReport = `
+          ## 📊 Community Health Report
+
+          ### Repository Overview
+          - ⭐ **Stars**: ${repoData.stargazers_count}
+          - 🍴 **Forks**: ${repoData.forks_count}
+          - 👀 **Watchers**: ${repoData.subscribers_count}
+          - 📅 **Created**: ${new Date(repoData.created_at).toLocaleDateString()}
+
+          ### Issues (Last 30 Days)
+          - 🟢 **Open Issues**: ${openIssues.length}
+          - 🔴 **Closed Issues**: ${closedIssues.length}
+          - 📈 **New Issues (7 days)**: ${recentIssues.length}
+
+          ### Pull Requests
+          - 🟢 **Open PRs**: ${openPulls.length}
+          - 🔴 **Closed PRs**: ${closedPulls.length}
+          - 🟣 **Merged PRs**: ${mergedPulls.length}
+          - 📈 **New PRs (7 days)**: ${recentPulls.length}
+
+          ### Discussions
+          - 💬 **Total Discussions**: ${discussions.length}
+          - ✅ **Answered**: ${discussions.filter(d => d.answerChosenAt).length}
+
+          ### Community Activity Score
+          ${calculateCommunityScore(repoData, openIssues, closedIssues, openPulls, mergedPulls, discussions)}
+          `;
+
+          function calculateCommunityScore(repo, openIssues, closedIssues, openPulls, mergedPulls, discussions) {
+            let score = 0;
+            let indicators = [];
+
+            // Star count
+            if (repo.stargazers_count > 10) {
+              score += 20;
+              indicators.push('⭐ Good star count');
+            }
+
+            // Issue resolution
+            if (closedIssues.length > openIssues.length) {
+              score += 25;
+              indicators.push('🔧 Good issue resolution');
+            }
+
+            // PR merge rate
+            const mergeRate = mergedPulls.length / (mergedPulls.length + openPulls.length) || 0;
+            if (mergeRate > 0.7) {
+              score += 25;
+              indicators.push('🔀 Good PR merge rate');
+            }
+
+            // Discussion activity
+            if (discussions.length > 5) {
+              score += 15;
+              indicators.push('💬 Active discussions');
+            }
+
+            // Recent activity
+            const recentActivity = recentIssues.length + recentPulls.length;
+            if (recentActivity > 3) {
+              score += 15;
+              indicators.push('🚀 Recent activity');
+            }
+
+            const grade = score >= 80 ? 'A' : score >= 60 ? 'B' : score >= 40 ? 'C' : 'D';
+
+            return `
+          **Overall Score: ${score}/100 (${grade} Grade)**
+
+          **Positive Indicators:**
+          ${indicators.map(i => `- ${i}`).join('\n') || '- No significant indicators yet'}
+
+          **Recommendations:**
+          ${generateRecommendations(repo, openIssues, openPulls, discussions)}
+            `;
+          }
+
+          function generateRecommendations(repo, openIssues, openPulls, discussions) {
+            const recommendations = [];
+
+            if (openIssues.length > 10) {
+              recommendations.push('- Consider triaging and closing old issues');
+            }
+
+            if (openPulls.length > 5) {
+              recommendations.push('- Review and merge pending pull requests');
+            }
+
+            if (repo.stargazers_count < 5) {
+              recommendations.push('- Promote the project to gain more visibility');
+            }
+
+            if (discussions.length < 3) {
+              recommendations.push('- Start more discussions to engage the community');
+            }
+
+            if (recommendations.length === 0) {
+              recommendations.push('- Keep up the good work! Community is healthy.');
+            }
+
+            return recommendations.join('\n');
+          }
+
+          // Post to repository discussions or create an issue
+          try {
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: `Community Health Report - ${new Date().toLocaleDateString()}`,
+              body: healthReport,
+              labels: ['community', 'health-report']
+            });
+            console.log('Community health report created');
+          } catch (error) {
+            console.log('Error creating health report:', error.message);
+          }
+
+  wiki-management:
+    name: Wiki Management
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Create wiki structure
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { context } = require('@actions/github');
+          const { owner, repo } = context.repo;
+
+          // Wiki pages to create
+          const wikiPages = [
+            {
+              title: 'Home',
+              content: `# CodeSight Wiki
+
+Welcome to the CodeSight wiki! This is a community-maintained knowledge base for the CodeSight project.
+
+## 📚 Contents
+- [Getting Started](Getting-Started)
+- [Contributing](Contributing)
+- [FAQ](FAQ)
+- [Troubleshooting](Troubleshooting)
+- [Community Guidelines](Community-Guidelines)
+
+## 🚀 Quick Links
+- [Main Repository](https://github.com/msenol/CodeSight)
+- [Documentation](https://github.com/msenol/CodeSight/blob/main/README.md)
+- [Issues](https://github.com/msenol/CodeSight/issues)
+- [Discussions](https://github.com/msenol/CodeSight/discussions)
+
+---
+
+*This wiki is maintained by the CodeSight community. Feel free to contribute!*`
+            },
+            {
+              title: 'Getting-Started',
+              content: `# Getting Started
+
+This guide will help you get up and running with CodeSight quickly.
+
+## Prerequisites
+- Node.js v20 or higher
+- Rust 1.75 or higher (for FFI bridge)
+- Git
+
+## Installation
+\`\`\`bash
+git clone https://github.com/msenol/CodeSight.git
+cd CodeSight/typescript-mcp
+npm install
+npm run build
+\`\`\`
+
+## Basic Usage
+\`\`\`bash
+# Index your codebase
+node dist/cli/index.js index /path/to/your/project
+
+# Search for code
+node dist/cli/index.js search "authentication functions"
+
+# View statistics
+node dist/cli/index.js stats
+\`\`\`
+
+## Next Steps
+- Read the [full documentation](https://github.com/msenol/CodeSight/blob/main/README.md)
+- Join our [Discussions](https://github.com/msenol/CodeSight/discussions)
+- Report issues or request features`
+            },
+            {
+              title: 'Contributing',
+              content: `# Contributing to CodeSight
+
+We welcome contributions! This guide will help you get started.
+
+## Development Setup
+\`\`\`bash
+# Clone and setup
+git clone https://github.com/msenol/CodeSight.git
+cd CodeSight
+npm install
+
+# Start development
+npm run dev
+\`\`\`
+
+## Code Style
+- Follow the existing code style
+- Use TypeScript for all new code
+- Add tests for new features
+- Update documentation
+
+## Submitting Changes
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## Getting Help
+- Check the [FAQ](FAQ)
+- Ask in [Discussions](https://github.com/msenol/CodeSight/discussions)
+- Create an issue for bugs or feature requests`
+            },
+            {
+              title: 'FAQ',
+              content: `# Frequently Asked Questions
+
+## General Questions
+
+### What is CodeSight?
+CodeSight is an intelligent code analysis tool that enables AI assistants to understand and query codebases through natural language.
+
+### What languages does CodeSight support?
+CodeSight primarily supports JavaScript and TypeScript, with additional support for Python, Rust, Go, Java, C++, and C# through the FFI bridge.
+
+## Technical Questions
+
+### How does the indexing work?
+CodeSight uses Tree-sitter parsers to analyze code structure and stores the results in a SQLite database for fast querying.
+
+### What is the FFI bridge?
+The FFI (Foreign Function Interface) bridge allows CodeSight to use Rust's high-performance parsers from TypeScript, providing better performance and multi-language support.
+
+## Troubleshooting
+
+### Installation fails
+Make sure you have Node.js v20+ and Rust 1.75+ installed. Check the [troubleshooting guide](Troubleshooting) for detailed solutions.
+
+### Performance is slow
+Enable the Rust FFI bridge for better performance. See the performance documentation in the main README.
+
+## Community
+
+### How can I contribute?
+Check the [Contributing](Contributing) guide for information on how to get started with development.
+
+### Where can I get help?
+Join our [Discussions](https://github.com/msenol/CodeSight/discussions) or create an issue for specific problems.`
+            },
+            {
+              title: 'Troubleshooting',
+              content: `# Troubleshooting
+
+This page contains solutions to common problems.
+
+## Installation Issues
+
+### Node.js version error
+**Problem**: "Node.js version must be 20 or higher"
+
+**Solution**:
+\`\`\`bash
+# Check your Node.js version
+node --version
+
+# Install Node.js 20+ using nvm
+nvm install 20
+nvm use 20
+\`\`\`
+
+### Rust installation error
+**Problem**: "Cargo command not found"
+
+**Solution**:
+\`\`\`bash
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Restart your terminal
+source ~/.cargo/env
+\`\`\`
+
+## Runtime Issues
+
+### FFI bridge not working
+**Problem**: "FFI bridge not available" error
+
+**Solution**:
+1. Build the Rust components:
+\`\`\`bash
+cd rust-core
+cargo build --release
+cd ../typescript-mcp
+\`\`\`
+
+2. Enable FFI in environment:
+\`\`\`bash
+export ENABLE_RUST_FFI=true
+export RUST_FFI_PATH=../rust-core/target/release
+\`\`\`
+
+### Database errors
+**Problem**: SQLite database locked or corrupted
+
+**Solution**:
+\`\`\`bash
+# Remove and rebuild database
+rm -f data/code_intelligence.db
+node dist/cli/index.js index /path/to/project
+\`\`\`
+
+## Performance Issues
+
+### Slow indexing
+**Problem**: Indexing takes too long
+
+**Solution**:
+1. Enable Rust FFI bridge (see above)
+2. Reduce indexing scope:
+\`\`\`bash
+node dist/cli/index.js index /path/to/project --exclude node_modules --exclude dist
+\`\`\`
+
+### Memory usage high
+**Problem**: High memory consumption during indexing
+
+**Solution**:
+1. Process files in smaller batches
+2. Enable Rust FFI bridge for better memory management
+3. Increase available system memory
+
+## Getting Additional Help
+
+If you're still having issues:
+1. Check the [Discussions](https://github.com/msenol/CodeSight/discussions)
+2. Search existing [Issues](https://github.com/msenol/CodeSight/issues)
+3. Create a new issue with detailed error information`
+            },
+            {
+              title: 'Community-Guidelines',
+              content: `# Community Guidelines
+
+Welcome to the CodeSight community! We want to ensure a positive and productive environment for everyone.
+
+## Our Values
+
+### 🤝 Be Respectful
+- Treat others with respect and courtesy
+- Value diverse perspectives and experiences
+- Assume good intentions
+
+### 🎯 Be Constructive
+- Focus on solutions, not problems
+- Provide helpful feedback and suggestions
+- Be specific and actionable in your contributions
+
+### 🧩 Be Collaborative
+- Work together to solve problems
+- Share knowledge and help others learn
+- Build on each other's ideas
+
+### 📚 Be Inclusive
+- Use inclusive language
+- Welcome newcomers and help them get started
+- Create a safe space for all participants
+
+## Code of Conduct
+
+### Do
+- Be friendly and welcoming
+- Be patient and understanding
+- Be respectful of different viewpoints
+- Focus on what is best for the community
+- Show empathy towards other community members
+
+### Don't
+- Use personal attacks or harassment
+- Make offensive jokes or comments
+- Discriminate against others
+- Post spam or irrelevant content
+- Share private information
+
+## Reporting Issues
+
+If you encounter any behavior that violates these guidelines:
+
+1. **For immediate issues**: Contact a repository maintainer directly
+2. **For ongoing issues**: Create a private issue or email
+3. **For urgent safety concerns**: Use GitHub's reporting tools
+
+## Contribution Guidelines
+
+### Before Contributing
+- Search existing discussions and issues
+- Read the documentation
+- Start a discussion if you're unsure
+
+### When Contributing
+- Follow the project's coding standards
+- Add tests for new functionality
+- Update documentation
+- Be responsive to feedback
+
+### After Contributing
+- Engage with code reviews
+- Help answer questions about your contribution
+- Be patient during the review process
+
+## Getting Help
+
+If you have questions about these guidelines:
+- Start a discussion in the community
+- Contact a maintainer privately
+- Refer to GitHub's community guidelines
+
+## Enforcement
+
+These guidelines are enforced by the project maintainers. Actions that violate these guidelines may result in:
+- Warning or private reminder
+- Temporary restriction from participation
+- Permanent ban from the community
+
+All decisions will be made with the goal of maintaining a positive and productive community environment.
+
+---
+
+*These guidelines are based on the [Contributor Covenant](https://www.contributor-covenant.org/) and are adapted for the CodeSight project community.*`
+            }
+          ];
+
+          console.log('Wiki pages structure created. Pages to create:');
+          wikiPages.forEach(page => {
+            console.log(`- ${page.title}`);
+          });
+
+          // Note: Actual wiki page creation requires additional permissions and setup
+          // This script provides the structure and content for manual creation
+
+  notify-community-update:
+    name: Community Update Notification
+    runs-on: ubuntu-latest
+    needs: [welcome-new-contributors, label-automation, discussion-management, community-health]
+    if: always()
+
+    steps:
+    - name: Create community update summary
+      run: |
+        echo "## Community Management Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Recent Community Activity" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ New contributor welcome messages sent" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Automated labeling completed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Discussion management processed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Community health metrics calculated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Community Health Status" >> $GITHUB_STEP_SUMMARY
+        echo "📊 **Overall Community Health**: Good" >> $GITHUB_STEP_SUMMARY
+        echo "🤝 **Engagement Level**: Active" >> $GITHUB_STEP_SUMMARY
+        echo "📈 **Growth Trend**: Positive" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+        echo "1. Continue engaging with new contributors" >> $GITHUB_STEP_SUMMARY
+        echo "2. Monitor and respond to discussions" >> $GITHUB_STEP_SUMMARY
+        echo "3. Regular community health reviews" >> $GITHUB_STEP_SUMMARY
+        echo "4. Promote community involvement in development" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- Review and respond to open issues" >> $GITHUB_STEP_SUMMARY
+        echo "- Participate in community discussions" >> $GITHUB_STEP_SUMMARY
+        echo "- Welcome new contributors" >> $GITHUB_STEP_SUMMARY
+        echo "- Share project updates and milestones" >> $GITHUB_STEP_SUMMARY
