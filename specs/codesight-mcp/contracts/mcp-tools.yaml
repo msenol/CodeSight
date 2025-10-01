@@ -22,7 +22,7 @@ paths:
                 query:
                   type: string
                   description: Natural language query
-                  example: "where is user authentication implemented?"
+                  example: 'where is user authentication implemented?'
                 codebase_id:
                   type: string
                   format: uuid

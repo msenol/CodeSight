@@ -394,7 +394,7 @@ src/               # ✅ React frontend
 ## 📚 Documentation
 
 - [Quick Start Guide](./specs/codesight-mcp/quickstart.md)
-- [Technical Architecture](./specs/codesight-mcp/technical-architecture.md)
+- [Architecture Overview](./docs/adrs/0001-hybrid-architecture.md)
 - [API Documentation](./specs/codesight-mcp/contracts/)
 - [Development Guide](./docs/development.md)
 - [TypeScript MCP Implementation](./typescript-mcp/README.md)
