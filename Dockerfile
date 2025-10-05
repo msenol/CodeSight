@@ -20,7 +20,7 @@ COPY rust-core/crates ./crates
 RUN cargo build --release
 
 # Stage 2: Node.js build environment
-FROM node:20-slim as node-builder
+FROM node:24-slim as node-builder
 
 # Install system dependencies for native modules
 RUN apt-get update && apt-get install -y \
@@ -42,7 +42,7 @@ COPY typescript-mcp/tsconfig.json ./
 RUN npm run build
 
 # Stage 3: Runtime environment
-FROM node:20-slim as runtime
+FROM node:24-slim as runtime
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
