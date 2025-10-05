@@ -4,6 +4,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { createFastifyServer } from '../src/server';
 
+// Extend Response interface for testing
+declare global {
+  interface Response {
+    url?: string;
+  }
+}
+
 /**
  * Performance Tests for Health Check Endpoints
  *

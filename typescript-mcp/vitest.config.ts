@@ -77,13 +77,6 @@ export default defineConfig({
   },
 
   
-  
-  // Benchmark configuration
-  benchmark: {
-    include: ['tests/**/*.bench.{ts,js}', 'src/**/*.bench.{ts,js}'],
-    exclude: ['node_modules/**', 'dist/**', 'rust-core/**'],
-  },
-
   // Test reporters
   reporters: ['verbose', 'json'],
 

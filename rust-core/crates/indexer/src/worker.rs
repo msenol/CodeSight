@@ -117,13 +117,13 @@ mod tests {
 
         assert_eq!(pool.len(), 4);
 
-        let worker1 = pool.next_worker();
-        let worker2 = pool.next_worker();
-        let worker3 = pool.next_worker();
-        let worker4 = pool.next_worker();
-        let worker5 = pool.next_worker(); // Should wrap around
+        let worker1_id = pool.next_worker().id();
+        let worker2_id = pool.next_worker().id();
+        let worker3_id = pool.next_worker().id();
+        let worker4_id = pool.next_worker().id();
+        let worker5_id = pool.next_worker().id(); // Should wrap around
 
-        assert_eq!(worker1.id(), worker5.id()); // Round-robin should work
+        assert_eq!(worker1_id, worker5_id); // Round-robin should work
     }
 
     #[tokio::test]

@@ -98,7 +98,7 @@ program
 
       console.log(chalk.green(`\nFound ${results.length} results:\n`));
 
-      results.forEach((result: Record<string, unknown>, index: number) => {
+      results.forEach((result, index: number) => {
 
 
         console.log(
