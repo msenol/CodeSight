@@ -354,7 +354,7 @@ mod tests {
     
     #[test]
     fn test_search_code() {
-        let result = search_code("function".to_string());
+        let result = search_code("function".to_string(), None);
         assert!(result.is_ok());
     }
     

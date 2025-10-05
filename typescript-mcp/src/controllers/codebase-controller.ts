@@ -22,6 +22,9 @@ interface CodebaseOptions {
   include_trends?: boolean;
   type?: string;
   recent_entities?: Record<string, unknown>[];
+  sort_by?: string;
+  sort_order?: string;
+  period?: string;
 }
 
 interface CodebaseData {
@@ -39,6 +42,7 @@ interface CodebaseData {
   tags?: string[];
   repository_url?: string;
   local_path?: string;
+  indexing_status?: string;
   statistics?: {
     totalFiles: number;
     totalEntities: number;
@@ -450,7 +454,7 @@ export class CodebaseController {
       }
 
       const exportData = await this.exportCodebaseData(id, {
-        format: format as string,
+        format: format as 'json' | 'csv' | 'xml',
         include_entities: include_entities === 'true',
         include_analysis: include_analysis === 'true',
         compress: compress === 'true',
@@ -622,7 +626,7 @@ export class CodebaseController {
     };
   }
 
-  private async removeCodebase(id: string, force: boolean): Promise<{ success: boolean; message: string }> {
+  private async removeCodebase(id: string, force: boolean): Promise<{ success: boolean; message: string; error?: string }> {
     // This would typically delete from a database
     // For now, return mock result
     const codebase = await this.fetchCodebaseById(id, {});
@@ -631,7 +635,7 @@ export class CodebaseController {
       return { success: false, message: 'Cannot delete active codebase without force flag' };
     }
 
-    return { success: true };
+    return { success: true, message: 'Codebase removed successfully' };
   }
 
   private async performCodebaseIndexing(id: string, options: IndexingOptions): Promise<{ success: boolean; job_id: string; message: string }> {

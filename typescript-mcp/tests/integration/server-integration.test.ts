@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../src/server.js';
+import { createFastifyServer } from '../src/server';
 
 /**
  * Basic Integration Tests for CodeSight MCP Server

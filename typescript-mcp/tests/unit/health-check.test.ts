@@ -15,7 +15,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
  */
 
 // Mock dependencies
-vi.mock('../src/services/logger.js', () => ({
+vi.mock('../src/services/logger', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('../src/services/logger.js', () => ({
   },
 }));
 
-vi.mock('../src/services/IndexingService.js', () => ({
+vi.mock('../src/services/IndexingService', () => ({
   IndexingService: {
     testConnection: vi.fn(),
     getHealthStats: vi.fn(),
@@ -31,20 +31,20 @@ vi.mock('../src/services/IndexingService.js', () => ({
   },
 }));
 
-vi.mock('../src/services/SearchEngine.js', () => ({
+vi.mock('../src/services/SearchEngine', () => ({
   SearchEngine: {
     healthCheck: vi.fn(),
   },
 }));
 
-vi.mock('../src/rust-bridge.js', () => ({
+vi.mock('../src/rust-bridge', () => ({
   rustBridge: {
     isAvailable: vi.fn(),
     getVersion: vi.fn(),
   },
 }));
 
-vi.mock('../src/config.js', () => ({
+vi.mock('../src/config', () => ({
   config: {
     version: '0.1.0',
   },
