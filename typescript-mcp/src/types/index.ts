@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
+ 
+ 
 // Core types for Code Intelligence MCP Server
 
 export interface CodebaseInfo {
@@ -428,6 +428,28 @@ export interface MockResponse<T = unknown> {
 
 export interface TestOperation<T = unknown> {
   (): Promise<T>;
+}
+
+// Additional data flow trace type for testing
+export interface DataFlowTrace {
+  id: string;
+  entryPoint: {
+    function: string;
+    file: string;
+    line: number;
+  };
+  flow: Array<{
+    node: string;
+    type: 'variable' | 'function' | 'parameter' | 'return';
+    file: string;
+    line: number;
+    description?: string;
+  }>;
+  summary: {
+    depth: number;
+    complexity: number;
+    confidence: number;
+  };
 }
 
 // Re-export common types

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
+ 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../src/server';
+import { createFastifyServer } from '../../src/server';
 
 // Extend Response interface for testing
 declare global {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createApp } from '../../src/app';
-import { Vulnerability } from '../../src/types/mcp';
+import { createFastifyServer } from '../../src/server';
+import { Vulnerability } from '../../src/types';
 
 /**
  * Contract Test for analyze_security MCP Tool
@@ -25,7 +25,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
   const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
 
   beforeAll(async () => {
-    app = await createApp();
+    app = await createFastifyServer();
     await app.ready();
   });
 

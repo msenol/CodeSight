@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
+ 
 import type { Request, Response } from 'express';
 import { SearchCodeTool } from '../tools/search-code.js';
 import { FindReferencesTool } from '../tools/find-references.js';
@@ -8,19 +8,28 @@ import { z } from 'zod';
 
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
 interface SearchResult {
-  query: string;
-  code: { matches: unknown[] };
-  references: { references: unknown[] };
-  data_flow: { traces: unknown[] };
-  metadata: {
-    total_matches: number;
-    search_time: number;
-    index_version: string;
+  query?: string;
+  codebase_id?: string;
+  code?: { matches: unknown[] };
+  references?: { references: unknown[] };
+  data_flow?: { traces: unknown[] };
+  query_results?: unknown[];
+  results?: unknown[];
+  combined?: unknown[];
+  metadata?: {
+    total_matches?: number;
+    search_time?: number;
+    index_version?: string;
+  };
+  analytics?: {
+    top_queries?: unknown[];
+    search_patterns?: unknown[];
   };
 }
 
 interface CombinedResult {
   total_results: number;
+  total_matches?: number;
   search_time: number;
   top_matches: Array<{
     file: string;
@@ -28,6 +37,12 @@ interface CombinedResult {
     content: string;
     score: number;
     match_type: string;
+    entity_type?: string;
+    context?: string;
+    entity_id?: string;
+    relevance_score?: number;
+    start_line?: number;
+    end_line?: number;
   }>;
   query_results: {
     code: { matches: unknown[] };

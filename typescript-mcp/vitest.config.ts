@@ -74,15 +74,14 @@ export default defineConfig({
       '@tools': resolve(__dirname, 'src/tools'),
       '@types': resolve(__dirname, 'src/types'),
     },
-  },
 
-  
-  // Test reporters
-  reporters: ['verbose', 'json'],
+    // Test reporters
+    reporters: ['verbose', 'json'],
 
-  // Output configuration
-  outputFile: {
-    json: './test-results/test-results.json',
-    junit: './test-results/junit.xml',
+    // Output configuration
+    outputFile: {
+      json: './test-results/test-results.json',
+      junit: './test-results/junit.xml',
+    },
   },
 });
