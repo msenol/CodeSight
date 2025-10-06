@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createApp } from '../../src/app';
-import { SearchResult } from '../../src/types/mcp';
+import { createFastifyServer } from '../../src/server';
+import { SearchResult } from '../../src/types';
 
 /**
  * Contract Test for search_code MCP Tool
@@ -23,7 +23,7 @@ describe('MCP Tool: search_code - Contract Tests', () => {
   const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
 
   beforeAll(async () => {
-    app = await createApp();
+    app = await createFastifyServer();
     await app.ready();
   });
 

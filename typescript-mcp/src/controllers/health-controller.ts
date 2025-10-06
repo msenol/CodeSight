@@ -129,11 +129,7 @@ export class HealthController {
         include_metrics = false,
       } = req.query;
 
-      const healthStatus = await this.performHealthCheck({
-        include_detailed: include_detailed === 'true',
-        include_dependencies: include_dependencies === 'true',
-        include_metrics: include_metrics === 'true',
-      });
+      const healthStatus = await this.performHealthCheck();
 
       const statusCode =
         healthStatus.status === 'healthy' ? 200 : healthStatus.status === 'degraded' ? 200 : 503;
@@ -154,11 +150,7 @@ export class HealthController {
    */
   async getDetailedHealth(req: Request, res: Response): Promise<void> {
     try {
-      const healthStatus = await this.performHealthCheck({
-        include_detailed: true,
-        include_dependencies: true,
-        include_metrics: true,
-      });
+      const healthStatus = await this.performHealthCheck();
 
       const statusCode =
         healthStatus.status === 'healthy' ? 200 : healthStatus.status === 'degraded' ? 200 : 503;

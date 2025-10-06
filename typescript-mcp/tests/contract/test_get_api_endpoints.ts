@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+ 
+ 
+ 
+ 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createApp } from '../../src/app';
-import { APIEndpoint } from '../../src/types/mcp';
+import { createFastifyServer } from '../../src/server';
+import { APIEndpoint } from '../../src/types';
 
 /**
  * Contract Test for get_api_endpoints MCP Tool
@@ -29,7 +29,7 @@ describe('MCP Tool: get_api_endpoints - Contract Tests', () => {
   const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
 
   beforeAll(async () => {
-    app = await createApp();
+    app = await createFastifyServer();
     await app.ready();
   });
 

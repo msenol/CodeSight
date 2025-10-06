@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createApp } from '../../src/app';
-import { DataFlowTrace } from '../../src/types/mcp';
+import { createFastifyServer } from '../../src/server';
+import { DataFlowTrace } from '../../src/types';
 
 /**
  * Contract Test for trace_data_flow MCP Tool
@@ -24,7 +24,7 @@ describe('MCP Tool: trace_data_flow - Contract Tests', () => {
   const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
 
   beforeAll(async () => {
-    app = await createApp();
+    app = await createFastifyServer();
     await app.ready();
   });
 

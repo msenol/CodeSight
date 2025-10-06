@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 
@@ -8,6 +8,7 @@ import { z } from 'zod';
 declare const console: {
   message: (...args: unknown[]) => void;
   log: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
 };
 
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
@@ -44,14 +45,21 @@ interface CodebaseData {
   local_path?: string;
   indexing_status?: string;
   statistics?: {
-    totalFiles: number;
-    totalEntities: number;
-    entity_count?: number;
+    total_files: number;
+    total_lines: number;
+    total_functions: number;
+    total_classes: number;
+    complexity_average: number;
+    test_coverage: number;
+    last_analysis: string;
   };
   recent_entities?: Array<{
     id: string;
     name: string;
     type: string;
+    file_path: string;
+    complexity: number;
+    last_modified: string;
   }>;
 }
 
@@ -375,7 +383,6 @@ export class CodebaseController {
       const stats = await this.getCodebaseStatistics(id, {
         include_trends: include_trends === 'true',
         period: period as string,
-        granularity: granularity as string,
       });
 
       res.status(200).json({
@@ -457,7 +464,6 @@ export class CodebaseController {
         format: format as 'json' | 'csv' | 'xml',
         include_entities: include_entities === 'true',
         include_analysis: include_analysis === 'true',
-        compress: compress === 'true',
       });
 
       if (format === 'json') {
@@ -543,7 +549,7 @@ export class CodebaseController {
   private async fetchCodebaseById(id: string, options: CodebaseOptions): Promise<CodebaseData> {
     // This would typically fetch from a database
     // For now, return mock data
-    const mockCodebase = {
+    const mockCodebase: CodebaseData = {
       id,
       name: 'E-commerce Platform',
       description: 'Main e-commerce application with user management and payment processing',
@@ -579,6 +585,7 @@ export class CodebaseController {
           type: 'class',
           file_path: 'src/services/user-service.ts',
           complexity: 8,
+          last_modified: '2024-01-20T10:30:00Z',
         },
         {
           id: 'entity_002',
@@ -586,6 +593,7 @@ export class CodebaseController {
           type: 'function',
           file_path: 'src/utils/payment-validator.ts',
           complexity: 5,
+          last_modified: '2024-01-19T14:15:00Z',
         },
       ];
     }
@@ -641,19 +649,11 @@ export class CodebaseController {
   private async performCodebaseIndexing(id: string, options: IndexingOptions): Promise<{ success: boolean; job_id: string; message: string }> {
     // This would typically trigger the actual indexing process
     // For now, return mock indexing result
+    const jobId = `idx_${Date.now()}`;
     return {
-      codebase_id: id,
-      indexing_id: `idx_${Date.now()}`,
-      status: 'in_progress',
-      started_at: new Date().toISOString(),
-      options,
-      progress: {
-        files_processed: 0,
-        total_files: 156,
-        entities_found: 0,
-        current_file: null,
-      },
-      estimated_completion: new Date(Date.now() + 300000).toISOString(), // 5 minutes
+      success: true,
+      job_id: jobId,
+      message: `Indexing job ${jobId} started for codebase ${id}`,
     };
   }
 
@@ -661,18 +661,9 @@ export class CodebaseController {
     // This would typically fetch current indexing status
     // For now, return mock status
     return {
-      codebase_id: id,
       status: 'completed',
-      last_indexed: '2024-01-20T14:00:00Z',
-      progress: {
-        files_processed: 156,
-        total_files: 156,
-        entities_found: 1234,
-        completion_percentage: 100,
-      },
-      duration_seconds: 45,
-      errors: [],
-      warnings: ['Some TypeScript files had parsing warnings'],
+      progress: 100,
+      message: 'Indexing completed successfully',
     };
   }
 
@@ -680,26 +671,16 @@ export class CodebaseController {
     // This would typically perform the actual sync
     // For now, return mock sync result
     return {
-      codebase_id: id,
-      sync_id: `sync_${Date.now()}`,
-      sync_type: options.sync_type,
-      status: 'completed',
-      started_at: new Date(Date.now() - 30000).toISOString(),
-      completed_at: new Date().toISOString(),
-      changes: {
-        files_added: 3,
-        files_modified: 7,
-        files_deleted: 1,
-        total_changes: 11,
-      },
-      reindex_triggered: options.auto_reindex,
+      success: true,
+      changes_detected: 11,
+      message: `Sync completed for codebase ${id}`,
     };
   }
 
   private async getCodebaseStatistics(id: string, options: CodebaseOptions): Promise<Record<string, unknown>> {
     // This would typically calculate actual statistics
     // For now, return mock statistics
-    const stats = {
+    const stats: Record<string, unknown> = {
       codebase_id: id,
       overview: {
         total_files: 156,
@@ -803,29 +784,13 @@ export class CodebaseController {
     const endIndex = startIndex + options.limit;
     const paginatedResults = filtered.slice(startIndex, endIndex);
 
-    return {
-      entities: paginatedResults,
-      pagination: {
-        current_page: options.page,
-        total_pages: Math.ceil(total / options.limit),
-        total_items: total,
-        items_per_page: options.limit,
-      },
-      summary: {
-        total_entities: total,
-        by_type: {
-          class: filtered.filter(e => e.type === 'class').length,
-          function: filtered.filter(e => e.type === 'function').length,
-          interface: filtered.filter(e => e.type === 'interface').length,
-        },
-      },
-    };
+    return paginatedResults;
   }
 
   private async exportCodebaseData(id: string, options: ExportOptions): Promise<Record<string, unknown>> {
     // This would typically generate export data
     // For now, return mock export data
-    const exportData = {
+    const exportData: Record<string, unknown> = {
       codebase_id: id,
       export_timestamp: new Date().toISOString(),
       format: options.format,
@@ -857,7 +822,7 @@ export class CodebaseController {
     return uuidRegex.test(uuid);
   }
 
-  private handleError(message: unknown, res: Response, defaultMessage: string): void {
+  private handleError(error: unknown, res: Response, defaultMessage: string): void {
     console.error('CodebaseController Error:', error);
 
     if (error instanceof z.ZodError) {

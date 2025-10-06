@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
+ 
 import type { Request, Response } from 'express';
 import { SuggestRefactoringTool } from '../tools/suggest-refactoring.js';
 import { z } from 'zod';
@@ -12,20 +12,51 @@ interface RefactoringRequest {
   include_code_examples?: boolean;
   include_impact_analysis?: boolean;
   max_suggestions?: number;
+  max_suggestions_per_entity?: number;
+}
+
+interface RefactoringResult {
+  entity_id: string;
+  suggestions?: unknown;
+  error?: string;
+  status: 'success' | 'failed';
+  successCount: number;
+  suggestionCount: number;
+  highPriorityCount: number;
+}
+
+interface RefactoringSummary {
+  successful: number;
+  failed: number;
+  total_suggestions: number;
+  high_priority_suggestions: number;
+}
+
+interface BatchRefactoringResults {
+  total_entities: number;
+  refactoring_types?: string[];
+  priority_focus?: string;
+  results: Array<Record<string, unknown>>;
+  summary: RefactoringSummary;
 }
 
 interface RefactoringPlanRequest {
   codebase_id: string;
-  scope?: string;
-  time_horizon?: string;
-  resource_constraints?: Record<string, unknown>;
-  quality_gates?: string[];
+  target_metrics?: {
+    max_complexity?: number;
+    min_maintainability?: number;
+    max_duplication_percentage?: number;
+  };
+  priority_areas?: ("high_complexity" | "security_issues" | "duplicates" | "poor_naming")[];
+  effort_budget?: "small" | "medium" | "large" | "unlimited";
+  timeline_weeks?: number;
 }
 
 interface RefactoringExecutionRequest {
   refactoring_id: string;
-  execution_mode?: 'dry_run' | 'auto_apply' | 'manual_approval';
-  backup_before?: boolean;
+  entity_id?: string;
+  auto_apply?: boolean;
+  create_backup?: boolean;
   run_tests?: boolean;
 }
 
@@ -33,12 +64,15 @@ interface RefactoringHistoryOptions {
   include_applied?: boolean;
   include_rejected?: boolean;
   limit?: number;
+  include_statistics?: boolean;
 }
 
 interface RecommendationOptions {
   focus_areas?: string[];
   complexity_threshold?: number;
   exclude_patterns?: string[];
+  priority?: string;
+  focus_area?: string;
 }
 
 // Rule 15: Global declarations for Node.js environment
@@ -365,7 +399,7 @@ export class RefactoringController {
       max_suggestions_per_entity = 5,
     } = request;
 
-    const results: Record<string, unknown> = {
+    const results: BatchRefactoringResults = {
       total_entities: entity_ids.length,
       refactoring_types,
       priority_focus,
@@ -380,7 +414,7 @@ export class RefactoringController {
 
     const promises = entity_ids.map(async (entityId) => {
       try {
-        const suggestions = await this.suggestRefactoringTool.call({
+        const suggestions = await this._suggestRefactoringTool.call({
           entity_id: entityId,
           refactoring_types,
           priority_focus,
@@ -571,7 +605,7 @@ export class RefactoringController {
   private async getRefactoringHistoryData(codebaseId: string, options: RefactoringHistoryOptions): Promise<Record<string, unknown>> {
     // This would typically fetch from a database
     // For now, return mock history data
-    const history = {
+    const history: Record<string, unknown> = {
       codebase_id: codebaseId,
       total_refactorings: 156,
       recent_refactorings: [

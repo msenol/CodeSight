@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { createApp } from '../../src/app';
-import { FunctionExplanation, ComplexityMetrics, CodeEntityReference } from '../../src/types/mcp';
+import { createFastifyServer } from '../../src/server';
+import { FunctionExplanation, ComplexityMetrics, CodeEntityReference } from '../../src/types';
 
 /**
  * Contract Test for explain_function MCP Tool
@@ -24,7 +24,7 @@ describe('MCP Tool: explain_function - Contract Tests', () => {
   const testEntityId = '550e8400-e29b-41d4-a716-446655440001';
 
   beforeAll(async () => {
-    app = await createApp();
+    app = await createFastifyServer();
     await app.ready();
   });
 
