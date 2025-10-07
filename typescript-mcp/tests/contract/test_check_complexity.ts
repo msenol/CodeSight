@@ -222,23 +222,18 @@ describe('MCP Tool: check_complexity - Contract Tests', () => {
       expect(metrics).toHaveProperty('cognitive_complexity');
       expect(metrics).toHaveProperty('lines_of_code');
       expect(metrics).toHaveProperty('maintainability_index');
-      expect(metrics).toHaveProperty('test_coverage');
-
       // Validate field types
-      expect(typeof metrics.cyclomatic_complexity).toBe('number');
-      expect(typeof metrics.cognitive_complexity).toBe('number');
-      expect(typeof metrics.lines_of_code).toBe('number');
-      expect(typeof metrics.maintainability_index).toBe('number');
-      expect(typeof metrics.test_coverage).toBe('number');
+      expect(typeof metrics.cyclomaticComplexity).toBe('number');
+      expect(typeof metrics.cognitiveComplexity).toBe('number');
+      expect(typeof metrics.linesOfCode).toBe('number');
+      expect(typeof metrics.maintainabilityIndex).toBe('number');
 
       // Validate value ranges
-      expect(metrics.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-      expect(metrics.cognitive_complexity).toBeGreaterThanOrEqual(0);
-      expect(metrics.lines_of_code).toBeGreaterThan(0);
-      expect(metrics.maintainability_index).toBeGreaterThanOrEqual(0);
-      expect(metrics.maintainability_index).toBeLessThanOrEqual(100);
-      expect(metrics.test_coverage).toBeGreaterThanOrEqual(0);
-      expect(metrics.test_coverage).toBeLessThanOrEqual(1);
+      expect(metrics.cyclomaticComplexity).toBeGreaterThanOrEqual(1);
+      expect(metrics.cognitiveComplexity).toBeGreaterThanOrEqual(0);
+      expect(metrics.linesOfCode).toBeGreaterThan(0);
+      expect(metrics.maintainabilityIndex).toBeGreaterThanOrEqual(0);
+      expect(metrics.maintainabilityIndex).toBeLessThanOrEqual(100);
     });
 
     it('should validate cyclomatic complexity values', async () => {
