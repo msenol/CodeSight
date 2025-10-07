@@ -119,7 +119,7 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     // Check if we're in a GraphQL context (resolver, schema, etc.)
     const graphqlKeywords = ['resolver', 'schema', 'Query', 'Mutation', 'Subscription', 'type', 'input'];
     const hasGraphQLBefore = graphqlKeywords.some(keyword =>
-      beforeMatch.toLowerCase().includes(keyword.toLowerCase())
+      beforeMatch.toLowerCase().includes(keyword.toLowerCase()),
     );
 
     // Check if we're inside a function definition that looks like a resolver
@@ -164,10 +164,10 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     const { method, path } = endpoint;
 
     // Basic RESTful convention checks
-    if (method === 'GET' && path.includes('/create')) return false;
-    if (method === 'POST' && !path.endsWith('s') && !path.includes('/')) return false;
-    if (method === 'PUT' && !path.includes('/')) return false;
-    if (method === 'DELETE' && path.endsWith('s') && !path.includes('/')) return false;
+    if (method === 'GET' && path.includes('/create')) {return false;}
+    if (method === 'POST' && !path.endsWith('s') && !path.includes('/')) {return false;}
+    if (method === 'PUT' && !path.includes('/')) {return false;}
+    if (method === 'DELETE' && path.endsWith('s') && !path.includes('/')) {return false;}
 
     return true;
   }

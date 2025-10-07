@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
-/* eslint-disable prefer-destructuring */
+ 
+ 
+ 
+ 
+ 
+ 
 import type {
   FunctionInfo,
   ComplexityMetrics,
@@ -20,56 +20,56 @@ import * as walk from 'acorn-walk';
 import { glob } from 'glob';
 
 declare const console: {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   log: (..._args: unknown[]) => void;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   warn: (..._args: unknown[]) => void;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   error: (..._args: unknown[]) => void;
 };
 
 export interface AnalysisService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   analyzeFile(_filePath: string): Promise<FileAnalysis>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   analyzeFunction(_filePath: string, _functionName: string): Promise<FunctionInfo | null>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getFunctionComplexity(_filePath: string, _functionName: string): Promise<ComplexityMetrics | null>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   explainCode(_code: string, _language?: string): Promise<CodeExplanation>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getCodeMetrics(_filePath: string): Promise<CodeMetrics>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   detectCodeSmells(_filePath: string): Promise<CodeSmell[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   searchEntities(_codebaseId: string, _options: unknown): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findCallees(_functionId: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findApiEndpoints(_codebaseId: string, _options: unknown): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findContainingEntity(_filePath: string, _line: number, _column: number): Promise<unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findDirectReferences(_entityId: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   searchInComments(_codebaseId: string, _query: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   searchInStrings(_codebaseId: string, _query: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findReferencesInFile(_filePath: string, _entityName: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   searchText(_codebaseId: string, _query: string, _options: unknown): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findDirectUsers(_entityId: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findDependencies(_entityId: string): Promise<unknown[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   analyzeFunctionBehavior(_entityId: string, _options: unknown): Promise<unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   analyzeFunctionSignature(_entityId: string): Promise<unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   calculateComplexityMetrics(_entityId: string): Promise<unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findCallers(_entityId: string): Promise<unknown[]>;
 }
 
@@ -413,7 +413,7 @@ export class DefaultAnalysisService implements AnalysisService {
         sourceType: 'module',
       });
 
-      this.traverseASTForAnalysis(ast, analysis);
+      this.traverseASTForAnalysis(ast as any, analysis);
     } catch (error) {
       // Fallback to Acorn for JavaScript files
       try {
@@ -436,13 +436,13 @@ export class DefaultAnalysisService implements AnalysisService {
     switch (node.type) {
       case 'FunctionDeclaration':
         if (node.id) {
-          analysis.functions.push(this.createFunctionInfo(node));
+          analysis.functions.push(this.createFunctionInfo(node as any));
         }
         break;
 
       case 'ClassDeclaration':
         if (node.id) {
-          analysis.classes.push(this.createClassInfo(node));
+          analysis.classes.push(this.createClassInfo(node as any));
         }
         break;
 
@@ -474,7 +474,7 @@ export class DefaultAnalysisService implements AnalysisService {
             this.traverseASTForAnalysis(child, analysis);
           }
         } else if (typeof node[key] === 'object') {
-          this.traverseASTForAnalysis(node[key], analysis);
+          this.traverseASTForAnalysis(node[key] as any, analysis);
         }
       }
     }
@@ -502,11 +502,11 @@ export class DefaultAnalysisService implements AnalysisService {
     const complexity = this.calculateNodeComplexity(node);
 
     return {
-      name: node.id.name,
+      name: (node.id as any).name,
       file: '', // Will be set by caller
       line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
       column: (node.loc?.start.column || 0) + 1,
-      parameters: node.params.map((param: ASTNode) => this.getParameterName(param)) || [],
+      parameters: (node.params || []).map((param: any) => this.getParameterName(param)),
       returnType: this.getReturnType(node),
       complexity,
     };
@@ -528,13 +528,13 @@ export class DefaultAnalysisService implements AnalysisService {
 
   private createClassInfo(node: ClassNode): ClassInfo {
     return {
-      name: node.id.name,
+      name: (node.id as any).name,
       line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
       column: (node.loc?.start.column || 0) + 1,
       methods: [],
       properties: [],
-      extends: node.superClass?.name,
-      implements: node.implements?.map((impl: ASTNode) => {
+      extends: (node as any).superClass?.name,
+      implements: (node as any).implements?.map((impl: any) => {
           if ('expression' in impl && impl.expression && typeof impl.expression === 'object' && 'name' in impl.expression) {
             return String(impl.expression.name);
           }
@@ -546,25 +546,25 @@ export class DefaultAnalysisService implements AnalysisService {
     };
   }
 
-  private createClassInfoFromAcorn(node: unknown): ClassInfo {
+  private createClassInfoFromAcorn(node: any): ClassInfo {
     return {
-      name: node.id.name,
+      name: (node.id)?.name || 'unknown',
       line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-      column: (node.loc?.start?.column || 0) + 1,
+      column: ((node.loc)?.start?.column || 0) + 1,
       methods: [],
       properties: [],
-      extends: node.superClass?.name,
+      extends: (node).superClass?.name,
     };
   }
 
-  private createInterfaceInfo(node: unknown): InterfaceInfo {
+  private createInterfaceInfo(node: any): InterfaceInfo {
     return {
-      name: node.id.name,
+      name: (node.id)?.name || 'unknown',
       line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-      column: (node.loc?.start?.column || 0) + 1,
+      column: ((node.loc)?.start?.column || 0) + 1,
       properties: [],
       methods: [],
-      extends: node.extends?.map((ext: unknown) => {
+      extends: (node).extends?.map((ext: any) => {
           if (ext && typeof ext === 'object') {
             if ('expression' in ext && ext.expression && typeof ext.expression === 'object' && 'name' in ext.expression) {
               return String(ext.expression.name);
@@ -578,10 +578,10 @@ export class DefaultAnalysisService implements AnalysisService {
     };
   }
 
-  private createImportInfo(node: unknown): ImportInfo {
+  private createImportInfo(node: any): ImportInfo {
     return {
-      source: node.source && typeof node.source === 'object' && 'value' in node.source ? String(node.source.value) : 'unknown',
-      imports: node.specifiers.map((spec: unknown) => {
+      source: (node.source && typeof node.source === 'object' && 'value' in node.source) ? String(node.source.value) : 'unknown',
+      imports: (node.specifiers || []).map((spec: any) => {
           if (spec && typeof spec === 'object' && 'local' in spec && spec.local && typeof spec.local === 'object' && 'name' in spec.local) {
             return String(spec.local.name);
           }
@@ -592,16 +592,16 @@ export class DefaultAnalysisService implements AnalysisService {
     };
   }
 
-  private createImportInfoFromAcorn(node: unknown): ImportInfo {
+  private createImportInfoFromAcorn(node: any): ImportInfo {
     return {
-      source: node.source && typeof node.source === 'object' && 'value' in node.source ? String(node.source.value) : 'unknown',
-      imports: node.specifiers.map((spec: unknown) => {
+      source: (node.source && typeof node.source === 'object' && 'value' in node.source) ? String(node.source.value) : 'unknown',
+      imports: (node.specifiers || []).map((spec: any) => {
           if (spec && typeof spec === 'object' && 'local' in spec && spec.local && typeof spec.local === 'object' && 'name' in spec.local) {
             return String(spec.local.name);
           }
           return 'unknown';
         }),
-      isDefault: node.specifiers.some((spec: unknown) => spec && typeof spec === 'object' && 'type' in spec && String(spec.type) === 'ImportDefaultSpecifier'),
+      isDefault: (node.specifiers || []).some((spec: any) => spec && typeof spec === 'object' && 'type' in spec && String(spec.type) === 'ImportDefaultSpecifier'),
       line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
     };
   }
@@ -625,25 +625,25 @@ export class DefaultAnalysisService implements AnalysisService {
     return null;
   }
 
-  private getParameterName(param: unknown): string {
-    if (param.type === 'Identifier') {
+  private getParameterName(param: any): string {
+    if (param && param.type === 'Identifier') {
       return param.name;
-    } else if (param.type === 'AssignmentPattern') {
+    } else if (param && param.type === 'AssignmentPattern') {
       return this.getParameterName(param.left);
-    } else if (param.type === 'RestElement') {
+    } else if (param && param.type === 'RestElement') {
       return `...${this.getParameterName(param.argument)}`;
     }
     return 'unknown';
   }
 
-  private getReturnType(node: unknown): string {
-    if (node.returnType) {
+  private getReturnType(node: any): string {
+    if (node?.returnType) {
       return this.getTypeAnnotation(node.returnType);
     }
     return 'unknown';
   }
 
-  private getTypeAnnotation(typeNode: unknown): string {
+  private getTypeAnnotation(typeNode: any): string {
     if (!typeNode) {return 'unknown';}
 
     switch (typeNode.type) {
@@ -658,7 +658,7 @@ export class DefaultAnalysisService implements AnalysisService {
       case 'TSAnyKeyword':
         return 'any';
       case 'TSTypeReference':
-        return typeNode.typeName?.name || 'unknown';
+        return (typeNode.typeName)?.name || 'unknown';
       default:
         return 'unknown';
     }
@@ -687,11 +687,11 @@ export class DefaultAnalysisService implements AnalysisService {
     }
   }
 
-  private getDeclarationName(declaration: unknown): string {
-    if (declaration.id) {
-      return declaration.id.name;
-    } else if (declaration.declarations?.[0]) {
-      return declaration.declarations[0].id.name;
+  private getDeclarationName(declaration: any): string {
+    if (declaration?.id) {
+      return (declaration.id).name;
+    } else if (declaration?.declarations?.[0]) {
+      return (declaration.declarations[0].id).name;
     }
     return 'unknown';
   }
@@ -793,8 +793,8 @@ export class DefaultAnalysisService implements AnalysisService {
   ): FunctionInfo | null {
     if (!node || typeof node !== 'object') {return null;}
 
-    if (node.type === 'FunctionDeclaration' && node.id && node.id.name === functionName) {
-      const functionInfo = this.createFunctionInfo(node);
+    if ((node as any).type === 'FunctionDeclaration' && (node as any).id && (node as any).id.name === functionName) {
+      const functionInfo = this.createFunctionInfo(node as any);
       functionInfo.file = filePath;
       return functionInfo;
     }
@@ -890,7 +890,7 @@ export class DefaultAnalysisService implements AnalysisService {
   ): void {
     if (!node || typeof node !== 'object') {return;}
 
-    switch (node.type) {
+    switch ((node as any).type) {
       case 'FunctionDeclaration':
         counts.functions++;
         break;
@@ -963,10 +963,10 @@ export class DefaultAnalysisService implements AnalysisService {
     return functions;
   }
 
-  async searchEntities(codebaseId: string, options: unknown): Promise<unknown[]> {
+  async searchEntities(codebaseId: string, options: any): Promise<unknown[]> {
     const entities: unknown[] = [];
-    const searchPattern = options.pattern || '**/*.{ts,tsx,js,jsx}';
-    const entityType = options.type || 'all';
+    const searchPattern = (options?.pattern) || '**/*.{ts,tsx,js,jsx}';
+    const entityType = (options?.type) || 'all';
 
     try {
       const files = await glob(searchPattern, {
@@ -986,7 +986,7 @@ export class DefaultAnalysisService implements AnalysisService {
       }
 
       return entities.filter(
-        entity => !options.name || entity.name.toLowerCase().includes(options.name.toLowerCase()),
+        entity => !options.name || (entity as any).name?.toLowerCase().includes((options.name as string).toLowerCase()),
       );
     } catch (error) {
       console.error('Failed to search entities:', error);
@@ -1023,9 +1023,9 @@ export class DefaultAnalysisService implements AnalysisService {
     }
   }
 
-  async findApiEndpoints(codebaseId: string, options: unknown): Promise<unknown[]> {
+  async findApiEndpoints(codebaseId: string, options: any): Promise<unknown[]> {
     const endpoints: unknown[] = [];
-    const searchPattern = options.pattern || '**/*.{ts,tsx,js,jsx}';
+    const searchPattern = (options?.pattern) || '**/*.{ts,tsx,js,jsx}';
 
     try {
       const files = await glob(searchPattern, {
@@ -1045,7 +1045,7 @@ export class DefaultAnalysisService implements AnalysisService {
       }
 
       return endpoints.filter(
-        endpoint => !options.method || endpoint.method === options.method.toUpperCase(),
+        endpoint => !options.method || (endpoint as any).method === (options.method as string).toUpperCase(),
       );
     } catch (error) {
       console.error('Failed to find API endpoints:', error);
@@ -1068,9 +1068,9 @@ export class DefaultAnalysisService implements AnalysisService {
       this.traverseASTForContainingEntity(ast, line, column, filePath, entity => {
         if (
           !containingEntity ||
-          (entity.start_line <= line &&
-            entity.end_line >= line &&
-            entity.start_line > containingEntity.start_line)
+          ((entity as any).start_line <= line &&
+            (entity as any).end_line >= line &&
+            (entity as any).start_line > (containingEntity as any).start_line)
         ) {
           containingEntity = entity;
         }
@@ -1259,10 +1259,10 @@ export class DefaultAnalysisService implements AnalysisService {
     }
   }
 
-  async searchText(codebaseId: string, query: string, options: unknown): Promise<unknown[]> {
+  async searchText(codebaseId: string, query: string, options: any): Promise<unknown[]> {
     const results: unknown[] = [];
-    const maxResults = options.max_results || 50;
-    const caseSensitive = options.case_sensitive || false;
+    const maxResults = (options?.max_results) || 50;
+    const caseSensitive = (options?.case_sensitive) || false;
 
     try {
       const files = await glob('**/*.{ts,tsx,js,jsx}', {
@@ -1302,7 +1302,7 @@ export class DefaultAnalysisService implements AnalysisService {
         }
       }
 
-      return results.sort((a, b) => b.score - a.score);
+      return results.sort((a, b) => ((b as any).score || 0) - ((a as any).score || 0));
     } catch (error) {
       console.error('Failed to search text:', error);
       return [];
@@ -1569,29 +1569,29 @@ export class DefaultAnalysisService implements AnalysisService {
 
     if (
       (entityType === 'all' || entityType === 'function') &&
-      (node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression')
+      ((node as any).type === 'FunctionDeclaration' || (node as any).type === 'ArrowFunctionExpression')
     ) {
-      if (node.id?.name) {
+      if ((node as any).id?.name) {
         entities.push({
-          id: `${filePath}#${node.id.name}`,
-          name: node.id.name,
+          id: `${filePath}#${(node as any).id.name}`,
+          name: (node as any).id.name,
           type: 'function',
           file_path: filePath,
           start_line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-          end_line: node.loc?.end?.line || 1,
+          end_line: ((node as any).loc)?.end?.line || 1,
         });
       }
     }
 
-    if ((entityType === 'all' || entityType === 'class') && node.type === 'ClassDeclaration') {
-      if (node.id?.name) {
+    if ((entityType === 'all' || entityType === 'class') && (node as any).type === 'ClassDeclaration') {
+      if ((node as any).id?.name) {
         entities.push({
-          id: `${filePath}#${node.id.name}`,
-          name: node.id.name,
+          id: `${filePath}#${(node as any).id.name}`,
+          name: (node as any).id.name,
           type: 'class',
           file_path: filePath,
           start_line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-          end_line: node.loc?.end?.line || 1,
+          end_line: ((node as any).loc)?.end?.line || 1,
         });
       }
     }
@@ -1660,13 +1660,13 @@ export class DefaultAnalysisService implements AnalysisService {
     if (!node || typeof node !== 'object') {return;}
 
     // Find function calls within the target function
-    if (node.type === 'CallExpression' && node.callee) {
+    if ((node as any).type === 'CallExpression' && (node as any).callee) {
       let calleeName = '';
 
-      if (node.callee.type === 'Identifier') {
-        calleeName = node.callee.name;
-      } else if (node.callee.type === 'MemberExpression' && node.callee.property) {
-        calleeName = node.callee.property.name;
+      if ((node as any).callee.type === 'Identifier') {
+        calleeName = ((node as any).callee).name;
+      } else if ((node as any).callee.type === 'MemberExpression' && (node as any).callee.property) {
+        calleeName = ((node as any).callee.property).name;
       }
 
       if (calleeName) {
@@ -1674,7 +1674,7 @@ export class DefaultAnalysisService implements AnalysisService {
           id: `${filePath}#${calleeName}`,
           name: calleeName,
           file_path: filePath,
-          line_number: node.loc?.start?.line || 1,
+          line_number: ((node as any).loc)?.start?.line || 1,
           call_type: 'direct',
         });
       }
@@ -1735,18 +1735,18 @@ export class DefaultAnalysisService implements AnalysisService {
     if (!_node || typeof _node !== 'object') {return;}
 
     if (
-      (_node.type === 'FunctionDeclaration' || _node.type === 'ClassDeclaration') &&
-      _node.loc &&
-      _node.id?.name
+      (( _node as any).type === 'FunctionDeclaration' || ( _node as any).type === 'ClassDeclaration') &&
+      ( _node as any).loc &&
+      ( _node as any).id?.name
     ) {
-      if (_line >= _node.loc.start.line && _line <= _node.loc.end.line) {
+      if (_line >= (( _node as any).loc).start.line && _line <= (( _node as any).loc).end.line) {
         _callback({
-          id: `${_filePath}#${_node.id.name}`,
-          name: _node.id.name,
-          type: _node.type === 'FunctionDeclaration' ? 'function' : 'class',
+          id: `${_filePath}#${( _node as any).id.name}`,
+          name: ( _node as any).id.name,
+          type: ( _node as any).type === 'FunctionDeclaration' ? 'function' : 'class',
           file_path: _filePath,
-          start_line: _node.loc.start.line,
-          end_line: _node.loc.end.line,
+          start_line: (( _node as any).loc).start.line,
+          end_line: (( _node as any).loc).end.line,
         });
       }
     }
@@ -1774,14 +1774,14 @@ export class DefaultAnalysisService implements AnalysisService {
     if (!node || typeof node !== 'object') {return;}
 
     // Find import statements
-    if (node.type === 'ImportDeclaration' && node.source?.value) {
+    if ((node as any).type === 'ImportDeclaration' && (node as any).source?.value) {
       dependencies.push({
-        id: `${filePath}#import_${node.source.value}`,
-        name: node.source.value,
+        id: `${filePath}#import_${(node as any).source.value}`,
+        name: (node as any).source.value,
         type: 'import',
         file_path: filePath,
-        line_number: node.loc?.start?.line || 1,
-        dependency_type: node.source.value.startsWith('.') ? 'internal' : 'external',
+        line_number: ((node as any).loc)?.start?.line || 1,
+        dependency_type: (node as any).source.value.startsWith('.') ? 'internal' : 'external',
       });
     }
 
@@ -1803,24 +1803,24 @@ export class DefaultAnalysisService implements AnalysisService {
     if (!node || typeof node !== 'object') {return;}
 
     // Detect async operations
-    if (node.type === 'AwaitExpression' || node.type === 'YieldExpression') {
-      analysis.async_operations = true;
+    if ((node as any).type === 'AwaitExpression' || (node as any).type === 'YieldExpression') {
+      (analysis as any).async_operations = true;
     }
 
     // Detect error handling
-    if (node.type === 'TryStatement' || node.type === 'CatchClause') {
-      analysis.error_handling = true;
+    if ((node as any).type === 'TryStatement' || (node as any).type === 'CatchClause') {
+      (analysis as any).error_handling = true;
     }
 
     // Detect I/O operations
-    if (node.type === 'CallExpression' && node.callee) {
-      const callName = node.callee.name || (node.callee.property?.name);
+    if ((node as any).type === 'CallExpression' && (node as any).callee) {
+      const callName = ((node as any).callee).name || ((node as any).callee.property?.name);
       if (
         callName &&
         (callName.includes('read') || callName.includes('write') || callName.includes('fetch'))
       ) {
-        analysis.io_operations = true;
-        analysis.side_effects.push(callName);
+        (analysis as any).io_operations = true;
+        ((analysis as any).side_effects || []).push(callName);
       }
     }
 
@@ -1846,14 +1846,14 @@ export class DefaultAnalysisService implements AnalysisService {
     if (!_node || typeof _node !== 'object') {return;}
 
     if (
-      (_node.type === 'FunctionDeclaration' || _node.type === 'ArrowFunctionExpression') &&
-      _node.id?.name === _functionName
+      ((_node as any).type === 'FunctionDeclaration' || (_node as any).type === 'ArrowFunctionExpression') &&
+      (_node as any).id?.name === _functionName
     ) {
       const signature = {
         entity_id: `${_functionName}`,
         name: _functionName,
         parameters:
-          _node.params?.map((param: unknown) => {
+          (_node as any).params?.map((param: any) => {
             if (param && typeof param === 'object') {
               return {
                 name: ('name' in param) ? String(param.name) : 'unknown',
@@ -1867,8 +1867,8 @@ export class DefaultAnalysisService implements AnalysisService {
               optional: false,
             };
           }) || [],
-        return_type: _node.returnType?.typeAnnotation?.type || 'unknown',
-        is_async: _node.async || false,
+        return_type: ((_node as any).returnType)?.typeAnnotation?.type || 'unknown',
+        is_async: (_node as any).async || false,
         visibility: 'public', // Default, would need more analysis for actual visibility
       };
 
@@ -1919,11 +1919,11 @@ export class DefaultAnalysisService implements AnalysisService {
     if (!_node || typeof _node !== 'object') {return;}
 
     if (
-      (_node.type === 'FunctionDeclaration' || _node.type === 'ArrowFunctionExpression') &&
-      _node.id?.name === _functionName &&
-      _node.range
+      ((_node as any).type === 'FunctionDeclaration' || (_node as any).type === 'ArrowFunctionExpression') &&
+      (_node as any).id?.name === _functionName &&
+      (_node as any).range
     ) {
-      const functionCode = _content.substring(_node.range[0], _node.range[1]);
+      const functionCode = _content.substring((_node as any).range[0], (_node as any).range[1]);
       _callback(functionCode);
     }
 

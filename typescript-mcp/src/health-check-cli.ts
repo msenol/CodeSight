@@ -19,12 +19,44 @@ import { config } from './config.js';
 
 declare const process: {
   env: Record<string, string | undefined>;
-  exit: () => never;
+  exit: (code?: number) => never;
+  uptime: () => number;
+  memoryUsage: () => {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers: number;
+  };
+  on: (event: string, listener: (...args: any[]) => void) => void;
 };
 declare const console: Console;
 declare const require: {
   main: unknown;
 };
+
+interface HealthStatus {
+  status: string;
+  timestamp: string;
+  version: string;
+  uptime: number;
+  checks: {
+    server: string;
+    dependencies: string;
+  };
+  memory?: {
+    heapUsedMB: number;
+    heapTotalMB: number;
+    percentage: number;
+  };
+}
+
+interface ErrorStatus {
+  status: string;
+  timestamp: string;
+  error: string;
+  uptime: number;
+}
 async function healthCheck() {
   try {
     logger.info('Starting CodeSight health check...');
@@ -33,7 +65,7 @@ async function healthCheck() {
     await createFastifyServer();
 
     // Basic health check - if we get here, the server can start
-    const healthStatus = {
+    const healthStatus: HealthStatus = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: config.version || '0.1.0',
@@ -80,7 +112,7 @@ async function healthCheck() {
   } catch (error) {
     logger.error('Health check failed:', error);
 
-    const errorStatus = {
+    const errorStatus: ErrorStatus = {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       error: error instanceof Error ? error.message : 'Unknown error',

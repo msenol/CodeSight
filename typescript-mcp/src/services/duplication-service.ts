@@ -1,37 +1,37 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
+ 
+ 
+ 
+ 
 import type { DuplicateCode, ASTNode } from '../types/index.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
 import { distance } from 'fast-levenshtein';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import * as acorn from 'acorn';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import * as walk from 'acorn-walk';
 
 export interface DuplicationService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   detectDuplicates(_projectPath: string): Promise<DuplicateCode[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   analyzeFile(_filePath: string): Promise<DuplicateCode[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   compareFiles(_file1: string, _file2: string): Promise<DuplicateCode[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findSimilarFunctions(_projectPath: string, _threshold?: number): Promise<FunctionDuplicate[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findSimilarClasses(_projectPath: string, _threshold?: number): Promise<ClassDuplicate[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   generateDuplicationReport(_duplicates: DuplicateCode[]): Promise<DuplicationReport>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   suggestRefactoring(_duplicate: DuplicateCode): Promise<RefactoringAdvice>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findDuplicateCode(_codebaseId: string, _options: Record<string, unknown>): Promise<DuplicateCode[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   findDuplicates(_files: string[], _options: Record<string, unknown>): Promise<DuplicateCode[]>;
 }
 

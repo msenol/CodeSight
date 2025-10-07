@@ -3,6 +3,7 @@
 import type { Request, Response } from 'express';
 import { SuggestRefactoringTool } from '../tools/suggest-refactoring.js';
 import { z } from 'zod';
+import type { RefactoringSuggestion as _RefactoringSuggestion } from '../types/index.js';
 
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
 interface RefactoringRequest {
@@ -15,7 +16,7 @@ interface RefactoringRequest {
   max_suggestions_per_entity?: number;
 }
 
-interface RefactoringResult {
+interface _RefactoringResult {
   entity_id: string;
   suggestions?: unknown;
   error?: string;
@@ -38,6 +39,7 @@ interface BatchRefactoringResults {
   priority_focus?: string;
   results: Array<Record<string, unknown>>;
   summary: RefactoringSummary;
+  [key: string]: unknown;
 }
 
 interface RefactoringPlanRequest {
@@ -47,8 +49,8 @@ interface RefactoringPlanRequest {
     min_maintainability?: number;
     max_duplication_percentage?: number;
   };
-  priority_areas?: ("high_complexity" | "security_issues" | "duplicates" | "poor_naming")[];
-  effort_budget?: "small" | "medium" | "large" | "unlimited";
+  priority_areas?: ('high_complexity' | 'security_issues' | 'duplicates' | 'poor_naming')[];
+  effort_budget?: 'small' | 'medium' | 'large' | 'unlimited';
   timeline_weeks?: number;
 }
 
@@ -65,6 +67,9 @@ interface RefactoringHistoryOptions {
   include_rejected?: boolean;
   limit?: number;
   include_statistics?: boolean;
+  filter_type?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
 interface RecommendationOptions {
@@ -73,14 +78,15 @@ interface RecommendationOptions {
   exclude_patterns?: string[];
   priority?: string;
   focus_area?: string;
+  max_recommendations?: number;
 }
 
 // Rule 15: Global declarations for Node.js environment
 
 declare const console: {
-  log: () => void;
-  error: () => void;
-  warn: () => void;
+  log: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
 };
 
 const SuggestRefactoringRequestSchema = z.object({
@@ -213,7 +219,7 @@ export class RefactoringController {
    */
   async generateRefactoringPlan(req: Request, res: Response): Promise<void> {
     try {
-      const validatedData = RefactoringPlanRequestSchema.parse(req.body);
+      const validatedData = RefactoringPlanRequestSchema.parse(req.body) as RefactoringPlanRequest;
 
       const plan = await this.createRefactoringPlan(validatedData);
 
@@ -233,7 +239,7 @@ export class RefactoringController {
    */
   async applyRefactoring(req: Request, res: Response): Promise<void> {
     try {
-      const validatedData = ApplyRefactoringRequestSchema.parse(req.body);
+      const validatedData = ApplyRefactoringRequestSchema.parse(req.body) as RefactoringExecutionRequest;
 
       const result = await this.executeRefactoring(validatedData);
 
@@ -428,7 +434,7 @@ export class RefactoringController {
           successCount: 1,
           suggestionCount: suggestions.suggestions.length,
           highPriorityCount: suggestions.suggestions.filter(
-            (s: Record<string, unknown>) => s.priority === 'high' || s.priority === 'critical',
+            (s: any) => s.priority === 'high' || s.priority === 'critical',
           ).length,
         };
       } catch (error) {

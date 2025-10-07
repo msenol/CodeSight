@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-undef */
+ 
+ 
 /* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-/* eslint-disable no-useless-escape */
+ 
+ 
+ 
+ 
 // import OpenAI from 'openai'; // Commented out - using mock mode
 import { z } from 'zod';
 import type { OpenAIMessage, UsageStats } from '../types/index.js';
@@ -159,7 +159,7 @@ export class LLMService implements ILLMService {
       content: userContent,
     });
 
-    const completion = await this.openaiClient!.chat.completions.create({
+    const completion = await (this.openaiClient as any).chat.completions.create({
       model: this.config.model,
       messages,
       max_tokens: request.maxTokens || this.config.maxTokens || 1000,
@@ -190,7 +190,7 @@ export class LLMService implements ILLMService {
     startTime: number,
   ): Promise<LLMResponse> {
     // Simulate API delay
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       setTimeout(() => resolve(), 500 + Math.random() * 1000);
     });
 
@@ -624,8 +624,10 @@ This analysis provides a starting point for code improvement. For more specific 
       totalRequests: 0,
       totalTokens: 0,
       averageResponseTime: 0,
-      errorRate: 0,
-    };
+      successRate: 100,
+      errors: 0,
+      lastRequest: new Date().toISOString(),
+    } as any;
   }
 }
 

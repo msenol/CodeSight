@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
+ 
 /**
  * Rust FFI Bridge
  */
 import { logger } from '../services/logger.js';
 
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
-// Rule 15: Interfaces reserved for future Rust FFI implementation
-/*
 interface NativeModule {
   initEngine: () => Promise<void>;
   searchCode: (_query: string, _limit: number) => Promise<Record<string, unknown>[]>;
@@ -16,14 +14,13 @@ interface NativeModule {
   getCodebaseStats: (_codebasePath?: string) => Promise<Record<string, unknown>>;
 }
 
-interface SearchResult {
+interface _SearchResult {
   file: string;
   line: number;
   content: string;
   score: number;
   entity?: Record<string, unknown>;
 }
-*/
 
 interface CodebaseStats {
   total_files: number;
@@ -44,7 +41,7 @@ interface FunctionAnalysis {
 
 // Try to load the native module, fall back to mock if not available
 // Rule 15: Native module reference reserved for future implementation
-const nativeModule: unknown = null;
+const nativeModule: NativeModule | null = null;
 
 /**
  * Get codebase statistics using Rust core
@@ -61,8 +58,8 @@ export async function getCodebaseStats(codebasePath?: string): Promise<CodebaseS
   }
 
   try {
-    const stats = await nativeModule.getCodebaseStats(codebasePath);
-    return stats as CodebaseStats;
+    const stats = await (nativeModule).getCodebaseStats(codebasePath);
+    return stats as unknown as CodebaseStats;
   } catch (error) {
     logger.error('Native stats failed:', error);
     return {

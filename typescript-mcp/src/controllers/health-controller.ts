@@ -124,9 +124,9 @@ export class HealthController {
   async getHealth(req: Request, res: Response): Promise<void> {
     try {
       const {
-        include_detailed = false,
-        include_dependencies = true,
-        include_metrics = false,
+        include_detailed: _include_detailed = false,
+        include_dependencies: _include_dependencies = true,
+        include_metrics: _include_metrics = false,
       } = req.query;
 
       const healthStatus = await this.performHealthCheck();

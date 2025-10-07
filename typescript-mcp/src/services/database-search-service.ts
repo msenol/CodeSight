@@ -4,10 +4,10 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
+ 
+ 
+ 
+ 
 // Rule 15: Global declarations for Node.js environment
 declare const process: {
   env: Record<string, string | undefined>;
@@ -27,9 +27,9 @@ export interface SearchService {
   keywordSearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
   semanticSearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
   structuredSearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   regexSearch(_pattern: string, _options: SearchOptions): Promise<SearchResult[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   fuzzySearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
   getCodeSnippet(filePath: string, line: number, contextLines: number): Promise<string>;
   getContextLines(filePath: string, line: number, contextLines: number): Promise<string[]>;
@@ -112,11 +112,11 @@ export class DatabaseSearchService implements SearchService {
     console.log(`[DEBUG] Found ${rows.length} raw results for query "${searchQuery}"`);
 
     const results = rows.map(row => ({
-      file: row.file_path,
-      line: row.start_line || 1,
+      file: (row as any).file_path,
+      line: (row as any).start_line || 1,
       column: 1,
-      content: row.content || '',
-      score: this.calculateRelevanceScore(row.name, row.content, searchQuery),
+      content: (row as any).content || '',
+      score: this.calculateRelevanceScore((row as any).name, (row as any).content, searchQuery),
     }));
 
     console.log(`[DEBUG] Returning ${results.length} formatted results`);

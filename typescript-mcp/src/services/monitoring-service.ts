@@ -47,9 +47,9 @@ export class MonitoringService extends EventEmitter {
   private metrics: Map<string, MetricData[]> = new Map();
   private alerts: Map<string, Alert> = new Map();
   private alertRules: Map<string, AlertRule> = new Map();
-  private systemMetricsInterval?: number;
-  private alertCheckInterval?: number;
-  private cleanupInterval?: number;
+  private systemMetricsInterval?: NodeJS.Timeout;
+  private alertCheckInterval?: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
   private requestCounts: Map<string, number> = new Map();
   private responseTimes: Map<string, number[]> = new Map();
   private errorCounts: Map<string, number> = new Map();
@@ -107,7 +107,7 @@ export class MonitoringService extends EventEmitter {
     metricArray.push(metric);
 
     // Limit metrics in memory
-    if (metricArray.length > this.config.maxMetricsInMemory) {
+    if (metricArray.length > Number(this.config.maxMetricsInMemory)) {
       metricArray.shift();
     }
 
@@ -276,7 +276,7 @@ export class MonitoringService extends EventEmitter {
    * Get active alerts
    */
   getActiveAlerts(): Alert[] {
-    return Array.from(this.alerts.values()).filter(alert => !alert.resolved);
+    return Array.from(this.alerts.values()).filter(alert => !(alert as any).resolved);
   }
 
   /**
@@ -291,9 +291,9 @@ export class MonitoringService extends EventEmitter {
    */
   resolveAlert(alertId: string): void {
     const alert = this.alerts.get(alertId);
-    if (alert && !alert.resolved) {
-      alert.resolved = true;
-      alert.resolvedAt = Date.now();
+    if (alert && !(alert as any).resolved) {
+      (alert as any).resolved = true;
+      (alert as any).resolvedAt = Date.now();
       this.emit('alertResolved', alert);
     }
   }
@@ -341,7 +341,7 @@ export class MonitoringService extends EventEmitter {
     // Determine overall health status
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
-    if (activeAlerts.some(alert => alert.ruleName.includes('critical'))) {
+    if (activeAlerts.some(alert => (alert as any).ruleName?.includes('critical'))) {
       status = 'unhealthy';
     } else if (activeAlerts.length > 0) {
       status = 'degraded';
@@ -444,7 +444,7 @@ export class MonitoringService extends EventEmitter {
   private startAlertChecking(): void {
     this.alertCheckInterval = setInterval(() => {
       this.checkAlerts();
-    }, this.config.alertCheckIntervalMs);
+    }, Number(this.config.alertCheckIntervalMs));
   }
 
   /**
@@ -459,7 +459,7 @@ export class MonitoringService extends EventEmitter {
 
       const shouldAlert = this.evaluateCondition(latestValue, rule.condition, rule.threshold);
       const existingAlert = Array.from(this.alerts.values()).find(
-        alert => alert.ruleId === rule.id && !alert.resolved,
+        alert => (alert as any).ruleId === rule.id && !(alert as any).resolved,
       );
 
       if (shouldAlert && !existingAlert) {
@@ -472,7 +472,7 @@ export class MonitoringService extends EventEmitter {
           value: latestValue,
           threshold: rule.threshold,
           condition: rule.condition,
-          timestamp: Date.now(),
+          timestamp: String(Date.now()),
           resolved: false,
         };
 
@@ -515,7 +515,7 @@ export class MonitoringService extends EventEmitter {
         switch (action.type) {
           case 'log':
             logger.error(
-              `ALERT: ${alert.ruleName} - ${alert.metric} ${alert.condition} ${alert.threshold} (current: ${alert.value})`,
+              `ALERT: ${(alert as any).ruleName} - ${(alert as any).metric} ${(alert as any).condition} ${(alert as any).threshold} (current: ${(alert as any).value})`,
             );
             break;
           case 'webhook':

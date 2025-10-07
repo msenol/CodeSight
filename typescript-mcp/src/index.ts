@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-console */
-/* eslint-disable no-undef */
+ 
+ 
+ 
+ 
 /**
  * CodeSight MCP Server - TypeScript Interface
  *
@@ -17,9 +17,21 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 // Rule 15: Global declarations for Node.js environment
 declare const process: {
   env: Record<string, string | undefined>;
-  stdin: unknown;
-  exit: () => never;
-  on: () => void;
+  stdin: {
+    resume: () => void;
+    on: (event: string, listener: (...args: any[]) => void) => void;
+  };
+  exit: (code?: number) => never;
+  on: (event: string, listener: (...args: any[]) => void) => void;
+  argv: string[];
+  uptime: () => number;
+  memoryUsage: () => {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers: number;
+  };
 };
 
 // Rule 15: NodeJS declaration reserved for future use

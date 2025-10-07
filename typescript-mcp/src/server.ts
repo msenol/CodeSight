@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-console */
-/* eslint-disable no-undef */
+ 
+ 
+ 
+ 
 /**
  * Fastify server configuration
  */

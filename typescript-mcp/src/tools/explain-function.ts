@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
+ 
+ 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 import type { AnalysisService } from '../services/analysis-service.js';
 import type { CodebaseService } from '../services/codebase-service.js';

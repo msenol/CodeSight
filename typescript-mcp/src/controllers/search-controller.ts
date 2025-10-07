@@ -13,9 +13,9 @@ interface SearchResult {
   code?: { matches: unknown[] };
   references?: { references: unknown[] };
   data_flow?: { traces: unknown[] };
-  query_results?: unknown[];
+  query_results?: { query: string; results: Record<string, unknown> }[];
   results?: unknown[];
-  combined?: unknown[];
+  combined?: CombinedResult;
   metadata?: {
     total_matches?: number;
     search_time?: number;
@@ -25,6 +25,9 @@ interface SearchResult {
     top_queries?: unknown[];
     search_patterns?: unknown[];
   };
+  total_queries?: number;
+  search_types?: string[];
+  unique_files?: number;
 }
 
 interface CombinedResult {
@@ -49,14 +52,16 @@ interface CombinedResult {
     references: { references: unknown[] };
     data_flow: { traces: unknown[] };
   };
+  unique_files?: number;
+  [key: string]: unknown;
 }
 
 // Rule 15: Global declarations for Node.js environment
 
 declare const console: {
-  log: () => void;
-  error: () => void;
-  warn: () => void;
+  log: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
 };
 
 const SearchRequestSchema = z.object({
@@ -208,7 +213,7 @@ export class SearchController {
       };
 
       const queryPromises = queries.map(async (query) => {
-        const queryResults: SearchResult['query_results'] = {
+        const queryResults: { query: string; results: Record<string, unknown> } = {
           query: query.text || query,
           results: {},
         };
@@ -369,22 +374,25 @@ export class SearchController {
     };
 
     for (const result of results) {
-      if (result.results.code?.matches) {
-        combined.total_matches += result.results.code.matches.length;
-        result.results.code.matches.forEach((match: Record<string, unknown>) => {
-          combined.unique_files.add(match.file_path);
-          combined.match_types.add(match.match_type);
+      const typedResult = result as unknown as { query: string; results: Record<string, unknown> };
+      if ((typedResult.results.code as any)?.matches) {
+        const codeResults = typedResult.results.code as { matches: any[] };
+        combined.total_matches += codeResults.matches.length;
+        codeResults.matches.forEach((match: Record<string, unknown>) => {
+          combined.unique_files.add(match.file_path as string);
+          combined.match_types.add(match.match_type as string);
           combined.top_matches.push({
             ...match,
-            query: result.query,
-          });
+            query: typedResult.query,
+          } as unknown as CombinedResult['top_matches'][0]);
         });
       }
 
-      if (result.results.references?.references) {
-        combined.total_matches += result.results.references.references.length;
-        result.results.references.references.forEach((ref: Record<string, unknown>) => {
-          combined.unique_files.add(ref.file_path);
+      if ((typedResult.results.references as any)?.references) {
+        const refResults = typedResult.results.references as { references: any[] };
+        combined.total_matches += refResults.references.length;
+        refResults.references.forEach((ref: Record<string, unknown>) => {
+          combined.unique_files.add(ref.file_path as string);
           combined.match_types.add('reference');
         });
       }
@@ -396,11 +404,17 @@ export class SearchController {
       .slice(0, 20);
 
     return {
+      total_results: combined.top_matches.length,
       total_matches: combined.total_matches,
-      unique_files: Array.from(combined.unique_files),
-      match_types: Array.from(combined.match_types),
+      unique_files: combined.unique_files.size,
+      search_time: Date.now(),
       top_matches: combined.top_matches,
-    };
+      query_results: {
+        code: { matches: [] },
+        references: { references: [] },
+        data_flow: { traces: [] },
+      },
+    } as CombinedResult;
   }
 
   private async generateSearchSuggestions(
@@ -445,7 +459,7 @@ export class SearchController {
   ): Promise<Record<string, unknown>> {
     // This would typically fetch from a database
     // For now, return mock data
-    const history = {
+    const history: Record<string, unknown> = {
       codebase_id: codebaseId,
       recent_searches: [
         {
