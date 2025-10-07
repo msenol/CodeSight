@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { createFastifyServer } from '../../src/server';
-import { Vulnerability } from '../../src/types';
+import { SecurityIssue } from '../../src/types';
 
 /**
  * Contract Test for analyze_security MCP Tool
@@ -17,7 +17,7 @@ import { Vulnerability } from '../../src/types';
  * - Error response validation
  * - Business logic validation
  * - Security pattern validation
- * - Vulnerability severity validation
+ * - SecurityIssue severity validation
  */
 
 describe('MCP Tool: analyze_security - Contract Tests', () => {
@@ -223,7 +223,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       expect(typeof body.summary.by_severity).toBe('object');
     });
 
-    it('should return Vulnerability objects conforming to schema', async () => {
+    it('should return SecurityIssue objects conforming to schema', async () => {
       const validRequest = {
         codebase_id: testCodebaseId,
         patterns: ['all'],
@@ -240,9 +240,9 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const body = JSON.parse(response.body);
 
       if (body.vulnerabilities.length > 0) {
-        const vulnerability: Vulnerability = body.vulnerabilities[0];
+        const vulnerability: SecurityIssue = body.vulnerabilities[0];
 
-        // Validate required Vulnerability fields
+        // Validate required SecurityIssue fields
         expect(vulnerability).toHaveProperty('type');
         expect(vulnerability).toHaveProperty('severity');
         expect(vulnerability).toHaveProperty('entity_id');
@@ -255,12 +255,12 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
         // Validate field types
         expect(typeof vulnerability.type).toBe('string');
         expect(typeof vulnerability.severity).toBe('string');
-        expect(typeof vulnerability.entity_id).toBe('string');
-        expect(typeof vulnerability.file_path).toBe('string');
-        expect(typeof vulnerability.line_number).toBe('number');
-        expect(typeof vulnerability.description).toBe('string');
-        expect(typeof vulnerability.recommendation).toBe('string');
-        expect(typeof vulnerability.code_snippet).toBe('string');
+        expect(typeof vulnerability.id).toBe('string');
+        expect(typeof vulnerability.file).toBe('string');
+        expect(typeof vulnerability.line).toBe('number');
+        expect(typeof vulnerability.message).toBe('string');
+        expect(typeof vulnerability.suggestion).toBe('string');
+        expect(typeof vulnerability.code).toBe('string');
 
         // Validate type enum
         const validTypes = [
@@ -279,20 +279,20 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
         // Validate UUID format for entity_id
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        expect(vulnerability.entity_id).toMatch(uuidRegex);
+        expect(vulnerability.id).toMatch(uuidRegex);
 
         // Validate line number
-        expect(vulnerability.line_number).toBeGreaterThan(0);
+        expect(vulnerability.line).toBeGreaterThan(0);
 
         // Validate file path format
-        expect(vulnerability.file_path).toMatch(
+        expect(vulnerability.file).toMatch(
           /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
         );
 
         // Validate content is not empty
-        expect(vulnerability.description.length).toBeGreaterThan(0);
-        expect(vulnerability.recommendation.length).toBeGreaterThan(0);
-        expect(vulnerability.code_snippet.length).toBeGreaterThan(0);
+        expect(vulnerability.message.length).toBeGreaterThan(0);
+        expect(vulnerability.suggestion.length).toBeGreaterThan(0);
+        expect(vulnerability.code.length).toBeGreaterThan(0);
       }
     });
 
@@ -398,7 +398,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       const body = JSON.parse(response.body);
 
       // Should only include SQL injection vulnerabilities
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         expect(vuln.type).toBe('sql_injection');
       });
     });
@@ -421,7 +421,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
       // Should only include high and critical severity vulnerabilities
       const allowedSeverities = ['high', 'critical'];
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         expect(allowedSeverities).toContain(vuln.severity);
       });
     });
@@ -444,7 +444,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
       // Should include medium, high, and critical severity vulnerabilities
       const allowedSeverities = ['medium', 'high', 'critical'];
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         expect(allowedSeverities).toContain(vuln.severity);
       });
     });
@@ -466,7 +466,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
       // Should only include specified vulnerability types
       const allowedTypes = ['sql_injection', 'xss', 'csrf'];
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         expect(allowedTypes).toContain(vuln.type);
       });
     });
@@ -526,7 +526,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
 
       if (body.vulnerabilities.length > 0) {
         const vulnerabilityTypes = new Set(
-          body.vulnerabilities.map((vuln: Vulnerability) => vuln.type),
+          body.vulnerabilities.map((vuln: SecurityIssue) => vuln.type),
         );
 
         // Should only contain valid vulnerability types
@@ -559,18 +559,18 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
 
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         // Description should be meaningful
-        expect(vuln.description.length).toBeGreaterThan(10);
-        expect(vuln.description).not.toBe('vulnerability found');
+        expect(vuln.message.length).toBeGreaterThan(10);
+        expect(vuln.message).not.toBe('vulnerability found');
 
         // Recommendation should be actionable
-        expect(vuln.recommendation.length).toBeGreaterThan(10);
-        expect(vuln.recommendation).not.toBe('fix this issue');
+        expect(vuln.suggestion.length).toBeGreaterThan(10);
+        expect(vuln.suggestion).not.toBe('fix this issue');
 
         // Code snippet should contain actual code
-        expect(vuln.code_snippet.length).toBeGreaterThan(5);
-        expect(vuln.code_snippet.trim()).not.toBe('');
+        expect(vuln.code.length).toBeGreaterThan(5);
+        expect(vuln.code.trim()).not.toBe('');
       });
     });
 
@@ -589,7 +589,7 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
 
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         // Severity should be appropriate for vulnerability type
         if (vuln.type === 'sql_injection' || vuln.type === 'command_injection') {
           expect(['medium', 'high', 'critical']).toContain(vuln.severity);
@@ -616,13 +616,13 @@ describe('MCP Tool: analyze_security - Contract Tests', () => {
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
 
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         // Code snippet should contain relevant code
-        expect(vuln.code_snippet).not.toMatch(/^\s*$/);
+        expect(vuln.code).not.toMatch(/^\s*$/);
 
         // For SQL injection, might contain SQL-related keywords
         if (vuln.type === 'sql_injection') {
-          const snippet = vuln.code_snippet.toLowerCase();
+          const snippet = vuln.code.toLowerCase();
 void 0; // hasSqlKeywords reserved for future use
             snippet.includes('select') ||
             snippet.includes('insert') ||
@@ -654,8 +654,8 @@ void 0; // hasSqlKeywords reserved for future use
       const body = JSON.parse(response.body);
 
       // Should not flag parameterized queries or prepared statements as vulnerabilities
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
-        const snippet = vuln.code_snippet.toLowerCase();
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
+        const snippet = vuln.code.toLowerCase();
 
         // These patterns should generally be safe
         const hasSafePatterns =
@@ -754,7 +754,7 @@ void 0; // hasSqlKeywords reserved for future use
       // Should handle vulnerabilities across different languages
       if (body.vulnerabilities.length > 0) {
         const fileExtensions = new Set(
-          body.vulnerabilities.map((vuln: Vulnerability) => {
+          body.vulnerabilities.map((vuln: SecurityIssue) => {
             const match = vuln.file_path.match(/\.(\w+)$/);
             return match ? match[1] : '';
           }),
@@ -782,7 +782,7 @@ void 0; // hasSqlKeywords reserved for future use
       const body = JSON.parse(response.body);
 
       // Should only include critical vulnerabilities
-      body.vulnerabilities.forEach((vuln: Vulnerability) => {
+      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
         expect(vuln.severity).toBe('critical');
       });
     });
