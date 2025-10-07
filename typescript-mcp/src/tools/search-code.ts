@@ -245,7 +245,7 @@ export class SearchCodeTool {
    * Perform the actual search using appropriate strategy
    */
   private async performSearch(input: SearchCodeInput, intent: string): Promise<unknown[]> {
-    const searchOptions = {
+    const _searchOptions = {
       intent,
       codebase_id: input.codebase_id,
       max_results: input.max_results,

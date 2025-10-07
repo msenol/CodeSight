@@ -7,31 +7,31 @@ import { parse } from '@typescript-eslint/typescript-estree';
 import * as acorn from 'acorn';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-useless-escape */
+ 
+ 
+ 
+ 
 export interface CodebaseService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   addCodebase(_name: string, _path: string, _languages: string[]): Promise<string>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   removeCodebase(_id: string): Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getCodebase(_id: string): Promise<CodebaseInfo | null>;
   listCodebases(): Promise<CodebaseInfo[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   indexCodebase(_id: string): Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   searchCode(_query: string, _codebaseId: string): Promise<SearchResult[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getFileInfo(_filePath: string, _codebaseId: string): Promise<FileInfo | null>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getCodeEntity(_entityId: string): Promise<unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getCodeLines(_filePath: string, _startLine: number, _endLine: number): Promise<string[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getFiles(_codebaseId: string): Promise<string[]>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   getCodeSnippet(_filePath: string, _startLine: number, _endLine: number): Promise<string>;
 }
 
@@ -336,15 +336,23 @@ export class DefaultCodebaseService implements CodebaseService {
 
       const entity = this.findEntityInAST(ast, entityIdentifier);
       if (entity) {
+        const typedEntity = entity as {
+          name: string;
+          type: string;
+          start_line?: number;
+          end_line?: number;
+          parameters?: unknown[];
+          return_type?: string;
+        };
         return {
           id: `${filePath}:${entityIdentifier}`,
-          name: entity.name,
-          type: entity.type,
+          name: typedEntity.name,
+          type: typedEntity.type,
           file_path: filePath,
-          start_line: entity.start_line,
-          end_line: entity.end_line,
-          parameters: entity.parameters || [],
-          return_type: entity.return_type || 'unknown',
+          start_line: typedEntity.start_line || 0,
+          end_line: typedEntity.end_line || 0,
+          parameters: typedEntity.parameters || [],
+          return_type: typedEntity.return_type || 'unknown',
         };
       }
     } catch (error) {
@@ -358,13 +366,19 @@ export class DefaultCodebaseService implements CodebaseService {
 
         const entity = this.findEntityInAcornAST(ast, entityIdentifier);
         if (entity) {
+          const typedEntity = entity as {
+            name: string;
+            type: string;
+            start_line?: number;
+            end_line?: number;
+          };
           return {
             id: `${filePath}:${entityIdentifier}`,
-            name: entity.name,
-            type: entity.type,
+            name: typedEntity.name,
+            type: typedEntity.type,
             file_path: filePath,
-            start_line: entity.start_line,
-            end_line: entity.end_line,
+            start_line: typedEntity.start_line || 0,
+            end_line: typedEntity.end_line || 0,
           };
         }
       } catch (acornError) {
@@ -378,7 +392,7 @@ export class DefaultCodebaseService implements CodebaseService {
 
   private findEntityInAST(node: unknown, entityIdentifier: string): unknown | null {
     const nodeObj = node as Record<string, unknown>;
-    if (!node || typeof node !== 'object') {return null;}
+    if (!node || typeof node !== 'object') { return null; }
 
     // Check if this node matches our entity
     if (
@@ -392,8 +406,8 @@ export class DefaultCodebaseService implements CodebaseService {
       return {
         name: (nodeObj.id as Record<string, unknown>).name,
         type: (nodeObj.type as string).replace('Declaration', '').toLowerCase(),
-        start_line: (nodeObj.loc as Record<string, unknown>).start?.line || 1,
-        end_line: (nodeObj.loc as Record<string, unknown>).end?.line || 1,
+        start_line: ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
+        end_line: ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
         parameters: this.extractParameters(node),
         return_type: this.extractReturnType(node),
       };
@@ -427,8 +441,8 @@ export class DefaultCodebaseService implements CodebaseService {
           foundEntity = {
             name: (nodeObj.id as Record<string, unknown>).name,
             type: 'function',
-            start_line: (nodeObj.loc as Record<string, unknown>).start.line,
-            end_line: (nodeObj.loc as Record<string, unknown>).end.line,
+            start_line: ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
+            end_line: ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
           };
         }
       },
@@ -438,8 +452,8 @@ export class DefaultCodebaseService implements CodebaseService {
           foundEntity = {
             name: (nodeObj.id as Record<string, unknown>).name,
             type: 'class',
-            start_line: (nodeObj.loc as Record<string, unknown>).start.line,
-            end_line: (nodeObj.loc as Record<string, unknown>).end.line,
+            start_line: ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
+            end_line: ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
           };
         }
       },
@@ -454,18 +468,20 @@ export class DefaultCodebaseService implements CodebaseService {
     const nodeObj = node as Record<string, unknown>;
     if (!node || typeof node !== 'object') {return;}
 
-    if (visitor[nodeObj.type]) {
-      (visitor[nodeObj.type] as (n: unknown) => void)(node);
+    const nodeType = nodeObj.type as string;
+    if (visitor[nodeType]) {
+      (visitor[nodeType] as (n: unknown) => void)(node);
     }
 
     for (const key in nodeObj) {
       if (key !== 'parent' && nodeObj[key]) {
-        if (Array.isArray(nodeObj[key])) {
-          for (const child of nodeObj[key]) {
+        const value = nodeObj[key];
+        if (Array.isArray(value)) {
+          for (const child of value) {
             this.simpleASTWalk(child, visitor);
           }
-        } else if (typeof nodeObj[key] === 'object') {
-          this.simpleASTWalk(nodeObj[key], visitor);
+        } else if (typeof value === 'object') {
+          this.simpleASTWalk(value, visitor);
         }
       }
     }
@@ -474,7 +490,7 @@ export class DefaultCodebaseService implements CodebaseService {
   private extractParameters(node: unknown): string[] {
     if (!(node as Record<string, unknown>).params) {return [];}
 
-    return (node as Record<string, unknown>).params?.map((param: unknown) => {
+    return ((node as Record<string, unknown>).params as unknown[] || []).map((param: unknown) => {
       const paramObj = param as Record<string, unknown>;
       if (paramObj.type === 'Identifier') {
         return paramObj.name as string;

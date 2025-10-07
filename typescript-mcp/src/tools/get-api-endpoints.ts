@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
+ 
 import type { APIEndpoint } from '../types/index.js';
 import { z } from 'zod';
 

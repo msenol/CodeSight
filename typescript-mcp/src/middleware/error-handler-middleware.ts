@@ -1,15 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-promise-executor-return */
-/* eslint-disable no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 import type { Response, NextFunction } from 'express';
-import { type ExtendedRequest, type ErrorResponse, HTTP_STATUS, ValidationError, AuthenticationError, AuthorizationError, RateLimitError } from './types.js';
+import { type ExtendedRequest, type ErrorResponse, type ValidationErrorDetail, HTTP_STATUS, ValidationError, AuthenticationError, AuthorizationError, RateLimitError } from './types.js';
 import { ZodError } from 'zod';
 
 // Rule 15: Global declarations for Node.js environment
@@ -23,8 +23,7 @@ export interface ErrorHandlerConfig {
   logErrors?: boolean;
   logLevel?: 'error' | 'warn' | 'info' | 'debug';
   customErrorMap?: Map<string, { status: number; message: string }>;
-
-  onError?: () => void;
+  onError?: (error: unknown, req: ExtendedRequest, res: Response) => void;
 }
 
 const defaultConfig: ErrorHandlerConfig = {
@@ -83,10 +82,9 @@ export class ErrorHandlerMiddleware {
   /**
    * Async error wrapper for route handlers
    */
-
-    static asyncHandler = (fn: () => Promise<void> | void) => {
-        return () => {
-      Promise.resolve(fn()).catch(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+  static asyncHandler = (fn: (req: ExtendedRequest, res: Response, next: NextFunction) => Promise<void> | void) => {
+    return (req: ExtendedRequest, res: Response, next: NextFunction) => {
+      Promise.resolve(fn(req, res, next)).catch(next);
     };
   };
 
@@ -110,7 +108,7 @@ export class ErrorHandlerMiddleware {
    * Method not allowed handler
    */
   methodNotAllowed = (allowedMethods: string[]) => {
-        return (req: ExtendedRequest, res: Response): void => {
+    return (req: ExtendedRequest, res: Response): void => {
       res.setHeader('Allow', allowedMethods.join(', '));
 
       res.status(HTTP_STATUS.METHOD_NOT_ALLOWED).json({
@@ -150,7 +148,7 @@ export class ErrorHandlerMiddleware {
   /**
    * Database error handler
    */
-    databaseError = (error: Error, req: ExtendedRequest, res: Response): void => {
+  databaseError = (error: Error, req: ExtendedRequest, res: Response): void => {
     console.error('Database error:', error);
 
     // Don't expose database details in production
@@ -186,7 +184,9 @@ export class ErrorHandlerMiddleware {
       status = HTTP_STATUS.BAD_REQUEST;
       errorType = 'Validation error';
       ({ message } = error);
-      ({ details } = error);
+      const validationDetails = error.details;
+      // Convert ValidationErrorDetail[] to match expected type
+      details = (validationDetails || []).map(detail => ({ field: detail.field, message: detail.message, value: detail.value, code: detail.code }));
     } else if (error instanceof ZodError) {
       status = HTTP_STATUS.BAD_REQUEST;
       errorType = 'Validation error';
@@ -252,7 +252,14 @@ export class ErrorHandlerMiddleware {
     };
 
     if (details) {
-      errorResponse.details = details;
+      // Handle the type union properly
+      if (Array.isArray(details)) {
+        // If it's an array, take the first element and cast to ValidationErrorDetail
+        errorResponse.details = details[0] as unknown as ValidationErrorDetail;
+      } else {
+        // If it's a single object, cast it properly
+        errorResponse.details = details as unknown as ValidationErrorDetail;
+      }
     }
 
     if (this.config.includeStack && error.stack) {

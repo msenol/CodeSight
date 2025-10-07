@@ -2,14 +2,13 @@
  * Indexing Service - Simple JavaScript implementation
  * (Rust FFI will be integrated later)
  */
-import type { CodeEntity } from './logger.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as process from 'node:process';
 import { glob } from 'glob';
 import Database from 'better-sqlite3';
 import { logger } from './logger.js';
-import type { DatabaseRow, Statistics, SearchResult, CodeEntity } from '../types/index.js';
+import type { DatabaseRow, Statistics, SearchResult } from '../types/index.js';
 
 export class IndexingService {
   private db: Database.Database;
@@ -83,7 +82,7 @@ export class IndexingService {
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
-      const transaction = this.db.transaction((entities: CodeEntity[]) => {
+      const transaction = this.db.transaction((entities: any[]) => {
         for (const entity of entities) {
           insertStmt.run(
             entity.id,
@@ -104,8 +103,8 @@ export class IndexingService {
     }
   }
 
-  private parseFile(filePath: string, content: string): CodeEntity[] {
-    const entities: CodeEntity[] = [];
+  private parseFile(filePath: string, content: string): any[] {
+    const entities: any[] = [];
     const lines = content.split('\n');
 
     lines.forEach((line, index) => {
@@ -146,7 +145,7 @@ export class IndexingService {
 
       // Extract arrow functions assigned to const
       const arrowMatch = line.match(
-        /(?:export]+)?(?:const|let)]+(\w+)]*=]*(?:\([^)]*)|[^=]+)]*=>/,
+        /(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=]+)\s*=>/,
       );
       if (arrowMatch && arrowMatch[1]) {
         entities.push({
@@ -212,11 +211,11 @@ export class IndexingService {
     const results = stmt.all(searchPattern, searchPattern, query, `${query}%`, limit);
 
     return results.map((row: DatabaseRow) => ({
-      file: row.file_path,
-      line: row.start_line,
-      content: row.content,
-      name: row.name,
-      score: this.calculateScore(query, row.name, row.content),
+      file: String(row.file_path),
+      line: Number(row.start_line),
+      content: String(row.content),
+      name: String(row.name),
+      score: this.calculateScore(query, String(row.name), String(row.content)),
     }));
   }
 
@@ -255,8 +254,15 @@ export class IndexingService {
     const total = totalStmt.get() as { total: number };
 
     return {
-      total: total.total,
-      byType: results,
+      total: Number(total.total),
+      byType: results as any,
+      totalFiles: 0,
+      totalEntities: Number(total.total),
+      totalLines: 0,
+      languages: [],
+      filesByLanguage: {},
+      entitiesByType: {},
+      indexedAt: new Date().toISOString(),
     };
   }
 

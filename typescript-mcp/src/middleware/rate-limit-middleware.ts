@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
+ 
 import type { Response, NextFunction } from 'express';
 import { type ExtendedRequest, type RateLimitConfig, HTTP_STATUS, RateLimitError } from './types.js';
 
 // Rule 15: Global declarations for Node.js environment
 declare const console: Console;
-declare const setInterval: () => void;
-declare const clearInterval: () => void;
+declare const setInterval: (callback: () => void, ms: number) => unknown;
+declare const clearInterval: (id: unknown) => void;
 // NodeJS type declarations removed to prevent unused variable warnings
 
 // In-memory store for rate limiting (in production, use Redis)
@@ -92,7 +92,7 @@ export class RateLimitMiddleware {
         res.setHeader('Retry-After', retryAfter);
 
         if (this.config.onLimitReached) {
-          this.config.onLimitReached(req, res);
+          this.config.onLimitReached(req, res as any);
         }
 
         throw new RateLimitError(this.config.message, retryAfter);
@@ -189,7 +189,8 @@ export class RateLimitMiddleware {
         }
 
         // Remove requests outside the window
-        requests[key] = requests[key].filter(timestamp => now - timestamp < windowMs);
+        const requestTimestamps = requests[key] || [];
+        requests[key] = requestTimestamps.filter(timestamp => now - timestamp < windowMs);
 
         // Add current request
         requests[key].push(now);
@@ -229,7 +230,7 @@ export class RateLimitMiddleware {
       limit: async (req: ExtendedRequest, res: Response, next: NextFunction) => {
         // Check burst limit first
         await new Promise<void>((resolve, reject) => {
-          burstLimiter.limit(req, res, error => {
+          burstLimiter.limit(req, res, (error?: any) => {
             if (error) {reject(error);} else {resolve();}
           });
         });
@@ -322,7 +323,8 @@ export class RateLimitMiddleware {
     const now = Date.now();
 
     for (const key in this.store) {
-      if (this.store[key].resetTime <= now) {
+      const entry = this.store[key];
+      if (entry && entry.resetTime <= now) {
         delete this.store[key];
       }
     }

@@ -307,7 +307,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'trace_data_flow': {
             // codebase_id reserved for future use
-            const { variable_name, file_path, codebase_id } = args as {
+            const { variable_name, file_path, codebase_id: _codebase_id } = args as {
               variable_name: string;
               file_path: string;
               codebase_id: string;
@@ -403,7 +403,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'find_duplicates': {
             // codebase_id reserved for future use
-            const { file_path, min_lines, codebase_id } = args as {
+            const { file_path: _file_path, min_lines, codebase_id } = args as {
               file_path?: string;
               min_lines?: number;
               codebase_id: string;

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
-/* eslint-disable no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+ 
+ 
+ 
+ 
+ 
+ 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 import { z } from 'zod';
 import { codebaseService } from '../services/codebase-service.js';
@@ -181,10 +181,10 @@ export class SuggestRefactoringTool {
       const effortEstimate = this.calculateEffortEstimate(suggestions);
 
       return {
-        entity_id: (entity as any).id,
+        entity_id: (entity).id,
         entity_name: entity.name,
-        entity_type: (entity as any).entity_type,
-        file_path: (entity as any).file_path,
+        entity_type: (entity).entity_type,
+        file_path: (entity).file_path,
         current_metrics: currentMetrics,
         suggestions: suggestions.slice(0, input.max_suggestions),
         priority_ranking: priorityRanking,

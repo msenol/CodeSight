@@ -2,8 +2,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import * as process from 'node:process';
-import fs from 'fs/promises';
-import type { DatabaseRow, DatabaseValue, DatabaseParams, Statistics } from '../types/index.js';
+import type { DatabaseRow, DatabaseParams, Statistics } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,6 +83,10 @@ export interface DatabaseConnection {
   executeQuery: (sql: string, params?: DatabaseParams) => Promise<DatabaseRow[]>;
   executeCommand: (sql: string, params?: DatabaseParams) => Promise<DatabaseCommandResult>;
   close: () => Promise<void>;
+  exec?: (sql: string) => Promise<{ changes: number }>;
+  run?: (sql: string, params?: DatabaseParams) => Promise<{ changes: number }>;
+  get?: (sql: string, params?: DatabaseParams) => Promise<DatabaseRow>;
+  all?: (sql: string, params?: DatabaseParams) => Promise<DatabaseRow[]>;
 }
 
 export interface DatabaseCommandResult {
@@ -122,12 +125,12 @@ export class DatabaseAdapter {
     }
   }
 
-  private async executeQuery(sql: string, params?: DatabaseParams): Promise<DatabaseRow[]> {
+  private async executeQuery(_sql: string, _params?: DatabaseParams): Promise<DatabaseRow[]> {
     // Mock query execution
-    return [{ id: 1, name: 'Sample Record', created_at: new Date() }];
+    return [{ id: 1, name: 'Sample Record', created_at: new Date().toISOString() }];
   }
 
-  private async executeCommand(sql: string, params?: DatabaseParams): Promise<DatabaseCommandResult> {
+  private async executeCommand(_sql: string, _params?: DatabaseParams): Promise<DatabaseCommandResult> {
     // Mock command execution
     return { affectedRows: 1, insertId: 123 };
   }
@@ -227,13 +230,21 @@ export class DatabaseAdapter {
     // Mock implementation - sqlite packages not available
     console.warn('SQLite packages not available - using mock database');
     this.db = {
+      executeQuery: async (sql: string, _params?: DatabaseParams) => {
+        console.log(`Mock executeQuery: ${sql.substring(0, 100)}...`);
+        return [{ id: 1, name: 'Mock Record', created_at: new Date().toISOString() }];
+      },
+      executeCommand: async (sql: string, _params?: DatabaseParams) => {
+        console.log(`Mock executeCommand: ${sql.substring(0, 100)}...`);
+        return { affectedRows: 1, changes: 1 };
+      },
       exec: async (sql: string) => {
         console.log(`Mock exec: ${sql.substring(0, 100)}...`);
         return { changes: 0 };
       },
       run: async () => ({ changes: 1 }),
-      get: async () => ({}),
-      all: async () => [],
+      get: async () => ({ id: 1, name: 'Mock Record', created_at: new Date().toISOString() }),
+      all: async () => [{ id: 1, name: 'Mock Record', created_at: new Date().toISOString() }],
       close: async () => {},
     };
   }
@@ -386,7 +397,7 @@ export class DatabaseAdapter {
     if (!this.db) {throw new Error('Database not initialized');}
 
     const row = await this.db.get('SELECT * FROM codebases WHERE id = ?', [id]);
-    return row || null;
+    return (row as unknown as CodebaseRecord) || null;
   }
 
   async getCodebases(
@@ -425,7 +436,7 @@ export class DatabaseAdapter {
     }
 
     const rows = await this.db.all(sql, params);
-    return rows;
+    return rows as unknown as CodebaseRecord[];
   }
 
   async updateCodebase(
@@ -499,7 +510,7 @@ export class DatabaseAdapter {
     if (!this.db) {throw new Error('Database not initialized');}
 
     const row = await this.db.get('SELECT * FROM entities WHERE id = ?', [id]);
-    return row || null;
+    return (row as unknown as EntityRecord) || null;
   }
 
   async getEntitiesByCodebase(
@@ -533,7 +544,7 @@ export class DatabaseAdapter {
     }
 
     const rows = await this.db.all(sql, params);
-    return rows;
+    return rows as unknown as EntityRecord[];
   }
 
   async getEntitiesByFile(filePath: string): Promise<EntityRecord[]> {
@@ -543,7 +554,7 @@ export class DatabaseAdapter {
       'SELECT * FROM entities WHERE file_path = ? ORDER BY start_line',
       [filePath],
     );
-    return rows;
+    return rows as unknown as EntityRecord[];
   }
 
   async updateEntity(id: string, updates: Partial<EntityRecord>): Promise<EntityRecord | null> {
@@ -613,7 +624,7 @@ export class DatabaseAdapter {
     sql += ' ORDER BY created_at DESC';
 
     const rows = await this.db.all(sql, params);
-    return rows;
+    return rows as unknown as AnalysisRecord[];
   }
 
   // Search history operations
@@ -650,7 +661,7 @@ export class DatabaseAdapter {
       'SELECT * FROM search_history WHERE codebase_id = ? ORDER BY created_at DESC LIMIT ?',
       [codebaseId, limit],
     );
-    return rows;
+    return rows as unknown as SearchHistoryRecord[];
   }
 
   // Refactoring operations
@@ -695,7 +706,7 @@ export class DatabaseAdapter {
     sql += ' ORDER BY created_at DESC';
 
     const rows = await this.db.all(sql, params);
-    return rows;
+    return rows as unknown as RefactoringRecord[];
   }
 
   async updateRefactoringStatus(id: string, status: string, appliedAt?: string): Promise<boolean> {
@@ -730,7 +741,7 @@ export class DatabaseAdapter {
       [codebaseId],
     );
 
-    const searchStats = await this.db.get(
+    const _searchStats = await this.db.get(
       `
       SELECT 
         COUNT(*) as total_searches,
@@ -742,7 +753,7 @@ export class DatabaseAdapter {
       [codebaseId],
     );
 
-    const refactoringStats = await this.db.get(
+    const _refactoringStats = await this.db.get(
       `
       SELECT 
         COUNT(*) as total_suggestions,
@@ -756,9 +767,15 @@ export class DatabaseAdapter {
     );
 
     return {
-      entities: stats,
-      search: searchStats,
-      refactoring: refactoringStats,
+      total: Number(stats.total) || 0,
+      byType: (stats.byType as any) || [],
+      totalFiles: Number(stats.totalFiles) || 0,
+      totalEntities: Number(stats.totalEntities) || 0,
+      totalLines: Number(stats.totalLines) || 0,
+      languages: (stats.languages as any) || [],
+      filesByLanguage: (stats.filesByLanguage as any) || {},
+      entitiesByType: (stats.entitiesByType as any) || {},
+      indexedAt: String(stats.indexedAt) || new Date().toISOString(),
     };
   }
 

@@ -15,10 +15,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Interface for the native module
 interface NativeModule {
   initEngine(): Promise<void>;
-  parseFile(): Promise<CodeEntity[]>;
-  searchCode(): Promise<SearchResult[]>;
-  generateEmbedding(): Promise<Float32Array>;
-  indexCodebase(): Promise<string>;
+  parseFile(_filePath: string, content: string): Promise<CodeEntity[]>;
+  searchCode(query: string, codebasePath?: string): Promise<SearchResult[]>;
+  generateEmbedding(text: string): Promise<Float32Array>;
+  indexCodebase(path: string, forceReindex?: boolean): Promise<string>;
   getStatistics?(): Promise<{
     total_entities: number;
     by_type: Record<string, number>;
@@ -76,7 +76,7 @@ function createMockModule() {
           content: 'function mock_function() { return "mock"; }',
         },
       ]);
-      /* eslint-enable */
+       
     },
     searchCode: (query: string, codebasePath?: string) => {
       logger.warn(`[MOCK] Searching for: ${query} in ${codebasePath ?? 'default path'}`);
@@ -88,7 +88,7 @@ function createMockModule() {
           score: 0.8,
         },
       ]);
-      /* eslint-enable */
+       
     },
     generateEmbedding: (text: string) => {
       logger.warn(`[MOCK] Generating embedding for: ${text}`);
@@ -186,7 +186,7 @@ export class RustFFIBridge {
     }
 
     try {
-      await nativeModule.initEngine();
+      await (nativeModule as NativeModule).initEngine();
       this.isInitialized = true;
       logger.warn('Rust FFI bridge initialized successfully');
     } catch (error) {
@@ -202,7 +202,7 @@ export class RustFFIBridge {
     this.ensureInitialized();
 
     try {
-      const entities = await nativeModule.parseFile(filePath, content);
+      const entities = await (nativeModule as NativeModule).parseFile(filePath, content);
       return entities.map(this.normalizeEntity);
     } catch (error) {
       logger.error(`Failed to parse file ${filePath}:`, error);
@@ -217,7 +217,7 @@ export class RustFFIBridge {
     this.ensureInitialized();
 
     try {
-      const results = await nativeModule.searchCode(query, codebasePath);
+      const results = await (nativeModule as NativeModule).searchCode(query, codebasePath);
       return results.map(this.normalizeSearchResult);
     } catch (error) {
       logger.error(`Failed to search for "${query}":`, error);
@@ -232,7 +232,7 @@ export class RustFFIBridge {
     this.ensureInitialized();
 
     try {
-      return await nativeModule.generateEmbedding(text);
+      return await (nativeModule as NativeModule).generateEmbedding(text);
     } catch (error) {
       logger.error('Failed to generate embedding:', error);
       throw error;
@@ -246,7 +246,7 @@ export class RustFFIBridge {
     this.ensureInitialized();
 
     try {
-      return await nativeModule.indexCodebase(path);
+      return await (nativeModule as NativeModule).indexCodebase(path);
     } catch (error) {
       logger.error(`Failed to index codebase ${path}:`, error);
       throw error;
@@ -265,7 +265,7 @@ export class RustFFIBridge {
 
     try {
       return (
-        (await nativeModule.getStatistics?.()) ?? {
+        (await (nativeModule as NativeModule).getStatistics?.()) ?? {
           total_entities: 0,
           by_type: {},
           by_language: {},
@@ -284,7 +284,7 @@ export class RustFFIBridge {
     this.ensureInitialized();
 
     try {
-      await nativeModule.clear?.();
+      await (nativeModule as NativeModule).clear?.();
     } catch (error) {
       logger.error('Failed to clear indexed data:', error);
       throw error;
@@ -296,6 +296,21 @@ export class RustFFIBridge {
    */
   isRustAvailable(): boolean {
     return nativeModule !== null && !nativeModule.toString().includes('[MOCK]');
+  }
+
+  /**
+   * Check if the bridge is available (alias for isRustAvailable)
+   */
+  async isAvailable(): Promise<boolean> {
+    return this.isRustAvailable();
+  }
+
+  /**
+   * Get the version of the Rust bridge
+   */
+  async getVersion(): Promise<string> {
+    // Return a mock version for now
+    return '0.1.0-mock';
   }
 
   /**
@@ -331,7 +346,7 @@ export class RustFFIBridge {
       signature: entityData.signature as string | undefined,
       documentation: entityData.documentation as string | undefined,
       visibility: entityData.visibility as string | undefined,
-      parameters: Array.isArray(entityData.parameters) ? entityData.parameters as Record<string, unknown>[] : [],
+      parameters: Array.isArray(entityData.parameters) ? entityData.parameters as Parameter[] : [],
       return_type: entityData.return_type as string | undefined,
       dependencies: Array.isArray(entityData.dependencies) ? entityData.dependencies as string[] : [],
       metadata: (entityData.metadata && typeof entityData.metadata === 'object') ? entityData.metadata as Record<string, string> : {},

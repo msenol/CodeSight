@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-console */
-/* eslint-disable no-undef */
+ 
+ 
+ 
+ 
+ 
 /**
  * CLI for CodeSight MCP Server
  */
@@ -102,7 +102,7 @@ program
 
 
         console.log(
-          `${chalk.cyan(`${index + 1}. ${result.name}`)} (score: ${(result.score as number).toFixed(2)})`,
+          `${chalk.cyan(`${index + 1}. ${result.name}`)} (score: ${(result.score).toFixed(2)})`,
         );
 
         console.log(`   📄 ${result.file}:${result.line}`);

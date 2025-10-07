@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import type { Request } from 'express';
 
 // Validation error detail interface
@@ -55,7 +55,8 @@ export interface RateLimitConfig {
   message?: string; // Custom error message
   skipSuccessfulRequests?: boolean;
   skipFailedRequests?: boolean;
-  keyGenerator?: () => string;
+  keyGenerator?: (req: ExtendedRequest) => string;
+  onLimitReached?: (req: ExtendedRequest, res: Response) => void;
 }
 
 // Authentication configuration

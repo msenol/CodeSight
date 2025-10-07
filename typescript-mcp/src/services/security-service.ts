@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
+ 
+ 
+ 
+ 
 /* eslint-disable no-useless-escape */
 import type { SecurityIssue, SecurityPattern, SecurityScanOptions } from '../types/index.js';
 import { z } from 'zod';

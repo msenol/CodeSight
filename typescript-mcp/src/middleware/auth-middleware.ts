@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
+ 
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { StringValue } from 'ms';
 import type { Response, NextFunction } from 'express';
@@ -44,7 +44,7 @@ export class AuthMiddleware {
       }
 
       const decoded = this.verifyToken(token);
-      req.user = decoded;
+      req.user = decoded as ExtendedRequest['user'];
 
       next();
     } catch (error) {
@@ -114,7 +114,7 @@ export class AuthMiddleware {
       if (token) {
         try {
           const decoded = this.verifyToken(token);
-          req.user = decoded;
+          req.user = decoded as ExtendedRequest['user'];
         } catch (error) {
           // Ignore token verification errors for optional auth
           console.warn('Optional auth token verification failed:', error);
@@ -174,7 +174,7 @@ export class AuthMiddleware {
    */
   verifyToken = (token: string): Record<string, unknown> => {
     try {
-      return jwt.verify(token, this.config.jwtSecret);
+      return jwt.verify(token, this.config.jwtSecret) as Record<string, unknown>;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new AuthenticationError('Token has expired');
@@ -285,8 +285,8 @@ export class AuthMiddleware {
 
       // Generate new token with same payload (minus exp, iat)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payloadObj = decoded as any;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const payloadObj = decoded;
+       
       const { exp: _exp, iat: _iat, ...payload } = payloadObj;
       const newToken = this.generateToken(payload);
 
@@ -363,7 +363,7 @@ export class AuthMiddleware {
   getConfig(): Omit<AuthConfig, 'jwtSecret'> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configObj = this.config as any;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const { jwtSecret: _jwtSecret, ...safeConfig } = configObj;
     return safeConfig;
   }

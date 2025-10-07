@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-undef */
-/* eslint-disable no-useless-escape */
+ 
+ 
+ 
+ 
+ 
 import type { RefactoringSuggestion, RefactoringOptions, CodeSmell } from '../types/index.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as fs from 'fs/promises';

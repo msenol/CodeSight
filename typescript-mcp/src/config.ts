@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-console */
-/* eslint-disable no-undef */
+ 
+ 
+ 
+ 
 /**
  * Configuration management
  */
@@ -15,6 +15,7 @@ declare const process: {
 dotenvConfig();
 
 export const config = {
+  version: process.env.npm_package_version || '0.1.0',
   server: {
     port: parseInt(process.env.PORT ?? '4000', 10),
     host: process.env.HOST ?? '0.0.0.0',

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-/* eslint-disable no-unused-vars */
+ 
+ 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import type { CodebaseService } from '../services/codebase-service.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import type { SecurityService } from '../services/security-service.js';
 import { z } from 'zod';
 
