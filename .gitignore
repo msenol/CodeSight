@@ -215,3 +215,11 @@ lint_output.txt
 
 # Duplicate config directories
 typescript-mcp/config/
+
+# Gorev task management
+.gorev/gorev.db
+.gorev/*.db
+
+# Sequential thoughts cache
+.sequential-thoughts/
+*.sequential-thoughts
