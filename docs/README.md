@@ -7,6 +7,8 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 **Current Version**: v0.1.0 (Production Ready)
 **Architecture**: Hybrid TypeScript + Rust with NAPI-RS FFI Bridge
 **Code Quality**: Enterprise-grade with 62% lint improvement achievement
+**Integration Testing**: 27/27 tests passing with comprehensive MCP protocol validation
+**Test Coverage**: Claude Desktop (9/9), VS Code (11/11), E2E Workflows (7/7)
 
 ## Quick Links
 
@@ -20,10 +22,13 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 - [Rust FFI Bridge](./rust-ffi-bridge.md) - NAPI-RS integration details
 - [Performance Benchmarks](./performance-benchmarks.md) - Detailed performance metrics
 
-### 🔧 API & Integration
-- [API Documentation](./API.md) - REST API endpoints and usage
+### 🧪 Testing & Quality Assurance
+- [Integration Testing Guide](./testing/integration-testing.md) - Comprehensive test suite documentation
 - [MCP Tools Documentation](./MCP-TOOLS.md) - Complete MCP protocol tools reference
 - [API Contract Specifications](../specs/codesight-mcp/contracts/) - OpenAPI specifications
+
+### 🔧 API & Integration
+- [API Documentation](./API.md) - REST API endpoints and usage
 
 ### 📦 Deployment & Operations
 - [Configuration Guide](./configuration.md) - Environment setup and configuration

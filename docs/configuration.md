@@ -1327,4 +1327,4 @@ kubectl exec -it <redis-pod> -n codesight -- redis-cli info
 
 ---
 
-**Need help?** Check our [troubleshooting guide](../troubleshooting/common-issues.md) or join the [community discussions](https://github.com/codesight/codesight-mcp/discussions).
+**Need help?** Check our [main README](../README.md#troubleshooting) or join the [community discussions](https://github.com/codesight/codesight-mcp/discussions).

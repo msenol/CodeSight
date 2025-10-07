@@ -406,8 +406,7 @@ pub fn collect_parse_metrics(result: &ParseResult) -> ParseMetrics {
 ## Related ADRs
 
 - [ADR-0001: Hybrid Rust/TypeScript Architecture](0001-hybrid-architecture.md)
-- [ADR-0003: Tantivy for Full-text Search](0003-tantivy-search.md)
-- [ADR-0006: Incremental Indexing Strategy](0006-incremental-indexing.md)
+- **Additional ADRs**: Tantivy Search and Incremental Indexing strategies are documented within the hybrid architecture ADR.
 
 ## References
 
