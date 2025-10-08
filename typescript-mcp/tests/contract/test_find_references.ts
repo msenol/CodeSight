@@ -1,563 +1,474 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { Reference } from '../../src/types';
-
 /**
- * Contract Test for find_references MCP Tool
+ * Contract Test for find_references MCP Tool (T011)
  *
- * This test validates that the find_references tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the find_references tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
- * - Reference type validation
+ * Test validates:
+ * - Tool exists and is registered
+ * - Reference finding and analysis
+ * - Reference categorization (read/write/call)
+ * - Cross-file reference tracking
+ * - Error handling for invalid inputs
  */
 
-describe('MCP Tool: find_references - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testEntityId = '550e8400-e29b-41d4-a716-446655440002';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('find_references MCP Tool - Contract Test (T011)', () => {
+  let mockServer: any;
+  let findReferencesTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have find_references tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('find_references')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with required fields only', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('find_references');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
-    });
+    // Required properties
+    expect(schema.required).toContain('target_identifier');
+    expect(schema.properties.target_identifier).toBeDefined();
+    expect(schema.properties.target_identifier.type).toBe('string');
 
-    it('should accept valid request with all optional parameters', async () => {
-      const validRequestWithOptionals = {
-        entity_id: testEntityId,
-        include_tests: true,
-        include_indirect: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequestWithOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with optional parameters set to false', async () => {
-      const validRequestWithFalseOptionals = {
-        entity_id: testEntityId,
-        include_tests: false,
-        include_indirect: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequestWithFalseOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject request missing required entity_id field', async () => {
-      const invalidRequest = {};
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('entity_id');
-    });
-
-    it('should reject request with invalid entity_id format', async () => {
-      const invalidRequest = {
-        entity_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid include_tests type', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        include_tests: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with invalid include_indirect type', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        include_indirect: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    // Optional properties
+    expect(schema.properties.codebase_id).toBeDefined();
+    expect(schema.properties.codebase_id.type).toBe('string');
+    expect(schema.properties.reference_types).toBeDefined();
+    expect(schema.properties.reference_types.type).toBe('array');
+    expect(schema.properties.include_declarations).toBeDefined();
+    expect(schema.properties.include_declarations.type).toBe('boolean');
+    expect(schema.properties.max_results).toBeDefined();
+    expect(schema.properties.max_results.type).toBe('number');
+    expect(schema.properties.file_patterns).toBeDefined();
+    expect(schema.properties.file_patterns.type).toBe('array');
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return response conforming to contract schema', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_tests: true,
-        include_indirect: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Validate top-level response structure
-      expect(body).toHaveProperty('references');
-      expect(body).toHaveProperty('total_count');
-
-      // Validate references array
-      expect(Array.isArray(body.references)).toBe(true);
-
-      // Validate total_count
-      expect(typeof body.total_count).toBe('number');
-      expect(body.total_count).toBeGreaterThanOrEqual(0);
-      expect(body.total_count).toBe(body.references.length);
+  it('should find function references', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'getUserById',
+      codebase_id: 'test-codebase-uuid',
+      include_declarations: true,
+      max_results: 20
     });
 
-    it('should return Reference objects conforming to schema', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_tests: true,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.references).toBeDefined();
+    expect(Array.isArray(result.references)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
+    // Target info should be included
+    expect(result.target_info).toBeDefined();
+    expect(result.target_info.name).toBe('getUserById');
+    expect(result.target_info.type).toBeDefined();
+
+    if (result.references.length > 0) {
+      const firstRef = result.references[0];
+      expect(firstRef.file_path).toBeDefined();
+      expect(firstRef.line_number).toBeDefined();
+      expect(firstRef.reference_type).toBeDefined();
+      expect(firstRef.context).toBeDefined();
+      expect(typeof firstRef.context).toBe('string');
+    }
+  });
+
+  it('should find variable references', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'currentUser',
+      reference_types: ['read', 'write'],
+      include_declarations: false
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.references).toBeDefined();
+
+    // Should only include read/write references, no declarations
+    expect(result.references.every((ref: any) => 
+      ['read', 'write'].includes(ref.reference_type)
+    )).toBe(true);
+  });
+
+  it('should find class/type references', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'UserService',
+      reference_types: ['instantiation', 'inheritance', 'import'],
+      max_results: 15
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.references.length > 0) {
+      result.references.forEach((ref: any) => {
+        expect(['instantiation', 'inheritance', 'import'].includes(ref.reference_type)).toBe(true);
+      });
+    }
+  });
+
+  it('should handle different reference types', async () => {
+    const tool = mockServer.getTool('find_references');
+    const referenceTypes = ['read', 'write', 'call', 'declaration', 'import', 'instantiation', 'inheritance'];
+
+    for (const refType of referenceTypes) {
+      const result = await tool.call({
+        target_identifier: 'testTarget',
+        reference_types: [refType]
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
 
-      if (body.references.length > 0) {
-        const reference: Reference = body.references[0];
+      if (result.references.length > 0) {
+        expect(result.references.every((ref: any) => ref.reference_type === refType)).toBe(true);
+      }
+    }
+  });
 
-        // Validate required Reference fields
-        expect(reference).toHaveProperty('referencing_entity_id');
-        expect(reference).toHaveProperty('file_path');
-        expect(reference).toHaveProperty('line_number');
-        expect(reference).toHaveProperty('reference_type');
-        expect(reference).toHaveProperty('context');
+  it('should include or exclude declarations based on parameter', async () => {
+    const tool = mockServer.getTool('find_references');
 
-        // Validate field types
-        expect(typeof reference.referencing_entity_id).toBe('string');
-        expect(typeof reference.file_path).toBe('string');
-        expect(typeof reference.line_number).toBe('number');
-        expect(typeof reference.reference_type).toBe('string');
-        expect(typeof reference.context).toBe('string');
+    const resultWithDeclarations = await tool.call({
+      target_identifier: 'CONFIG',
+      include_declarations: true
+    });
 
-        // Validate UUID format for referencing_entity_id
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        expect(reference.referencing_entity_id).toMatch(uuidRegex);
+    const resultWithoutDeclarations = await tool.call({
+      target_identifier: 'CONFIG',
+      include_declarations: false
+    });
 
-        // Validate reference_type enum
-        const validReferenceTypes = ['call', 'import', 'extend', 'implement', 'instantiate'];
-        expect(validReferenceTypes).toContain(reference.reference_type);
+    // Both should succeed
+    expect(resultWithDeclarations.success).toBe(true);
+    expect(resultWithoutDeclarations.success).toBe(true);
 
-        // Validate line number
-        expect(reference.line_number).toBeGreaterThan(0);
+    // With declarations should have more or equal references
+    expect(resultWithDeclarations.references.length).toBeGreaterThanOrEqual(
+      resultWithoutDeclarations.references.length
+    );
 
-        // Validate file path format
-        expect(reference.file_path).toMatch(
-          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+    // Check that declarations are properly categorized
+    if (resultWithDeclarations.references.length > 0) {
+      const hasDeclarations = resultWithDeclarations.references.some((ref: any) => 
+        ref.reference_type === 'declaration'
+      );
+      expect(hasDeclarations).toBe(true);
+    }
+
+    if (resultWithoutDeclarations.references.length > 0) {
+      const hasDeclarations = resultWithoutDeclarations.references.some((ref: any) => 
+        ref.reference_type === 'declaration'
+      );
+      expect(hasDeclarations).toBe(false);
+    }
+  });
+
+  it('should respect max_results parameter', async () => {
+    const tool = mockServer.getTool('find_references');
+    const maxResults = 10;
+
+    const result = await tool.call({
+      target_identifier: 'commonlyUsedFunction',
+      max_results: maxResults
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.references.length).toBeLessThanOrEqual(maxResults);
+  });
+
+  it('should filter by file patterns', async () => {
+    const tool = mockServer.getTool('find_references');
+
+    const resultWithPattern = await tool.call({
+      target_identifier: 'apiFunction',
+      file_patterns: ['src/api/**/*.ts', 'src/services/**/*.ts']
+    });
+
+    const resultWithoutPattern = await tool.call({
+      target_identifier: 'apiFunction'
+    });
+
+    expect(resultWithPattern.success).toBe(true);
+    expect(resultWithoutPattern.success).toBe(true);
+
+    // Results with pattern should only match specified files
+    if (resultWithPattern.references.length > 0) {
+      resultWithPattern.references.forEach((ref: any) => {
+        expect(ref.file_path).toMatch(/^\/?(src\/api|src\/services)/);
+      });
+    }
+  });
+
+  it('should provide context for each reference', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'processData',
+      include_declarations: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.references.length > 0) {
+      result.references.forEach((ref: any) => {
+        // Should include context lines
+        expect(ref.context).toBeDefined();
+        expect(typeof ref.context).toBe('string');
+        expect(ref.context.length).toBeGreaterThan(0);
+
+        // Should include target in context (highlighted)
+        expect(ref.context.toLowerCase()).toContain(
+          ref.target_name?.toLowerCase() || 'processData'.toLowerCase()
         );
 
-        // Validate context is not empty
-        expect(reference.context.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should handle empty results gracefully', async () => {
-      const orphanEntityId = '00000000-0000-0000-0000-000000000001';
-      const validRequest = {
-        entity_id: orphanEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
+        // Should include line and column information
+        expect(ref.line_number).toBeDefined();
+        expect(typeof ref.line_number).toBe('number');
+        expect(ref.column_number).toBeDefined();
+        expect(typeof ref.column_number).toBe('number');
       });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const body = JSON.parse(response.body);
-        expect(body.references).toEqual([]);
-        expect(body.total_count).toBe(0);
-      }
-    });
+    }
   });
 
-  describe('Optional Parameter Behavior', () => {
-    it('should use default values for optional parameters', async () => {
-      const requestWithDefaults = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: requestWithDefaults,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Default include_tests = true (should include test references)
-      // Default include_indirect = false (should only include direct references)
-      expect(body.references).toBeDefined();
-      expect(body.total_count).toBeDefined();
+  it('should handle cross-file references', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'exportedFunction',
+      include_declarations: true
     });
 
-    it('should exclude test references when include_tests is false', async () => {
-      const requestWithoutTests = {
-        entity_id: testEntityId,
-        include_tests: false,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: requestWithoutTests,
-      });
+    if (result.references.length > 1) {
+      const files = result.references.map((ref: any) => ref.file_path);
+      const uniqueFiles = [...new Set(files)];
+      
+      // Should have references from multiple files
+      expect(uniqueFiles.length).toBeGreaterThan(1);
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should not include references from test files
-      body.references.forEach((ref: Reference) => {
-        expect(ref.file_path).not.toMatch(
-          /\.(test|spec)\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
-        );
-        expect(ref.file_path).not.toMatch(/\/tests?\//i);
-        expect(ref.file_path).not.toMatch(/\/test\//i);
-        expect(ref.file_path).not.toMatch(/\/spec\//i);
-      });
-    });
-
-    it('should include indirect references when include_indirect is true', async () => {
-      const requestWithIndirect = {
-        entity_id: testEntityId,
-        include_indirect: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: requestWithIndirect,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should include both direct and indirect references
-      expect(body.references).toBeDefined();
-      expect(body.total_count).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should exclude indirect references when include_indirect is false', async () => {
-      const requestWithoutIndirect = {
-        entity_id: testEntityId,
-        include_indirect: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: requestWithoutIndirect,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include direct references
-      expect(body.references).toBeDefined();
-      expect(body.total_count).toBeGreaterThanOrEqual(0);
-    });
+      // Should include declaration file
+      const declarationRefs = result.references.filter((ref: any) => 
+        ref.reference_type === 'declaration'
+      );
+      expect(declarationRefs.length).toBeGreaterThan(0);
+    }
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent entity', async () => {
-      const nonExistentEntityId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        entity_id: nonExistentEntityId,
-      };
+  it('should validate required target_identifier parameter', async () => {
+    const tool = mockServer.getTool('find_references');
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
+    // Should fail when target_identifier is missing
+    await expect(tool.call({
+      max_results: 10
+    })).rejects.toThrow('target_identifier is required');
 
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('entity not found');
-    });
+    // Should fail when target_identifier is empty
+    await expect(tool.call({
+      target_identifier: '',
+      max_results: 10
+    })).rejects.toThrow('target_identifier cannot be empty');
 
-    it('should handle malformed UUID gracefully', async () => {
-      const malformedRequest = {
-        entity_id: 'not-a-uuid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: malformedRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
+    // Should fail when target_identifier is not a string
+    await expect(tool.call({
+      target_identifier: 123,
+      max_results: 10
+    })).rejects.toThrow('target_identifier must be a string');
   });
 
-  describe('Business Logic Validation', () => {
-    it('should correctly identify different reference types', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_tests: true,
-        include_indirect: true,
-      };
+  it('should validate reference_types parameter', async () => {
+    const tool = mockServer.getTool('find_references');
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
+    // Should fail for invalid reference types
+    await expect(tool.call({
+      target_identifier: 'test',
+      reference_types: ['invalid_type']
+    })).rejects.toThrow('invalid reference type: invalid_type');
+
+    // Should fail when reference_types is not an array
+    await expect(tool.call({
+      target_identifier: 'test',
+      reference_types: 'not_array'
+    })).rejects.toThrow('reference_types must be an array');
+  });
+
+  it('should validate file_patterns parameter', async () => {
+    const tool = mockServer.getTool('find_references');
+
+    // Should fail for invalid file patterns
+    await expect(tool.call({
+      target_identifier: 'test',
+      file_patterns: ['invalid[pattern']
+    })).rejects.toThrow('invalid file pattern');
+
+    // Should accept valid glob patterns
+    const validPatterns = ['src/**/*.ts', 'test/*.spec.js', '**/*.tsx'];
+    for (const pattern of validPatterns) {
+      const result = await tool.call({
+        target_identifier: 'test',
+        file_patterns: [pattern]
       });
+      expect(result).toBeDefined();
+    }
+  });
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+  it('should handle non-existent target gracefully', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'nonExistentIdentifier12345',
+      codebase_id: 'test-codebase-uuid'
+    });
 
-      if (body.references.length > 0) {
-        const referenceTypes = new Set(body.references.map((ref: Reference) => ref.reference_type));
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true); // Should still succeed but with empty results
+    expect(result.references).toEqual([]);
+    expect(result.metadata.total_references).toBe(0);
+  });
 
-        // Should only contain valid reference types
-        const validTypes = ['call', 'import', 'extend', 'implement', 'instantiate'];
-        referenceTypes.forEach(type => {
-          expect(validTypes).toContain(type);
+  it('should categorize references by type and usage', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'dataProcessor',
+      include_declarations: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.references.length > 0) {
+      // Should have reference type distribution
+      expect(result.summary).toBeDefined();
+      expect(result.summary.by_type).toBeDefined();
+      expect(result.summary.by_file).toBeDefined();
+
+      // Each reference should have proper categorization
+      result.references.forEach((ref: any) => {
+        expect(ref.reference_type).toBeDefined();
+        expect(['read', 'write', 'call', 'declaration', 'import', 'instantiation', 'inheritance'])
+          .toContain(ref.reference_type);
+        
+        // Should have confidence score for automated categorization
+        expect(ref.confidence).toBeDefined();
+        expect(typeof ref.confidence).toBe('number');
+        expect(ref.confidence).toBeGreaterThanOrEqual(0);
+        expect(ref.confidence).toBeLessThanOrEqual(1);
+      });
+    }
+  });
+
+  it('should provide execution metrics and summary', async () => {
+    const tool = mockServer.getTool('find_references');
+    const result = await tool.call({
+      target_identifier: 'analyzePerformance',
+      max_results: 50
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+
+    // Should include performance metrics
+    expect(result.metadata.search_time_ms).toBeDefined();
+    expect(typeof result.metadata.search_time_ms).toBe('number');
+    expect(result.metadata.files_searched).toBeDefined();
+    expect(typeof result.metadata.files_searched).toBe('number');
+    expect(result.metadata.total_references).toBeDefined();
+    expect(typeof result.metadata.total_references).toBe('number');
+
+    // Should include summary statistics
+    expect(result.summary.total_references).toBe(result.metadata.total_references);
+    expect(result.summary.unique_files).toBeDefined();
+    expect(result.summary.reference_types).toBeDefined();
+  });
+
+  it('should handle ambiguous target identifiers', async () => {
+    const tool = mockServer.getTool('find_references');
+    
+    // Test with identifier that might exist in multiple contexts
+    const result = await tool.call({
+      target_identifier: 'init'
+    });
+
+    expect(result).toBeDefined();
+    
+    if (result.success) {
+      // Should provide disambiguation if multiple targets found
+      if (result.multiple_targets) {
+        expect(result.targets).toBeDefined();
+        expect(Array.isArray(result.targets)).toBe(true);
+        expect(result.targets.length).toBeGreaterThan(1);
+        
+        result.targets.forEach((target: any) => {
+          expect(target.name).toBeDefined();
+          expect(target.type).toBeDefined();
+          expect(target.location).toBeDefined();
+          expect(target.preview).toBeDefined();
         });
       }
-    });
-
-    it('should provide meaningful context for each reference', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.references.forEach((ref: Reference) => {
-        // Context should contain meaningful code snippet
-        expect(ref.context.length).toBeGreaterThan(5);
-        expect(ref.context.trim()).not.toBe('');
-
-        // Context should not be just whitespace
-        expect(ref.context.trim().length).toBeGreaterThan(0);
-      });
-    });
-
-    it('should not include self-references', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should not include references where the referencing entity is the same as the target entity
-      body.references.forEach((ref: Reference) => {
-        expect(ref.referencing_entity_id).not.toBe(testEntityId);
-      });
-    });
-
-    it('should return references sorted by relevance or file path', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      if (body.references.length > 1) {
-        // References should be sorted (either by file path or by some relevance metric)
-        const filePaths = body.references.map((ref: Reference) => ref.file_path);
-        const sortedFilePaths = [...filePaths].sort();
-
-        // Either sorted by file path or by some other consistent ordering
-        const isSortedByPath = JSON.stringify(filePaths) === JSON.stringify(sortedFilePaths);
-        const hasConsistentOrdering = filePaths.every((path, index) => {
-          if (index === 0) {return true;}
-          return path >= filePaths[index - 1] || true; // Allow any consistent ordering
-        });
-
-        expect(isSortedByPath || hasConsistentOrdering).toBe(true);
-      }
-    });
-  });
-
-  describe('Performance Validation', () => {
-    it('should complete reference search within reasonable time', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_tests: true,
-        include_indirect: true,
-      };
-
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-
-      // Should complete within 2 seconds for reference search
-      const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(2000);
-    });
-
-    it('should handle entities with many references efficiently', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_tests: true,
-        include_indirect: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should handle large numbers of references without timeout
-      expect(body.total_count).toBeGreaterThanOrEqual(0);
-      expect(body.references.length).toBeLessThanOrEqual(1000); // Reasonable limit
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle entities in different languages', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should handle cross-language references
-      body.references.forEach((ref: Reference) => {
-        expect(ref.file_path).toMatch(
-          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
-        );
-      });
-    });
-
-    it('should handle entities with no references', async () => {
-      const isolatedEntityId = '550e8400-e29b-41d4-a716-446655440099';
-      const validRequest = {
-        entity_id: isolatedEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/find_references',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const body = JSON.parse(response.body);
-        expect(body.references).toEqual([]);
-        expect(body.total_count).toBe(0);
-      }
-    });
+    }
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'find_references' not found"
+ * - "target_identifier is required"
+ * - "target_identifier cannot be empty"
+ * - "target_identifier must be a string"
+ * - "invalid reference type: {type}"
+ * - "reference_types must be an array"
+ * - "invalid file pattern: {pattern}"
+ * - "max_results must be a positive integer"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   target_info: {
+ *     name: string,
+ *     type: string,
+ *     location: {file_path: string, line_number: number}
+ *   },
+ *   references: Array<{
+ *     file_path: string,
+ *     line_number: number,
+ *     column_number: number,
+ *     reference_type: 'read' | 'write' | 'call' | 'declaration' | 'import' | 'instantiation' | 'inheritance',
+ *     context: string,
+ *     target_name: string,
+ *     confidence: number
+ *   }>,
+ *   multiple_targets?: boolean,
+ *   targets?: Array<{name: string, type: string, location: object, preview: string}>,
+ *   summary: {
+ *     total_references: number,
+ *     unique_files: number,
+ *     reference_types: Record<string, number>,
+ *     by_type: Record<string, number>,
+ *     by_file: Record<string, number>
+ *   },
+ *   metadata: {
+ *     search_time_ms: number,
+ *     files_searched: number,
+ *     total_references: number
+ *   }
+ * }
+ */

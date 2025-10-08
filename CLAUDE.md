@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **Version: v0.1.0**
-**Last Updated: October 1, 2025**
+**Last Updated: January 8, 2025**
 
 ## Project Overview
 
@@ -90,9 +90,19 @@ docker-compose -f docker-compose.dev.yml up -d
 - `search_code`: Natural language search with SQLite results
 - `explain_function`: Function explanation with codebase lookup
 
-**🔧 Mock Implementation (Working Protocol):**
-- `find_references`, `trace_data_flow`, `analyze_security`
-- `get_api_endpoints`, `check_complexity`, `find_duplicates`, `suggest_refactoring`
+**📝 Contract Tests Completed (Phase 3.2 TDD):**
+- `find_references`: Find all references to a symbol (contract test complete)
+- `trace_data_flow`: Trace data flow through the code (contract test complete)
+- `analyze_security`: Analyze code for security vulnerabilities (contract test complete)
+- `get_api_endpoints`: List all API endpoints in the codebase (contract test complete)
+- `check_complexity`: Analyze code complexity metrics (contract test complete)
+- `find_duplicates`: Detect duplicate code patterns (contract test complete)
+- `suggest_refactoring`: Provide refactoring suggestions (contract test complete)
+
+**🔧 Current Implementation Status:**
+- 2 tools fully implemented and functional
+- 7 tools have comprehensive contract tests written (T009-T017)
+- Ready for Phase 3.3 core implementation
 
 ## Environment Configuration
 

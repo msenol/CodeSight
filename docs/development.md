@@ -2,18 +2,18 @@
 
 ## Overview
 
-This guide covers development practices for the CodeSight MCP Server hybrid TypeScript/Rust architecture.
+This guide covers development practices, workflows, and standards for contributing to the CodeSight MCP Server project. The project follows enterprise-grade development standards with emphasis on code quality, testing, and documentation.
 
-## Prerequisites
+## Development Environment Setup
 
-- Node.js v20 LTS or higher
-- Rust 1.75 or higher
-- Docker 20.10+ (for local development environment)
-- Git
+### Prerequisites
 
-## Development Setup
+- **Node.js**: v20 LTS or higher
+- **Rust**: 1.75 or higher (for FFI bridge development)
+- **Docker**: 20.10+ (for local development environment)
+- **Git**: For version control
 
-### 1. Clone and Install
+### Quick Setup
 
 ```bash
 # Clone the repository
@@ -23,403 +23,602 @@ cd codesight-mcp
 # Install root dependencies
 npm install
 
-# Install TypeScript MCP server dependencies
+# Setup TypeScript MCP server
 cd typescript-mcp
 npm install
+npm run build
 
-# Build Rust FFI bridge
+# Setup Rust core (optional for FFI development)
 cd ../rust-core
-cargo build --release
+cargo build
 cd ../typescript-mcp
 
-# Build TypeScript server
-npm run build
-```
-
-### 2. Development Environment
-
-```bash
-# Start development services (PostgreSQL, Redis, monitoring)
+# Start development environment
 docker-compose -f docker-compose.dev.yml up -d
-
-# Start development server
 npm run dev
-
-# Check service status
-docker-compose ps
 ```
 
-### 3. Code Quality Standards
-
-The CodeSight MCP Server maintains enterprise-grade code quality standards:
-
-```bash
-# Run lint checks (should show 378 remaining issues - down from 1000+)
-npm run lint
-
-# Auto-fix fixable issues
-npm run lint:fix
-
-# Run TypeScript-specific checks
-npm run lint:typescript
-
-# Check overall code quality
-npm run lint:check
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-**Code Quality Achievements:**
-- 🏆 **62% Issue Reduction**: Successfully reduced lint issues from 1000+ to 378 remaining
-- 🏆 **Rule 15 Compliance**: Enterprise-grade development standards with systematic cleanup
-- 🏆 **Type Safety**: Comprehensive 'any' type elimination and proper TypeScript interfaces
-
-## Architecture Overview
-
-### Hybrid TypeScript/Rust Architecture
+## Project Structure
 
 ```
-┌─────────────────────────────────────┐
-│           Client Layer              │
-│  (Claude Desktop, VS Code, CLI)     │
-└─────────────────┬───────────────────┘
-                  │ MCP Protocol
-┌─────────────────▼───────────────────┐
-│        TypeScript MCP Layer        │
-│  • Full MCP Protocol (9 tools)     │
-│  • Request/response handling        │
-│  • REST API + WebSocket            │
-│  • Enterprise error handling        │
-└─────────────────┬───────────────────┘
-                  │ NAPI-RS FFI Bridge
-┌─────────────────▼───────────────────┐
-│          Rust Core Engine           │
-│  • Tree-sitter parsing             │
-│  • SQLite operations               │
-│  • Multi-language support          │
-│  • Parallel processing             │
-└─────────────────┬───────────────────┘
-                  │ Database Layer
-┌─────────────────▼───────────────────┐
-│     Data Storage & Caching         │
-│  • PostgreSQL (Production)         │
-│  • SQLite (Development)            │
-│  • Redis (Caching)                 │
-└─────────────────────────────────────┘
+codesight-mcp/
+├── typescript-mcp/          # TypeScript MCP Server
+│   ├── src/
+│   │   ├── tools/          # MCP tool implementations
+│   │   ├── services/       # Business logic services
+│   │   ├── controllers/    # REST API controllers
+│   │   ├── middleware/     # Express middleware
+│   │   ├── cli/           # Command-line interface
+│   │   ├── ffi/           # Rust FFI bridge integration
+│   │   └── types/         # TypeScript type definitions
+│   ├── tests/
+│   │   ├── contract/      # MCP tool contract tests
+│   │   ├── integration/   # Integration tests
+│   │   ├── unit/          # Unit tests
+│   │   └── performance/   # Performance tests
+│   ├── dist/              # Compiled JavaScript output
+│   └── package.json
+├── rust-core/              # Rust performance layer
+│   ├── crates/
+│   │   ├── core/          # Core functionality
+│   │   ├── ffi/           # NAPI-RS bindings
+│   │   ├── parser/        # Tree-sitter parsers
+│   │   └── indexer/       # Indexing algorithms
+│   ├── benches/           # Performance benchmarks
+│   └── Cargo.toml
+├── src/                    # React frontend (optional)
+├── api/                    # Express API server (optional)
+├── docs/                   # Documentation
+├── specs/                  # Technical specifications
+└── docker-compose.yml      # Development environment
 ```
 
 ## Development Workflow
 
 ### 1. Feature Development
 
-```bash
-# Create feature branch
-git checkout -b feature/your-feature-name
+1. **Create Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-# Make changes to TypeScript code
-# Edit files in typescript-mcp/src/
+2. **Write Tests First (TDD)**
+   ```bash
+   # Create contract test for new MCP tool
+   cd typescript-mcp
+   # Create test in tests/contract/test_new_tool.ts
+   npm run test:contract
+   ```
 
-# Make changes to Rust code
-# Edit files in rust-core/src/
+3. **Implement Feature**
+   ```bash
+   # Implement tool in src/tools/new-tool.ts
+   npm run build
+   npm run test
+   ```
 
-# Build Rust components
-cd rust-core
-cargo build --release
-cd ../typescript-mcp
+4. **Run Full Test Suite**
+   ```bash
+   npm run test:all
+   npm run test:integration
+   npm run test:performance
+   ```
 
-# Build TypeScript components
-npm run build
+### 2. MCP Tool Development
 
-# Run tests
-npm test
+#### Contract Test First
+Always write comprehensive contract tests before implementation:
 
-# Run lint checks
-npm run lint
+```typescript
+// tests/contract/test_new_tool.ts
+describe('new_tool MCP Tool - Contract Test', () => {
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('new_tool');
+    expect(tool.inputSchema.required).toContain('required_param');
+  });
 
-# Commit changes
-git add .
-git commit -m "feat: implement your feature"
+  it('should handle basic functionality', async () => {
+    const result = await tool.call({
+      required_param: 'test_value',
+      optional_param: 'optional_value'
+    });
+    expect(result.success).toBe(true);
+  });
+});
 ```
 
-### 2. Testing
+#### Tool Implementation
+```typescript
+// src/tools/new-tool.ts
+import { z } from 'zod';
+
+const inputSchema = z.object({
+  required_param: z.string(),
+  optional_param: z.string().optional()
+});
+
+export async function handleNewTool(input: z.infer<typeof inputSchema>) {
+  // Implementation logic
+  return {
+    success: true,
+    result: processedData
+  };
+}
+```
+
+### 3. Rust FFI Development
+
+#### Adding New Rust Functions
+```rust
+// rust-core/src/lib.rs
+#[napi]
+pub fn rust_function(input: String) -> Result<String, String> {
+    // Rust implementation
+    Ok(format!("Processed: {}", input))
+}
+```
+
+#### TypeScript Integration
+```typescript
+// typescript-mcp/src/ffi/rust-bridge.ts
+let rustModule: any;
+
+try {
+  rustModule = require('../native/index.node');
+} catch (error) {
+  console.warn('Rust FFI not available, using fallback');
+  // Fallback implementation
+}
+
+export function callRustFunction(input: string): string {
+  if (rustModule) {
+    return rustModule.rustFunction(input);
+  }
+  // TypeScript fallback
+  return `Fallback processed: ${input}`;
+}
+```
+
+## Code Standards
+
+### TypeScript Standards
+
+#### 1. Type Safety
+- **No `any` types**: Use proper TypeScript interfaces
+- **Strict mode**: All files must pass strict type checking
+- **Explicit returns**: All functions must have explicit return types
+- **Zod validation**: Use Zod for runtime type validation
+
+```typescript
+// Good
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+}
+
+async function getUser(id: string): Promise<UserData | null> {
+  // Implementation
+}
+
+// Bad
+async function getUser(id: any): any {
+  // Implementation
+}
+```
+
+#### 2. Error Handling
+- **Comprehensive error handling**: All async operations must handle errors
+- **Typed errors**: Use custom error classes with proper types
+- **Graceful degradation**: Fallback implementations for FFI calls
+
+```typescript
+class CodeSightError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'CodeSightError';
+  }
+}
+
+async function safeOperation<T>(
+  operation: () => Promise<T>,
+  fallback: () => T
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    console.warn('Operation failed, using fallback:', error);
+    return fallback();
+  }
+}
+```
+
+#### 3. Code Organization
+- **Single responsibility**: Each function/class has one clear purpose
+- **Dependency injection**: Use dependency injection for testability
+- **Module structure**: Clear module boundaries and interfaces
+
+```typescript
+// services/user-service.ts
+export class UserService {
+  constructor(
+    private database: Database,
+    private logger: Logger
+  ) {}
+
+  async getUser(id: string): Promise<User | null> {
+    try {
+      return await this.database.users.findById(id);
+    } catch (error) {
+      this.logger.error('Failed to get user', { id, error });
+      throw new CodeSightError('Database error', 'DATABASE_ERROR', error);
+    }
+  }
+}
+```
+
+### Rust Standards
+
+#### 1. Error Handling
+```rust
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum CodeSightError {
+    #[error("Database error: {0}")]
+    Database(#[from] sqlx::Error),
+    
+    #[error("Parsing error: {0}")]
+    Parsing(String),
+    
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+}
+
+pub type Result<T> = std::result::Result<T, CodeSightError>;
+```
+
+#### 2. Performance Optimization
+```rust
+use rayon::prelude::*;
+
+pub fn process_files_parallel(files: Vec<PathBuf>) -> Result<Vec<ProcessedFile>> {
+    files
+        .par_iter()
+        .map(|file| process_file(file))
+        .collect::<Result<Vec<_>>>()
+}
+```
+
+## Testing Strategy
+
+### 1. Test Categories
+
+#### Unit Tests
+- Test individual functions and classes
+- Mock external dependencies
+- Fast execution (< 100ms per test)
+
+```typescript
+// tests/unit/user-service.test.ts
+describe('UserService', () => {
+  it('should return user when found', async () => {
+    const mockDatabase = createMockDatabase();
+    const service = new UserService(mockDatabase, mockLogger);
+    
+    mockDatabase.users.findById.mockResolvedValue(mockUser);
+    
+    const result = await service.getUser('user-123');
+    
+    expect(result).toEqual(mockUser);
+  });
+});
+```
+
+#### Integration Tests
+- Test component interactions
+- Use real database (testcontainers)
+- Test API endpoints
+
+```typescript
+// tests/integration/api.test.ts
+describe('User API', () => {
+  let app: FastifyInstance;
+  let container: StartedTestContainer;
+
+  beforeAll(async () => {
+    container = await new PostgreSQLTestContainer().start();
+    app = await createTestApp(container.getConnectionUri());
+  });
+
+  it('should create user via API', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/users',
+      payload: { name: 'Test User', email: 'test@example.com' }
+    });
+
+    expect(response.statusCode).toBe(201);
+  });
+});
+```
+
+#### Contract Tests
+- Test MCP tool specifications
+- Validate input/output schemas
+- Test error scenarios
+
+```typescript
+// tests/contract/test_search_code.ts
+describe('search_code MCP Tool - Contract Test', () => {
+  it('should validate input schema correctly', async () => {
+    const schema = tool.inputSchema;
+    expect(schema.required).toContain('query');
+    expect(schema.properties.query.type).toBe('string');
+  });
+});
+```
+
+#### Performance Tests
+- Benchmark critical operations
+- Validate performance requirements
+- Load testing
+
+```typescript
+// tests/performance/search.test.ts
+describe('Search Performance', () => {
+  it('should complete search within 50ms', async () => {
+    const startTime = performance.now();
+    
+    await searchCode({ query: 'test query' });
+    
+    const duration = performance.now() - startTime;
+    expect(duration).toBeLessThan(50);
+  });
+});
+```
+
+### 2. Test Commands
 
 ```bash
 # Run all tests
-npm test
+npm run test
 
-# Run specific test suites
+# Run specific test types
 npm run test:unit
 npm run test:integration
 npm run test:contract
+npm run test:performance
 
 # Run tests with coverage
 npm run test:coverage
 
-# Run Rust tests
-cd rust-core
-cargo test
+# Watch mode for development
+npm run test:watch
 ```
 
-### 3. FFI Bridge Development
+## Build and Deployment
 
-When working with the Rust FFI bridge:
-
+### Development Build
 ```bash
-# Test FFI bridge integration
+# TypeScript build
 cd typescript-mcp
-node dist/cli/index.js test-ffi
+npm run build
 
-# Debug FFI issues
-ENABLE_RUST_FFI=true RUST_LOG=debug node dist/index.js
-
-# Build Rust in debug mode for faster iteration
+# Rust build (debug)
 cd ../rust-core
 cargo build
+
+# Hybrid build
 cd ../typescript-mcp
+npm run build:hybrid
 ```
 
-**FFI Development Best Practices:**
-- Always implement graceful fallback when calling Rust functions
-- Use proper error handling across FFI boundaries
-- Minimize data serialization overhead between languages
-- Test both Rust-only and TypeScript-only paths independently
-- Handle platform-specific compilation issues gracefully
+### Production Build
+```bash
+# TypeScript build
+cd typescript-mcp
+npm run build:prod
 
-## Code Organization
+# Rust build (release)
+cd ../rust-core
+cargo build --release
 
-### TypeScript Structure
-
-```
-typescript-mcp/
-├── src/
-│   ├── tools/          # MCP tools implementation
-│   ├── services/       # Business logic services
-│   ├── cli/           # CLI commands
-│   ├── ffi/           # Rust FFI bridge integration
-│   ├── middleware/    # Express middleware
-│   ├── controllers/   # API controllers
-│   ├── types/         # TypeScript type definitions
-│   └── utils/         # Utility functions
-├── tests/
-│   ├── contract/      # MCP protocol tests
-│   ├── integration/   # Integration tests
-│   └── unit/          # Unit tests
-└── dist/              # Compiled JavaScript
+# Create distribution
+cd ../typescript-mcp
+npm run dist
 ```
 
-### Rust Structure
+### Docker Development
+```bash
+# Start development environment
+docker-compose -f docker-compose.dev.yml up -d
 
-```
-rust-core/
-├── crates/
-│   ├── ffi/           # NAPI-RS bindings
-│   ├── core/          # Core services
-│   ├── parser/        # Tree-sitter parsers
-│   └── search/        # Search algorithms
-├── benches/           # Performance benchmarks
-├── tests/             # Rust tests
-└── target/            # Compiled artifacts
+# View logs
+docker-compose logs -f typescript-mcp
+
+# Stop environment
+docker-compose -f docker-compose.dev.yml down
 ```
 
 ## Performance Optimization
 
-### Current Performance (Hybrid Implementation)
-
-| Operation | TypeScript Only | Hybrid (TS+Rust) | Improvement |
-|-----------|-----------------|-----------------|-------------|
-| File Indexing | 2-3 seconds | 1-2 seconds | 2x faster |
-| Search Query | 50-100ms | 20-50ms | 2.5x faster |
-| Memory Usage | ~30MB | ~25MB | 17% reduction |
-| Multi-Language | JS/TS only | 15+ languages | 7.5x coverage |
-
-### Optimization Guidelines
-
-1. **Use Rust for Performance-Critical Operations**
-   - Code parsing and indexing
-   - Search algorithms
-   - Memory-intensive operations
-
-2. **Use TypeScript for Integration Logic**
-   - MCP protocol handling
-   - API endpoints
-   - Request/response formatting
-
-3. **Minimize FFI Calls**
-   - Batch operations when possible
-   - Use efficient data serialization
-   - Implement connection pooling
-
-## Error Handling
-
-### TypeScript Error Handling
+### 1. TypeScript Optimization
+- **Lazy loading**: Load modules on demand
+- **Caching**: Cache expensive operations
+- **Batching**: Batch database operations
 
 ```typescript
-// Use Result types for FFI calls
-const result = await callRustFunction(params);
-if (result.isErr) {
-  // Handle error gracefully
-  return fallbackImplementation(params);
+class SearchService {
+  private cache = new LRUCache<string, SearchResult>(1000);
+
+  async search(query: string): Promise<SearchResult> {
+    const cacheKey = `search:${query}`;
+    
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
+
+    const result = await this.performSearch(query);
+    this.cache.set(cacheKey, result);
+    return result;
+  }
 }
 ```
 
-### Rust Error Handling
+### 2. Rust Optimization
+- **Parallel processing**: Use Rayon for CPU-bound tasks
+- **Memory efficiency**: Use efficient data structures
+- **Zero-copy**: Minimize memory allocations
 
 ```rust
-// Use Result<T, Error> for all functions
-pub fn parse_code(input: &str) -> Result<AST, ParseError> {
-    // Implementation
+use rayon::prelude::*;
+
+pub fn index_files(files: &[PathBuf]) -> Result<Vec<IndexedFile>> {
+    files
+        .par_iter()
+        .map(|file| {
+            let content = std::fs::read_to_string(file)?;
+            let parsed = parse_content(&content)?;
+            Ok(IndexedFile::new(file, parsed))
+        })
+        .collect()
 }
 ```
+
+## Code Review Process
+
+### 1. Pre-commit Checklist
+- [ ] All tests pass
+- [ ] No TypeScript compilation errors
+- [ ] Code follows style guidelines
+- [ ] Documentation is updated
+- [ ] Performance impact is considered
+
+### 2. Pull Request Requirements
+- **Clear description**: Explain what and why
+- **Test coverage**: New features have tests
+- **Documentation**: Updated where necessary
+- **Breaking changes**: Clearly documented
+
+### 3. Review Guidelines
+- **Functionality**: Does it work as intended?
+- **Code quality**: Is it maintainable and readable?
+- **Performance**: Are there performance implications?
+- **Security**: Are there security concerns?
 
 ## Debugging
 
-### TypeScript Debugging
-
+### 1. TypeScript Debugging
 ```bash
-# Enable debug logging
-DEBUG=* node dist/index.js
-
-# Use Node.js debugger
+# Debug with Node.js
 node --inspect-brk dist/index.js
+
+# Use VS Code debugger
+# Add launch configuration to .vscode/launch.json
 ```
 
-### Rust Debugging
+### 2. Rust Debugging
+```bash
+# Debug with GDB
+cargo build
+gdb target/debug/codesight-core
 
+# Use Rust IDE support
+cargo check
+cargo clippy
+```
+
+### 3. Integration Debugging
 ```bash
 # Enable debug logging
-RUST_LOG=debug cargo run
+LOG_LEVEL=debug npm run dev
 
-# Use Rust debugger
-rust-gdb target/release/myprogram
-```
-
-### FFI Debugging
-
-```bash
-# Enable FFI debug logging
-ENABLE_RUST_FFI=true RUST_LOG=debug node dist/index.js
-
-# Test FFI bridge specifically
+# Test MCP tools directly
 node dist/cli/index.js test-ffi
+node dist/cli/index.js search "test query"
 ```
 
-## Monitoring
+## Common Issues and Solutions
 
-### Local Development Monitoring
-
+### 1. FFI Bridge Issues
 ```bash
-# Access monitoring dashboards
-# Grafana: http://localhost:3000 (admin/admin)
-# Prometheus: http://localhost:9090
-
-# View logs
-docker-compose logs -f
-```
-
-### Performance Monitoring
-
-The application includes comprehensive monitoring:
-
-- **Prometheus Metrics**: Performance and health metrics
-- **Grafana Dashboards**: Real-time visualization
-- **Structured Logging**: JSON-based logging with correlation IDs
-- **Health Checks**: Comprehensive health monitoring
-
-## Deployment
-
-### Development Deployment
-
-```bash
-# Deploy to development environment
-docker-compose -f docker-compose.dev.yml up -d
-
-# Verify deployment
-docker-compose ps
-```
-
-### Production Deployment
-
-```bash
-# Build production images
-docker-compose -f docker-compose.prod.yml build
-
-# Deploy to production
-docker-compose -f docker-compose.prod.yml up -d
-
-# Deploy to Kubernetes
-kubectl apply -f k8s/
-```
-
-## Contributing
-
-### Code Style
-
-- Follow ESLint configuration
-- Use TypeScript strict mode
-- Write comprehensive tests
-- Document all public APIs
-- Use conventional commit messages
-
-### Pull Request Process
-
-1. Create feature branch from main
-2. Implement changes with tests
-3. Ensure all tests pass
-4. Update documentation
-5. Submit pull request with description
-6. Address code review feedback
-
-### Code Review Guidelines
-
-- Review for functionality and performance
-- Check for proper error handling
-- Verify test coverage
-- Ensure documentation is updated
-- Check for security vulnerabilities
-
-## Troubleshooting
-
-### Common Issues
-
-**Module not found errors:**
-```bash
-# Ensure build completed successfully
+# Symptoms: Rust functions not found
+# Solution: Rebuild native module
 cd typescript-mcp
-npm run build
-ls dist/
+npm run build:native
+
+# Symptoms: Platform-specific errors
+# Solution: Check NAPI-RS configuration
+napi build --platform
 ```
 
-**FFI bridge not working:**
+### 2. Database Issues
 ```bash
-# Test FFI bridge
-node dist/cli/index.js test-ffi
+# Symptoms: SQLite database locked
+# Solution: Check for open connections
+lsof data/codesight.db
 
-# Check Rust components
-cd ../rust-core
+# Symptoms: Migration errors
+# Solution: Recreate database
+rm data/codesight.db
+npm run dev
+```
+
+### 3. Performance Issues
+```bash
+# Symptoms: Slow indexing
+# Solution: Check Rust compilation
+cd rust-core
 cargo build --release
+
+# Symptoms: Memory leaks
+# Solution: Profile with Node.js
+node --inspect dist/cli/index.js
+# Use Chrome DevTools Memory tab
 ```
 
-**Database connection issues:**
-```bash
-# Check database status
-docker-compose ps
+## Contributing Guidelines
 
-# Reset database
-docker-compose down -v
-docker-compose up -d
-```
+### 1. Before Contributing
+- Read this development guide
+- Set up development environment
+- Run existing tests to ensure everything works
 
-## Additional Resources
+### 2. Making Changes
+- Create feature branch from main
+- Write tests before implementation (TDD)
+- Follow code standards and patterns
+- Update documentation as needed
 
-- [MCP Protocol Specification](https://spec.modelcontextprotocol.io/)
-- [Tree-sitter Documentation](https://tree-sitter.github.io/tree-sitter/)
-- [NAPI-RS Documentation](https://napi.rs/)
-- [Rust Book](https://doc.rust-lang.org/book/)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+### 3. Submitting Changes
+- Create pull request with clear description
+- Ensure all tests pass
+- Address code review feedback
+- Squash commits for clean history
 
-## Support
+## Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/codesight-mcp/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/codesight-mcp/discussions)
-- **Documentation**: [Project Documentation](https://docs.codesight-mcp.com)
+### Documentation
+- [API Reference](./api-reference.md)
+- [MCP Tools Documentation](./mcp-tools.md)
+- [Architecture Overview](../specs/codesight-mcp/)
+
+### Community
+- GitHub Issues: Report bugs and request features
+- Discord: Real-time discussion and support
+- Documentation: Detailed guides and examples
+
+### Development Support
+- Review existing code patterns
+- Check test files for usage examples
+- Use debug logging to troubleshoot issues
+- Reach out to maintainers for guidance
+
+---
+
+This development guide is a living document. Please suggest improvements and updates as the project evolves.

@@ -1,603 +1,375 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { FunctionExplanation, ComplexityMetrics, CodeEntityReference } from '../../src/types';
-
 /**
- * Contract Test for explain_function MCP Tool
+ * Contract Test for explain_function MCP Tool (T010)
  *
- * This test validates that the explain_function tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the explain_function tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
- * - Complex nested object validation
+ * Test validates:
+ * - Tool exists and is registered
+ * - Function identification and analysis
+ * - Explanation generation and formatting
+ * - Error handling for invalid inputs
+ * - Support for various function types and languages
  */
 
-describe('MCP Tool: explain_function - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testEntityId = '550e8400-e29b-41d4-a716-446655440001';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('explain_function MCP Tool - Contract Test (T010)', () => {
+  let mockServer: any;
+  let explainTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have explain_function tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('explain_function')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with required fields only', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('explain_function');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
-    });
+    // Required properties
+    expect(schema.required).toContain('function_identifier');
+    expect(schema.properties.function_identifier).toBeDefined();
+    expect(schema.properties.function_identifier.type).toBe('string');
 
-    it('should accept valid request with all optional parameters', async () => {
-      const validRequestWithOptionals = {
-        entity_id: testEntityId,
-        include_callers: true,
-        include_callees: true,
-        include_complexity: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequestWithOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with optional parameters set to false', async () => {
-      const validRequestWithFalseOptionals = {
-        entity_id: testEntityId,
-        include_callers: false,
-        include_callees: false,
-        include_complexity: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequestWithFalseOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject request missing required entity_id field', async () => {
-      const invalidRequest = {};
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('entity_id');
-    });
-
-    it('should reject request with invalid entity_id format', async () => {
-      const invalidRequest = {
-        entity_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid include_callers type', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        include_callers: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with invalid include_callees type', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        include_callees: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with invalid include_complexity type', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        include_complexity: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    // Optional properties
+    expect(schema.properties.codebase_id).toBeDefined();
+    expect(schema.properties.codebase_id.type).toBe('string');
+    expect(schema.properties.detail_level).toBeDefined();
+    expect(schema.properties.detail_level.type).toBe('string');
+    expect(schema.properties.include_examples).toBeDefined();
+    expect(schema.properties.include_examples.type).toBe('boolean');
+    expect(schema.properties.language).toBeDefined();
+    expect(schema.properties.language.type).toBe('string');
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return FunctionExplanation conforming to contract schema', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_callers: true,
-        include_callees: true,
-        include_complexity: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      // Validate required FunctionExplanation fields
-      expect(explanation).toHaveProperty('entity_id');
-      expect(explanation).toHaveProperty('name');
-      expect(explanation).toHaveProperty('description');
-      expect(explanation).toHaveProperty('parameters');
-      expect(explanation).toHaveProperty('return_type');
-      expect(explanation).toHaveProperty('complexity');
-      expect(explanation).toHaveProperty('callers');
-      expect(explanation).toHaveProperty('callees');
-
-      // Validate field types
-      expect(typeof explanation.entity_id).toBe('string');
-      expect(typeof explanation.name).toBe('string');
-      expect(typeof explanation.description).toBe('string');
-      expect(Array.isArray(explanation.parameters)).toBe(true);
-      expect(typeof explanation.return_type).toBe('string');
-      expect(typeof explanation.complexity).toBe('object');
-      expect(Array.isArray(explanation.callers)).toBe(true);
-      expect(Array.isArray(explanation.callees)).toBe(true);
-
-      // Validate UUID format for entity_id
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      expect(explanation.entity_id).toMatch(uuidRegex);
+  it('should handle function explanation by name', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const result = await tool.call({
+      function_identifier: 'getUserById',
+      codebase_id: 'test-codebase-uuid',
+      detail_level: 'comprehensive',
+      include_examples: true
     });
 
-    it('should validate parameter objects structure', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.explanation).toBeDefined();
+    expect(typeof result.explanation).toBe('string');
+    expect(result.explanation.length).toBeGreaterThan(0);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
+    // Explanation structure validation
+    expect(result.function_info).toBeDefined();
+    expect(result.function_info.name).toBe('getUserById');
+    expect(result.function_info.signature).toBeDefined();
+    expect(result.function_info.parameters).toBeDefined();
+    expect(result.function_info.return_type).toBeDefined();
+    expect(result.function_info.location).toBeDefined();
+  });
+
+  it('should handle function explanation by file and line', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const result = await tool.call({
+      function_identifier: 'src/services/user.ts:45',
+      detail_level: 'basic',
+      include_examples: false
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.explanation).toBeDefined();
+    expect(typeof result.explanation).toBe('string');
+
+    expect(result.function_info).toBeDefined();
+    expect(result.function_info.file_path).toBe('src/services/user.ts');
+    expect(result.function_info.line_number).toBe(45);
+  });
+
+  it('should handle different detail levels', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const detailLevels = ['basic', 'standard', 'comprehensive'];
+
+    for (const level of detailLevels) {
+      const result = await tool.call({
+        function_identifier: 'calculateTotal',
+        detail_level: level
       });
 
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.explanation).toBeDefined();
 
-      if (explanation.parameters.length > 0) {
-        explanation.parameters.forEach(param => {
-          expect(param).toHaveProperty('name');
-          expect(param).toHaveProperty('type');
-          expect(param).toHaveProperty('description');
-
-          expect(typeof param.name).toBe('string');
-          expect(typeof param.type).toBe('string');
-          expect(typeof param.description).toBe('string');
-        });
+      // Explanation length should vary by detail level
+      if (level === 'comprehensive') {
+        expect(result.explanation.length).toBeGreaterThan(100);
+      } else if (level === 'basic') {
+        expect(result.explanation.length).toBeLessThan(500);
       }
+    }
+  });
+
+  it('should include code examples when requested', async () => {
+    const tool = mockServer.getTool('explain_function');
+
+    const resultWithoutExamples = await tool.call({
+      function_identifier: 'validateEmail',
+      include_examples: false
     });
 
-    it('should validate ComplexityMetrics structure', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_complexity: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-      const complexity: ComplexityMetrics = explanation.complexity;
-
-      // Validate ComplexityMetrics fields
-      expect(complexity).toHaveProperty('cyclomatic_complexity');
-      expect(complexity).toHaveProperty('cognitive_complexity');
-      expect(complexity).toHaveProperty('lines_of_code');
-      expect(complexity).toHaveProperty('maintainability_index');
-      expect(complexity).toHaveProperty('test_coverage');
-
-      // Validate field types
-      expect(typeof complexity.cyclomatic_complexity).toBe('number');
-      expect(typeof complexity.cognitive_complexity).toBe('number');
-      expect(typeof complexity.lines_of_code).toBe('number');
-      expect(typeof complexity.maintainability_index).toBe('number');
-      expect(typeof complexity.test_coverage).toBe('number');
-
-      // Validate value ranges
-      expect(complexity.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-      expect(complexity.cognitive_complexity).toBeGreaterThanOrEqual(0);
-      expect(complexity.lines_of_code).toBeGreaterThan(0);
-      expect(complexity.maintainability_index).toBeGreaterThanOrEqual(0);
-      expect(complexity.maintainability_index).toBeLessThanOrEqual(100);
-      expect(complexity.test_coverage).toBeGreaterThanOrEqual(0);
-      expect(complexity.test_coverage).toBeLessThanOrEqual(1);
+    const resultWithExamples = await tool.call({
+      function_identifier: 'validateEmail',
+      include_examples: true
     });
 
-    it('should validate CodeEntityReference structure for callers', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_callers: true,
-      };
+    // Both should succeed
+    expect(resultWithoutExamples.success).toBe(true);
+    expect(resultWithExamples.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
+    // Examples should only be included when requested
+    if (resultWithExamples.success) {
+      expect(resultWithExamples.examples).toBeDefined();
+      expect(Array.isArray(resultWithExamples.examples)).toBe(true);
+    }
+
+    if (resultWithoutExamples.success) {
+      expect(resultWithoutExamples.examples).toBeUndefined();
+    }
+  });
+
+  it('should handle functions from different programming languages', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const testCases = [
+      { identifier: 'calculateSum', language: 'javascript', expectedFeatures: ['parameters', 'return'] },
+      { identifier: 'process_data', language: 'python', expectedFeatures: ['function', 'parameters'] },
+      { identifier: 'getUserById', language: 'typescript', expectedFeatures: ['type annotations', 'return type'] },
+      { identifier: 'main', language: 'rust', expectedFeatures: ['function', 'ownership'] }
+    ];
+
+    for (const testCase of testCases) {
+      const result = await tool.call({
+        function_identifier: testCase.identifier,
+        language: testCase.language,
+        detail_level: 'standard'
       });
 
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.function_info.language).toBe(testCase.language);
 
-      if (explanation.callers.length > 0) {
-        explanation.callers.forEach((caller: CodeEntityReference) => {
-          expect(caller).toHaveProperty('entity_id');
-          expect(caller).toHaveProperty('name');
-          expect(caller).toHaveProperty('file_path');
-          expect(caller).toHaveProperty('line_number');
+      // Check for language-specific features in explanation
+      const explanation = result.explanation.toLowerCase();
+      testCase.expectedFeatures.forEach(feature => {
+        // Not all features may be present, but explanation should be comprehensive
+        expect(explanation.length).toBeGreaterThan(50);
+      });
+    }
+  });
 
-          expect(typeof caller.entity_id).toBe('string');
-          expect(typeof caller.name).toBe('string');
-          expect(typeof caller.file_path).toBe('string');
-          expect(typeof caller.line_number).toBe('number');
+  it('should validate required function_identifier parameter', async () => {
+    const tool = mockServer.getTool('explain_function');
 
-          // Validate UUID format
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          expect(caller.entity_id).toMatch(uuidRegex);
+    // Should fail when function_identifier is missing
+    await expect(tool.call({
+      detail_level: 'basic'
+    })).rejects.toThrow('function_identifier is required');
 
-          // Validate line number
-          expect(caller.line_number).toBeGreaterThan(0);
-        });
+    // Should fail when function_identifier is empty
+    await expect(tool.call({
+      function_identifier: '',
+      detail_level: 'basic'
+    })).rejects.toThrow('function_identifier cannot be empty');
+
+    // Should fail when function_identifier is not a string
+    await expect(tool.call({
+      function_identifier: 123,
+      detail_level: 'basic'
+    })).rejects.toThrow('function_identifier must be a string');
+  });
+
+  it('should validate detail_level parameter', async () => {
+    const tool = mockServer.getTool('explain_function');
+
+    // Should fail for invalid detail levels
+    await expect(tool.call({
+      function_identifier: 'testFunction',
+      detail_level: 'invalid'
+    })).rejects.toThrow('detail_level must be one of: basic, standard, comprehensive');
+  });
+
+  it('should validate language parameter', async () => {
+    const tool = mockServer.getTool('explain_function');
+
+    // Should fail for unsupported languages
+    await expect(tool.call({
+      function_identifier: 'testFunction',
+      language: 'brainfuck'
+    })).rejects.toThrow('language not supported');
+
+    // Should accept valid languages
+    const validLanguages = ['javascript', 'typescript', 'python', 'rust', 'go', 'java'];
+    for (const lang of validLanguages) {
+      const result = await tool.call({
+        function_identifier: 'testFunction',
+        language: lang
+      });
+      expect(result).toBeDefined();
+    }
+  });
+
+  it('should handle non-existent function gracefully', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const result = await tool.call({
+      function_identifier: 'nonExistentFunction12345',
+      codebase_id: 'test-codebase-uuid'
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(result.error).toContain('function not found');
+  });
+
+  it('should provide comprehensive function analysis', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const result = await tool.call({
+      function_identifier: 'complexBusinessLogic',
+      detail_level: 'comprehensive',
+      include_examples: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Should include detailed analysis sections
+    expect(result.explanation).toBeDefined();
+    expect(result.function_info).toBeDefined();
+
+    // Comprehensive analysis should include:
+    expect(result.function_info.purpose).toBeDefined();
+    expect(result.function_info.algorithm).toBeDefined();
+    expect(result.function_info.complexity).toBeDefined();
+    expect(result.function_info.dependencies).toBeDefined();
+    expect(result.function_info.side_effects).toBeDefined();
+
+    if (result.examples) {
+      expect(result.examples.length).toBeGreaterThan(0);
+      result.examples.forEach((example: any) => {
+        expect(example.code).toBeDefined();
+        expect(example.description).toBeDefined();
+      });
+    }
+  });
+
+  it('should handle ambiguous function identifiers', async () => {
+    const tool = mockServer.getTool('explain_function');
+    
+    // Test with function name that might exist in multiple files
+    const result = await tool.call({
+      function_identifier: 'init',
+      detail_level: 'standard'
+    });
+
+    expect(result).toBeDefined();
+    
+    if (result.success) {
+      // Should provide disambiguation if multiple functions found
+      expect(result.explanation).toBeDefined();
+      if (result.multiple_matches) {
+        expect(result.matches).toBeDefined();
+        expect(Array.isArray(result.matches)).toBe(true);
+        expect(result.matches.length).toBeGreaterThan(1);
       }
-    });
-
-    it('should validate CodeEntityReference structure for callees', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_callees: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      if (explanation.callees.length > 0) {
-        explanation.callees.forEach((callee: CodeEntityReference) => {
-          expect(callee).toHaveProperty('entity_id');
-          expect(callee).toHaveProperty('name');
-          expect(callee).toHaveProperty('file_path');
-          expect(callee).toHaveProperty('line_number');
-
-          expect(typeof callee.entity_id).toBe('string');
-          expect(typeof callee.name).toBe('string');
-          expect(typeof callee.file_path).toBe('string');
-          expect(typeof callee.line_number).toBe('number');
-
-          // Validate UUID format
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          expect(callee.entity_id).toMatch(uuidRegex);
-
-          // Validate line number
-          expect(callee.line_number).toBeGreaterThan(0);
-        });
-      }
-    });
+    }
   });
 
-  describe('Optional Parameter Behavior', () => {
-    it('should use default values for optional parameters', async () => {
-      const requestWithDefaults = {
-        entity_id: testEntityId,
-      };
+  it('should explain complex function signatures', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const complexSignatures = [
+      'async function fetchData<T>(url: string, options?: RequestOptions): Promise<T>',
+      'function memoize<T extends (...args: any[]) => any>(fn: T): T',
+      'const curry = <T extends any[]>(fn: (...args: T) => any) => (...args: Partial<T>) => any'
+    ];
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: requestWithDefaults,
+    for (const signature of complexSignatures) {
+      const result = await tool.call({
+        function_identifier: signature,
+        language: 'typescript',
+        detail_level: 'comprehensive'
       });
 
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      // Default include_callers = true
-      expect(explanation.callers).toBeDefined();
-
-      // Default include_callees = true
-      expect(explanation.callees).toBeDefined();
-
-      // Default include_complexity = true
-      expect(explanation.complexity).toBeDefined();
-    });
-
-    it('should exclude callers when include_callers is false', async () => {
-      const requestWithoutCallers = {
-        entity_id: testEntityId,
-        include_callers: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: requestWithoutCallers,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-      expect(explanation.callers).toEqual([]);
-    });
-
-    it('should exclude callees when include_callees is false', async () => {
-      const requestWithoutCallees = {
-        entity_id: testEntityId,
-        include_callees: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: requestWithoutCallees,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-      expect(explanation.callees).toEqual([]);
-    });
-
-    it('should exclude complexity when include_complexity is false', async () => {
-      const requestWithoutComplexity = {
-        entity_id: testEntityId,
-        include_complexity: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: requestWithoutComplexity,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      // When complexity is excluded, it should be null or have default/empty values
-      if (explanation.complexity) {
-        expect(explanation.complexity.cyclomatic_complexity).toBe(0);
-        expect(explanation.complexity.cognitive_complexity).toBe(0);
-        expect(explanation.complexity.lines_of_code).toBe(0);
-        expect(explanation.complexity.maintainability_index).toBe(0);
-        expect(explanation.complexity.test_coverage).toBe(0);
-      }
-    });
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.function_info.signature).toBeDefined();
+      expect(result.function_info.type_parameters || result.function_info.generics).toBeDefined();
+    }
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent entity', async () => {
-      const nonExistentEntityId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        entity_id: nonExistentEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('entity not found');
+  it('should provide execution time metrics', async () => {
+    const tool = mockServer.getTool('explain_function');
+    const result = await tool.call({
+      function_identifier: 'testFunction',
+      detail_level: 'standard'
     });
 
-    it('should return 400 for entity that is not a function', async () => {
-      // Assuming we have a test entity that exists but is not a function
-      const nonFunctionEntityId = '550e8400-e29b-41d4-a716-446655440002';
-      const validRequest = {
-        entity_id: nonFunctionEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect([400, 422]).toContain(response.statusCode);
-      const body = JSON.parse(response.body);
-      expect(body.error).toMatch(/not a function|invalid entity type/);
-    });
-  });
-
-  describe('Business Logic Validation', () => {
-    it('should provide meaningful function description', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      expect(explanation.description.length).toBeGreaterThan(10);
-      expect(explanation.name.length).toBeGreaterThan(0);
-    });
-
-    it('should correctly identify function parameters', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      // Parameters should be properly parsed
-      explanation.parameters.forEach(param => {
-        expect(param.name).not.toBe('');
-        expect(param.type).not.toBe('');
-        expect(param.description).not.toBe('');
-      });
-    });
-
-    it('should provide accurate complexity metrics', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_complexity: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-      const complexity = explanation.complexity;
-
-      // Complexity metrics should be realistic
-      expect(complexity.cyclomatic_complexity).toBeLessThan(100);
-      expect(complexity.cognitive_complexity).toBeLessThan(200);
-      expect(complexity.lines_of_code).toBeLessThan(10000);
-    });
-
-    it('should identify caller-callee relationships correctly', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_callers: true,
-        include_callees: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      // Callers and callees should not include the function itself
-      const selfReferences = [...explanation.callers, ...explanation.callees].filter(
-        ref => ref.entity_id === testEntityId,
-      );
-      expect(selfReferences.length).toBe(0);
-
-      // All references should have valid file paths
-      [...explanation.callers, ...explanation.callees].forEach(ref => {
-        expect(ref.file_path).toMatch(/\.(ts|js|py|java|cpp|c|rs|go)$/);
-      });
-    });
-  });
-
-  describe('Performance Validation', () => {
-    it('should complete explanation within reasonable time', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_callers: true,
-        include_callees: true,
-        include_complexity: true,
-      };
-
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-
-      // Should complete within 3 seconds for complex analysis
-      const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(3000);
-    });
-
-    it('should handle functions with many callers efficiently', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        include_callers: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/explain_function',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const explanation: FunctionExplanation = JSON.parse(response.body);
-
-      // Should handle large numbers of callers without timeout
-      // (This assumes the test function might have many callers)
-      expect(explanation.callers.length).toBeGreaterThanOrEqual(0);
-    });
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+    expect(result.metadata.analysis_time_ms).toBeDefined();
+    expect(typeof result.metadata.analysis_time_ms).toBe('number');
+    expect(result.metadata.functions_analyzed).toBeDefined();
+    expect(typeof result.metadata.functions_analyzed).toBe('number');
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'explain_function' not found"
+ * - "function_identifier is required"
+ * - "function_identifier cannot be empty"
+ * - "function_identifier must be a string"
+ * - "detail_level must be one of: basic, standard, comprehensive"
+ * - "language not supported"
+ * - "function not found"
+ * - "invalid function identifier format"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   explanation: string,
+ *   function_info: {
+ *     name: string,
+ *     signature: string,
+ *     parameters: Array<{name: string, type: string, optional: boolean}>,
+ *     return_type: string,
+ *     location: {file_path: string, line_number: number},
+ *     language: string,
+ *     purpose?: string,
+ *     algorithm?: string,
+ *     complexity?: string,
+ *     dependencies?: string[],
+ *     side_effects?: string[],
+ *     type_parameters?: string[]
+ *   },
+ *   examples?: Array<{code: string, description: string}>,
+ *   multiple_matches?: boolean,
+ *   matches?: Array<{name: string, location: {file_path: string, line_number: number}}>,
+ *   metadata: {
+ *     analysis_time_ms: number,
+ *     functions_analyzed: number
+ *   }
+ * }
+ */

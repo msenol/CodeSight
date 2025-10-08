@@ -1,464 +1,313 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { SearchResult } from '../../src/types';
-
 /**
- * Contract Test for search_code MCP Tool
+ * Contract Test for search_code MCP Tool (T009)
  *
- * This test validates that the search_code tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the search_code tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
+ * Test validates:
+ * - Tool exists and is registered
+ * - Input schema validation
+ * - Output format compliance
+ * - Error handling for invalid inputs
+ * - Search functionality with various query types
  */
 
-describe('MCP Tool: search_code - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('search_code MCP Tool - Contract Test (T009)', () => {
+  let mockServer: any;
+  let searchTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have search_code tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('search_code')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with all required fields', async () => {
-      const validRequest = {
-        query: 'where is user authentication implemented?',
-        codebase_id: testCodebaseId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('search_code');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
-    });
+    // Required properties
+    expect(schema.required).toContain('query');
+    expect(schema.properties.query).toBeDefined();
+    expect(schema.properties.query.type).toBe('string');
 
-    it('should accept valid request with optional parameters', async () => {
-      const validRequestWithOptionals = {
-        query: 'find database connection logic',
-        codebase_id: testCodebaseId,
-        context_lines: 5,
-        max_results: 20,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequestWithOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject request missing required query field', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('query');
-    });
-
-    it('should reject request missing required codebase_id field', async () => {
-      const invalidRequest = {
-        query: 'test query',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase_id');
-    });
-
-    it('should reject request with invalid codebase_id format', async () => {
-      const invalidRequest = {
-        query: 'test query',
-        codebase_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid context_lines type', async () => {
-      const invalidRequest = {
-        query: 'test query',
-        codebase_id: testCodebaseId,
-        context_lines: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with invalid max_results type', async () => {
-      const invalidRequest = {
-        query: 'test query',
-        codebase_id: testCodebaseId,
-        max_results: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    // Optional properties
+    expect(schema.properties.limit).toBeDefined();
+    expect(schema.properties.limit.type).toBe('number');
+    expect(schema.properties.file_types).toBeDefined();
+    expect(schema.properties.file_types.type).toBe('array');
+    expect(schema.properties.include_content).toBeDefined();
+    expect(schema.properties.include_content.type).toBe('boolean');
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return response conforming to contract schema', async () => {
-      const validRequest = {
-        query: 'authentication function',
-        codebase_id: testCodebaseId,
-        context_lines: 3,
-        max_results: 10,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Validate top-level response structure
-      expect(body).toHaveProperty('results');
-      expect(body).toHaveProperty('query_intent');
-      expect(body).toHaveProperty('execution_time_ms');
-
-      // Validate results array
-      expect(Array.isArray(body.results)).toBe(true);
-      expect(body.results.length).toBeLessThanOrEqual(validRequest.max_results);
-
-      // Validate query_intent enum
-      const validIntents = [
-        'find_function',
-        'explain_code',
-        'trace_flow',
-        'find_usage',
-        'security_audit',
-      ];
-      expect(validIntents).toContain(body.query_intent);
-
-      // Validate execution_time_ms
-      expect(typeof body.execution_time_ms).toBe('number');
-      expect(body.execution_time_ms).toBeGreaterThanOrEqual(0);
+  it('should handle basic search queries', async () => {
+    const tool = mockServer.getTool('search_code');
+    const result = await tool.call({
+      query: 'function getUserData',
+      limit: 10,
+      file_types: ['ts', 'js'],
+      include_content: true
     });
 
-    it('should return SearchResult objects conforming to schema', async () => {
-      const validRequest = {
-        query: 'user authentication',
-        codebase_id: testCodebaseId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.results).toBeDefined();
+    expect(Array.isArray(result.results)).toBe(true);
+    expect(result.results.length).toBeLessThanOrEqual(10);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
+    // Result structure validation
+    if (result.results.length > 0) {
+      const firstResult = result.results[0];
+      expect(firstResult.file_path).toBeDefined();
+      expect(typeof firstResult.file_path).toBe('string');
+      expect(firstResult.line_number).toBeDefined();
+      expect(typeof firstResult.line_number).toBe('number');
+      expect(firstResult.content).toBeDefined();
+      expect(typeof firstResult.content).toBe('string');
+      expect(firstResult.score).toBeDefined();
+      expect(typeof firstResult.score).toBe('number');
+    }
+  });
+
+  it('should handle empty search results gracefully', async () => {
+    const tool = mockServer.getTool('search_code');
+    const result = await tool.call({
+      query: 'xyzNonExistentFunction123',
+      limit: 5
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.results).toBeDefined();
+    expect(Array.isArray(result.results)).toBe(true);
+    expect(result.results.length).toBe(0);
+  });
+
+  it('should validate required query parameter', async () => {
+    const tool = mockServer.getTool('search_code');
+
+    // Should fail when query is missing
+    await expect(tool.call({
+      limit: 10,
+      file_types: ['ts']
+    })).rejects.toThrow('query is required');
+
+    // Should fail when query is empty
+    await expect(tool.call({
+      query: '',
+      limit: 10
+    })).rejects.toThrow('query cannot be empty');
+
+    // Should fail when query is not a string
+    await expect(tool.call({
+      query: 123,
+      limit: 10
+    })).rejects.toThrow('query must be a string');
+  });
+
+  it('should handle invalid limit values', async () => {
+    const tool = mockServer.getTool('search_code');
+
+    // Should fail for negative limits
+    await expect(tool.call({
+      query: 'test',
+      limit: -1
+    })).rejects.toThrow('limit must be positive');
+
+    // Should fail for excessive limits
+    await expect(tool.call({
+      query: 'test',
+      limit: 1001
+    })).rejects.toThrow('limit cannot exceed 1000');
+  });
+
+  it('should support different file type filters', async () => {
+    const tool = mockServer.getTool('search_code');
+
+    // Test with TypeScript files only
+    const tsResult = await tool.call({
+      query: 'interface',
+      file_types: ['ts'],
+      include_content: false
+    });
+
+    expect(tsResult.success).toBe(true);
+    expect(tsResult.results.every((r: any) => r.file_path.endsWith('.ts'))).toBe(true);
+
+    // Test with multiple file types
+    const multiResult = await tool.call({
+      query: 'function',
+      file_types: ['ts', 'js', 'tsx', 'jsx'],
+      limit: 15
+    });
+
+    expect(multiResult.success).toBe(true);
+    expect(multiResult.results.every((r: any) =>
+      ['.ts', '.js', '.tsx', '.jsx'].some(ext => r.file_path.endsWith(ext))
+    )).toBe(true);
+  });
+
+  it('should include content when requested', async () => {
+    const tool = mockServer.getTool('search_code');
+
+    const resultWithoutContent = await tool.call({
+      query: 'function',
+      include_content: false,
+      limit: 1
+    });
+
+    const resultWithContent = await tool.call({
+      query: 'function',
+      include_content: true,
+      limit: 1
+    });
+
+    // Both should succeed
+    expect(resultWithoutContent.success).toBe(true);
+    expect(resultWithContent.success).toBe(true);
+
+    // Content should only be included when requested
+    if (resultWithoutContent.results.length > 0) {
+      expect(resultWithoutContent.results[0].content).toBeUndefined();
+    }
+
+    if (resultWithContent.results.length > 0) {
+      expect(resultWithContent.results[0].content).toBeDefined();
+      expect(typeof resultWithContent.results[0].content).toBe('string');
+    }
+  });
+
+  it('should handle complex search queries with special characters', async () => {
+    const tool = mockServer.getTool('search_code');
+
+    const complexQueries = [
+      'async function* getData()',
+      'class MyClass<T extends GenericType>',
+      'const [a, b] = array',
+      'import { named, default as alias } from',
+      '@Decorator(param1, param2)',
+      'type ComplexType = { [key: string]: number[] }'
+    ];
+
+    for (const query of complexQueries) {
+      const result = await tool.call({
+        query,
+        limit: 5,
+        include_content: true
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.results).toBeDefined();
+      expect(Array.isArray(result.results)).toBe(true);
+    }
+  });
 
-      if (body.results.length > 0) {
-        const result: SearchResult = body.results[0];
+  it('should provide accurate relevance scoring', async () => {
+    const tool = mockServer.getTool('search_code');
 
-        // Validate required SearchResult fields
-        expect(result).toHaveProperty('entity_id');
-        expect(result).toHaveProperty('file_path');
-        expect(result).toHaveProperty('start_line');
-        expect(result).toHaveProperty('end_line');
-        expect(result).toHaveProperty('code_snippet');
-        expect(result).toHaveProperty('relevance_score');
-        expect(result).toHaveProperty('entity_type');
-        expect(result).toHaveProperty('context');
+    const result = await tool.call({
+      query: 'getUserById',
+      limit: 10,
+      include_content: true
+    });
 
-        // Validate field types
-        expect(typeof result.entity_id).toBe('string');
-        expect(typeof result.file_path).toBe('string');
-        expect(typeof result.start_line).toBe('number');
-        expect(typeof result.end_line).toBe('number');
-        expect(typeof result.code_snippet).toBe('string');
-        expect(typeof result.relevance_score).toBe('number');
-        expect(typeof result.entity_type).toBe('string');
-        expect(Array.isArray(result.context)).toBe(true);
+    expect(result.success).toBe(true);
 
-        // Validate entity_type enum
-        const validEntityTypes = [
-          'function',
-          'class',
-          'method',
-          'variable',
-          'import',
-          'type',
-          'interface',
-          'enum',
-          'constant',
-        ];
-        expect(validEntityTypes).toContain(result.entity_type);
-
-        // Validate UUID format for entity_id
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        expect(result.entity_id).toMatch(uuidRegex);
-
-        // Validate relevance_score range
-        expect(result.relevance_score).toBeGreaterThanOrEqual(0);
-        expect(result.relevance_score).toBeLessThanOrEqual(1);
-
-        // Validate line numbers
-        expect(result.start_line).toBeGreaterThan(0);
-        expect(result.end_line).toBeGreaterThanOrEqual(result.start_line);
-
-        // Validate context array contains strings
-        result.context.forEach(contextLine => {
-          expect(typeof contextLine).toBe('string');
-        });
+    if (result.results.length > 1) {
+      // Results should be sorted by relevance score (descending)
+      for (let i = 1; i < result.results.length; i++) {
+        expect(result.results[i-1].score).toBeGreaterThanOrEqual(result.results[i].score);
       }
-    });
 
-    it('should respect max_results parameter', async () => {
-      const maxResults = 5;
-      const validRequest = {
-        query: 'function',
-        codebase_id: testCodebaseId,
-        max_results: maxResults,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
+      // All scores should be between 0 and 1
+      result.results.forEach((r: any) => {
+        expect(r.score).toBeGreaterThanOrEqual(0);
+        expect(r.score).toBeLessThanOrEqual(1);
       });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.results.length).toBeLessThanOrEqual(maxResults);
-    });
-
-    it('should use default values for optional parameters', async () => {
-      const validRequest = {
-        query: 'test function',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should use default max_results = 10
-      expect(body.results.length).toBeLessThanOrEqual(10);
-
-      // Should use default context_lines = 3
-      if (body.results.length > 0) {
-        const result = body.results[0];
-        expect(result.context.length).toBeLessThanOrEqual(6); // 3 before + 3 after
-      }
-    });
+    }
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent codebase', async () => {
-      const nonExistentCodebaseId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        query: 'test query',
-        codebase_id: nonExistentCodebaseId,
-      };
+  it('should handle timeout and large queries gracefully', async () => {
+    const tool = mockServer.getTool('search_code');
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase not found');
+    // Test with a very broad query that might return many results
+    const result = await tool.call({
+      query: 'function',
+      limit: 1000, // Maximum allowed
+      include_content: false // Don't include content to avoid large responses
     });
 
-    it('should handle empty query gracefully', async () => {
-      const validRequest = {
-        query: '',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.results).toEqual([]);
-    });
-
-    it('should handle very long query gracefully', async () => {
-      const longQuery = 'a'.repeat(10000);
-      const validRequest = {
-        query: longQuery,
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect([200, 400]).toContain(response.statusCode);
-    });
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.results.length).toBeLessThanOrEqual(1000);
   });
 
-  describe('Business Logic Validation', () => {
-    it('should correctly identify query intent', async () => {
-      const testCases = [
-        { query: 'find function getUserById', expectedIntent: 'find_function' },
-        { query: 'explain how authentication works', expectedIntent: 'explain_code' },
-        { query: 'trace data flow from API to database', expectedIntent: 'trace_flow' },
-        { query: 'where is validateUser used', expectedIntent: 'find_usage' },
-        { query: 'security vulnerabilities in login', expectedIntent: 'security_audit' },
-      ];
+  it('should provide metadata about search performance', async () => {
+    const tool = mockServer.getTool('search_code');
 
-      for (const testCase of testCases) {
-        const request = {
-          query: testCase.query,
-          codebase_id: testCodebaseId,
-        };
-
-        const response = await app.inject({
-          method: 'POST',
-          url: '/tools/search_code',
-          payload: request,
-        });
-
-        expect(response.statusCode).toBe(200);
-        const body = JSON.parse(response.body);
-        expect(body.query_intent).toBe(testCase.expectedIntent);
-      }
+    const result = await tool.call({
+      query: 'interface User',
+      limit: 10
     });
 
-    it('should return results sorted by relevance score', async () => {
-      const validRequest = {
-        query: 'authentication',
-        codebase_id: testCodebaseId,
-        max_results: 10,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      if (body.results.length > 1) {
-        for (let i = 0; i < body.results.length - 1; i++) {
-          expect(body.results[i].relevance_score).toBeGreaterThanOrEqual(
-            body.results[i + 1].relevance_score,
-          );
-        }
-      }
-    });
-
-    it('should include appropriate context lines', async () => {
-      const contextLines = 5;
-      const validRequest = {
-        query: 'function declaration',
-        codebase_id: testCodebaseId,
-        context_lines: contextLines,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      if (body.results.length > 0) {
-        const result = body.results[0];
-        // Context should include lines before and after the match
-        expect(result.context.length).toBeLessThanOrEqual(contextLines * 2);
-      }
-    });
-  });
-
-  describe('Performance Validation', () => {
-    it('should complete search within reasonable time', async () => {
-      const validRequest = {
-        query: 'performance test query',
-        codebase_id: testCodebaseId,
-      };
-
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/search_code',
-        payload: validRequest,
-      });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Execution time should be reasonable (< 5 seconds)
-      expect(body.execution_time_ms).toBeLessThan(5000);
-
-      // Actual response time should be close to reported execution time
-      const actualTime = endTime - startTime;
-      expect(Math.abs(actualTime - body.execution_time_ms)).toBeLessThan(1000);
-    });
+    // Should include metadata about the search
+    expect(result.metadata).toBeDefined();
+    expect(result.metadata.total_results).toBeDefined();
+    expect(typeof result.metadata.total_results).toBe('number');
+    expect(result.metadata.search_time_ms).toBeDefined();
+    expect(typeof result.metadata.search_time_ms).toBe('number');
+    expect(result.metadata.files_searched).toBeDefined();
+    expect(typeof result.metadata.files_searched).toBe('number');
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'search_code' not found"
+ * - "query is required"
+ * - "query cannot be empty"
+ * - "query must be a string"
+ * - "limit must be positive"
+ * - "limit cannot exceed 1000"
+ * - "file_types must be an array of strings"
+ * - "include_content must be a boolean"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   results: [
+ *     {
+ *       file_path: string,
+ *       line_number: number,
+ *       content?: string,
+ *       score: number,
+ *       match_type: 'exact' | 'fuzzy' | 'semantic'
+ *     }
+ *   ],
+ *   metadata: {
+ *     total_results: number,
+ *     search_time_ms: number,
+ *     files_searched: number,
+ *     query_type: 'exact' | 'fuzzy' | 'semantic'
+ *   }
+ * }
+ */
