@@ -1,716 +1,524 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { DataFlowTrace } from '../../src/types';
-
 /**
- * Contract Test for trace_data_flow MCP Tool
+ * Contract Test for trace_data_flow MCP Tool (T012)
  *
- * This test validates that the trace_data_flow tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the trace_data_flow tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
- * - Data flow path validation
+ * Test validates:
+ * - Tool exists and is registered
+ * - Data flow tracing and analysis
+ * - Variable/parameter tracking through functions
+ * - Cross-module data flow visualization
+ * - Error handling for invalid inputs
  */
 
-describe('MCP Tool: trace_data_flow - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('trace_data_flow MCP Tool - Contract Test (T012)', () => {
+  let mockServer: any;
+  let traceDataFlowTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have trace_data_flow tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('trace_data_flow')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with all required fields', async () => {
-      const validRequest = {
-        start_point: 'REST API /users',
-        end_point: 'database table users',
-        codebase_id: testCodebaseId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
-    });
+    // Required properties
+    expect(schema.required).toContain('entry_point');
+    expect(schema.properties.entry_point).toBeDefined();
+    expect(schema.properties.entry_point.type).toBe('string');
 
-    it('should accept valid request with optional max_depth parameter', async () => {
-      const validRequestWithOptionals = {
-        start_point: 'API endpoint /api/users/create',
-        end_point: 'PostgreSQL users table',
-        codebase_id: testCodebaseId,
-        max_depth: 15,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequestWithOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request without codebase_id (optional)', async () => {
-      const validRequestWithoutCodebase = {
-        start_point: 'function getUserData',
-        end_point: 'Redis cache',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequestWithoutCodebase,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject request missing required start_point field', async () => {
-      const invalidRequest = {
-        end_point: 'database table users',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('start_point');
-    });
-
-    it('should reject request missing required end_point field', async () => {
-      const invalidRequest = {
-        start_point: 'REST API /users',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('end_point');
-    });
-
-    it('should reject request with invalid codebase_id format', async () => {
-      const invalidRequest = {
-        start_point: 'REST API /users',
-        end_point: 'database table users',
-        codebase_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid max_depth type', async () => {
-      const invalidRequest = {
-        start_point: 'REST API /users',
-        end_point: 'database table users',
-        codebase_id: testCodebaseId,
-        max_depth: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with negative max_depth', async () => {
-      const invalidRequest = {
-        start_point: 'REST API /users',
-        end_point: 'database table users',
-        codebase_id: testCodebaseId,
-        max_depth: -1,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with empty start_point', async () => {
-      const invalidRequest = {
-        start_point: '',
-        end_point: 'database table users',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with empty end_point', async () => {
-      const invalidRequest = {
-        start_point: 'REST API /users',
-        end_point: '',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    // Optional properties
+    expect(schema.properties.codebase_id).toBeDefined();
+    expect(schema.properties.codebase_id.type).toBe('string');
+    expect(schema.properties.trace_depth).toBeDefined();
+    expect(schema.properties.trace_depth.type).toBe('number');
+    expect(schema.properties.include_libraries).toBeDefined();
+    expect(schema.properties.include_libraries.type).toBe('boolean');
+    expect(schema.properties.flow_direction).toBeDefined();
+    expect(schema.properties.flow_direction.type).toBe('string');
+    expect(schema.properties.target_variables).toBeDefined();
+    expect(schema.properties.target_variables.type).toBe('array');
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return DataFlowTrace conforming to contract schema', async () => {
-      const validRequest = {
-        start_point: 'API /users/create',
-        end_point: 'database users table',
-        codebase_id: testCodebaseId,
-        max_depth: 10,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Validate required DataFlowTrace fields
-      expect(trace).toHaveProperty('path');
-      expect(trace).toHaveProperty('total_steps');
-      expect(trace).toHaveProperty('confidence');
-
-      // Validate field types
-      expect(Array.isArray(trace.path)).toBe(true);
-      expect(typeof trace.total_steps).toBe('number');
-      expect(typeof trace.confidence).toBe('number');
-
-      // Validate total_steps matches path length
-      expect(trace.total_steps).toBe(trace.path.length);
-
-      // Validate confidence range
-      expect(trace.confidence).toBeGreaterThanOrEqual(0);
-      expect(trace.confidence).toBeLessThanOrEqual(1);
+  it('should trace data flow from function entry point', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'processUserData',
+      codebase_id: 'test-codebase-uuid',
+      trace_depth: 5,
+      include_libraries: false
     });
 
-    it('should validate path step objects structure', async () => {
-      const validRequest = {
-        start_point: 'controller method createUser',
-        end_point: 'database insert operation',
-        codebase_id: testCodebaseId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.data_flow).toBeDefined();
+    expect(Array.isArray(result.data_flow.steps)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
+    // Entry point info should be included
+    expect(result.entry_point_info).toBeDefined();
+    expect(result.entry_point_info.name).toBe('processUserData');
+    expect(result.entry_point_info.location).toBeDefined();
+
+    if (result.data_flow.steps.length > 0) {
+      const firstStep = result.data_flow.steps[0];
+      expect(firstStep.operation).toBeDefined();
+      expect(firstStep.location).toBeDefined();
+      expect(firstStep.data_transformations).toBeDefined();
+      expect(Array.isArray(firstStep.data_transformations)).toBe(true);
+    }
+  });
+
+  it('should trace data flow through variable transformations', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'calculateTotal',
+      target_variables: ['price', 'quantity', 'total'],
+      trace_depth: 3
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.data_flow).toBeDefined();
+
+    // Should track variable transformations
+    if (result.data_flow.steps.length > 0) {
+      result.data_flow.steps.forEach((step: any) => {
+        if (step.data_transformations.length > 0) {
+          step.data_transformations.forEach((transform: any) => {
+            expect(transform.variable_name).toBeDefined();
+            expect(transform.before_value).toBeDefined();
+            expect(transform.after_value).toBeDefined();
+            expect(transform.operation).toBeDefined();
+          });
+        }
       });
 
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
+      // Should include final variable states
+      expect(result.final_state).toBeDefined();
+      expect(Array.isArray(result.final_state.variables)).toBe(true);
+    }
+  });
 
-      if (trace.path.length > 0) {
-        trace.path.forEach(step => {
-          // Validate required step fields
-          expect(step).toHaveProperty('entity_id');
-          expect(step).toHaveProperty('name');
-          expect(step).toHaveProperty('file_path');
-          expect(step).toHaveProperty('line_number');
-          expect(step).toHaveProperty('transformation');
+  it('should handle bidirectional flow tracing', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const directions = ['forward', 'backward', 'bidirectional'];
 
-          // Validate field types
-          expect(typeof step.entity_id).toBe('string');
-          expect(typeof step.name).toBe('string');
-          expect(typeof step.file_path).toBe('string');
-          expect(typeof step.line_number).toBe('number');
-          expect(typeof step.transformation).toBe('string');
+    for (const direction of directions) {
+      const result = await tool.call({
+        entry_point: 'dataProcessor',
+        flow_direction: direction,
+        trace_depth: 3
+      });
 
-          // Validate UUID format for entity_id
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          expect(step.entity_id).toMatch(uuidRegex);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.data_flow.direction).toBe(direction);
 
-          // Validate line number
-          expect(step.line_number).toBeGreaterThan(0);
+      // Flow steps should be ordered appropriately based on direction
+      if (result.data_flow.steps.length > 1) {
+        if (direction === 'forward') {
+          // Forward flow should follow execution order
+          for (let i = 1; i < result.data_flow.steps.length; i++) {
+            expect(result.data_flow.steps[i].sequence_number).toBeGreaterThan(
+              result.data_flow.steps[i-1].sequence_number
+            );
+          }
+        }
+      }
+    }
+  });
 
-          // Validate file path format
-          expect(step.file_path).toMatch(
-            /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
-          );
+  it('should include or exclude library functions based on parameter', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
 
-          // Validate name and transformation are not empty
-          expect(step.name.length).toBeGreaterThan(0);
-          expect(step.transformation.length).toBeGreaterThan(0);
+    const resultWithLibraries = await tool.call({
+      entry_point: 'processRequest',
+      include_libraries: true,
+      trace_depth: 5
+    });
+
+    const resultWithoutLibraries = await tool.call({
+      entry_point: 'processRequest',
+      include_libraries: false,
+      trace_depth: 5
+    });
+
+    // Both should succeed
+    expect(resultWithLibraries.success).toBe(true);
+    expect(resultWithoutLibraries.success).toBe(true);
+
+    // Results should differ based on library inclusion
+    if (resultWithLibraries.data_flow.steps.length !== resultWithoutLibraries.data_flow.steps.length) {
+      // At least one of them should include library calls
+      const hasLibrarySteps = (result: any) => 
+        result.data_flow.steps.some((step: any) => step.is_library_function);
+
+      if (resultWithLibraries.data_flow.steps.length > resultWithoutLibraries.data_flow.steps.length) {
+        expect(hasLibrarySteps(resultWithLibraries)).toBe(true);
+      }
+    }
+  });
+
+  it('should respect trace_depth parameter', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const maxDepth = 3;
+
+    const result = await tool.call({
+      entry_point: 'deeplyNestedFunction',
+      trace_depth: maxDepth
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Should not exceed specified depth
+    if (result.data_flow.steps.length > 0) {
+      const maxStepDepth = Math.max(...result.data_flow.steps.map((step: any) => step.depth));
+      expect(maxStepDepth).toBeLessThanOrEqual(maxDepth);
+    }
+  });
+
+  it('should trace data flow across multiple files', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'orchestratorFunction',
+      trace_depth: 4,
+      include_libraries: false
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.data_flow.steps.length > 1) {
+      const files = result.data_flow.steps.map((step: any) => step.location.file_path);
+      const uniqueFiles = [...new Set(files)];
+
+      // Should potentially trace across multiple files
+      expect(uniqueFiles.length).toBeGreaterThanOrEqual(1);
+
+      // Should include cross-file data flow information
+      if (uniqueFiles.length > 1) {
+        expect(result.data_flow.cross_file_flows).toBeDefined();
+        expect(Array.isArray(result.data_flow.cross_file_flows)).toBe(true);
+
+        result.data_flow.cross_file_flows.forEach((flow: any) => {
+          expect(flow.from_file).toBeDefined();
+          expect(flow.to_file).toBeDefined();
+          expect(flow.data_transferred).toBeDefined();
+          expect(flow.transfer_point).toBeDefined();
         });
       }
-    });
-
-    it('should handle empty path gracefully', async () => {
-      const unreachableRequest = {
-        start_point: 'isolated function',
-        end_point: 'unreachable destination',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: unreachableRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      expect(trace.path).toEqual([]);
-      expect(trace.total_steps).toBe(0);
-      expect(trace.confidence).toBeGreaterThanOrEqual(0);
-    });
+    }
   });
 
-  describe('Optional Parameter Behavior', () => {
-    it('should use default max_depth when not specified', async () => {
-      const requestWithDefaults = {
-        start_point: 'API endpoint',
-        end_point: 'database table',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: requestWithDefaults,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Default max_depth = 10, so path should not exceed 10 steps
-      expect(trace.path.length).toBeLessThanOrEqual(10);
-      expect(trace.total_steps).toBeLessThanOrEqual(10);
+  it('should identify data transformations and operations', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'dataTransformer',
+      target_variables: ['input', 'output'],
+      trace_depth: 3
     });
 
-    it('should respect custom max_depth parameter', async () => {
-      const customDepth = 5;
-      const requestWithCustomDepth = {
-        start_point: 'API endpoint /users',
-        end_point: 'database users table',
-        codebase_id: testCodebaseId,
-        max_depth: customDepth,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: requestWithCustomDepth,
+    if (result.data_flow.steps.length > 0) {
+      result.data_flow.steps.forEach((step: any) => {
+        // Should identify operation types
+        expect(step.operation_type).toBeDefined();
+        expect(['assignment', 'function_call', 'arithmetic', 'conditional', 'loop', 'return'])
+          .toContain(step.operation_type);
+
+        // Should track data transformations
+        if (step.data_transformations.length > 0) {
+          step.data_transformations.forEach((transform: any) => {
+            expect(transform.operation).toBeDefined();
+            expect(transform.operation_category).toBeDefined();
+            expect(['data_manipulation', 'type_conversion', 'validation', 'formatting'])
+              .toContain(transform.operation_category);
+          });
+        }
       });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Path should not exceed custom max_depth
-      expect(trace.path.length).toBeLessThanOrEqual(customDepth);
-      expect(trace.total_steps).toBeLessThanOrEqual(customDepth);
-    });
-
-    it('should handle very small max_depth values', async () => {
-      const smallDepth = 1;
-      const requestWithSmallDepth = {
-        start_point: 'function call',
-        end_point: 'return value',
-        max_depth: smallDepth,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: requestWithSmallDepth,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      expect(trace.path.length).toBeLessThanOrEqual(smallDepth);
-      expect(trace.total_steps).toBeLessThanOrEqual(smallDepth);
-    });
-
-    it('should handle very large max_depth values', async () => {
-      const largeDepth = 100;
-      const requestWithLargeDepth = {
-        start_point: 'API endpoint',
-        end_point: 'database table',
-        max_depth: largeDepth,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: requestWithLargeDepth,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Should complete without timeout even with large depth
-      expect(trace.path.length).toBeLessThanOrEqual(largeDepth);
-    });
+    }
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent codebase', async () => {
-      const nonExistentCodebaseId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        start_point: 'API endpoint',
-        end_point: 'database table',
-        codebase_id: nonExistentCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase not found');
+  it('should provide data flow visualization metadata', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'complexFlowFunction',
+      trace_depth: 5
     });
 
-    it('should handle invalid start_point gracefully', async () => {
-      const invalidRequest = {
-        start_point: 'non-existent-entity',
-        end_point: 'database table',
-        codebase_id: testCodebaseId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.visualization_data).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
+    // Should include graph information for visualization
+    expect(result.visualization_data.nodes).toBeDefined();
+    expect(Array.isArray(result.visualization_data.nodes)).toBe(true);
+    expect(result.visualization_data.edges).toBeDefined();
+    expect(Array.isArray(result.visualization_data.edges)).toBe(true);
+
+    if (result.visualization_data.nodes.length > 0) {
+      result.visualization_data.nodes.forEach((node: any) => {
+        expect(node.id).toBeDefined();
+        expect(node.type).toBeDefined();
+        expect(node.label).toBeDefined();
+        expect(node.position).toBeDefined();
       });
+    }
 
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Should return empty path for invalid start point
-      expect(trace.path).toEqual([]);
-      expect(trace.total_steps).toBe(0);
-      expect(trace.confidence).toBeLessThan(0.5);
-    });
-
-    it('should handle invalid end_point gracefully', async () => {
-      const invalidRequest = {
-        start_point: 'API endpoint /users',
-        end_point: 'non-existent-destination',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: invalidRequest,
+    if (result.visualization_data.edges.length > 0) {
+      result.visualization_data.edges.forEach((edge: any) => {
+        expect(edge.from).toBeDefined();
+        expect(edge.to).toBeDefined();
+        expect(edge.data_flow).toBeDefined();
       });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Should return empty or partial path for invalid end point
-      expect(trace.confidence).toBeLessThan(1.0);
-    });
+    }
   });
 
-  describe('Business Logic Validation', () => {
-    it('should trace logical data flow paths', async () => {
-      const validRequest = {
-        start_point: 'REST API /users/create',
-        end_point: 'database users table',
-        codebase_id: testCodebaseId,
-      };
+  it('should validate required entry_point parameter', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
+    // Should fail when entry_point is missing
+    await expect(tool.call({
+      trace_depth: 5
+    })).rejects.toThrow('entry_point is required');
 
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
+    // Should fail when entry_point is empty
+    await expect(tool.call({
+      entry_point: '',
+      trace_depth: 5
+    })).rejects.toThrow('entry_point cannot be empty');
 
-      if (trace.path.length > 0) {
-        // Path should represent logical flow
-        const transformations = trace.path.map(step => step.transformation);
-
-        // Should contain meaningful transformation descriptions
-        transformations.forEach(transformation => {
-          expect(transformation.length).toBeGreaterThan(5);
-          expect(transformation).not.toBe('unknown');
-        });
-      }
-    });
-
-    it('should provide meaningful step names', async () => {
-      const validRequest = {
-        start_point: 'user input validation',
-        end_point: 'database persistence',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      trace.path.forEach(step => {
-        // Step names should be descriptive
-        expect(step.name.length).toBeGreaterThan(2);
-        expect(step.name).not.toMatch(/^(step|node|entity)\d+$/);
-      });
-    });
-
-    it('should calculate reasonable confidence scores', async () => {
-      const validRequest = {
-        start_point: 'API controller method',
-        end_point: 'database table',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Confidence should be reasonable based on path completeness
-      if (trace.path.length > 0) {
-        expect(trace.confidence).toBeGreaterThan(0.1);
-      } else {
-        expect(trace.confidence).toBeLessThan(0.5);
-      }
-    });
-
-    it('should handle circular dependencies gracefully', async () => {
-      const circularRequest = {
-        start_point: 'recursive function A',
-        end_point: 'recursive function A',
-        codebase_id: testCodebaseId,
-        max_depth: 5,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: circularRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Should not get stuck in infinite loops
-      expect(trace.path.length).toBeLessThanOrEqual(5);
-      expect(trace.total_steps).toBeLessThanOrEqual(5);
-    });
-
-    it('should identify different types of data transformations', async () => {
-      const validRequest = {
-        start_point: 'HTTP request body',
-        end_point: 'SQL INSERT statement',
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      if (trace.path.length > 1) {
-        // Should identify different transformation types
-        const transformations = trace.path.map(step => step.transformation.toLowerCase());
-
-        // Common transformation patterns
-        const hasValidTransformation = transformations.some(
-          t =>
-            t.includes('parse') ||
-            t.includes('validate') ||
-            t.includes('transform') ||
-            t.includes('map') ||
-            t.includes('convert') ||
-            t.includes('serialize') ||
-            t.includes('deserialize'),
-        );
-
-        expect(hasValidTransformation).toBe(true);
-      }
-    });
+    // Should fail when entry_point is not a string
+    await expect(tool.call({
+      entry_point: 123,
+      trace_depth: 5
+    })).rejects.toThrow('entry_point must be a string');
   });
 
-  describe('Performance Validation', () => {
-    it('should complete data flow tracing within reasonable time', async () => {
-      const validRequest = {
-        start_point: 'API endpoint /complex/operation',
-        end_point: 'database complex_table',
-        codebase_id: testCodebaseId,
-        max_depth: 10,
-      };
+  it('should validate flow_direction parameter', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
 
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: validRequest,
+    // Should fail for invalid flow directions
+    await expect(tool.call({
+      entry_point: 'test',
+      flow_direction: 'invalid'
+    })).rejects.toThrow('flow_direction must be one of: forward, backward, bidirectional');
+
+    // Should accept valid directions
+    const validDirections = ['forward', 'backward', 'bidirectional'];
+    for (const direction of validDirections) {
+      const result = await tool.call({
+        entry_point: 'test',
+        flow_direction: direction
       });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-
-      // Should complete within 5 seconds for complex tracing
-      const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(5000);
-    });
-
-    it('should handle deep traces efficiently', async () => {
-      const deepRequest = {
-        start_point: 'entry point',
-        end_point: 'deep destination',
-        max_depth: 20,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: deepRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Should handle deep traces without performance issues
-      expect(trace.total_steps).toBeLessThanOrEqual(20);
-    });
+      expect(result).toBeDefined();
+    }
   });
 
-  describe('Edge Cases', () => {
-    it('should handle same start and end points', async () => {
-      const samePointRequest = {
-        start_point: 'function processData',
-        end_point: 'function processData',
-        codebase_id: testCodebaseId,
-      };
+  it('should validate trace_depth parameter', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: samePointRequest,
-      });
+    // Should fail for invalid trace depths
+    await expect(tool.call({
+      entry_point: 'test',
+      trace_depth: 0
+    })).rejects.toThrow('trace_depth must be a positive integer');
 
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
+    await expect(tool.call({
+      entry_point: 'test',
+      trace_depth: -1
+    })).rejects.toThrow('trace_depth must be a positive integer');
 
-      // Should handle identity case
-      expect(trace.total_steps).toBeLessThanOrEqual(1);
-      expect(trace.confidence).toBeGreaterThan(0.8);
+    await expect(tool.call({
+      entry_point: 'test',
+      trace_depth: 21
+    })).rejects.toThrow('trace_depth cannot exceed 20');
+  });
+
+  it('should handle non-existent entry point gracefully', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'nonExistentFunction12345',
+      codebase_id: 'test-codebase-uuid'
     });
 
-    it('should handle cross-language data flows', async () => {
-      const crossLanguageRequest = {
-        start_point: 'TypeScript API endpoint',
-        end_point: 'Python data processor',
-        codebase_id: testCodebaseId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(result.error).toContain('entry point not found');
+  });
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: crossLanguageRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const trace: DataFlowTrace = JSON.parse(response.body);
-
-      // Should handle cross-language flows
-      if (trace.path.length > 0) {
-        const fileExtensions = trace.path.map(step => {
-          const match = step.file_path.match(/\.(\w+)$/);
-          return match ? match[1] : '';
-        });
-
-        // May contain different file extensions for cross-language flows
-        expect(fileExtensions.length).toBeGreaterThan(0);
-      }
+  it('should detect data flow patterns and anti-patterns', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'patternAnalysisFunction',
+      trace_depth: 6
     });
 
-    it('should handle very long point descriptions', async () => {
-      const longDescription = 'very long description '.repeat(20);
-      const longPointRequest = {
-        start_point: longDescription + 'start',
-        end_point: longDescription + 'end',
-        codebase_id: testCodebaseId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/trace_data_flow',
-        payload: longPointRequest,
+    // Should identify patterns in data flow
+    expect(result.data_flow.patterns).toBeDefined();
+    expect(Array.isArray(result.data_flow.patterns)).toBe(true);
+
+    if (result.data_flow.patterns.length > 0) {
+      result.data_flow.patterns.forEach((pattern: any) => {
+        expect(pattern.name).toBeDefined();
+        expect(pattern.type).toBeDefined();
+        expect(['pipeline', 'fan_out', 'fan_in', 'circular_dependency', 'data_aggregation'])
+          .toContain(pattern.type);
+        expect(pattern.locations).toBeDefined();
+        expect(Array.isArray(pattern.locations)).toBe(true);
       });
+    }
 
-      expect([200, 400]).toContain(response.statusCode);
+    // Should identify potential anti-patterns
+    expect(result.data_flow.anti_patterns).toBeDefined();
+    expect(Array.isArray(result.data_flow.anti_patterns)).toBe(true);
+  });
 
-      if (response.statusCode === 200) {
-        const trace: DataFlowTrace = JSON.parse(response.body);
-        expect(trace).toHaveProperty('path');
-        expect(trace).toHaveProperty('total_steps');
-        expect(trace).toHaveProperty('confidence');
-      }
+  it('should provide comprehensive execution metrics', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'performanceTestFunction',
+      trace_depth: 5
     });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+
+    // Should include performance metrics
+    expect(result.metadata.trace_time_ms).toBeDefined();
+    expect(typeof result.metadata.trace_time_ms).toBe('number');
+    expect(result.metadata.functions_analyzed).toBeDefined();
+    expect(typeof result.metadata.functions_analyzed).toBe('number');
+    expect(result.metadata.data_transformations).toBeDefined();
+    expect(typeof result.metadata.data_transformations).toBe('number');
+    expect(result.metadata.max_depth_reached).toBeDefined();
+    expect(typeof result.metadata.max_depth_reached).toBe('number');
+
+    // Should include complexity metrics
+    expect(result.metadata.complexity_metrics).toBeDefined();
+    expect(result.metadata.complexity_metrics.cyclomatic_complexity).toBeDefined();
+    expect(result.metadata.complexity_metrics.data_flow_complexity).toBeDefined();
+  });
+
+  it('should handle circular dependencies in data flow', async () => {
+    const tool = mockServer.getTool('trace_data_flow');
+    const result = await tool.call({
+      entry_point: 'recursiveFunction',
+      trace_depth: 10,
+      flow_direction: 'bidirectional'
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Should detect and handle circular dependencies
+    if (result.data_flow.circular_dependencies) {
+      expect(Array.isArray(result.data_flow.circular_dependencies)).toBe(true);
+      
+      result.data_flow.circular_dependencies.forEach((cycle: any) => {
+        expect(cycle.cycle_path).toBeDefined();
+        expect(Array.isArray(cycle.cycle_path)).toBe(true);
+        expect(cycle.entry_point).toBeDefined();
+        expect(cycle.severity).toBeDefined();
+      });
+    }
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'trace_data_flow' not found"
+ * - "entry_point is required"
+ * - "entry_point cannot be empty"
+ * - "entry_point must be a string"
+ * - "flow_direction must be one of: forward, backward, bidirectional"
+ * - "trace_depth must be a positive integer"
+ * - "trace_depth cannot exceed 20"
+ * - "target_variables must be an array of strings"
+ * - "entry point not found"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   entry_point_info: {
+ *     name: string,
+ *     location: {file_path: string, line_number: number},
+ *     signature: string
+ *   },
+ *   data_flow: {
+ *     direction: 'forward' | 'backward' | 'bidirectional',
+ *     steps: Array<{
+ *       sequence_number: number,
+ *       depth: number,
+ *       operation: string,
+ *       operation_type: string,
+ *       location: {file_path: string, line_number: number},
+ *       data_transformations: Array<{
+ *         variable_name: string,
+ *         before_value: any,
+ *         after_value: any,
+ *         operation: string,
+ *         operation_category: string
+ *       }>,
+ *       is_library_function: boolean
+ *     }>,
+ *     cross_file_flows?: Array<{
+ *       from_file: string,
+ *       to_file: string,
+ *       data_transferred: string[],
+ *       transfer_point: {file_path: string, line_number: number}
+ *     }>,
+ *     patterns: Array<{name: string, type: string, locations: Array<any>}>,
+ *     anti_patterns: Array<{name: string, severity: string, locations: Array<any>}>,
+ *     circular_dependencies?: Array<{
+ *       cycle_path: Array<string>,
+ *       entry_point: string,
+ *       severity: string
+ *     }>
+ *   },
+ *   final_state?: {
+ *     variables: Array<{name: string, value: any, type: string}>
+ *   },
+ *   visualization_data: {
+ *     nodes: Array<{id: string, type: string, label: string, position: any}>,
+ *     edges: Array<{from: string, to: string, data_flow: any}>
+ *   },
+ *   metadata: {
+ *     trace_time_ms: number,
+ *     functions_analyzed: number,
+ *     data_transformations: number,
+ *     max_depth_reached: number,
+ *     complexity_metrics: {
+ *       cyclomatic_complexity: number,
+ *       data_flow_complexity: number
+ *     }
+ *   }
+ * }
+ */
