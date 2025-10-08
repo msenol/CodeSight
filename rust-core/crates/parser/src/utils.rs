@@ -95,11 +95,7 @@ pub fn extract_file_extension(file_path: &Path) -> Option<String> {
     let file_name = file_path.file_name()?.to_str()?;
 
     // Handle multi-part extensions like .tsx, .test.js, etc.
-    if let Some(dot_idx) = file_name.rfind('.') {
-        Some(file_name[dot_idx + 1..].to_lowercase())
-    } else {
-        None
-    }
+    file_name.rfind('.').map(|dot_idx| file_name[dot_idx + 1..].to_lowercase())
 }
 
 /// Sanitize string for use in identifiers

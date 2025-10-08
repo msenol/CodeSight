@@ -197,7 +197,7 @@ impl CodeEntity {
 
     /// Check if this entity has documentation
     pub fn has_documentation(&self) -> bool {
-        self.documentation.as_ref().map_or(false, |doc| !doc.trim().is_empty())
+        self.documentation.as_ref().is_some_and(|doc| !doc.trim().is_empty())
     }
 
     /// Get a short display name for the entity
@@ -284,8 +284,10 @@ impl Validate for CodeEntity {
             ));
         }
 
-        // Validate file path is relative
-        if std::path::Path::new(&self.file_path).is_absolute() {
+        // Validate file path is relative (cross-platform check)
+        let path = std::path::Path::new(&self.file_path);
+        // Check for absolute paths on both Unix and Windows platforms
+        if path.is_absolute() || self.file_path.starts_with('/') {
             return Err(CoreError::ValidationError(
                 "File path must be relative to codebase root".to_string(),
             ));

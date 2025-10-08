@@ -90,7 +90,7 @@ impl TaskQueue {
         queue.make_contiguous().sort_by(|a, b| b.priority.cmp(&a.priority));
 
         // Send to processor
-        if let Err(_) = self.task_sender.send(task) {
+        if self.task_sender.send(task).is_err() {
             return Err(anyhow::anyhow!("Failed to send task to processor"));
         }
 

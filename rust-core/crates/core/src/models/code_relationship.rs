@@ -107,7 +107,7 @@ impl CodeRelationship {
 
     /// Check if this relationship has context information
     pub fn has_context(&self) -> bool {
-        self.context.as_ref().map_or(false, |ctx| !ctx.trim().is_empty())
+        self.context.as_ref().is_some_and(|ctx| !ctx.trim().is_empty())
     }
 
     /// Get a human-readable description of the relationship

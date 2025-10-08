@@ -19,6 +19,12 @@ impl TypeScriptParser {
     }
 }
 
+impl Default for TypeScriptParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LanguageParser for TypeScriptParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
         let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse TypeScript file"))?;
@@ -55,6 +61,12 @@ impl JavaScriptParser {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-javascript is available
         Self { parser: Mutex::new(parser) }
+    }
+}
+
+impl Default for JavaScriptParser {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -97,6 +109,12 @@ impl PythonParser {
     }
 }
 
+impl Default for PythonParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LanguageParser for PythonParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
         let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse Python file"))?;
@@ -133,6 +151,12 @@ impl RustParser {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-rust is available
         Self { parser: Mutex::new(parser) }
+    }
+}
+
+impl Default for RustParser {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -175,6 +199,12 @@ impl GoParser {
     }
 }
 
+impl Default for GoParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LanguageParser for GoParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
         let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse Go file"))?;
@@ -211,6 +241,12 @@ impl JavaParser {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-java is available
         Self { parser: Mutex::new(parser) }
+    }
+}
+
+impl Default for JavaParser {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -253,6 +289,12 @@ impl CppParser {
     }
 }
 
+impl Default for CppParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LanguageParser for CppParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
         let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse C++ file"))?;
@@ -289,6 +331,12 @@ impl CSharpParser {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-c-sharp is available
         Self { parser: Mutex::new(parser) }
+    }
+}
+
+impl Default for CSharpParser {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

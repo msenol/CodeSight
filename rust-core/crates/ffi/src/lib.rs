@@ -154,10 +154,8 @@ pub fn search_code(query: String, _codebase_path: Option<String>) -> Result<Vec<
     }).map_err(|e| Error::from_reason(format!("Query failed: {}", e)))?;
 
     let mut search_results = Vec::new();
-    for result in results {
-        if let Ok(r) = result {
-            search_results.push(r);
-        }
+    for r in results.flatten() {
+        search_results.push(r);
     }
 
     Ok(search_results)
@@ -169,8 +167,8 @@ pub fn generate_embedding(text: String) -> Result<Vec<f32>> {
     // Simple hash-based mock embedding
     let hash = text.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
     let mut embedding = vec![0.0; 384];
-    for i in 0..384 {
-        embedding[i] = ((hash.wrapping_mul(i as u32 + 1) % 1000) as f32) / 1000.0;
+    for (i, val) in embedding.iter_mut().enumerate().take(384) {
+        *val = ((hash.wrapping_mul(i as u32 + 1) % 1000) as f32) / 1000.0;
     }
     Ok(embedding)
 }
@@ -199,7 +197,7 @@ pub fn index_codebase(path: String) -> Result<String> {
         .map_err(|e| Error::from_reason(format!("Failed to clear old entries: {}", e)))?;
 
     let mut indexed_count = 0;
-    let extensions = vec!["js", "ts", "jsx", "tsx", "mjs", "cjs"];
+    let extensions = ["js", "ts", "jsx", "tsx", "mjs", "cjs"];
 
     // Walk through directory
     for entry in WalkDir::new(codebase_path)

@@ -325,7 +325,9 @@ export class JobsController {
   // Simulated async job processing (in production, this would be handled by a job queue system)
   private async processJobAsync(jobId: string) {
     const job = jobStore.get(jobId);
-    if (!job) return;
+    if (!job) {
+      return;
+    }
 
     try {
       // Simulate job start
@@ -364,7 +366,9 @@ export class JobsController {
 
   private completeJob(jobId: string) {
     const job = jobStore.get(jobId);
-    if (!job) return;
+    if (!job) {
+      return;
+    }
 
     job.status = 'completed';
     job.progress_percentage = 100;
