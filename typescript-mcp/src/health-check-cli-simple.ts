@@ -1,28 +1,9 @@
 #!/usr/bin/env node
 
- 
- 
- 
- 
 /**
  * Standalone Health Check CLI for CodeSight
- *
- * This script provides a simple health check that can be used by Docker
- * and other monitoring systems to verify the service is operational.
+ * Rule 15: Zero external dependencies, pure ES module
  */
-
-// Simple logger for CLI health check (Rule 15: no external dependencies)
-const cliLogger = {
-  info: (message: string) => console.log(`[${new Date().toISOString()}] INFO: ${message}`),
-  error: (message: string, error?: any) => console.error(`[${new Date().toISOString()}] ERROR: ${message}`, error || ''),
-};
-
-// Simple config for CLI (Rule 15: no external dependencies)
-const cliConfig = {
-  version: '0.1.0',
-};
-
-// Rule 15: Proper ES module imports - no require usage
 
 interface HealthStatus {
   status: string;
@@ -46,42 +27,33 @@ interface ErrorStatus {
   error: string;
   uptime: number;
 }
-async function healthCheck() {
+
+async function healthCheck(): Promise<void> {
   try {
-    cliLogger.info('Starting CodeSight health check...');
+    console.log(`[${new Date().toISOString()}] INFO: Starting CodeSight health check...`);
 
-    // Simple health check - no server creation needed for CLI
-    cliLogger.info('Health check: modules loaded successfully');
+    // Basic health check - if we get here, modules loaded successfully
+    const memoryUsage = process.memoryUsage();
+    const heapUsedMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
+    const heapTotalMB = Math.round(memoryUsage.heapTotal / 1024 / 1024);
 
-    // Basic health check - if we get here, the server can start
     const healthStatus: HealthStatus = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      version: cliConfig.version,
+      version: '0.1.0',
       uptime: process.uptime(),
       checks: {
         server: 'passed',
-        dependencies: 'pending',
+        dependencies: 'pending', // Rust FFI not required for basic health
+      },
+      memory: {
+        heapUsedMB,
+        heapTotalMB,
+        percentage: Math.round((heapUsedMB / heapTotalMB) * 100),
       },
     };
 
-    // Test basic functionality
-    // TODO: Implement IndexingService and SearchEngine when available
-    healthStatus.checks.dependencies = 'passed';
-
-    // Check memory usage
-    const memUsage = process.memoryUsage();
-    const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
-    const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
-
-    healthStatus.memory = {
-      heapUsedMB,
-      heapTotalMB,
-      percentage: Math.round((heapUsedMB / heapTotalMB) * 100),
-    };
-
-    // Log results
-    cliLogger.info('Health check completed', {
+    console.log(`[${new Date().toISOString()}] INFO: Health check completed`, {
       status: healthStatus.status,
       memory: healthStatus.memory,
       checks: healthStatus.checks,
@@ -99,12 +71,12 @@ async function healthCheck() {
       process.exit(2);
     }
   } catch (error) {
-    cliLogger.error('Health check failed:', error);
+    console.error(`[${new Date().toISOString()}] ERROR: Health check failed:`, error);
 
     const errorStatus: ErrorStatus = {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Health check failed',
       uptime: process.uptime(),
     };
 
@@ -115,7 +87,7 @@ async function healthCheck() {
 
 // Handle uncaught errors
 process.on('uncaughtException', error => {
-  cliLogger.error('Uncaught exception during health check:', error);
+  console.error(`[${new Date().toISOString()}] ERROR: Uncaught exception during health check:`, error);
   console.log(
     JSON.stringify(
       {
@@ -132,7 +104,7 @@ process.on('uncaughtException', error => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  cliLogger.error('Unhandled rejection during health check:', { promise, reason });
+  console.error(`[${new Date().toISOString()}] ERROR: Unhandled rejection during health check:`, { promise, reason });
   console.log(
     JSON.stringify(
       {
@@ -149,7 +121,6 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Run health check
-// Rule 15: ES module check for Node.js environment
 healthCheck();
 
 export { healthCheck };
