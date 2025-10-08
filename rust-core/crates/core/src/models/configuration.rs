@@ -445,7 +445,7 @@ pub struct CpuLimits {
 }
 
 /// I/O limits
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct IoLimits {
     /// Maximum read operations per second
     pub max_read_ops_per_second: Option<u32>,
@@ -801,17 +801,6 @@ impl Default for CpuLimits {
             warning_threshold_percent: 80.0,
             critical_threshold_percent: 95.0,
             enable_throttling: false,
-        }
-    }
-}
-
-impl Default for IoLimits {
-    fn default() -> Self {
-        Self {
-            max_read_ops_per_second: None,
-            max_write_ops_per_second: None,
-            max_read_bytes_per_second: None,
-            max_write_bytes_per_second: None,
         }
     }
 }

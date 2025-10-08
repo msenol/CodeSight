@@ -75,6 +75,11 @@ impl WorkerPool {
         self.workers.len()
     }
 
+    /// Check if the worker pool is empty
+    pub fn is_empty(&self) -> bool {
+        self.workers.is_empty()
+    }
+
     /// Check if any worker is busy
     pub async fn any_busy(&self) -> bool {
         for worker in &self.workers {

@@ -477,11 +477,9 @@ impl Plugin {
     /// Check if a version satisfies a requirement (simplified semver)
     fn version_satisfies(&self, version: &str, requirement: &str) -> bool {
         // Simplified version checking - in practice, use a proper semver library
-        if requirement.starts_with('^') {
-            let req_version = &requirement[1..];
+        if let Some(req_version) = requirement.strip_prefix('^') {
             version >= req_version
-        } else if requirement.starts_with('~') {
-            let req_version = &requirement[1..];
+        } else if let Some(req_version) = requirement.strip_prefix('~') {
             version.starts_with(req_version)
         } else {
             version == requirement

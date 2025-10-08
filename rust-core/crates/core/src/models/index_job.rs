@@ -85,11 +85,12 @@ pub enum IndexJobStatus {
 }
 
 /// Job priority levels
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Ord, Eq, Default)]
 pub enum JobPriority {
     /// Lowest priority
     Low = 1,
     /// Normal priority
+    #[default]
     Normal = 2,
     /// High priority
     High = 3,
@@ -154,9 +155,10 @@ pub struct JobProgress {
 }
 
 /// Job phases
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub enum JobPhase {
     /// Initializing the job
+    #[default]
     Initializing,
     /// Scanning for files
     Scanning,
@@ -552,18 +554,6 @@ impl IndexJob {
     /// Get custom metadata
     pub fn get_custom_metadata(&self, key: &str) -> Option<&String> {
         self.metadata.custom.get(key)
-    }
-}
-
-impl Default for JobPriority {
-    fn default() -> Self {
-        JobPriority::Normal
-    }
-}
-
-impl Default for JobPhase {
-    fn default() -> Self {
-        JobPhase::Initializing
     }
 }
 

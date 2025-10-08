@@ -197,7 +197,7 @@ impl IndexingEngine {
                         };
 
                         let engine_instance = engine.write().await;
-                        match engine_instance.process_file(&file, &content).await {
+                        match engine_instance.process_file(file, &content).await {
                             Ok(entities) => {
                                 results.push((file.clone(), Ok(entities)));
                             }
