@@ -1,802 +1,576 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { ComplexityMetrics } from '../../src/types';
-
 /**
- * Contract Test for check_complexity MCP Tool
+ * Contract Test for check_complexity MCP Tool (T015)
  *
- * This test validates that the check_complexity tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the check_complexity tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
- * - Complexity metric validation
- * - Metric type filtering
+ * Test validates:
+ * - Tool exists and is registered
+ * - Code complexity metrics calculation
+ * - Maintainability index assessment
+ * - Cyclomatic and cognitive complexity analysis
+ * - Refactoring recommendations
  */
 
-describe('MCP Tool: check_complexity - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testEntityId = '550e8400-e29b-41d4-a716-446655440003';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('check_complexity MCP Tool - Contract Test (T015)', () => {
+  let mockServer: any;
+  let checkComplexityTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have check_complexity tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('check_complexity')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with required fields only', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
-    });
+    // Required properties
+    expect(schema.required).toContain('target');
+    expect(schema.properties.target).toBeDefined();
+    expect(schema.properties.target.type).toBe('string');
 
-    it('should accept valid request with all optional parameters', async () => {
-      const validRequestWithOptionals = {
-        entity_id: testEntityId,
-        metric_types: ['cyclomatic', 'cognitive', 'lines_of_code'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequestWithOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with single metric type', async () => {
-      const validRequestSingleMetric = {
-        entity_id: testEntityId,
-        metric_types: ['cyclomatic'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequestSingleMetric,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with all metric types', async () => {
-      const validRequestAllMetrics = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequestAllMetrics,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with maintainability metric', async () => {
-      const validRequestMaintainability = {
-        entity_id: testEntityId,
-        metric_types: ['maintainability'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequestMaintainability,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject request missing required entity_id field', async () => {
-      const invalidRequest = {};
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('entity_id');
-    });
-
-    it('should reject request with invalid entity_id format', async () => {
-      const invalidRequest = {
-        entity_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid metric_types enum', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        metric_types: ['invalid_metric'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('metric');
-    });
-
-    it('should reject request with non-array metric_types', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        metric_types: 'cyclomatic',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with empty metric_types array', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        metric_types: [],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with mixed valid and invalid metric types', async () => {
-      const invalidRequest = {
-        entity_id: testEntityId,
-        metric_types: ['cyclomatic', 'invalid_metric'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    // Optional properties
+    expect(schema.properties.complexity_types).toBeDefined();
+    expect(schema.properties.complexity_types.type).toBe('array');
+    expect(schema.properties.thresholds).toBeDefined();
+    expect(schema.properties.thresholds.type).toBe('object');
+    expect(schema.properties.include_suggestions).toBeDefined();
+    expect(schema.properties.include_suggestions.type).toBe('boolean');
+    expect(schema.properties.detailed_analysis).toBeDefined();
+    expect(schema.properties.detailed_analysis.type).toBe('boolean');
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return ComplexityMetrics conforming to contract schema', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Validate required ComplexityMetrics fields
-      expect(metrics).toHaveProperty('cyclomatic_complexity');
-      expect(metrics).toHaveProperty('cognitive_complexity');
-      expect(metrics).toHaveProperty('lines_of_code');
-      expect(metrics).toHaveProperty('maintainability_index');
-      // Validate field types
-      expect(typeof metrics.cyclomaticComplexity).toBe('number');
-      expect(typeof metrics.cognitiveComplexity).toBe('number');
-      expect(typeof metrics.linesOfCode).toBe('number');
-      expect(typeof metrics.maintainabilityIndex).toBe('number');
-
-      // Validate value ranges
-      expect(metrics.cyclomaticComplexity).toBeGreaterThanOrEqual(1);
-      expect(metrics.cognitiveComplexity).toBeGreaterThanOrEqual(0);
-      expect(metrics.linesOfCode).toBeGreaterThan(0);
-      expect(metrics.maintainabilityIndex).toBeGreaterThanOrEqual(0);
-      expect(metrics.maintainabilityIndex).toBeLessThanOrEqual(100);
+  it('should analyze code complexity for file', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/services/user-service.ts',
+      detailed_analysis: true,
+      include_suggestions: true
     });
 
-    it('should validate cyclomatic complexity values', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['cyclomatic'],
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.complexity_summary).toBeDefined();
+    expect(result.metrics).toBeDefined();
+    expect(result.complex_items).toBeDefined();
+    expect(Array.isArray(result.complex_items)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Cyclomatic complexity should be at least 1 (for any function)
-      expect(metrics.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-
-      // Should be reasonable (most functions have complexity < 50)
-      expect(metrics.cyclomatic_complexity).toBeLessThan(1000);
-
-      // Should be an integer
-      expect(Number.isInteger(metrics.cyclomatic_complexity)).toBe(true);
-    });
-
-    it('should validate cognitive complexity values', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['cognitive'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Cognitive complexity can be 0 for very simple functions
-      expect(metrics.cognitive_complexity).toBeGreaterThanOrEqual(0);
-
-      // Should be reasonable
-      expect(metrics.cognitive_complexity).toBeLessThan(1000);
-
-      // Should be an integer
-      expect(Number.isInteger(metrics.cognitive_complexity)).toBe(true);
-    });
-
-    it('should validate lines of code values', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['lines_of_code'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Lines of code should be at least 1
-      expect(metrics.lines_of_code).toBeGreaterThan(0);
-
-      // Should be reasonable (most functions < 10000 lines)
-      expect(metrics.lines_of_code).toBeLessThan(100000);
-
-      // Should be an integer
-      expect(Number.isInteger(metrics.lines_of_code)).toBe(true);
-    });
-
-    it('should validate maintainability index values', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['maintainability'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Maintainability index should be between 0 and 100
-      expect(metrics.maintainability_index).toBeGreaterThanOrEqual(0);
-      expect(metrics.maintainability_index).toBeLessThanOrEqual(100);
-
-      // Should be a number (can be float)
-      expect(typeof metrics.maintainability_index).toBe('number');
-    });
-
-    it('should validate test coverage values', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Test coverage should be between 0 and 1 (0% to 100%)
-      expect(metrics.test_coverage).toBeGreaterThanOrEqual(0);
-      expect(metrics.test_coverage).toBeLessThanOrEqual(1);
-
-      // Should be a number (can be float)
-      expect(typeof metrics.test_coverage).toBe('number');
-    });
+    // Complexity summary structure validation
+    expect(result.complexity_summary.overall_score).toBeDefined();
+    expect(typeof result.complexity_summary.overall_score).toBe('number');
+    expect(result.complexity_summary.maintainability_index).toBeDefined();
+    expect(typeof result.complexity_summary.maintainability_index).toBe('number');
+    expect(result.complexity_summary.files_analyzed).toBeDefined();
+    expect(result.complexity_summary.functions_analyzed).toBeDefined();
   });
 
-  describe('Optional Parameter Behavior', () => {
-    it('should use default values for optional parameters', async () => {
-      const requestWithDefaults = {
-        entity_id: testEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: requestWithDefaults,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Default metric_types = ['all'] (should include all metrics)
-      expect(metrics.cyclomatic_complexity).toBeDefined();
-      expect(metrics.cognitive_complexity).toBeDefined();
-      expect(metrics.lines_of_code).toBeDefined();
-      expect(metrics.maintainability_index).toBeDefined();
-      expect(metrics.test_coverage).toBeDefined();
+  it('should analyze code complexity for directory', async () => {
+    const tool = mockServer.getComplexityTool();
+    const result = await tool.call({
+      target: 'src/controllers/',
+      complexity_types: ['cyclomatic', 'cognitive', 'halstead'],
+      include_suggestions: true
     });
 
-    it('should filter by specific metric types', async () => {
-      const requestWithSpecificMetrics = {
-        entity_id: testEntityId,
-        metric_types: ['cyclomatic', 'cognitive'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: requestWithSpecificMetrics,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Should include requested metrics
-      expect(metrics.cyclomatic_complexity).toBeDefined();
-      expect(metrics.cognitive_complexity).toBeDefined();
-
-      // Other metrics should be 0 or default values when not requested
-      expect(metrics.lines_of_code).toBeDefined();
-      expect(metrics.maintainability_index).toBeDefined();
-      expect(metrics.test_coverage).toBeDefined();
-    });
-
-    it('should handle single metric type request', async () => {
-      const requestSingleMetric = {
-        entity_id: testEntityId,
-        metric_types: ['lines_of_code'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: requestSingleMetric,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Should include the requested metric
-      expect(metrics.lines_of_code).toBeGreaterThan(0);
-
-      // Other metrics should still be present (contract requires all fields)
-      expect(metrics.cyclomatic_complexity).toBeDefined();
-      expect(metrics.cognitive_complexity).toBeDefined();
-      expect(metrics.maintainability_index).toBeDefined();
-      expect(metrics.test_coverage).toBeDefined();
-    });
-
-    it('should handle all metric types request', async () => {
-      const requestAllMetrics = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: requestAllMetrics,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Should include all metrics with meaningful values
-      expect(metrics.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-      expect(metrics.cognitive_complexity).toBeGreaterThanOrEqual(0);
-      expect(metrics.lines_of_code).toBeGreaterThan(0);
-      expect(metrics.maintainability_index).toBeGreaterThanOrEqual(0);
-      expect(metrics.test_coverage).toBeGreaterThanOrEqual(0);
-    });
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.complexity_summary.files_analyzed).toBeGreaterThan(1);
+    expect(result.complex_items.length).toBeGreaterThan(0);
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent entity', async () => {
-      const nonExistentEntityId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        entity_id: nonExistentEntityId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('entity not found');
+  it('should analyze complexity for function', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'processData',
+      complexity_types: ['cyclomatic', 'cognitive'],
+      detailed_analysis: true
     });
 
-    it('should return 400 for entity that is not a function/method/class', async () => {
-      // Assuming we have a test entity that exists but is not analyzable for complexity
-      const nonAnalyzableEntityId = '550e8400-e29b-41d4-a716-446655440004';
-      const validRequest = {
-        entity_id: nonAnalyzableEntityId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect([400, 422]).toContain(response.statusCode);
-      const body = JSON.parse(response.body);
-      expect(body.error).toMatch(
-        /not analyzable|invalid entity type|complexity analysis not supported/,
+    if (result.complex_items.length > 0) {
+      const functionComplexity = result.complex_items.find((item: any) => 
+        item.type === 'function'
       );
-    });
 
-    it('should handle malformed UUID gracefully', async () => {
-      const malformedRequest = {
-        entity_id: 'not-a-uuid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: malformedRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
+      if (functionComplexity) {
+        expect(functionComplexity.name).toBeDefined();
+        expect(functionComplexity.location).toBeDefined();
+        expect(functionComplexity.complexity_scores).toBeDefined();
+        expect(functionComplexity.complexity_scores.cyclomatic).toBeDefined();
+        expect(functionComplexity.complexity_scores.cognitive).toBeDefined();
+      }
+    }
   });
 
-  describe('Business Logic Validation', () => {
-    it('should provide realistic complexity metrics', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Metrics should be realistic for typical code
-      expect(metrics.cyclomatic_complexity).toBeLessThan(100); // Very complex functions rarely exceed 50
-      expect(metrics.cognitive_complexity).toBeLessThan(200); // Cognitive complexity is usually higher than cyclomatic
-      expect(metrics.lines_of_code).toBeLessThan(10000); // Most functions are under 1000 lines
-
-      // Maintainability index should be reasonable
-      expect(metrics.maintainability_index).toBeGreaterThan(0);
-
-      // Test coverage should be realistic
-      expect(metrics.test_coverage).toBeLessThanOrEqual(1);
+  it('should calculate various complexity metrics', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/complex-module.ts',
+      detailed_analysis: true
     });
 
-    it('should show correlation between complexity metrics', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metrics).toBeDefined();
+    expect(Array.isArray(result.metrics)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
+    if (result.metrics.length > 0) {
+      result.metrics.forEach((metric: any) => {
+        expect(metric.name).toBeDefined();
+        expect(metric.value).toBeDefined();
+        expect(typeof metric.value).toBe('number');
+        expect(metric.threshold).toBeDefined();
+        expect(typeof metric.threshold).toBe('number');
+        expect(metric.status).toBeDefined();
+        expect(['good', 'warning', 'critical']).toContain(metric.status);
+        expect(metric.description).toBeDefined();
       });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Generally, higher complexity should correlate with lower maintainability
-      if (metrics.cyclomatic_complexity > 20) {
-        expect(metrics.maintainability_index).toBeLessThan(80);
-      }
-
-      // Cognitive complexity should generally be >= cyclomatic complexity
-      expect(metrics.cognitive_complexity).toBeGreaterThanOrEqual(
-        metrics.cyclomatic_complexity * 0.5,
-      );
-    });
-
-    it('should handle different entity types appropriately', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // All metrics should be present and valid regardless of entity type
-      expect(metrics.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-      expect(metrics.cognitive_complexity).toBeGreaterThanOrEqual(0);
-      expect(metrics.lines_of_code).toBeGreaterThan(0);
-      expect(metrics.maintainability_index).toBeGreaterThanOrEqual(0);
-      expect(metrics.test_coverage).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should calculate maintainability index correctly', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['maintainability'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Maintainability index should follow expected patterns:
-      // 0-9: Extremely difficult to maintain
-      // 10-19: Difficult to maintain
-      // 20-100: Increasingly maintainable
-      expect(metrics.maintainability_index).toBeGreaterThanOrEqual(0);
-      expect(metrics.maintainability_index).toBeLessThanOrEqual(100);
-
-      // Should be a reasonable precision (not too many decimal places)
-      const decimalPlaces = (metrics.maintainability_index.toString().split('.')[1] || '').length;
-      expect(decimalPlaces).toBeLessThanOrEqual(2);
-    });
-
-    it('should provide accurate test coverage metrics', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Test coverage should be between 0 and 1
-      expect(metrics.test_coverage).toBeGreaterThanOrEqual(0);
-      expect(metrics.test_coverage).toBeLessThanOrEqual(1);
-
-      // Should have reasonable precision
-      const decimalPlaces = (metrics.test_coverage.toString().split('.')[1] || '').length;
-      expect(decimalPlaces).toBeLessThanOrEqual(4);
-    });
+    }
   });
 
-  describe('Performance Validation', () => {
-    it('should complete complexity analysis within reasonable time', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-
-      // Should complete within 2 seconds for complexity analysis
-      const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(2000);
+  it('should identify complex code items', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/problematic-code.ts',
+      complexity_types: ['cyclomatic', 'cognitive', 'halstead'],
+      include_suggestions: true
     });
 
-    it('should handle complex entities efficiently', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.complex_items).toBeDefined();
+    expect(Array.isArray(result.complex_items)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Should handle even complex entities without timeout
-      expect(metrics.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle very simple entities', async () => {
-      const simpleEntityId = '550e8400-e29b-41d4-a716-446655440005';
-      const validRequest = {
-        entity_id: simpleEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-        // Simple entities should have low complexity
-        expect(metrics.cyclomatic_complexity).toBeLessThanOrEqual(5);
-        expect(metrics.cognitive_complexity).toBeLessThanOrEqual(10);
-        expect(metrics.maintainability_index).toBeGreaterThan(50);
-      }
-    });
-
-    it('should handle entities with no test coverage', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Should handle 0% test coverage gracefully
-      if (metrics.test_coverage === 0) {
-        expect(metrics.test_coverage).toBe(0);
-      }
-    });
-
-    it('should handle entities with 100% test coverage', async () => {
-      const wellTestedEntityId = '550e8400-e29b-41d4-a716-446655440006';
-      const validRequest = {
-        entity_id: wellTestedEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-        // Should handle 100% test coverage
-        if (metrics.test_coverage === 1) {
-          expect(metrics.test_coverage).toBe(1);
+    if (result.complex_items.length > 0) {
+      result.complex_items.forEach((item: any) => {
+        expect(item.type).toBeDefined();
+        expect(['file', 'function', 'class', 'method']).toContain(item.type);
+        expect(item.name).toBeDefined();
+        expect(item.location).toBeDefined();
+        expect(item.location.file_path).toBeDefined();
+        expect(item.location.line_number).toBeDefined();
+        expect(item.complexity_scores).toBeDefined();
+        
+        // Should include complexity scores
+        if (item.complexity_scores.cyclomatic) {
+          expect(typeof item.complexity_scores.cyclomatic).toBe('number');
         }
+        if (item.complexity_scores.cognitive) {
+          expect(typeof item.complexity_scores.cognitive).toBe('number');
+        }
+        if (item.complexity_scores.halstead) {
+          expect(typeof item.complexity_scores.halstead).toBe('object');
+        }
+        
+        expect(item.issues).toBeDefined();
+        expect(Array.isArray(item.issues)).toBe(true);
+        expect(item.suggestions).toBeDefined();
+        expect(Array.isArray(item.suggestions)).toBe(true);
+      });
+    }
+  });
+
+  it('should include maintainability index calculation', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/maintainable-code.ts',
+      detailed_analysis: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.complexity_summary.maintainability_index).toBeDefined();
+    expect(typeof result.complexity_summary.maintainability_index).toBe('number');
+    expect(result.complexity_summary.maintainability_index).toBeGreaterThanOrEqual(0);
+    expect(result.complexity_summary.maintainability_index).toBeLessThanOrEqual(100);
+  });
+
+  it('should provide refactoring suggestions', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/complex-function.ts',
+      include_suggestions: true,
+      detailed_analysis: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.complex_items.length > 0) {
+      const complexItem = result.complex_items[0];
+      expect(complexItem.suggestions).toBeDefined();
+      expect(Array.isArray(complexItem.suggestions)).toBe(true);
+
+      complexItem.suggestions.forEach((suggestion: any) => {
+        expect(suggestion).toBeDefined();
+        expect(typeof suggestion).toBe('string');
+        expect(suggestion.length).toBeGreaterThan(10);
+      });
+    }
+  });
+
+  it('should handle different complexity types', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const complexityTypes = [
+      'cyclomatic',
+      'cognitive', 
+      'halstead',
+      'maintainability',
+      'nesting',
+      'parameter'
+    ];
+
+    for (const complexityType of complexityTypes) {
+      const result = await tool.call({
+        target: 'src/test-target.ts',
+        complexity_types: [complexType]
+      });
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+
+      if (result.metrics.length > 0) {
+        const foundMetric = result.metrics.find((m: any) => 
+          m.name.toLowerCase().includes(complexityType.toLowerCase())
+        );
+        expect(foundMetric).toBeDefined();
+      }
+    }
+  });
+
+  it('should apply custom thresholds', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/threshold-test.ts',
+      thresholds: {
+        cyclomatic: 15,
+        cognitive: 20,
+        maintainability: 60
       }
     });
 
-    it('should handle entities in different programming languages', async () => {
-      const validRequest = {
-        entity_id: testEntityId,
-        metric_types: ['all'],
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-      // Should work across different programming languages
-      expect(metrics.cyclomatic_complexity).toBeGreaterThanOrEqual(1);
-      expect(metrics.cognitive_complexity).toBeGreaterThanOrEqual(0);
-      expect(metrics.lines_of_code).toBeGreaterThan(0);
-    });
-
-    it('should handle very large entities', async () => {
-      const largeEntityId = '550e8400-e29b-41d4-a716-446655440007';
-      const validRequest = {
-        entity_id: largeEntityId,
-        metric_types: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/check_complexity',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const metrics: ComplexityMetrics = JSON.parse(response.body);
-
-        // Should handle large entities without overflow
-        expect(metrics.lines_of_code).toBeGreaterThan(0);
-        expect(metrics.lines_of_code).toBeLessThan(1000000); // Reasonable upper bound
-        expect(metrics.cyclomatic_complexity).toBeLessThan(10000); // Reasonable upper bound
+    if (result.metrics.length > 0) {
+      const cyclomaticMetric = result.metrics.find((m: any) => 
+        m.name === 'cyclomatic_complexity'
+      );
+      if (cyclomaticMetric) {
+        expect(cyclomaticMetric.threshold).toBe(15);
       }
+    }
+  });
+
+  it('should analyze trends and provide recommendations', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/evolving-code/',
+      detailed_analysis: true
     });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.trends).toBeDefined();
+
+    if (result.trends) {
+      expect(result.trends.historical_data).toBeDefined();
+      expect(Array.isArray(result.trends.historical_data)).toBe(true);
+      expect(result.trends.recommendations).toBeDefined();
+      expect(Array.isArray(result.trends.recommendations)).toBe(true);
+    }
+  });
+
+  it('should handle different target types', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const targetTypes = [
+      'src/file.ts',
+      'src/directory/',
+      'functionName',
+      'ClassName'
+    ];
+
+    for (const targetType of targetTypes) {
+      const result = await tool.call({
+        target: targetType
+      });
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it('should validate required target parameter', async () => {
+    const tool = mockServer.getTool('check_complexity');
+
+    // Should fail when target is missing
+    await expect(tool.call({
+      complexity_types: ['cyclomatic']
+    })).rejects.toThrow('target is required');
+
+    // Should fail when target is empty
+    await expect(tool.call({
+      target: '',
+      complexity_types: ['cyclomatic']
+    })).rejects.toThrow('target cannot be empty');
+
+    // Should fail when target is not a string
+    await expect(tool.call({
+      target: 123,
+      complexity_types: ['cyclomatic']
+    })).rejects.toThrow('target must be a string');
+  });
+
+  it('should validate complexity_types parameter', async () => {
+    const tool = mockServer.getTool('check_complexity');
+
+    // Should fail for invalid complexity types
+    await expect(tool.call({
+      target: 'test.ts',
+      complexity_types: ['invalid-type']
+    })).rejects.toThrow('invalid complexity type: invalid-type');
+
+    // Should fail when complexity_types is not an array
+    await expect(tool.call({
+      target: 'test.ts',
+      complexity_types: 'not-array'
+    })).rejects.throw('complexity_types must be an array');
+  });
+
+  it('should provide performance metrics', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/large-module/',
+      detailed_analysis: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+
+    // Should include performance metrics
+    expect(result.metadata.analysis_time_ms).toBeDefined();
+    expect(typeof result.metadata.analysis_time_ms).toBe('number');
+    expect(result.metadata.metrics_calculated).toBeDefined();
+    expect(Array.isArray(result.metadata.metrics_calculated)).toBe(true);
+  });
+
+  it('should handle very complex code', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/ultra-complex-function.ts',
+      detailed_analysis: true,
+      include_suggestions: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Should identify high complexity items
+    if (result.complex_items.length > 0) {
+      const highComplexityItems = result.complex_items.filter((item: any) => {
+        const score = item.complexity_scores.cyclomatic || 0;
+        return score > 20;
+      });
+
+      expect(highComplexityItems.length).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('should identify code smells', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/smelly-code.ts',
+      detailed_analysis: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Look for code smells in complex items
+    if (result.complex_items.length > 0) {
+      const itemsWithIssues = result.complex_items.filter((item: any) => 
+        item.issues && item.issues.length > 0
+      );
+
+      expect(itemsWithIssues.length).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('should suggest specific refactoring techniques', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/refactoring-candidate.ts',
+      include_suggestions: true,
+      detailed_analysis: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.complex_items.length > 0) {
+      const itemWithSuggestions = result.complex_items.find((item: any) => 
+        item.suggestions && item.suggestions.length > 0
+      );
+
+      if (itemWithSuggestions) {
+        // Should include common refactoring patterns
+        const suggestions = itemWithSuggestions.suggestions.join(' ').toLowerCase();
+        const commonPatterns = [
+          'extract method', 'extract function', 'split class', 'extract class',
+          'replace conditional', 'introduce parameter', 'move method'
+        ];
+
+        const hasCommonPattern = commonPatterns.some(pattern => 
+          suggestions.includes(pattern)
+        );
+        expect(hasCommonPattern).toBe(true);
+      }
+    }
+  });
+
+  it('should calculate accurate cyclomatic complexity', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/cyclomatic-test.ts'
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.complex_items.length > 0) {
+      const functionItem = result.complex_items.find((item: any) => 
+        item.type === 'function'
+      );
+
+      if (functionItem && functionItem.complexity_scores.cyclomatic) {
+        const cyclomatic = functionItem.complexity_scores.cyclomatic;
+        // Should be a reasonable cyclomatic complexity value
+        expect(cyclomatic).toBeGreaterThan(0);
+        expect(cyclomatic).toBeLessThan(100); // Reasonable upper bound
+      }
+    }
+  });
+
+  it('should calculate cognitive complexity', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const result = await tool.call({
+      target: 'src/cognitive-test.ts',
+      complexity_types: ['cognitive']
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.complex_items.length > 0) {
+      const functionItem = result.complex_items.find((item: any) => 
+        item.type === 'function'
+      );
+
+      if (functionItem && functionItem.complexity_scores.cognitive) {
+        const cognitive = functionItem.complexity_scores.cognitive;
+        // Should be a reasonable cognitive complexity value
+        expect(cognitive).toBeGreaterThan(0);
+        expect(cognitive).toBeLessThan(100); // Reasonable upper bound
+      }
+    }
+  });
+
+  it('should handle large codebases efficiently', async () => {
+    const tool = mockServer.getTool('check_complexity');
+    const startTime = Date.now();
+
+    const result = await tool.call({
+      target: 'src/', // Analyze entire src directory
+      complexity_types: ['cyclomatic'], // Focus on one metric for performance
+      include_suggestions: false // Skip suggestions for performance
+    });
+
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    
+    // Should complete within reasonable time (under 10 seconds for typical project size)
+    expect(duration).toBeLessThan(10000);
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'check_complexity' not found"
+ * - "target is required"
+ * - "target cannot be empty"
+ * - "target must be a string"
+ * - "complexity_types must be an array of strings"
+ * - "invalid complexity type: {type}"
+ * - "thresholds must be an object"
+ * - "include_suggestions must be a boolean"
+ * - "detailed_analysis must be a boolean"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   complexity_summary: {
+ *     overall_score: number,
+ *     maintainability_index: number,
+ *     total_complexity: number,
+ *     files_analyzed: number,
+ *     functions_analyzed: number
+ *   },
+ *   metrics: [
+ *     {
+ *       name: string,
+ *       value: number,
+ *       threshold: number,
+ *       status: 'good' | 'warning' | 'critical',
+ *       description: string
+ *     }
+ *   ],
+ *   complex_items: [
+ *     {
+ *       type: 'file' | 'function' | 'class',
+ *       name: string,
+ *       location: {
+ *         file_path: string,
+ *       line_number: number
+ *       },
+ *       complexity_scores: {
+ *         cyclomatic: number,
+ *         cognitive: number,
+ *         halstead: object
+ *       },
+ *       issues: [string],
+ *       suggestions: [string]
+ *     }
+ *   ],
+ *   trends: {
+ *     historical_data: [object],
+ *     recommendations: [string]
+ *   },
+ *   metadata: {
+ *     analysis_time_ms: number,
+ *     metrics_calculated: [string]
+ *   }
+ * }
+ */

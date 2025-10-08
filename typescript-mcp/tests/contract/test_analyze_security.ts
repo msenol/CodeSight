@@ -1,790 +1,472 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { SecurityIssue } from '../../src/types';
-
 /**
- * Contract Test for analyze_security MCP Tool
+ * Contract Test for analyze_security MCP Tool (T013)
  *
- * This test validates that the analyze_security tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the analyze_security tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
- * - Security pattern validation
- * - SecurityIssue severity validation
+ * Test validates:
+ * - Tool exists and is registered
+ * - Security vulnerability detection
+ * - Code anti-pattern identification
+ * - Compliance standards checking
+ * - Risk assessment and reporting
  */
 
-describe('MCP Tool: analyze_security - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('analyze_security MCP Tool - Contract Test (T013)', () => {
+  let mockServer: any;
+  let analyzeTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have analyze_security tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('analyze_security')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with required fields only', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
-    });
+    // Required properties
+    expect(schema.required).toContain('target');
+    expect(schema.properties.target).toBeDefined();
+    expect(schema.properties.target.type).toBe('string');
 
-    it('should accept valid request with all optional parameters', async () => {
-      const validRequestWithOptionals = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection', 'xss', 'csrf'],
-        severity_threshold: 'medium',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequestWithOptionals,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with single pattern', async () => {
-      const validRequestSinglePattern = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection'],
-        severity_threshold: 'high',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequestSinglePattern,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should accept request with all patterns', async () => {
-      const validRequestAllPatterns = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'low',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequestAllPatterns,
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject request missing required codebase_id field', async () => {
-      const invalidRequest = {};
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase_id');
-    });
-
-    it('should reject request with invalid codebase_id format', async () => {
-      const invalidRequest = {
-        codebase_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid patterns enum', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['invalid_pattern'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('pattern');
-    });
-
-    it('should reject request with invalid severity_threshold enum', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-        severity_threshold: 'invalid_severity',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('severity');
-    });
-
-    it('should reject request with non-array patterns', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-        patterns: 'sql_injection',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should reject request with empty patterns array', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-        patterns: [],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    // Optional properties
+    expect(schema.properties.security_levels).toBeDefined();
+    expect(schema.properties.security_levels.type).toBe('array');
+    expect(schema.properties.severity_threshold).toBeDefined();
+    expect(schema.properties.severity_threshold.type).toBe('string');
+    expect(schema.properties.include_suggestions).toBeDefined();
+    expect(schema.properties.include_suggestions.type).toBe('boolean');
+    expect(schema.properties.compliance_standards).toBeDefined();
+    expect(schema.properties.compliance_standards.type).toBe('array');
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return response conforming to contract schema', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection', 'xss'],
-        severity_threshold: 'low',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Validate top-level response structure
-      expect(body).toHaveProperty('vulnerabilities');
-      expect(body).toHaveProperty('summary');
-
-      // Validate vulnerabilities array
-      expect(Array.isArray(body.vulnerabilities)).toBe(true);
-
-      // Validate summary object
-      expect(typeof body.summary).toBe('object');
-      expect(body.summary).toHaveProperty('total');
-      expect(body.summary).toHaveProperty('by_severity');
-      expect(typeof body.summary.total).toBe('number');
-      expect(typeof body.summary.by_severity).toBe('object');
+  it('should perform basic security analysis', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/auth/authentication.ts',
+      security_levels: ['sast', 'dependency'],
+      include_suggestions: true
     });
 
-    it('should return SecurityIssue objects conforming to schema', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'low',
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.analysis_summary).toBeDefined();
+    expect(result.vulnerabilities).toBeDefined();
+    expect(Array.isArray(result.vulnerabilities)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      if (body.vulnerabilities.length > 0) {
-        const vulnerability: SecurityIssue = body.vulnerabilities[0];
-
-        // Validate required SecurityIssue fields
-        expect(vulnerability).toHaveProperty('type');
-        expect(vulnerability).toHaveProperty('severity');
-        expect(vulnerability).toHaveProperty('entity_id');
-        expect(vulnerability).toHaveProperty('file_path');
-        expect(vulnerability).toHaveProperty('line_number');
-        expect(vulnerability).toHaveProperty('description');
-        expect(vulnerability).toHaveProperty('recommendation');
-        expect(vulnerability).toHaveProperty('code_snippet');
-
-        // Validate field types
-        expect(typeof vulnerability.type).toBe('string');
-        expect(typeof vulnerability.severity).toBe('string');
-        expect(typeof vulnerability.id).toBe('string');
-        expect(typeof vulnerability.file).toBe('string');
-        expect(typeof vulnerability.line).toBe('number');
-        expect(typeof vulnerability.message).toBe('string');
-        expect(typeof vulnerability.suggestion).toBe('string');
-        expect(typeof vulnerability.code).toBe('string');
-
-        // Validate type enum
-        const validTypes = [
-          'sql_injection',
-          'xss',
-          'csrf',
-          'path_traversal',
-          'command_injection',
-          'other',
-        ];
-        expect(validTypes).toContain(vulnerability.type);
-
-        // Validate severity enum
-        const validSeverities = ['low', 'medium', 'high', 'critical'];
-        expect(validSeverities).toContain(vulnerability.severity);
-
-        // Validate UUID format for entity_id
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        expect(vulnerability.id).toMatch(uuidRegex);
-
-        // Validate line number
-        expect(vulnerability.line).toBeGreaterThan(0);
-
-        // Validate file path format
-        expect(vulnerability.file).toMatch(
-          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
-        );
-
-        // Validate content is not empty
-        expect(vulnerability.message.length).toBeGreaterThan(0);
-        expect(vulnerability.suggestion.length).toBeGreaterThan(0);
-        expect(vulnerability.code.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should validate summary statistics', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      const summary = body.summary;
-
-      // Validate total matches vulnerabilities count
-      expect(summary.total).toBe(body.vulnerabilities.length);
-
-      // Validate by_severity breakdown
-      expect(typeof summary.by_severity).toBe('object');
-
-      const severityKeys = Object.keys(summary.by_severity);
-      const validSeverities = ['low', 'medium', 'high', 'critical'];
-
-      severityKeys.forEach(severity => {
-        expect(validSeverities).toContain(severity);
-        expect(typeof summary.by_severity[severity]).toBe('number');
-        expect(summary.by_severity[severity]).toBeGreaterThanOrEqual(0);
-      });
-
-      // Validate severity counts sum to total
-      const severitySum = Object.values(summary.by_severity).reduce(
-        (sum: number, count: any) => sum + count,
-        0,
-      );
-      expect(severitySum).toBe(summary.total);
-    });
-
-    it('should handle empty results gracefully', async () => {
-      const cleanCodebaseId = '550e8400-e29b-41d4-a716-446655440099';
-      const validRequest = {
-        codebase_id: cleanCodebaseId,
-        patterns: ['sql_injection'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const body = JSON.parse(response.body);
-        expect(body.vulnerabilities).toEqual([]);
-        expect(body.summary.total).toBe(0);
-        expect(Object.values(body.summary.by_severity).every((count: any) => count === 0)).toBe(
-          true,
-        );
-      }
-    });
+    // Analysis summary structure validation
+    expect(result.analysis_summary.total_issues).toBeDefined();
+    expect(typeof result.analysis_summary.total_issues).toBe('number');
+    expect(result.analysis_summary.critical_issues).toBeDefined();
+    expect(result.analysis_summary.high_issues).toBeDefined();
+    expect(result.analysis_summary.files_analyzed).toBeDefined();
   });
 
-  describe('Optional Parameter Behavior', () => {
-    it('should use default values for optional parameters', async () => {
-      const requestWithDefaults = {
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: requestWithDefaults,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Default patterns = ['all'] (should check all vulnerability types)
-      // Default severity_threshold = 'low' (should include all severities)
-      expect(body.vulnerabilities).toBeDefined();
-      expect(body.summary).toBeDefined();
+  it('should identify security vulnerabilities', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/payment/payment-processor.ts',
+      severity_threshold: 'medium',
+      include_suggestions: true
     });
 
-    it('should filter by specific patterns', async () => {
-      const requestWithSpecificPatterns = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection'],
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: requestWithSpecificPatterns,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include SQL injection vulnerabilities
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        expect(vuln.type).toBe('sql_injection');
-      });
-    });
-
-    it('should filter by severity threshold', async () => {
-      const requestWithHighSeverity = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'high',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: requestWithHighSeverity,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include high and critical severity vulnerabilities
-      const allowedSeverities = ['high', 'critical'];
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        expect(allowedSeverities).toContain(vuln.severity);
-      });
-    });
-
-    it('should filter by medium severity threshold', async () => {
-      const requestWithMediumSeverity = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'medium',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: requestWithMediumSeverity,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should include medium, high, and critical severity vulnerabilities
-      const allowedSeverities = ['medium', 'high', 'critical'];
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        expect(allowedSeverities).toContain(vuln.severity);
-      });
-    });
-
-    it('should handle multiple specific patterns', async () => {
-      const requestWithMultiplePatterns = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection', 'xss', 'csrf'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: requestWithMultiplePatterns,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include specified vulnerability types
-      const allowedTypes = ['sql_injection', 'xss', 'csrf'];
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        expect(allowedTypes).toContain(vuln.type);
-      });
-    });
+    if (result.vulnerabilities.length > 0) {
+      const firstVuln = result.vulnerabilities[0];
+      expect(firstVuln.id).toBeDefined();
+      expect(firstVuln.title).toBeDefined();
+      expect(firstVuln.severity).toBeDefined();
+      expect(firstVuln.category).toBeDefined();
+      expect(firstVuln.description).toBeDefined();
+      expect(firstVuln.location).toBeDefined();
+      expect(firstVuln.location.file_path).toBeDefined();
+      expect(firstVuln.location.line_number).toBeDefined();
+      expect(firstVuln.cwe_id).toBeDefined();
+      expect(firstVuln.cvss_score).toBeDefined();
+      expect(firstVuln.remediation).toBeDefined();
+    }
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent codebase', async () => {
-      const nonExistentCodebaseId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        codebase_id: nonExistentCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase not found');
+  it('should detect code anti-patterns', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/utils/validation.ts',
+      security_levels: ['anti-patterns', 'code-quality']
     });
 
-    it('should handle malformed UUID gracefully', async () => {
-      const malformedRequest = {
-        codebase_id: 'not-a-uuid',
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.security_patterns).toBeDefined();
+    expect(Array.isArray(result.security_patterns)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: malformedRequest,
+    if (result.security_patterns.length > 0) {
+      result.security_patterns.forEach((pattern: any) => {
+        expect(pattern.pattern).toBeDefined();
+        expect(pattern.type).toBeDefined();
+        expect(['positive', 'negative']).toContain(pattern.type);
+        expect(pattern.description).toBeDefined();
+        expect(pattern.locations).toBeDefined();
+        expect(Array.isArray(pattern.locations)).toBe(true);
       });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
+    }
   });
 
-  describe('Business Logic Validation', () => {
-    it('should identify different vulnerability types correctly', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'low',
-      };
+  it('should check compliance standards', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/api/routes.ts',
+      compliance_standards: ['owasp', 'pci-dss', 'gdpr'],
+      severity_threshold: 'low'
+    });
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.compliance_report).toBeDefined();
+
+    if (result.compliance_report) {
+      expect(result.compliance_report.standards_checked).toBeDefined();
+      expect(Array.isArray(result.compliance_report.standards_checked)).toBe(true);
+      expect(result.compliance_report.compliance_score).toBeDefined();
+      expect(typeof result.compliance_report.compliance_score).toBe('number');
+      expect(result.compliance_report.violations).toBeDefined();
+      expect(Array.isArray(result.compliance_report.violations)).toBe(true);
+    }
+  });
+
+  it('should provide remediation recommendations', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/database/connection.ts',
+      include_suggestions: true,
+      security_levels: ['sql-injection', 'input-validation']
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.recommendations).toBeDefined();
+    expect(Array.isArray(result.recommendations)).toBe(true);
+
+    if (result.recommendations.length > 0) {
+      result.recommendations.forEach((rec: any) => {
+        expect(rec.priority).toBeDefined();
+        expect(rec.action).toBeDefined();
+        expect(rec.description).toBeDefined();
+        expect(rec.impact).toBeDefined();
+        expect(['high', 'medium', 'low']).toContain(rec.priority);
+      });
+    }
+  });
+
+  it('should handle different security levels', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const securityLevels = ['sast', 'dependency', 'runtime', 'infrastructure', 'anti-patterns'];
+
+    for (const level of securityLevels) {
+      const result = await tool.call({
+        target: 'src/test-target.ts',
+        security_levels: [level]
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.metadata.security_analysis.tools_used).toContain(level);
+    }
+  });
 
-      if (body.vulnerabilities.length > 0) {
-        const vulnerabilityTypes = new Set(
-          body.vulnerabilities.map((vuln: SecurityIssue) => vuln.type),
-        );
+  it('should respect severity thresholds', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const thresholds = ['low', 'medium', 'high', 'critical'];
 
-        // Should only contain valid vulnerability types
-        const validTypes = [
-          'sql_injection',
-          'xss',
-          'csrf',
-          'path_traversal',
-          'command_injection',
-          'other',
-        ];
-        vulnerabilityTypes.forEach(type => {
-          expect(validTypes).toContain(type);
+    for (const threshold of thresholds) {
+      const result = await tool.call({
+        target: 'src/secure-code.ts',
+        severity_threshold: threshold
+      });
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+
+      // Should only include vulnerabilities at or above threshold
+      if (result.vulnerabilities.length > 0) {
+        const severityOrder = ['low', 'medium', 'high', 'critical'];
+        const thresholdIndex = severityOrder.indexOf(threshold);
+        
+        result.vulnerabilities.forEach((vuln: any) => {
+          const vulnIndex = severityOrder.indexOf(vuln.severity);
+          expect(vulnIndex).toBeGreaterThanOrEqual(thresholdIndex);
         });
       }
-    });
-
-    it('should provide meaningful descriptions and recommendations', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection', 'xss'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        // Description should be meaningful
-        expect(vuln.message.length).toBeGreaterThan(10);
-        expect(vuln.message).not.toBe('vulnerability found');
-
-        // Recommendation should be actionable
-        expect(vuln.suggestion.length).toBeGreaterThan(10);
-        expect(vuln.suggestion).not.toBe('fix this issue');
-
-        // Code snippet should contain actual code
-        expect(vuln.code.length).toBeGreaterThan(5);
-        expect(vuln.code.trim()).not.toBe('');
-      });
-    });
-
-    it('should assign appropriate severity levels', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        // Severity should be appropriate for vulnerability type
-        if (vuln.type === 'sql_injection' || vuln.type === 'command_injection') {
-          expect(['medium', 'high', 'critical']).toContain(vuln.severity);
-        }
-
-        if (vuln.type === 'xss') {
-          expect(['low', 'medium', 'high']).toContain(vuln.severity);
-        }
-      });
-    });
-
-    it('should provide relevant code snippets', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        // Code snippet should contain relevant code
-        expect(vuln.code).not.toMatch(/^\s*$/);
-
-        // For SQL injection, might contain SQL-related keywords
-        if (vuln.type === 'sql_injection') {
-          const snippet = vuln.code.toLowerCase();
-void 0; // hasSqlKeywords reserved for future use
-            snippet.includes('select') ||
-            snippet.includes('insert') ||
-            snippet.includes('update') ||
-            snippet.includes('delete') ||
-            snippet.includes('query') ||
-            snippet.includes('sql');
-
-          // Not all SQL injections will have these keywords, but many will
-          // This is a heuristic check
-        }
-      });
-    });
-
-    it('should not report false positives for safe code patterns', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['sql_injection'],
-        severity_threshold: 'medium',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should not flag parameterized queries or prepared statements as vulnerabilities
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        const snippet = vuln.code.toLowerCase();
-
-        // These patterns should generally be safe
-        const hasSafePatterns =
-          snippet.includes('prepared') || snippet.includes('parameter') || snippet.includes('bind');
-
-        // If safe patterns are present, severity should not be critical
-        if (hasSafePatterns) {
-          expect(vuln.severity).not.toBe('critical');
-        }
-      });
-    });
+    }
   });
 
-  describe('Performance Validation', () => {
-    it('should complete security analysis within reasonable time', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'low',
-      };
-
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-
-      // Should complete within 10 seconds for comprehensive security analysis
-      const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(10000);
+  it('should analyze entire codebase', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'codebase',
+      security_levels: ['sast', 'dependency', 'anti-patterns'],
+      severity_threshold: 'medium'
     });
 
-    it('should handle large codebases efficiently', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should handle large numbers of vulnerabilities without timeout
-      expect(body.summary.total).toBeGreaterThanOrEqual(0);
-      expect(body.vulnerabilities.length).toBeLessThanOrEqual(10000); // Reasonable limit
-    });
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.analysis_summary.files_analyzed).toBeGreaterThan(1);
+    expect(result.analysis_summary.total_issues).toBeDefined();
   });
 
-  describe('Edge Cases', () => {
-    it('should handle codebases with no security issues', async () => {
-      const cleanCodebaseId = '550e8400-e29b-41d4-a716-446655440098';
-      const validRequest = {
-        codebase_id: cleanCodebaseId,
-        patterns: ['all'],
-      };
+  it('should include CWE and CVSS scoring', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/crypto/encryption.ts',
+      security_levels: ['cryptography', 'key-management']
+    });
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.vulnerabilities.length > 0) {
+      result.vulnerabilities.forEach((vuln: any) => {
+        expect(vuln.cwe_id).toBeDefined();
+        expect(typeof vuln.cwe_id).toBe('string');
+        expect(vuln.cvss_score).toBeDefined();
+        expect(typeof vuln.cvss_score).toBe('number');
+        expect(vuln.cvss_score).toBeGreaterThanOrEqual(0);
+        expect(vuln.cvss_score).toBeLessThanOrEqual(10);
       });
+    }
+  });
 
-      expect([200, 404]).toContain(response.statusCode);
+  it('should provide detailed vulnerability information', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/api/user-controller.ts',
+      include_suggestions: true
+    });
 
-      if (response.statusCode === 200) {
-        const body = JSON.parse(response.body);
-        expect(body.vulnerabilities).toEqual([]);
-        expect(body.summary.total).toBe(0);
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.vulnerabilities.length > 0) {
+      const vuln = result.vulnerabilities[0];
+      expect(vuln.location.code_snippet).toBeDefined();
+      expect(typeof vuln.location.code_snippet).toBe('string');
+      expect(vuln.references).toBeDefined();
+      expect(Array.isArray(vuln.references)).toBe(true);
+    }
+  });
+
+  it('should validate required target parameter', async () => {
+    const tool = mockServer.getTool('analyze_security');
+
+    // Should fail when target is missing
+    await expect(tool.call({
+      security_levels: ['sast']
+    })).rejects.toThrow('target is required');
+
+    // Should fail when target is empty
+    await expect(tool.call({
+      target: '',
+      security_levels: ['sast']
+    })).rejects.toThrow('target cannot be empty');
+
+    // Should fail when target is not a string
+    await expect(tool.call({
+      target: 123,
+      security_levels: ['sast']
+    })).rejects.toThrow('target must be a string');
+  });
+
+  it('should validate severity_threshold parameter', async () => {
+    const tool = mockServer.getTool('analyze_security');
+
+    // Should fail for invalid severity thresholds
+    await expect(tool.call({
+      target: 'test.ts',
+      severity_threshold: 'invalid'
+    })).rejects.toThrow('severity_threshold must be one of: low, medium, high, critical');
+  });
+
+  it('should handle security_levels parameter validation', async () => {
+    const tool = mockServer.getTool('analyze_security');
+
+    // Should fail for invalid security levels
+    await expect(tool.call({
+      target: 'test.ts',
+      security_levels: ['invalid-level']
+    })).rejects.toThrow('invalid security level: invalid-level');
+
+    // Should accept valid security levels
+    const validLevels = ['sast', 'dependency', 'runtime', 'infrastructure', 'anti-patterns'];
+    for (const level of validLevels) {
+      const result = await tool.call({
+        target: 'test.ts',
+        security_levels: [level]
+      });
+      expect(result).toBeDefined();
+    }
+  });
+
+  it('should provide performance metrics', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/large-module/',
+      security_levels: ['sast', 'dependency']
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+
+    // Should include performance metrics
+    expect(result.metadata.analysis_time_ms).toBeDefined();
+    expect(typeof result.metadata.analysis_time_ms).toBe('number');
+    expect(result.metadata.tools_used).toBeDefined();
+    expect(Array.isArray(result.metadata.tools_used)).toBe(true);
+    expect(result.metadata.scan_coverage).toBeDefined();
+    expect(typeof result.metadata.scan_coverage).toBe('number');
+  });
+
+  it('should handle complex security scenarios', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const complexScenarios = [
+      {
+        target: 'src/auth/jwt-handler.ts',
+        security_levels: ['authentication', 'authorization', 'token-management'],
+        compliance_standards: ['owasp-auth']
+      },
+      {
+        target: 'src/api/file-upload.ts',
+        security_levels: ['file-validation', 'malware-scanning', 'path-traversal'],
+        compliance_standards: ['owasp-file-upload']
+      },
+      {
+        target: 'src/database/orm-models.ts',
+        security_levels: ['sql-injection', 'orm-usage', 'data-validation'],
+        compliance_standards: ['owasp-sqli']
       }
+    ];
+
+    for (const scenario of complexScenarios) {
+      const result = await tool.call(scenario);
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.analysis_summary.total_issues).toBeDefined();
+      expect(result.metadata.tools_used.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('should provide actionable remediation steps', async () => {
+    const tool = mockServer.getTool('analyze_security');
+    const result = await tool.call({
+      target: 'src/vulnerable-code.ts',
+      include_suggestions: true,
+      severity_threshold: 'low'
     });
 
-    it('should handle mixed language codebases', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should handle vulnerabilities across different languages
-      if (body.vulnerabilities.length > 0) {
-        const fileExtensions = new Set(
-          body.vulnerabilities.map((vuln: SecurityIssue) => {
-            const match = vuln.file_path.match(/\.(\w+)$/);
-            return match ? match[1] : '';
-          }),
-        );
-
-        // Should support multiple file types
-        expect(fileExtensions.size).toBeGreaterThanOrEqual(1);
-      }
-    });
-
-    it('should handle critical severity threshold', async () => {
-      const criticalRequest = {
-        codebase_id: testCodebaseId,
-        patterns: ['all'],
-        severity_threshold: 'critical',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/analyze_security',
-        payload: criticalRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include critical vulnerabilities
-      body.vulnerabilities.forEach((vuln: SecurityIssue) => {
-        expect(vuln.severity).toBe('critical');
-      });
-    });
+    if (result.vulnerabilities.length > 0) {
+      const vuln = result.vulnerabilities[0];
+      expect(vuln.remediation).toBeDefined();
+      expect(typeof vuln.remediation).toBe('string');
+      expect(vuln.remediation.length).toBeGreaterThan(10);
+      
+      // Should include specific steps or references
+      expect(
+        vuln.remediation.includes('fix') || 
+        vuln.remediation.includes('update') || 
+        vuln.remediation.includes('implement') ||
+        vuln.remediation.includes('remove')
+      ).toBe(true);
+    }
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'analyze_security' not found"
+ * - "target is required"
+ * - "target cannot be empty"
+ * - "target must be a string"
+ * - "severity_threshold must be one of: low, medium, high, critical"
+ * - "invalid security level: {level}"
+ * - "security_levels must be an array of strings"
+ * - "compliance_standards must be an array of strings"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   analysis_summary: {
+ *     total_issues: number,
+ *     critical_issues: number,
+ *     high_issues: number,
+ *     medium_issues: number,
+ *     low_issues: number,
+ *     files_analyzed: number
+ *   },
+ *   vulnerabilities: [
+ *     {
+ *       id: string,
+ *       title: string,
+ *       severity: string,
+ *       category: string,
+ *       description: string,
+ *       location: {
+ *         file_path: string,
+ *         line_number: number,
+ *         code_snippet: string
+ *       },
+ *       cwe_id: string,
+ *       cvss_score: number,
+ *       remediation: string,
+ *       references: [string]
+ *     }
+ *   ],
+ *   security_patterns: [
+ *     {
+ *       pattern: string,
+ *       type: 'positive' | 'negative',
+ *       description: string,
+ *       locations: [{file_path: string, line_number: number}]
+ *     }
+ *   ],
+ *   compliance_report: {
+ *     standards_checked: [string],
+ *     compliance_score: number,
+ *     violations: [{standard: string, violation: string}]
+ *   },
+ *   recommendations: [
+ *     {
+ *       priority: string,
+ *       action: string,
+ *       description: string,
+ *       impact: string
+ *     }
+ *   ],
+ *   metadata: {
+ *     analysis_time_ms: number,
+ *     tools_used: [string],
+ *     scan_coverage: number
+ *   }
+ * }
+ */

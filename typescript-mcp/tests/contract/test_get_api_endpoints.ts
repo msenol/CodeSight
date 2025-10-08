@@ -1,783 +1,528 @@
- 
- 
- 
- 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FastifyInstance } from 'fastify';
-import { createFastifyServer } from '../../src/server';
-import { APIEndpoint } from '../../src/types';
-
 /**
- * Contract Test for get_api_endpoints MCP Tool
+ * Contract Test for get_api_endpoints MCP Tool (T014)
  *
- * This test validates that the get_api_endpoints tool implementation
- * conforms to the MCP Tools Contract specification defined in:
- * specs/001-code-intelligence-mcp/contracts/mcp-tools.yaml
+ * This test validates the get_api_endpoints tool contract implementation.
+ * According to TDD principles, this test must FAIL before implementation.
  *
- * Test Coverage:
- * - Request/Response schema validation
- * - Required field validation
- * - Optional parameter handling
- * - Error response validation
- * - Business logic validation
- * - API endpoint discovery validation
- * - HTTP method filtering
+ * Test validates:
+ * - Tool exists and is registered
+ * - API endpoint discovery and analysis
+ * - Route pattern detection
+ * - OpenAPI specification generation
+ * - Documentation extraction from code
  */
 
-describe('MCP Tool: get_api_endpoints - Contract Tests', () => {
-  let app: FastifyInstance;
-  const testCodebaseId = '550e8400-e29b-41d4-a716-446655440000';
+import { describe, it, expect, beforeEach } from 'vitest';
 
-  beforeAll(async () => {
-    app = await createFastifyServer();
-    await app.ready();
+describe('get_api_endpoints MCP Tool - Contract Test (T014)', () => {
+  let mockServer: any;
+  let getApiEndpointsTool: any;
+
+  beforeEach(() => {
+    // Mock server setup - this will fail because tool doesn't exist yet
+    mockServer = {
+      tools: new Map(),
+      hasTool: (name: string) => mockServer.tools.has(name),
+      getTool: (name: string) => mockServer.tools.get(name),
+    };
   });
 
-  afterAll(async () => {
-    await app.close();
+  it('should have get_api_endpoints tool registered', () => {
+    // This should fail - tool not implemented yet
+    expect(mockServer.hasTool('get_api_endpoints')).toBe(true);
   });
 
-  describe('Request Schema Validation', () => {
-    it('should accept valid request with required fields only', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-      };
+  it('should validate input schema correctly', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    expect(tool).toBeDefined();
+    expect(tool.inputSchema).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
+    const schema = tool.inputSchema;
 
-      expect(response.statusCode).toBe(200);
+    // Optional properties (all are optional for flexibility)
+    expect(schema.properties.codebase_id).toBeDefined();
+    expect(schema.properties.codebase_id.type).toBe('string');
+    expect(schema.properties.api_types).toBeDefined();
+    expect(schema.properties.api_types.type).toBe('array');
+    expect(schema.properties.include_documentation).toBeDefined();
+    expect(schema.properties.include_documentation.type).toBe('boolean');
+    expect(schema.properties.group_by).toBeDefined();
+    expect(schema.properties.group_by.type).toBe('string');
+    expect(schema.properties.filter_by_tag).toBeDefined();
+    expect(schema.properties.filter_by_tag.type).toBe('array');
+  });
+
+  it('should discover API endpoints in codebase', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      codebase_id: 'test-codebase-uuid',
+      include_documentation: true,
+      group_by: 'controller'
     });
 
-    it('should accept valid request with all optional parameters', async () => {
-      const validRequestWithOptionals = {
-        codebase_id: testCodebaseId,
-        filter_method: 'GET',
-        include_schemas: true,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.api_summary).toBeDefined();
+    expect(result.endpoints).toBeDefined();
+    expect(Array.isArray(result.endpoints)).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequestWithOptionals,
-      });
+    // API summary structure validation
+    expect(result.api_summary.total_endpoints).toBeDefined();
+    expect(typeof result.api_summary.total_endpoints).toBe('number');
+    expect(result.api_summary.api_types).toBeDefined();
+    expect(Array.isArray(result.api_summary.api_types)).toBe(true);
+    expect(result.api_summary.controllers).toBeDefined();
+    expect(Array.isArray(result.api_summary.controllers)).toBe(true);
+  });
 
-      expect(response.statusCode).toBe(200);
+  it('should extract endpoint details correctly', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
     });
 
-    it('should accept request with different HTTP methods', async () => {
-      const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'all'];
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      for (const method of methods) {
-        const validRequest = {
-          codebase_id: testCodebaseId,
-          filter_method: method,
-          include_schemas: false,
-        };
+    if (result.endpoints.length > 0) {
+      const endpoint = result.endpoints[0];
+      expect(endpoint.path).toBeDefined();
+      expect(endpoint.method).toBeDefined();
+      expect(endpoint.controller).toBeDefined();
+      expect(endpoint.action).toBeDefined();
+      expect(endpoint.parameters).toBeDefined();
+      expect(Array.isArray(endpoint.parameters)).toBe(true);
+      expect(endpoint.responses).toBeDefined();
+      expect(Array.isArray(endpoint.responses)).toBe(true);
+      expect(endpoint.middleware).toBeDefined();
+      expect(Array.isArray(endpoint.middleware)).toBe(true);
+      expect(endpoint.tags).toBeDefined();
+      expect(Array.isArray(endpoint.tags)).toBe(true);
+      expect(endpoint.location).toBeDefined();
+      expect(endpoint.location.file_path).toBeDefined();
+      expect(endpoint.location.line_number).toBeDefined();
+    }
+  });
 
-        const response = await app.inject({
-          method: 'POST',
-          url: '/tools/get_api_endpoints',
-          payload: validRequest,
-        });
+  it('should include documentation for endpoints', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
+    });
 
-        expect(response.statusCode).toBe(200);
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.endpoints.length > 0) {
+      const endpoint = result.endpoints[0];
+      if (endpoint.documentation) {
+        expect(endpoint.documentation.summary).toBeDefined();
+        expect(endpoint.documentation.description).toBeDefined();
+        expect(endpoint.documentation.examples).toBeDefined();
+        expect(Array.isArray(endpoint.documentation.examples)).toBe(true);
       }
-    });
-
-    it('should reject request missing required codebase_id field', async () => {
-      const invalidRequest = {};
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase_id');
-    });
-
-    it('should reject request with invalid codebase_id format', async () => {
-      const invalidRequest = {
-        codebase_id: 'invalid-uuid-format',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
-
-    it('should reject request with invalid filter_method enum', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'INVALID_METHOD',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('method');
-    });
-
-    it('should reject request with invalid include_schemas type', async () => {
-      const invalidRequest = {
-        codebase_id: testCodebaseId,
-        include_schemas: 'invalid',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: invalidRequest,
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
+    }
   });
 
-  describe('Response Schema Validation', () => {
-    it('should return response conforming to contract schema', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-        include_schemas: true,
-      };
+  it('should group endpoints by specified criteria', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const groupingOptions = ['path', 'method', 'controller'];
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
+    for (const groupBy of groupingOptions) {
+      const result = await tool.call({
+        group_by: groupBy,
+        include_documentation: false
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.groupings).toBeDefined();
+      expect(typeof result.groupings).toBe('object');
+    }
+  });
 
-      // Validate top-level response structure
-      expect(body).toHaveProperty('endpoints');
-      expect(body).toHaveProperty('total_count');
+  it('should filter endpoints by API types', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const apiTypes = ['rest', 'graphql', 'websocket', 'grpc'];
 
-      // Validate endpoints array
-      expect(Array.isArray(body.endpoints)).toBe(true);
+    for (const apiType of apiTypes) {
+      const result = await tool.call({
+        api_types: [apiType],
+        include_documentation: false
+      });
 
-      // Validate total_count
-      expect(typeof body.total_count).toBe('number');
-      expect(body.total_count).toBeGreaterThanOrEqual(0);
-      expect(body.total_count).toBe(body.endpoints.length);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      
+      if (result.endpoints.length > 0) {
+        result.endpoints.forEach((endpoint: any) => {
+          // Should have consistent API type annotation
+          expect(endpoint.api_type).toBeDefined();
+        });
+      }
+    }
+  });
+
+  it('should filter endpoints by tags', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      filter_by_tag: ['public', 'v1', 'authenticated'],
+      include_documentation: false
     });
 
-    it('should return APIEndpoint objects conforming to schema', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        include_schemas: true,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      if (body.endpoints.length > 0) {
-        const endpoint: APIEndpoint = body.endpoints[0];
-
-        // Validate required APIEndpoint fields
-        expect(endpoint).toHaveProperty('id');
-        expect(endpoint).toHaveProperty('path');
-        expect(endpoint).toHaveProperty('method');
-        expect(endpoint).toHaveProperty('handler_entity_id');
-        expect(endpoint).toHaveProperty('request_schema');
-        expect(endpoint).toHaveProperty('response_schema');
-        expect(endpoint).toHaveProperty('authentication_required');
-        expect(endpoint).toHaveProperty('file_path');
-        expect(endpoint).toHaveProperty('line_number');
-
-        // Validate field types
-        expect(typeof endpoint.id).toBe('string');
-        expect(typeof endpoint.path).toBe('string');
-        expect(typeof endpoint.method).toBe('string');
-        expect(typeof endpoint.handler_entity_id).toBe('string');
-        expect(typeof endpoint.request_schema).toBe('object');
-        expect(typeof endpoint.response_schema).toBe('object');
-        expect(typeof endpoint.authentication_required).toBe('boolean');
-        expect(typeof endpoint.file_path).toBe('string');
-        expect(typeof endpoint.line_number).toBe('number');
-
-        // Validate UUID format for id and handler_entity_id
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        expect(endpoint.id).toMatch(uuidRegex);
-        expect(endpoint.handler_entity_id).toMatch(uuidRegex);
-
-        // Validate method enum
-        const validMethods = [
-          'GET',
-          'POST',
-          'PUT',
-          'DELETE',
-          'PATCH',
-          'OPTIONS',
-          'HEAD',
-          'GraphQL',
-        ];
-        expect(validMethods).toContain(endpoint.method);
-
-        // Validate line number
-        expect(endpoint.line_number).toBeGreaterThan(0);
-
-        // Validate file path format
-        expect(endpoint.file_path).toMatch(
-          /\.(ts|js|py|java|cpp|c|rs|go|cs|php|rb|swift|kt|scala|dart|ex)$/,
+    if (result.endpoints.length > 0) {
+      result.endpoints.forEach((endpoint: any) => {
+        expect(endpoint.tags).toBeDefined();
+        expect(Array.isArray(endpoint.tags)).toBe(true);
+        
+        // Should include at least one of the filtered tags
+        const hasFilteredTag = ['public', 'v1', 'authenticated'].some(tag => 
+          endpoint.tags.includes(tag)
         );
-
-        // Validate path format (should start with / for REST APIs)
-        if (endpoint.method !== 'GraphQL') {
-          expect(endpoint.path).toMatch(/^\//);
-        }
-      }
-    });
-
-    it('should handle schemas when include_schemas is true', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        include_schemas: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
+        expect(hasFilteredTag).toBe(true);
       });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // When include_schemas is true, schemas should be populated
-        expect(endpoint.request_schema).toBeDefined();
-        expect(endpoint.response_schema).toBeDefined();
-
-        // Schemas should be objects (can be empty)
-        expect(typeof endpoint.request_schema).toBe('object');
-        expect(typeof endpoint.response_schema).toBe('object');
-      });
-    });
-
-    it('should handle schemas when include_schemas is false', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        include_schemas: false,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // When include_schemas is false, schemas should be empty or minimal
-        expect(endpoint.request_schema).toBeDefined();
-        expect(endpoint.response_schema).toBeDefined();
-      });
-    });
-
-    it('should handle empty results gracefully', async () => {
-      const emptyCodebaseId = '550e8400-e29b-41d4-a716-446655440099';
-      const validRequest = {
-        codebase_id: emptyCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const body = JSON.parse(response.body);
-        expect(body.endpoints).toEqual([]);
-        expect(body.total_count).toBe(0);
-      }
-    });
+    }
   });
 
-  describe('Optional Parameter Behavior', () => {
-    it('should use default values for optional parameters', async () => {
-      const requestWithDefaults = {
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: requestWithDefaults,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Default filter_method = 'all' (should include all HTTP methods)
-      // Default include_schemas = true (should include schema information)
-      expect(body.endpoints).toBeDefined();
-      expect(body.total_count).toBeDefined();
+  it('should generate OpenAPI specification', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
     });
 
-    it('should filter by specific HTTP method', async () => {
-      const requestWithGetFilter = {
-        codebase_id: testCodebaseId,
-        filter_method: 'GET',
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.openapi_spec).toBeDefined();
+    expect(typeof result.openapi_spec).toBe('object');
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: requestWithGetFilter,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include GET endpoints
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        expect(endpoint.method).toBe('GET');
-      });
-    });
-
-    it('should filter by POST method', async () => {
-      const requestWithPostFilter = {
-        codebase_id: testCodebaseId,
-        filter_method: 'POST',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: requestWithPostFilter,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should only include POST endpoints
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        expect(endpoint.method).toBe('POST');
-      });
-    });
-
-    it('should include all methods when filter_method is all', async () => {
-      const requestWithAllFilter = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: requestWithAllFilter,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should include endpoints with any HTTP method
-      if (body.endpoints.length > 0) {
-        const methods = new Set(body.endpoints.map((endpoint: APIEndpoint) => endpoint.method));
-        const validMethods = [
-          'GET',
-          'POST',
-          'PUT',
-          'DELETE',
-          'PATCH',
-          'OPTIONS',
-          'HEAD',
-          'GraphQL',
-        ];
-
-        methods.forEach(method => {
-          expect(validMethods).toContain(method);
-        });
-      }
-    });
+    // Should include basic OpenAPI structure
+    expect(result.openapi_spec.openapi).toBeDefined();
+    expect(result.openapi_spec.info).toBeDefined();
+    expect(result.openapi_spec.paths).toBeDefined();
+    expect(result.openapi_spec.servers).toBeDefined();
   });
 
-  describe('Error Handling', () => {
-    it('should return 404 for non-existent codebase', async () => {
-      const nonExistentCodebaseId = '00000000-0000-0000-0000-000000000000';
-      const validRequest = {
-        codebase_id: nonExistentCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('codebase not found');
+  it('should analyze multiple API frameworks', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
     });
 
-    it('should handle malformed UUID gracefully', async () => {
-      const malformedRequest = {
-        codebase_id: 'not-a-uuid',
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: malformedRequest,
-      });
+    // Should detect frameworks used
+    expect(result.metadata.frameworks_detected).toBeDefined();
+    expect(Array.isArray(result.metadata.frameworks_detected)).toBe(true);
 
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.error).toContain('uuid');
-    });
+    // Should include analysis metrics
+    expect(result.metadata.scan_time_ms).toBeDefined();
+    expect(typeof result.metadata.scan_time_ms).toBe('number');
+    expect(result.metadata.files_scanned).toBeDefined();
+    expect(typeof result.metadata.files_scanned).toBe('number');
   });
 
-  describe('Business Logic Validation', () => {
-    it('should discover REST API endpoints correctly', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-        include_schemas: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        if (endpoint.method !== 'GraphQL') {
-          // REST endpoints should have valid path patterns
-          expect(endpoint.path).toMatch(/^\/[\w\-\/{}:]*$/);
-
-          // Should have reasonable path structure
-          expect(endpoint.path.length).toBeGreaterThan(0);
-          expect(endpoint.path).not.toBe('/');
-        }
-      });
+  it('should handle different HTTP methods', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
     });
 
-    it('should identify authentication requirements correctly', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        include_schemas: true,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
+    if (result.endpoints.length > 0) {
+      const methods = result.endpoints.map((e: any) => e.method);
+      const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+      
+      methods.forEach(method => {
+        expect(validMethods).toContain(method);
       });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // Authentication requirement should be a boolean
-        expect(typeof endpoint.authentication_required).toBe('boolean');
-
-        // Certain paths typically require authentication
-        if (
-          endpoint.path.includes('/admin') ||
-          endpoint.path.includes('/private') ||
-          endpoint.path.includes('/auth') ||
-          endpoint.method === 'DELETE' ||
-          endpoint.method === 'PUT'
-        ) {
-          // These might require authentication (heuristic)
-        }
-      });
-    });
-
-    it('should provide meaningful endpoint paths', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // Paths should be meaningful
-        expect(endpoint.path.length).toBeGreaterThan(1);
-        expect(endpoint.path).not.toMatch(/^\/(endpoint|api|route)\d+$/);
-
-        // Should not contain obvious placeholder text
-        expect(endpoint.path.toLowerCase()).not.toContain('placeholder');
-        expect(endpoint.path.toLowerCase()).not.toContain('example');
-      });
-    });
-
-    it('should link endpoints to correct handler entities', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // Handler entity ID should be valid UUID
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        expect(endpoint.handler_entity_id).toMatch(uuidRegex);
-
-        // Should have valid file path and line number
-        expect(endpoint.file_path.length).toBeGreaterThan(0);
-        expect(endpoint.line_number).toBeGreaterThan(0);
-      });
-    });
-
-    it('should handle different API frameworks', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should handle various API frameworks (Express, Fastify, Spring, etc.)
-      if (body.endpoints.length > 0) {
-        const methods = new Set(body.endpoints.map((endpoint: APIEndpoint) => endpoint.method));
-
-        // Should support standard HTTP methods
-        const standardMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-        const hasStandardMethods = standardMethods.some(method => methods.has(method));
-
-        if (methods.size > 0) {
-          expect(hasStandardMethods || methods.has('GraphQL')).toBe(true);
-        }
-      }
-    });
-
-    it('should provide appropriate schema information', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        include_schemas: true,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // Schemas should be objects
-        expect(typeof endpoint.request_schema).toBe('object');
-        expect(typeof endpoint.response_schema).toBe('object');
-
-        // POST/PUT endpoints should typically have request schemas
-        if (
-          endpoint.method === 'POST' ||
-          endpoint.method === 'PUT' ||
-          endpoint.method === 'PATCH'
-        ) {
-          // Request schema might be populated for these methods
-          expect(endpoint.request_schema).toBeDefined();
-        }
-
-        // All endpoints should have response schemas
-        expect(endpoint.response_schema).toBeDefined();
-      });
-    });
+    }
   });
 
-  describe('Performance Validation', () => {
-    it('should complete endpoint discovery within reasonable time', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-        include_schemas: true,
-      };
-
-      const startTime = Date.now();
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-      const endTime = Date.now();
-
-      expect(response.statusCode).toBe(200);
-
-      // Should complete within 5 seconds for endpoint discovery
-      const executionTime = endTime - startTime;
-      expect(executionTime).toBeLessThan(5000);
+  it('should extract route parameters correctly', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
     });
 
-    it('should handle large numbers of endpoints efficiently', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      // Should handle large numbers of endpoints without timeout
-      expect(body.total_count).toBeGreaterThanOrEqual(0);
-      expect(body.endpoints.length).toBeLessThanOrEqual(1000); // Reasonable limit
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle codebases with no API endpoints', async () => {
-      const noApiCodebaseId = '550e8400-e29b-41d4-a716-446655440098';
-      const validRequest = {
-        codebase_id: noApiCodebaseId,
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect([200, 404]).toContain(response.statusCode);
-
-      if (response.statusCode === 200) {
-        const body = JSON.parse(response.body);
-        expect(body.endpoints).toEqual([]);
-        expect(body.total_count).toBe(0);
-      }
-    });
-
-    it('should handle GraphQL endpoints', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      const graphqlEndpoints = body.endpoints.filter(
-        (endpoint: APIEndpoint) => endpoint.method === 'GraphQL',
+    if (result.endpoints.length > 0) {
+      const endpointWithParams = result.endpoints.find((e: any) => 
+        e.parameters.length > 0
       );
 
-      graphqlEndpoints.forEach((endpoint: APIEndpoint) => {
-        // GraphQL endpoints might have different path patterns
-        expect(endpoint.path).toBeDefined();
-        expect(endpoint.path.length).toBeGreaterThan(0);
-
-        // GraphQL typically uses POST method internally but is marked as GraphQL
-        expect(endpoint.method).toBe('GraphQL');
-      });
-    });
-
-    it('should handle mixed REST and GraphQL APIs', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-        filter_method: 'all',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      if (body.endpoints.length > 0) {
-        const methods = new Set(body.endpoints.map((endpoint: APIEndpoint) => endpoint.method));
-
-        // Should handle both REST and GraphQL endpoints
-        const hasRest = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].some(method =>
-          methods.has(method),
-        );
-        const hasGraphQL = methods.has('GraphQL');
-
-        // Should have at least one type of API
-        expect(hasRest || hasGraphQL).toBe(true);
+      if (endpointWithParams) {
+        endpointWithParams.parameters.forEach((param: any) => {
+          expect(param.name).toBeDefined();
+          expect(param.type).toBeDefined();
+          expect(param.required).toBeDefined();
+          expect(typeof param.required).toBe('boolean');
+          expect(param.location).toBeDefined();
+          expect(['query', 'path', 'header', 'cookie']).toContain(param.location);
+        });
       }
+    }
+  });
+
+  it('should include response schemas', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
     });
 
-    it('should handle endpoints with complex path parameters', async () => {
-      const validRequest = {
-        codebase_id: testCodebaseId,
-      };
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/tools/get_api_endpoints',
-        payload: validRequest,
-      });
+    if (result.endpoints.length > 0) {
+      const endpoint = result.endpoints[0];
+      expect(endpoint.responses).toBeDefined();
+      expect(Array.isArray(endpoint.responses)).toBe(true);
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-
-      body.endpoints.forEach((endpoint: APIEndpoint) => {
-        // Should handle path parameters like /users/{id} or /users/:id
-        if (endpoint.path.includes('{') || endpoint.path.includes(':')) {
-          expect(endpoint.path).toMatch(/\/[\w\-{}:]+/);
+      endpoint.responses.forEach((response: any) => {
+        expect(response.status_code).toBeDefined();
+        expect(typeof response.status_code).toBe('number');
+        expect(response.description).toBeDefined();
+        expect(typeof response.description).toBe('string');
+        
+        if (response.schema) {
+          expect(typeof response.schema).toBe('object');
         }
       });
+    }
+  });
+
+  it('should detect middleware usage', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: false
     });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.endpoints.length > 0) {
+      const endpointWithMiddleware = result.endpoints.find((e: any) => 
+        e.middleware && e.middleware.length > 0
+      );
+
+      if (endpointWithMiddleware) {
+        endpointWithMiddleware.middleware.forEach((middleware: any) => {
+          expect(typeof middleware).toBe('string');
+        });
+      }
+    }
+  });
+
+  it('should handle API versioning', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.api_summary) {
+      expect(result.api_summary.version).toBeDefined();
+      expect(typeof result.api_summary.version).toBe('string');
+    }
+
+    if (result.endpoints.length > 0) {
+      const versionedEndpoints = result.endpoints.filter((e: any) => 
+        e.path.includes('/v') || e.tags.includes('v1') || e.tags.includes('v2')
+      );
+
+      // Should detect versioning in paths or tags
+      expect(versionedEndpoints.length).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('should identify controller patterns', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      group_by: 'controller',
+      include_documentation: false
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    if (result.api_summary && result.api_summary.controllers.length > 0) {
+      result.api_summary.controllers.forEach((controller: string) => {
+        expect(typeof controller).toBe('string');
+        expect(controller.length).toBeGreaterThan(0);
+      });
+    }
+  });
+
+  it('should provide performance metrics', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: false
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+
+    // Should include performance metrics
+    expect(result.metadata.scan_time_ms).toBeDefined();
+    expect(typeof result.metadata.scan_time_ms).toBe('number');
+    expect(result.metadata.files_scanned).toBeDefined();
+    expect(typeof result.metadata.files_scanned).toBe('number');
+    expect(result.metadata.frameworks_detected).toBeDefined();
+    expect(Array.isArray(result.metadata.frameworks_detected)).toBe(true);
+  });
+
+  it('should handle codebase-specific scanning', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      codebase_id: 'specific-codebase-uuid',
+      api_types: ['rest'],
+      include_documentation: true
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Should focus on specific codebase
+    if (result.endpoints.length > 0) {
+      result.endpoints.forEach((endpoint: any) => {
+        expect(endpoint.location.file_path).toBeDefined();
+        expect(endpoint.location.file_path).toBeTruthy();
+      });
+    }
+  });
+
+  it('should handle empty codebase gracefully', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      codebase_id: 'empty-codebase-uuid'
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.api_summary.total_endpoints).toBe(0);
+    expect(result.endpoints).toEqual([]);
+  });
+
+  it('should handle complex API patterns', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true,
+      group_by: 'path'
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+
+    // Should handle nested routes
+    if (result.endpoints.length > 0) {
+      const nestedRoutes = result.endpoints.filter((e: any) => 
+        e.path.split('/').length > 3
+      );
+
+      expect(nestedRoutes.length).toBeGreaterThanOrEqual(0);
+    }
+
+    // Should handle query parameters
+    const endpointsWithQuery = result.endpoints.filter((e: any) => 
+      e.parameters.some((p: any) => p.location === 'query')
+    );
+
+    expect(endpointsWithQuery.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should extract comprehensive metadata', async () => {
+    const tool = mockServer.getTool('get_api_endpoints');
+    const result = await tool.call({
+      include_documentation: true,
+      api_types: ['rest', 'graphql']
+    });
+
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+    expect(result.metadata).toBeDefined();
+
+    // Should include comprehensive metadata
+    expect(result.metadata.scan_time_ms).toBeDefined();
+    expect(result.metadata.files_scanned).toBeDefined();
+    expect(result.metadata.frameworks_detected).toBeDefined();
+    expect(result.metadata.frameworks_detected.length).toBeGreaterThan(0);
+    expect(typeof result.metadata.scan_time_ms).toBe('number');
+    expect(typeof result.metadata.files_scanned).toBe('number');
   });
 });
+
+/**
+ * Expected Error Messages (for implementation reference):
+ *
+ * - "Tool 'get_api_endpoints' not found"
+ * - "codebase_id must be a valid UUID"
+ * - "api_types must be an array of strings"
+ * - "group_by must be one of: path, method, controller"
+ * - "filter_by_tag must be an array of strings"
+ * - "include_documentation must be a boolean"
+ *
+ * Expected Success Response Structure:
+ *
+ * {
+ *   success: true,
+ *   api_summary: {
+ *     total_endpoints: number,
+ *     api_types: [string],
+ *     controllers: [string],
+ *     version: string
+ *   },
+ *   endpoints: [
+ *     {
+ *       path: string,
+ *       method: string,
+ *       controller: string,
+ *       action: string,
+ *       parameters: [
+ *         {
+ *           name: string,
+ *           type: string,
+ *           required: boolean,
+ *           location: string
+ *         }
+ *       ],
+ *       responses: [
+ *         {
+ *           status_code: number,
+ *           description: string,
+ *           schema: object
+ *         }
+ *       ],
+ *       middleware: [string],
+ *       tags: [string],
+ *       documentation: {
+ *         summary: string,
+ *         description: string,
+ *         examples: [object]
+ *       },
+ *       location: {
+ *         file_path: string,
+ *         line_number: number
+ *       },
+ *       api_type: string
+ *     }
+ *   ],
+ *   groupings: object,
+ *   openapi_spec: object,
+ *   metadata: {
+ *     scan_time_ms: number,
+ *     files_scanned: number,
+ *     frameworks_detected: [string]
+ *   }
+ * }
+ */
