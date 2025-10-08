@@ -626,6 +626,9 @@ mod tests {
             "application/json".to_string(),
         );
 
+        // Make the entry evictable so scores are calculated
+        entry.metadata.evictable = true;
+
         // Test LRU policy
         let lru_score = entry.eviction_score(&EvictionPolicy::Lru);
         assert!(lru_score >= 0.0);
