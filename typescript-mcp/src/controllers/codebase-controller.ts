@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
  
 import type { Request, Response } from 'express';
 import { z } from 'zod';

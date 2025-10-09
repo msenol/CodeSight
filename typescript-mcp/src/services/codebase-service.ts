@@ -6,7 +6,6 @@ import { DatabaseSearchService } from './database-search-service.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as acorn from 'acorn';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
  
  
  
@@ -74,8 +73,9 @@ export class DefaultCodebaseService implements CodebaseService {
     // Handle "default" codebase ID - use current working directory
     if (id === 'default' || id === 'Default') {
       const defaultPath = process.cwd();
-      // eslint-disable-next-line no-console
-      console.log('[DEBUG] Using default codebase path:', defaultPath);
+      // Using logger for debugging instead of console
+      // TODO: Replace with proper logger when available
+      // logger.debug('[DEBUG] Using default codebase path:', defaultPath);
 
       const codebase: CodebaseInfo = {
         id: 'default',
@@ -111,8 +111,8 @@ export class DefaultCodebaseService implements CodebaseService {
       return codebase;
     } catch {
       // Not a valid path, check memory only
-      // eslint-disable-next-line no-console
-      console.log('[DEBUG] Codebase not found for ID:', id);
+      // TODO: Replace with proper logger when available
+      // logger.debug('[DEBUG] Codebase not found for ID:', id);
       return null;
     }
   }
