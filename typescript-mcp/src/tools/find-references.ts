@@ -79,6 +79,14 @@ export class FindReferencesTool {
   name = 'find_references';
   description = 'Find all references to a code entity with detailed usage analysis';
 
+  private codebaseService: CodebaseService;
+  private analysisService: AnalysisService;
+
+  constructor() {
+    this.codebaseService = new CodebaseService();
+    this.analysisService = new AnalysisService();
+  }
+
   inputSchema = {
     type: 'object',
     properties: {

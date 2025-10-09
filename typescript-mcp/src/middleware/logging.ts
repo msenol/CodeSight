@@ -4,7 +4,7 @@
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 import { randomUUID } from 'crypto';
 
 const logger = new Logger('LoggingMiddleware');

@@ -4,9 +4,9 @@
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 // import type { AnalysisService } from '../services/analysis-service.js'; // Rule 15: Import reserved for future implementation
  
-import type { ComplexityService } from '../services/complexity-service.js';
+import { complexityService } from '../services/complexity-service.js';
  
-import type { CodebaseService } from '../services/codebase-service.js';
+import { codebaseService } from '../services/codebase-service.js';
 import { z } from 'zod';
 
 const CheckComplexityInputSchema = z.object({
@@ -90,12 +90,12 @@ export class CheckComplexityTool {
     try {
       const input = CheckComplexityInputSchema.parse(args);
 
-      const entity = await this.codebaseService.getCodeEntity(input.entity_id);
+      const entity = await codebaseService.getCodeEntity(input.entity_id);
       if (!entity) {
         throw new Error(`Code entity with ID ${input.entity_id} not found`);
       }
 
-      const metrics = await this.complexityService.calculateMetrics(entity, input.metric_types);
+      const metrics = await complexityService.calculateMetrics(entity, input.metric_types);
       const rating = this.calculateComplexityRating(metrics);
       const suggestions = input.include_suggestions
         ? this.generateSuggestions(metrics, rating)

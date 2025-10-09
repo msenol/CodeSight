@@ -259,6 +259,7 @@ export interface QueryResult {
 export interface Statistics {
   total: number;
   byType: Array<{ entity_type: string; count: number }>;
+  byLanguage: Array<{ language: string; count: number }>;
   totalFiles: number;
   totalEntities: number;
   totalLines: number;

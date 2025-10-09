@@ -5,7 +5,7 @@
 
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 
 const logger = new Logger('MessageQueue');
 

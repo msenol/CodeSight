@@ -3,9 +3,8 @@
  * Provides comprehensive metrics collection and exposition
  */
 
-import { register, Counter, Histogram, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
+import { Counter, Histogram, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
 import { Request, Response } from 'express';
-import { performance } from 'perf_hooks';
 
 // Custom metrics registry for CodeSight
 export const metricsRegistry = new Registry();
@@ -402,7 +401,7 @@ export class SystemMetricsCollector {
  * Error metrics collector
  */
 export class ErrorMetricsCollector {
-  static recordError(errorType: string, component: string, error: Error): void {
+  static recordError(errorType: string, component: string, _error: Error): void {
     errorsTotal
       .labels(errorType, component)
       .inc();
@@ -480,7 +479,6 @@ export function metricsHandler(req: Request, res: Response): void {
  * Get all available metrics as a JSON object
  */
 export async function getMetricsAsJSON(): Promise<Record<string, any>> {
-  const metrics = await metricsRegistry.metrics();
   const result: Record<string, any> = {};
 
   // This is a simplified version - in production you might want to parse the Prometheus format
@@ -497,7 +495,8 @@ export async function getMetricsAsJSON(): Promise<Record<string, any>> {
     'codesight_errors_total'
   ];
 
-  result.registry_size = metricsRegistry.getMetricsAsJSON().length;
+  const metrics = await metricsRegistry.getMetricsAsJSON();
+  result.registry_size = metrics.length;
   result.timestamp = new Date().toISOString();
 
   return result;

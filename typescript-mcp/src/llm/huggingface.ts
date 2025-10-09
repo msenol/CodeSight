@@ -3,7 +3,7 @@
  * Provides remote AI capabilities when local solutions are unavailable
  */
 
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 
 const logger = new Logger('HuggingFace');
 

@@ -579,7 +579,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
 
       // Detect complex expressions (simplified heuristic)
       const complexityIndicators = [
-        /\([^)]*\([^)]*)/g, // Nested parentheses
+        /\([^)]*\([^)]*\)/g, // Nested parentheses
         /\?[^:]*:[^;]*/g, // Ternary operators
         /&&.*\|\|/g, // Mixed logical operators
         /\.[^.]*\.[^.]*\./g, // Chained method calls
@@ -676,7 +676,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
       const line = lines[i];
 
       // Detect complex if conditions
-      const complexConditionPattern = /if]*\(([^)]*(?:\|\||&&)[^)]*))/;
+      const complexConditionPattern = /if\s*\(([^)]*(?:\|\||&&)[^)]*)\)/;
       const match = line.match(complexConditionPattern);
 
       if (match) {
@@ -1026,8 +1026,8 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
 
   private detectStrategyPatternOpportunity(code: string): boolean {
     // Look for multiple if-else or switch statements that could benefit from Strategy pattern
-    const switchCount = (code.match(/switch]*\(/g) || []).length;
-    const ifElseCount = (code.match(/if]*\([^)]*)]*{[^}]*}]*else/g) || []).length;
+    const switchCount = (code.match(/switch\s*\(/g) || []).length;
+    const ifElseCount = (code.match(/if\s*\([^)]*\)\s*{[^}]*}\s*else/g) || []).length;
 
     return switchCount > 2 || ifElseCount > 3;
   }

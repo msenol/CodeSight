@@ -1,6 +1,8 @@
  
  
 import type { APIEndpoint } from '../types/index.js';
+import { codebaseService } from '../services/codebase-service.js';
+import { apiDiscoveryService } from '../services/api-discovery-service.js';
 import { z } from 'zod';
 
 const GetApiEndpointsInputSchema = z.object({
@@ -38,6 +40,8 @@ interface GetApiEndpointsResult {
 export class GetApiEndpointsTool {
   name = 'get_api_endpoints';
   description = 'Discover and analyze REST and GraphQL API endpoints in the codebase';
+
+  // Services are imported directly
 
   inputSchema = {
     type: 'object',
@@ -77,15 +81,15 @@ export class GetApiEndpointsTool {
     try {
       const input = GetApiEndpointsInputSchema.parse(args);
 
-      const codebase = await this.codebaseService.getCodebase(input.codebase_id);
+      const codebase = await codebaseService.getCodebase(input.codebase_id);
       if (!codebase) {
         throw new Error(`Codebase with ID ${input.codebase_id} not found`);
       }
 
-      const endpoints = await this.apiDiscoveryService.findApiEndpoints(input.codebase_id);
+      const endpoints = await apiDiscoveryService.findApiEndpoints(input.codebase_id);
       const methodsSummary = this.calculateMethodsSummary(endpoints);
       const authSummary = this.calculateAuthSummary(endpoints);
-      const frameworks = await this.apiDiscoveryService.detectFrameworks(input.codebase_id);
+      const frameworks = await apiDiscoveryService.detectFrameworks(input.codebase_id);
 
       return {
         codebase_id: input.codebase_id,

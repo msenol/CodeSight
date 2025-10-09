@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { DatabaseSearchService } from '../services/database-search-service';
-import { Logger } from '../services/logger';
+import { DatabaseSearchService } from '../services/database-search-service.js';
+import { Logger } from '../services/logger.js';
 
 const logger = new Logger('QueriesController');
 

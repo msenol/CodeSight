@@ -769,6 +769,7 @@ export class DatabaseAdapter {
     return {
       total: Number(stats.total) || 0,
       byType: (stats.byType as any) || [],
+      byLanguage: (stats.byLanguage as any) || [],
       totalFiles: Number(stats.totalFiles) || 0,
       totalEntities: Number(stats.totalEntities) || 0,
       totalLines: Number(stats.totalLines) || 0,
