@@ -1,114 +1,183 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use code_intelligence_core::indexer::Indexer;
-use code_intelligence_core::models::Codebase;
-use std::time::Duration;
-use tokio::runtime::Runtime;
-use std::path::PathBuf;
+use codesight_core::services::{IndexerService, ParserService};
+use codesight_core::models::Codebase;
+use std::path::{Path, PathBuf};
 use tempfile::TempDir;
+use tokio::runtime::Runtime;
 
-/// Benchmark indexing performance for different file sizes
-fn bench_file_indexing(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
+fn create_test_codebase() -> (TempDir, Codebase) {
+    let temp_dir = TempDir::new().unwrap();
+    let codebase_path = temp_dir.path();
 
-    let mut group = c.benchmark_group("file_indexing");
-    group.measurement_time(Duration::from_secs(30));
-    group.sample_size(20);
+    // Create test files
+    let test_files = vec![
+        ("src/main.ts", r#"
+export class UserService {
+    constructor(private database: Database) {}
 
-    // Test different file sizes (lines of code)
-    let file_sizes = vec![100, 500, 1000, 5000, 10000];
-
-    for size in file_sizes {
-        group.bench_with_input(
-            BenchmarkId::new(format!("{}_lines", size), "single_file"),
-            &size,
-            |b, &size| {
-                b.to_async(&rt).iter(|| async {
-                    let indexer = Indexer::new().await;
-                    let temp_dir = TempDir::new().unwrap();
-                    let test_file = create_test_file(&temp_dir, size);
-
-                    let _result = indexer.index_file(black_box(&test_file)).await;
-                });
-            },
-        );
+    async getUser(id: string): Promise<User | null> {
+        return await this.database.users.findById(id);
     }
 
-    group.finish();
+    async createUser(userData: CreateUserDto): Promise<User> {
+        const user = new User();
+        Object.assign(user, userData);
+        return await this.database.users.save(user);
+    }
 }
 
-/// Benchmark batch indexing performance
-fn bench_batch_indexing(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
+interface User {
+    id: string;
+    name: string;
+    email: string;
+}
 
-    let mut group = c.benchmark_group("batch_indexing");
-    group.measurement_time(Duration::from_secs(60));
-    group.sample_size(10);
+interface CreateUserDto {
+    name: string;
+    email: string;
+}
+"#),
+        ("src/auth.ts", r#"
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
-    // Test different batch sizes
-    let batch_sizes = vec![10, 50, 100, 500];
+export class AuthService {
+    constructor(private jwtSecret: string) {}
 
-    for batch_size in batch_sizes {
-        group.bench_with_input(
-            BenchmarkId::new(format!("{}_files", batch_size), "batch"),
-            &batch_size,
-            |b, &batch_size| {
-                b.to_async(&rt).iter(|| async {
-                    let indexer = Indexer::new().await;
-                    let temp_dir = TempDir::new().unwrap();
-                    let test_files = create_test_files_batch(&temp_dir, batch_size);
-
-                    let start_time = std::time::Instant::now();
-                    let _results = indexer.index_files(black_box(test_files)).await;
-                    let duration = start_time.elapsed();
-
-                    // Ensure we're actually measuring the work
-                    black_box(duration);
-                });
-            },
-        );
+    async hashPassword(password: string): Promise<string> {
+        return await bcrypt.hash(password, 10);
     }
 
-    group.finish();
+    async verifyPassword(password: string, hash: string): Promise<boolean> {
+        return await bcrypt.compare(password, hash);
+    }
+
+    generateToken(userId: string): string {
+        return jwt.sign({ userId }, this.jwtSecret, { expiresIn: '24h' });
+    }
+}
+"#),
+        ("src/database.ts", r#"
+export class Database {
+    users: UserRepository;
+    posts: PostRepository;
+
+    constructor() {
+        this.users = new UserRepository();
+        this.posts = new PostRepository();
+    }
 }
 
-/// Benchmark incremental indexing performance
-fn bench_incremental_indexing(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
+export class UserRepository {
+    private users: Map<string, User> = new Map();
 
-    let mut group = c.benchmark_group("incremental_indexing");
-    group.measurement_time(Duration::from_secs(45));
-    group.sample_size(15);
+    async findById(id: string): Promise<User | null> {
+        return this.users.get(id) || null;
+    }
 
-    // Test incremental updates
-    let scenarios = vec![
-        ("small_change", 10, 1),    // 10 files, 1 changed
-        ("medium_change", 100, 10), // 100 files, 10 changed
-        ("large_change", 1000, 100), // 1000 files, 100 changed
+    async save(user: User): Promise<User> {
+        this.users.set(user.id, user);
+        return user;
+    }
+}
+
+export class PostRepository {
+    private posts: Map<string, Post> = new Map();
+
+    async findById(id: string): Promise<Post | null> {
+        return this.posts.get(id) || null;
+    }
+
+    async save(post: Post): Promise<Post> {
+        this.posts.set(post.id, post);
+        return post;
+    }
+}
+"#),
+        ("utils/helpers.ts", r#"
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency,
+    }).format(amount);
+}
+
+export function formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+}
+
+export function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+): (...args: Parameters<T>) => void {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<T>) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+}
+"#),
     ];
 
-    for (name, total_files, changed_files) in scenarios {
+    for (file_path, content) in test_files {
+        let full_path = codebase_path.join(file_path);
+        if let Some(parent) = full_path.parent() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
+        std::fs::write(full_path, content).unwrap();
+    }
+
+    let codebase = Codebase {
+        id: "test-codebase".to_string(),
+        name: "Test Codebase".to_string(),
+        path: codebase_path.to_string_lossy().to_string(),
+        size_bytes: 0,
+        file_count: test_files.len() as u32,
+        language_stats: [("typescript".to_string(), test_files.len() as u32)].into_iter().collect(),
+        index_version: "1.0.0".to_string(),
+        last_indexed: None,
+        configuration_id: "default".to_string(),
+        status: codesight_core::models::CodebaseStatus::Unindexed,
+    };
+
+    (temp_dir, codebase)
+}
+
+fn bench_indexing_performance(c: &mut Criterion) {
+    let rt = Runtime::new().unwrap();
+
+    let mut group = c.benchmark_group("indexing");
+
+    // Benchmark different file counts
+    for file_count in [1, 5, 10, 25, 50].iter() {
         group.bench_with_input(
-            BenchmarkId::new(name, "incremental"),
-            &(total_files, changed_files),
-            |b, &(total_files, changed_files)| {
+            BenchmarkId::new("files", file_count),
+            file_count,
+            |b, &file_count| {
                 b.to_async(&rt).iter(|| async {
-                    let indexer = Indexer::new().await;
-                    let temp_dir = TempDir::new().unwrap();
+                    let (_temp_dir, codebase) = create_test_codebase();
+                    let parser = ParserService::new();
+                    let indexer = IndexerService::new();
 
-                    // Initial indexing
-                    let initial_files = create_test_files_batch(&temp_dir, total_files);
-                    let _initial_result = indexer.index_files(initial_files.clone()).await;
-
-                    // Simulate some time passing
-                    tokio::time::sleep(Duration::from_millis(100)).await;
-
-                    // Incremental indexing - modify some files
-                    let modified_files = initial_files
+                    // Create additional test files if needed
+                    let mut files_to_process = vec![];
+                    for entry in walkdir::WalkDir::new(&codebase.path)
                         .into_iter()
-                        .take(changed_files)
-                        .collect();
+                        .filter_map(|e| e.ok())
+                        .filter(|e| {
+                            e.path().extension().map(|ext| ext == "ts").unwrap_or(false)
+                        })
+                        .take(file_count)
+                    {
+                        files_to_process.push(entry.path().to_path_buf());
+                    }
 
-                    let _incremental_result = indexer.index_files(black_box(modified_files)).await;
+                    for file_path in &files_to_process {
+                        let content = std::fs::read_to_string(file_path).unwrap();
+                        let ast = parser.parse(&content, "typescript").unwrap();
+                        let entities = indexer.extract_entities(&ast, file_path).unwrap();
+                        black_box(entities);
+                    }
                 });
             },
         );
@@ -117,33 +186,88 @@ fn bench_incremental_indexing(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark different language parsing performance
-fn bench_language_parsing(c: &mut Criterion) {
+fn bench_parsing_performance(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
+    let parser = ParserService::new();
 
-    let mut group = c.benchmark_group("language_parsing");
-    group.measurement_time(Duration::from_secs(20));
-    group.sample_size(30);
+    let mut group = c.benchmark_group("parsing");
 
-    let languages = vec![
-        ("rust", "rs"),
-        ("typescript", "ts"),
-        ("javascript", "js"),
-        ("python", "py"),
-        ("go", "go"),
+    // Test different languages
+    let test_cases = vec![
+        ("typescript", r#"
+export class ComplexClass<T> {
+    private items: T[] = [];
+
+    constructor(private config: Config) {}
+
+    async process<U>(data: U[], transform: (item: U) => T): Promise<T[]> {
+        return data.map(transform);
+    }
+
+    *[Symbol.iterator](): Iterator<T> {
+        for (const item of this.items) {
+            yield item;
+        }
+    }
+}
+"#),
+        ("javascript", r#"
+function createUser({ name, email, role = 'user' } = {}) {
+    const user = {
+        id: generateId(),
+        name,
+        email,
+        role,
+        createdAt: new Date(),
+        permissions: getPermissions(role)
+    };
+
+    return database.users.save(user);
+}
+
+const generateId = () => Math.random().toString(36).substr(2, 9);
+"#),
+        ("python", r#"
+from typing import List, Dict, Optional, TypeVar, Generic
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
+
+T = TypeVar('T')
+
+class Repository(Generic[T], ABC):
+    @abstractmethod
+    async def find_by_id(self, id: str) -> Optional[T]:
+        pass
+
+    @abstractmethod
+    async def save(self, entity: T) -> T:
+        pass
+
+@dataclass
+class User:
+    id: str
+    name: str
+    email: str
+    created_at: datetime
+
+class UserRepository(Repository[User]):
+    async def find_by_id(self, id: str) -> Optional[User]:
+        return self._users.get(id)
+
+    async def save(self, user: User) -> User:
+        self._users[user.id] = user
+        return user
+"#),
     ];
 
-    for (language, extension) in languages {
+    for (language, code) in test_cases {
         group.bench_with_input(
-            BenchmarkId::new(language, "parse_language"),
-            &extension,
-            |b, extension| {
+            BenchmarkId::new("language", language),
+            language,
+            |b, &language| {
                 b.to_async(&rt).iter(|| async {
-                    let indexer = Indexer::new().await;
-                    let temp_dir = TempDir::new().unwrap();
-                    let test_file = create_language_specific_file(&temp_dir, extension, 1000);
-
-                    let _result = indexer.index_file(black_box(&test_file)).await;
+                    let ast = parser.parse(black_box(code), language).unwrap();
+                    black_box(ast);
                 });
             },
         );
@@ -152,182 +276,63 @@ fn bench_language_parsing(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark memory usage during indexing
-fn bench_memory_indexing(c: &mut Criterion) {
+fn bench_entity_extraction(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
+    let parser = ParserService::new();
+    let indexer = IndexerService::new();
 
-    let mut group = c.benchmark_group("memory_indexing");
-    group.measurement_time(Duration::from_secs(30));
-    group.sample_size(10);
+    let mut group = c.benchmark_group("entity_extraction");
 
-    // Test memory usage patterns
-    let memory_scenarios = vec![
-        ("low_memory", 100, 50),     // Small files, low parallelism
-        ("medium_memory", 500, 100), // Medium files, medium parallelism
-        ("high_memory", 1000, 200),  // Large files, high parallelism
-    ];
+    let test_code = r#"
+export class ServiceManager {
+    private services: Map<string, Service> = new Map();
 
-    for (name, file_count, parallelism) in memory_scenarios {
-        group.bench_with_input(
-            BenchmarkId::new(name, "memory_usage"),
-            &(file_count, parallelism),
-            |b, &(file_count, parallelism)| {
-                b.to_async(&rt).iter(|| async {
-                    let indexer = Indexer::new().await;
-                    let temp_dir = TempDir::new().unwrap();
-                    let test_files = create_test_files_batch(&temp_dir, file_count);
+    constructor(private config: Configuration) {}
 
-                    // Configure indexer for memory test
-                    indexer.set_parallelism(black_box(parallelism));
-
-                    let _results = indexer.index_files(black_box(test_files)).await;
-                });
-            },
-        );
+    registerService<T extends Service>(name: string, service: T): void {
+        this.services.set(name, service);
     }
+
+    getService<T extends Service>(name: string): T | null {
+        return (this.services.get(name) as T) || null;
+    }
+
+    async initializeServices(): Promise<void> {
+        for (const [name, service] of this.services) {
+            await service.initialize();
+        }
+    }
+}
+
+interface Service {
+    initialize(): Promise<void>;
+    shutdown(): Promise<void>;
+}
+
+interface Configuration {
+    database: DatabaseConfig;
+    cache: CacheConfig;
+    logging: LoggingConfig;
+}
+
+type ServiceFactory<T extends Service> = () => T;
+"#;
+
+    group.bench_function("typescript_entities", |b| {
+        b.to_async(&rt).iter(|| async {
+            let ast = parser.parse(test_code, "typescript").unwrap();
+            let entities = indexer.extract_entities(&ast, Path::new("test.ts")).unwrap();
+            black_box(entities);
+        });
+    });
 
     group.finish();
-}
-
-/// Helper function to create a test file with specified size
-fn create_test_file(temp_dir: &TempDir, line_count: usize) -> PathBuf {
-    let file_path = temp_dir.path().join("test_file.rs");
-    let mut content = String::new();
-
-    content.push_str("// Auto-generated test file for benchmarking\n");
-    content.push_str("use std::collections::{HashMap, HashSet};\n");
-    content.push_str("use serde::{Deserialize, Serialize};\n\n");
-
-    for i in 0..line_count {
-        content.push_str(&format!(
-            r#"
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TestStruct{i} {{
-    pub id: usize,
-    pub name: String,
-    pub data: HashMap<String, Vec<i32>>,
-    pub flags: HashSet<String>,
-}}
-
-impl TestStruct{i} {{
-    pub fn new(id: usize, name: String) -> Self {{
-        Self {{
-            id,
-            name,
-            data: HashMap::new(),
-            flags: HashSet::new(),
-        }}
-    }}
-
-    pub fn process(&self) -> Result<Vec<String>, Box<dyn std::error::Error>> {{
-        let mut results = Vec::new();
-        for (key, values) in &self.data {{
-            results.push(format!("{{}}: {{:?}}", key, values));
-        }}
-        Ok(results)
-    }}
-}}
-
-pub fn function_{i}(input: TestStruct{i}) -> Result<String, Box<dyn std::error::Error>> {{
-    let processed = input.process()?;
-    Ok(format!("Processed {{}} items", processed.len()))
-}}
-
-#[cfg(test)]
-mod tests_{i} {{
-    use super::*;
-
-    #[test]
-    fn test_struct_{i}() {{
-        let test_struct = TestStruct{i}::new({i}, "test_{i}".to_string());
-        assert!(test_struct.process().is_ok());
-    }}
-}}
-"#
-        ));
-    }
-
-    std::fs::write(&file_path, content).unwrap();
-    file_path
-}
-
-/// Helper function to create multiple test files
-fn create_test_files_batch(temp_dir: &TempDir, file_count: usize) -> Vec<PathBuf> {
-    (0..file_count)
-        .map(|i| {
-            let file_path = temp_dir.path().join(format!("test_file_{}.rs", i));
-            let content = format!(
-                r#"
-// Test file {i}
-pub mod module_{i} {{
-    pub struct TestStruct {{
-        value: i32,
-    }}
-
-    pub fn test_function_{i}() -> i32 {{
-        {i}
-    }}
-}}
-"#
-            );
-            std::fs::write(&file_path, content).unwrap();
-            file_path
-        })
-        .collect()
-}
-
-/// Helper function to create language-specific test files
-fn create_language_specific_file(temp_dir: &TempDir, extension: &str, line_count: usize) -> PathBuf {
-    let file_path = temp_dir.path().join(format!("test_file.{}", extension));
-    let mut content = String::new();
-
-    match extension {
-        "rs" => {
-            content.push_str("use std::collections::HashMap;\n\n");
-            for i in 0..line_count {
-                content.push_str(&format!("pub fn rust_function_{}() -> i32 {{ {} }}\n", i, i));
-            }
-        }
-        "ts" => {
-            content.push_str("import {{ Map }} from 'typescript';\n\n");
-            for i in 0..line_count {
-                content.push_str(&format!("export function tsFunction_{}(): number {{ return {}; }}\n", i, i));
-            }
-        }
-        "js" => {
-            for i in 0..line_count {
-                content.push_str(&format!("function jsFunction_{}() {{ return {}; }}\n", i, i));
-            }
-        }
-        "py" => {
-            for i in 0..line_count {
-                content.push_str(&format!("def py_function_{}():\n    return {}\n\n", i, i));
-            }
-        }
-        "go" => {
-            for i in 0..line_count {
-                content.push_str(&format!("func goFunction{}() int {{ return {} }}\n", i, i));
-            }
-        }
-        _ => {
-            // Default to simple content
-            for i in 0..line_count {
-                content.push_str(&format!("Line {} content\n", i));
-            }
-        }
-    }
-
-    std::fs::write(&file_path, content).unwrap();
-    file_path
 }
 
 criterion_group!(
     benches,
-    bench_file_indexing,
-    bench_batch_indexing,
-    bench_incremental_indexing,
-    bench_language_parsing,
-    bench_memory_indexing
+    bench_indexing_performance,
+    bench_parsing_performance,
+    bench_entity_extraction
 );
-
 criterion_main!(benches);

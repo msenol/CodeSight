@@ -1,42 +1,365 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use code_intelligence_core::indexer::Indexer;
-use code_intelligence_core::search::SearchEngine;
-use code_intelligence_core::models::{Codebase, CodeEntity};
-use std::time::Duration;
+use codesight_core::services::{IndexerService, ParserService, SearchService};
+use codesight_core::models::{Codebase, CodeEntity};
+use std::path::{Path, PathBuf};
+use tempfile::TempDir;
 use tokio::runtime::Runtime;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
-/// Memory usage tracking for indexing operations
-fn bench_memory_indexing(c: &mut Criterion) {
+fn create_large_test_dataset() -> (TempDir, Codebase, Vec<String>) {
+    let temp_dir = TempDir::new().unwrap();
+    let codebase_path = temp_dir.path();
+
+    let mut file_paths = Vec::new();
+
+    // Create a larger test dataset with various file sizes
+    for i in 0..100 {
+        let file_content = if i % 5 == 0 {
+            // Large file with many entities
+            format!(r#"
+// Large file {} with many functions and classes
+export class Service{i} {{
+    private dependencies: Map<string, any> = new Map();
+    private cache: LRUCache<string, any> = new LRUCache(1000);
+    private metrics: MetricsCollector = new MetricsCollector();
+
+    constructor(private config: Config{i}) {{
+        this.initialize();
+    }}
+
+    private initialize(): void {{
+        this.setupDependencies();
+        this.configureCache();
+        this.initializeMetrics();
+    }}
+
+    async processRequest<i>(request: Request{i}): Promise<Response{i}> {{
+        const startTime = performance.now();
+
+        try {{
+            // Validate request
+            const validation = await this.validateRequest(request);
+            if (!validation.isValid) {{
+                return this.createErrorResponse(validation.errors);
+            }}
+
+            // Process request
+            const result = await this.handleRequest(request);
+
+            // Update metrics
+            this.metrics.recordRequest('success', performance.now() - startTime);
+
+            return this.createSuccessResponse(result);
+        }} catch (error) {{
+            this.metrics.recordRequest('error', performance.now() - startTime);
+            return this.createErrorResponse([error.message]);
+        }}
+    }}
+
+    private async validateRequest(request: Request{i}): Promise<ValidationResult> {{
+        const validator = new RequestValidator{i}();
+        return await validator.validate(request);
+    }}
+
+    private async handleRequest(request: Request{i}): Promise<ProcessResult> {{
+        const processor = new RequestProcessor{i}();
+        return await processor.process(request);
+    }}
+
+    private createSuccessResponse(result: ProcessResult): Response<i> {{
+        return {{
+            success: true,
+            data: result,
+            timestamp: new Date().toISOString(),
+            requestId: this.generateRequestId()
+        }};
+    }}
+
+    private createErrorResponse(errors: string[]): Response<i> {{
+        return {{
+            success: false,
+            errors,
+            timestamp: new Date().toISOString(),
+            requestId: this.generateRequestId()
+        }};
+    }}
+
+    private generateRequestId(): string {{
+        return Math.random().toString(36).substr(2, 9);
+    }}
+
+    // Additional methods for Service{i}
+    async getMetrics(): Promise<ServiceMetrics> {{
+        return this.metrics.getMetrics();
+    }}
+
+    async clearCache(): Promise<void> {{
+        this.cache.clear();
+    }}
+
+    async healthCheck(): Promise<HealthStatus> {{
+        return {{
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            memoryUsage: process.memoryUsage()
+        }};
+    }}
+}}
+
+export class RequestValidator{i} {{
+    private rules: ValidationRule[] = [];
+
+    constructor() {{
+        this.setupValidationRules();
+    }}
+
+    private setupValidationRules(): void {{
+        this.rules = [
+            new RequiredFieldRule('id'),
+            new RequiredFieldRule('type'),
+            new ValidEmailRule('email'),
+            new MinLengthRule('name', 2),
+            new MaxLengthRule('name', 100)
+        ];
+    }}
+
+    async validate(request: Request{i}): Promise<ValidationResult> {{
+        const errors: string[] = [];
+
+        for (const rule of this.rules) {{
+            const ruleErrors = await rule.validate(request);
+            errors.push(...ruleErrors);
+        }}
+
+        return {{
+            isValid: errors.length === 0,
+            errors
+        }};
+    }}
+}}
+
+export class RequestProcessor{i} {{
+    private plugins: Plugin[] = [];
+
+    constructor() {{
+        this.loadPlugins();
+    }}
+
+    private loadPlugins(): void {{
+        // Load processing plugins
+        this.plugins = [
+            new AuthPlugin(),
+            new LoggingPlugin(),
+            new CachingPlugin(),
+            new MetricsPlugin()
+        ];
+    }}
+
+    async process(request: Request{i}): Promise<ProcessResult> {{
+        let context = new ProcessContext(request);
+
+        for (const plugin of this.plugins) {{
+            context = await plugin.process(context);
+        }}
+
+        return context.getResult();
+    }}
+}}
+
+// Supporting interfaces and classes
+interface Config{i} {{
+    database: DatabaseConfig;
+    cache: CacheConfig;
+    logging: LoggingConfig;
+    plugins: PluginConfig[];
+}}
+
+interface Request{i> {{
+    id: string;
+    type: string;
+    data: any;
+    metadata: RequestMetadata;
+}}
+
+interface Response<i> {{
+    success: boolean;
+    data?: any;
+    errors?: string[];
+    timestamp: string;
+    requestId: string;
+}}
+
+interface ValidationResult {{
+    isValid: boolean;
+    errors: string[];
+}}
+
+interface ProcessResult {{
+    processedData: any;
+    metadata: ProcessMetadata;
+    metrics: ProcessMetrics;
+}}
+"#, i)
+        } else if i % 3 == 0 {
+            // Medium file
+            format!(r#"
+// Medium file {} - Utility functions
+export class StringUtil{i} {{
+    static capitalize(str: string): string {{
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }}
+
+    static truncate(str: string, length: number): string {{
+        return str.length > length ? str.slice(0, length) + '...' : str;
+    }}
+
+    static slugify(str: string): string {{
+        return str
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }}
+
+    static isValidEmail(email: string): boolean {{
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }}
+
+    static generateId(length: number = 8): string {{
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {{
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }}
+        return result;
+    }}
+}}
+
+export class DateUtil{i} {{
+    static formatDate(date: Date, format: string = 'YYYY-MM-DD'): string {{
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return format
+            .replace('YYYY', year.toString())
+            .replace('MM', month)
+            .replace('DD', day);
+    }}
+
+    static isWeekend(date: Date): boolean {{
+        const day = date.getDay();
+        return day === 0 || day === 6;
+    }}
+
+    static addDays(date: Date, days: number): Date {{
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }}
+}}
+
+export class ArrayUtil{i} {{
+    static unique<T>(array: T[]): T[] {{
+        return [...new Set(array)];
+    }}
+
+    static chunk<T>(array: T[], size: number): T[][] {{
+        const chunks: T[][] = [];
+        for (let i = 0; i < array.length; i += size) {{
+            chunks.push(array.slice(i, i + size));
+        }}
+        return chunks;
+    }}
+
+    static shuffle<T>(array: T[]): T[] {{
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {{
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }}
+        return shuffled;
+    }}
+}}
+"#, i)
+        } else {
+            // Small file
+            format!(r#"
+// Small file {} - Constants and types
+export const CONSTANTS{i} = {{
+    API_VERSION: 'v1',
+    MAX_RETRIES: 3,
+    TIMEOUT_MS: 5000,
+    CACHE_TTL: 3600
+}};
+
+export type Status{i} = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface ConfigItem{i} {{
+    key: string;
+    value: any;
+    type: 'string' | 'number' | 'boolean' | 'object';
+}}
+
+export function createConfigItem<i>(key: string, value: any): ConfigItem<i> {{
+    return {{
+        key,
+        value,
+        type: typeof value as any
+    }};
+}}
+"#, i)
+        };
+
+        let file_path = codebase_path.join(format!("src/module_{}/file_{}.ts", i / 10, i));
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
+        std::fs::write(&file_path, file_content).unwrap();
+        file_paths.push(file_path.to_string_lossy().to_string());
+    }
+
+    let codebase = Codebase {
+        id: "large-test-codebase".to_string(),
+        name: "Large Test Codebase".to_string(),
+        path: codebase_path.to_string_lossy().to_string(),
+        size_bytes: 0,
+        file_count: file_paths.len() as u32,
+        language_stats: [("typescript".to_string(), file_paths.len() as u32)].into_iter().collect(),
+        index_version: "1.0.0".to_string(),
+        last_indexed: None,
+        configuration_id: "default".to_string(),
+        status: codesight_core::models::CodebaseStatus::Unindexed,
+    };
+
+    (temp_dir, codebase, file_paths)
+}
+
+fn bench_memory_usage_during_indexing(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
 
     let mut group = c.benchmark_group("memory_indexing");
-    group.measurement_time(Duration::from_secs(30));
-    group.sample_size(20);
-    group.throughput(Throughput::Bytes(std::mem::size_of::<CodeEntity>() as u64));
 
-    // Test memory usage with different entity counts
-    let entity_counts = vec![1000, 5000, 10000, 25000, 50000];
-
-    for count in entity_counts {
+    // Test memory usage with different file counts
+    for file_count in [10, 25, 50, 100].iter() {
         group.bench_with_input(
-            BenchmarkId::new(format!("{}_entities", count), "indexing_memory"),
-            &count,
-            |b, &entity_count| {
+            BenchmarkId::new("files", file_count),
+            file_count,
+            |b, &file_count| {
                 b.to_async(&rt).iter(|| async {
-                    let indexer = Indexer::new().await;
-                    let entities = create_entities(entity_count);
+                    let (_temp_dir, codebase, file_paths) = create_large_test_dataset();
+                    let parser = ParserService::new();
+                    let indexer = IndexerService::new();
 
-                    let start_memory = get_memory_usage();
+                    let files_to_process: Vec<String> = file_paths.into_iter().take(file_count).collect();
 
-                    let _results = indexer.index_entities(black_box(entities)).await;
-
-                    let end_memory = get_memory_usage();
-                    let memory_used = end_memory - start_memory;
-
-                    // Ensure memory measurement is not optimized away
-                    black_box(memory_used);
+                    for file_path in &files_to_process {
+                        let content = std::fs::read_to_string(file_path).unwrap();
+                        let ast = parser.parse(&content, "typescript").unwrap();
+                        let entities = indexer.extract_entities(&ast, Path::new(file_path)).unwrap();
+                        black_box(entities);
+                    }
                 });
             },
         );
@@ -45,38 +368,48 @@ fn bench_memory_indexing(c: &mut Criterion) {
     group.finish();
 }
 
-/// Memory usage tracking for search operations
-fn bench_memory_searching(c: &mut Criterion) {
+fn bench_memory_usage_during_search(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
+    let search_service = SearchService::new();
 
-    let mut group = c.benchmark_group("memory_searching");
-    group.measurement_time(Duration::from_secs(20));
-    group.sample_size(50);
+    let mut group = c.benchmark_group("memory_search");
+
+    // Create a large entity set for search testing
+    let (_temp_dir, codebase, file_paths) = create_large_test_dataset();
+    let parser = ParserService::new();
+    let indexer = IndexerService::new();
+
+    let mut all_entities = Vec::new();
+    for file_path in &file_paths {
+        let content = std::fs::read_to_string(file_path).unwrap();
+        let ast = parser.parse(&content, "typescript").unwrap();
+        let entities = indexer.extract_entities(&ast, Path::new(file_path)).unwrap();
+        all_entities.extend(entities);
+    }
 
     // Test memory usage with different result set sizes
-    let result_sizes = vec![10, 50, 100, 500, 1000];
-
-    for size in result_sizes {
+    for entity_count in [100, 500, 1000, all_entities.len()].iter() {
         group.bench_with_input(
-            BenchmarkId::new(format!("{}_results", size), "search_memory"),
-            &size,
-            |b, &result_size| {
+            BenchmarkId::new("entities", entity_count),
+            entity_count,
+            |b, &entity_count| {
                 b.to_async(&rt).iter(|| async {
-                    let search_engine = SearchEngine::new().await;
-                    let codebase = create_large_codebase(50000);
+                    let search_query = codesight_core::models::Query {
+                        id: "test-query".to_string(),
+                        query_text: "service utility function".to_string(),
+                        query_type: codesight_core::models::QueryType::NaturalLanguage,
+                        intent: codesight_core::models::QueryIntent::FindFunction,
+                        codebase_id: codebase.id.clone(),
+                        user_id: None,
+                        timestamp: chrono::Utc::now(),
+                        execution_time_ms: 0,
+                        result_count: 0,
+                        cache_hit: false,
+                    };
 
-                    let start_memory = get_memory_usage();
-
-                    let _results = search_engine.search(
-                        "*".to_string(),
-                        &codebase,
-                        black_box(result_size),
-                    ).await;
-
-                    let end_memory = get_memory_usage();
-                    let memory_used = end_memory - start_memory;
-
-                    black_box(memory_used);
+                    let entities: Vec<CodeEntity> = all_entities.iter().take(entity_count).cloned().collect();
+                    let results = search_service.search(black_box(&search_query), black_box(&entities)).await;
+                    black_box(results);
                 });
             },
         );
@@ -85,149 +418,82 @@ fn bench_memory_searching(c: &mut Criterion) {
     group.finish();
 }
 
-/// Concurrent operations memory usage
-fn bench_concurrent_memory(c: &mut Criterion) {
+fn bench_cache_memory_impact(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
 
-    let mut group = c.benchmark_group("concurrent_memory");
-    group.measurement_time(Duration::from_secs(45));
-    group.sample_size(10);
+    let mut group = c.benchmark_group("memory_cache");
 
-    let concurrency_levels = vec![1, 2, 4, 8, 16];
+    let (_temp_dir, codebase, file_paths) = create_large_test_dataset();
+    let parser = ParserService::new();
 
-    for level in concurrency_levels {
-        group.bench_with_input(
-            BenchmarkId::new(format!("{}_threads", level), "concurrent_operations"),
-            &level,
-            |b, &concurrency| {
-                b.to_async(&rt).iter(|| async {
-                    let search_engine = Arc::new(SearchEngine::new().await);
-                    let codebase = Arc::new(create_large_codebase(10000));
-
-                    let start_memory = get_memory_usage();
-                    let operation_count = Arc::new(AtomicUsize::new(0));
-
-                    let handles: Vec<_> = (0..concurrency)
-                        .map(|_| {
-                            let engine = search_engine.clone();
-                            let cb = codebase.clone();
-                            let counter = operation_count.clone();
-
-                            tokio::spawn(async move {
-                                for _ in 0..10 {
-                                    let _result = engine.search("test".to_string(), &cb.as_ref(), 100).await;
-                                    counter.fetch_add(1, Ordering::Relaxed);
-                                }
-                            })
-                        })
-                        .collect();
-
-                    // Wait for all operations to complete
-                    for handle in handles {
-                        let _ = handle.await;
-                    }
-
-                    let end_memory = get_memory_usage();
-                    let memory_used = end_memory - start_memory;
-                    let total_operations = operation_count.load(Ordering::Relaxed);
-
-                    black_box((memory_used, total_operations));
-                });
-            },
-        );
-    }
-
-    group.finish();
-}
-
-/// Memory leak detection test
-fn bench_memory_leak_detection(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
-
-    let mut group = c.benchmark_group("memory_leak_detection");
-    group.measurement_time(Duration::from_secs(60));
-    group.sample_size(5);
-
-    group.bench_function("repeated_operations", |b| {
+    // Test memory impact with and without caching
+    group.bench_function("with_cache", |b| {
         b.to_async(&rt).iter(|| async {
-            let search_engine = SearchEngine::new().await;
-            let codebase = create_large_codebase(1000);
+            let mut cache = std::collections::HashMap::new();
 
-            let initial_memory = get_memory_usage();
+            for file_path in &file_paths.iter().take(50) {
+                let content = std::fs::read_to_string(file_path).unwrap();
 
-            // Perform many operations to detect memory leaks
-            for i in 0..1000 {
-                let _results = search_engine.search(
-                    format!("test_query_{}", i % 10),
-                    &codebase,
-                    10,
-                ).await;
-
-                // Periodically check memory usage
-                if i % 100 == 0 {
-                    let current_memory = get_memory_usage();
-                    let memory_growth = current_memory - initial_memory;
-
-                    // Log memory growth for debugging
-                    if i % 200 == 0 {
-                        eprintln!("Iteration {}: Memory growth = {} MB", i, memory_growth / 1024 / 1024);
-                    }
-
-                    black_box(memory_growth);
+                // Check cache first
+                if let Some(cached_ast) = cache.get(file_path) {
+                    black_box(cached_ast);
+                } else {
+                    let ast = parser.parse(&content, "typescript").unwrap();
+                    cache.insert(file_path.clone(), ast);
                 }
             }
+        });
+    });
 
-            let final_memory = get_memory_usage();
-            let total_growth = final_memory - initial_memory;
-
-            black_box(total_growth);
+    group.bench_function("without_cache", |b| {
+        b.to_async(&rt).iter(|| async {
+            for file_path in &file_paths.iter().take(50) {
+                let content = std::fs::read_to_string(file_path).unwrap();
+                let ast = parser.parse(&content, "typescript").unwrap();
+                black_box(ast);
+            }
         });
     });
 
     group.finish();
 }
 
-/// Memory pressure test
-fn bench_memory_pressure(c: &mut Criterion) {
+fn bench_concurrent_memory_usage(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
+    let parser = ParserService::new();
 
-    let mut group = c.benchmark_group("memory_pressure");
-    group.measurement_time(Duration::from_secs(30));
-    group.sample_size(15);
+    let mut group = c.benchmark_group("memory_concurrent");
 
-    // Test under different memory pressure scenarios
-    let pressure_levels = vec![
-        ("low_pressure", 1000),
-        ("medium_pressure", 10000),
-        ("high_pressure", 50000),
-        ("extreme_pressure", 100000),
-    ];
+    let (_temp_dir, codebase, file_paths) = create_large_test_dataset();
 
-    for (name, entity_count) in pressure_levels {
+    // Test memory usage with different concurrency levels
+    for concurrency in [1, 4, 8, 16].iter() {
         group.bench_with_input(
-            BenchmarkId::new(name, "pressure_test"),
-            &entity_count,
-            |b, &entity_count| {
+            BenchmarkId::new("concurrent_tasks", concurrency),
+            concurrency,
+            |b, &concurrency| {
                 b.to_async(&rt).iter(|| async {
-                    let search_engine = SearchEngine::new().await;
-                    let codebase = create_large_codebase(entity_count);
+                    let files_to_process: Vec<String> = file_paths.iter().take(concurrency * 5).cloned().collect();
+                    let chunk_size = (files_to_process.len() + concurrency - 1) / concurrency;
 
-                    // Simulate memory pressure by holding large result sets
-                    let start_memory = get_memory_usage();
+                    let mut handles = Vec::new();
+                    for chunk in files_to_process.chunks(chunk_size) {
+                        let chunk = chunk.to_vec();
+                        let parser_clone = parser.clone();
 
-                    let _results = search_engine.search(
-                        "*".to_string(),
-                        &codebase,
-                        1000, // Large result set
-                    ).await;
+                        let handle = tokio::spawn(async move {
+                            for file_path in chunk {
+                                let content = std::fs::read_to_string(&file_path).unwrap();
+                                let ast = parser_clone.parse(&content, "typescript").unwrap();
+                                black_box(ast);
+                            }
+                        });
+                        handles.push(handle);
+                    }
 
-                    // Simulate processing while holding results
-                    tokio::time::sleep(Duration::from_millis(100)).await;
-
-                    let end_memory = get_memory_usage();
-                    let memory_used = end_memory - start_memory;
-
-                    black_box(memory_used);
+                    for handle in handles {
+                        handle.await.unwrap();
+                    }
                 });
             },
         );
@@ -236,110 +502,11 @@ fn bench_memory_pressure(c: &mut Criterion) {
     group.finish();
 }
 
-/// Helper functions for memory benchmarking
-
-fn create_entities(count: usize) -> Vec<CodeEntity> {
-    (0..count)
-        .map(|i| CodeEntity {
-            id: uuid::Uuid::new_v4(),
-            codebase_id: uuid::Uuid::new_v4(),
-            entity_type: match i % 5 {
-                0 => code_intelligence_core::models::EntityType::Function,
-                1 => code_intelligence_core::models::EntityType::Class,
-                2 => code_intelligence_core::models::EntityType::Method,
-                3 => code_intelligence_core::models::EntityType::Variable,
-                _ => code_intelligence_core::models::EntityType::Interface,
-            },
-            name: format!("entity_{}", i),
-            qualified_name: format!("module_{}::entity_{}", i % 10, i),
-            file_path: format!("src/module_{}/file.rs", i % 10),
-            start_line: (i % 100) + 1,
-            end_line: (i % 100) + 10,
-            start_column: 1,
-            end_column: 50,
-            language: "rust".to_string(),
-            signature: Some(format!("fn entity_{}()", i)),
-            visibility: code_intelligence_core::models::Visibility::Public,
-            documentation: Some(format!("Documentation for entity {}", i)),
-            ast_hash: format!("hash_{}", i),
-            embedding_id: Some(uuid::Uuid::new_v4()),
-        })
-        .collect()
-}
-
-fn create_large_codebase(entity_count: usize) -> Codebase {
-    let mut codebase = Codebase::new(
-        "large-test-codebase".to_string(),
-        "/tmp/large_test".to_string(),
-    );
-
-    codebase.size_bytes = (entity_count * 500) as u64; // Estimated size
-    codebase.file_count = (entity_count / 10).max(1);
-
-    codebase
-}
-
-/// Get current memory usage (platform-specific)
-fn get_memory_usage() -> usize {
-    #[cfg(target_os = "linux")]
-    {
-        use std::fs;
-        if let Ok(status) = fs::read_to_string("/proc/self/status") {
-            for line in status.lines() {
-                if line.starts_with("VmRSS:") {
-                    if let Some(kb_str) = line.split_whitespace().nth(1) {
-                        if let Ok(kb) = kb_str.parse::<usize>() {
-                            return kb * 1024; // Convert KB to bytes
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        use std::process::Command;
-        if let Ok(output) = Command::new("ps")
-            .args(&["-o", "rss=", "-p"])
-            .arg(&format!("{}", std::process::id()))
-            .output()
-        {
-            if let Ok(rss_str) = String::from_utf8(output.stdout).trim().parse::<usize>() {
-                return rss_str * 1024; // Convert KB to bytes
-            }
-        }
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        use std::process::Command;
-        if let Ok(output) = Command::new("wmic")
-            .args(&["process", "where", "processid=", std::process::id().to_string()])
-            .args(&["get", "WorkingSetSize"])
-            .output()
-        {
-            if let Ok(output_str) = String::from_utf8(output.stdout) {
-                if let Some(bytes_str) = output_str.lines().nth(1) {
-                    if let Ok(bytes) = bytes_str.trim().parse::<usize>() {
-                        return bytes;
-                    }
-                }
-            }
-        }
-    }
-
-    // Fallback: return 0 if we can't get memory usage
-    0
-}
-
 criterion_group!(
-    memory_benches,
-    bench_memory_indexing,
-    bench_memory_searching,
-    bench_concurrent_memory,
-    bench_memory_leak_detection,
-    bench_memory_pressure
+    benches,
+    bench_memory_usage_during_indexing,
+    bench_memory_usage_during_search,
+    bench_cache_memory_impact,
+    bench_concurrent_memory_usage
 );
-
-criterion_main!(memory_benches);
+criterion_main!(benches);

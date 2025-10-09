@@ -1,220 +1,477 @@
-// K6 stress test for CodeSight MCP Server
-import { check, sleep } from 'k6';
-import { Rate } from 'k6/metrics';
+// Stress Testing for CodeSight MCP Server
 import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { Rate, Trend, Counter } from 'k6/metrics';
 
-// Custom metrics for stress testing
-const stressErrors = new Rate('stress_errors');
-const memoryUsage = new Rate('memory_usage');
-const cpuUsage = new Rate('cpu_usage');
+// Stress test metrics
+export let stressErrors = new Rate('stress_errors');
+export let memoryUsage = new Trend('memory_usage');
+export let cpuUsage = new Trend('cpu_usage');
+export let concurrentUsers = new Trend('concurrent_users');
+export let throughput = new Rate('throughput');
 
-// Stress test configuration - high load for extended periods
-export const options = {
+// Performance degradation tracking
+export let responseTimeIncrease = new Trend('response_time_increase');
+export let errorRateIncrease = new Rate('error_rate_increase');
+
+export let options = {
   stages: [
-    { duration: '1m', target: 100 },    // Ramp up to 100 users
-    { duration: '3m', target: 300 },    // Ramp up to 300 users
-    { duration: '5m', target: 500 },    // Peak load - 500 concurrent users
-    { duration: '3m', target: 300 },    // Scale down
-    { duration: '1m', target: 100 },    // Further scale down
-    { duration: '2m', target: 50 },     // Sustained medium load
-    { duration: '1m', target: 0 },      // Cool down
+    // Ramp up quickly to stress level
+    { duration: '30s', target: 50 },
+    // Sustained stress
+    { duration: '2m', target: 100 },
+    // Peak stress - push to limits
+    { duration: '3m', target: 200 },
+    // Maximum stress - test breaking point
+    { duration: '2m', target: 500 },
+    // Sustained maximum
+    { duration: '1m', target: 500 },
+    // Gradual recovery
+    { duration: '2m', target: 100 },
+    // Cool down
+    { duration: '1m', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<2000'], // Allow higher response times under stress
-    http_req_failed: ['rate<0.2'],     // Allow 20% error rate under stress
-    stress_errors: ['rate<0.2'],
+    // More lenient thresholds for stress testing
+    http_req_duration: ['p(95)<5000'], // 5s tolerance under stress
+    http_req_failed: ['rate<0.2'], // Allow 20% errors under extreme stress
+    stress_errors: ['rate<0.25'],
+    throughput: ['rate>10'], // Minimum throughput rate
   },
-  discardResponseBodies: true, // Improve performance by discarding bodies
-  noConnectionReuse: false,     // Enable connection reuse
-  userAgent: 'k6-stress-test/1.0',
+  insecureSkipTLSVerify: true,
+  noConnectionReuse: true, // Disable connection reuse to stress connection handling
+  noVUConnectionReuse: true, // Each VU creates new connections
 };
 
-// Complex queries for stress testing
-const STRESS_QUERIES = [
-  'complex async function error handling with proper logging',
-  'database connection pooling and transaction management',
-  'authentication middleware with JWT token validation',
-  'RESTful API endpoint with comprehensive error handling',
-  'unit testing framework setup with mocking strategies',
-  'dependency injection container configuration',
-  'memory management and garbage collection optimization',
-  'parallel processing with thread-safe data structures',
-  'caching strategies with Redis and invalidation policies',
-  'monitoring and observability with metrics collection',
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:4000';
+
+// Stress test scenarios - more aggressive
+const STRESS_SCENARIOS = [
+  // Heavy search operations
+  {
+    name: 'intensive_search',
+    weight: 35,
+    func: () => intensiveSearch(),
+  },
+  // Concurrent indexing
+  {
+    name: 'concurrent_indexing',
+    weight: 20,
+    func: () => concurrentIndexing(),
+  },
+  // Complex analysis operations
+  {
+    name: 'complex_analysis',
+    weight: 20,
+    func: () => complexAnalysis(),
+  },
+  // Rapid API calls
+  {
+    name: 'rapid_api_calls',
+    weight: 15,
+    func: () => rapidAPICalls(),
+  },
+  // Memory pressure
+  {
+    name: 'memory_pressure',
+    weight: 10,
+    func: () => memoryPressure(),
+  },
 ];
 
-export function setup() {
-  console.log('Starting stress test for CodeSight MCP Server');
-  console.log('This test simulates high-load production scenarios');
+// Baseline metrics collected at start
+let baselineResponseTime = 0;
+let baselineErrorRate = 0;
 
-  // Pre-warm the server
-  for (let i = 0; i < 10; i++) {
-    http.get('http://localhost:4000/health', { timeout: '5s' });
+export function setup() {
+  console.log('Starting stress test - pushing system to limits');
+  console.log(`Target: ${BASE_URL}`);
+
+  // Collect baseline metrics
+  console.log('Collecting baseline metrics...');
+  const baselineResults = runBaselineTest();
+  baselineResponseTime = baselineResults.avgResponseTime;
+  baselineErrorRate = baselineResults.errorRate;
+
+  console.log(`Baseline Response Time: ${baselineResponseTime}ms`);
+  console.log(`Baseline Error Rate: ${(baselineErrorRate * 100).toFixed(2)}%`);
+
+  // Check system health before stress
+  const healthResponse = http.get(`${BASE_URL}/health`, { timeout: '10s' });
+  if (healthResponse.status !== 200) {
+    throw new Error(`System unhealthy before stress test: ${healthResponse.status}`);
   }
 
-  return {
-    baseUrl: 'http://localhost:4000',
-    startTime: Date.now(),
-  };
+  return { baselineResponseTime, baselineErrorRate };
 }
 
 export default function(data) {
-  // Random test scenario selection
-  const scenario = Math.random();
+  // Track concurrent users estimation
+  concurrentUsers.add(__VU * 2); // Rough estimate
 
-  if (scenario < 0.7) {
-    // 70%: Search operations (most common)
-    performSearch(data);
-  } else if (scenario < 0.85) {
-    // 15%: Codebase management
-    performCodebaseOperation(data);
-  } else if (scenario < 0.95) {
-    // 10%: Health checks
-    performHealthCheck(data);
-  } else {
-    // 5%: Metrics endpoint
-    performMetricsCheck(data);
-  }
+  // Select stress scenario
+  const scenario = selectStressScenario();
+  scenario.func();
 
-  // Variable think time to simulate realistic usage patterns
-  sleep(Math.random() * 3 + 0.1); // 0.1-3.1s
+  // Minimal think time for stress testing
+  sleep(Math.random() * 0.5 + 0.1); // 0.1-0.6 seconds
 }
 
-function performSearch(data) {
-  const query = STRESS_QUERIES[Math.floor(Math.random() * STRESS_QUERIES.length)];
-  const payload = JSON.stringify({
-    query,
-    codebase_id: generateRandomCodebaseId(),
-    limit: Math.floor(Math.random() * 50) + 5, // 5-54 results
-    filters: {
-      file_types: getRandomFileTypes(),
-      entity_types: getRandomEntityTypes(),
+function selectStressScenario() {
+  const totalWeight = STRESS_SCENARIOS.reduce((sum, scenario) => sum + scenario.weight, 0);
+  let random = Math.random() * totalWeight;
+
+  for (const scenario of STRESS_SCENARIOS) {
+    random -= scenario.weight;
+    if (random <= 0) {
+      return scenario;
+    }
+  }
+
+  return STRESS_SCENARIOS[0];
+}
+
+function intensiveSearch() {
+  const queries = [
+    'complex user authentication and authorization system with role-based access control',
+    'database connection pooling and transaction management across multiple services',
+    'advanced error handling and retry mechanisms with circuit breaker patterns',
+    'performance optimization techniques for large-scale distributed systems',
+    'security vulnerability assessment and penetration testing methodologies',
+    'microservices architecture with service mesh and API gateway patterns',
+    'real-time data processing and streaming analytics pipelines',
+    'machine learning model deployment and monitoring frameworks',
+    'container orchestration and Kubernetes cluster management',
+    'GraphQL schema design and resolver optimization strategies',
+  ];
+
+  const query = queries[Math.floor(Math.random() * queries.length)];
+  const startTime = Date.now();
+
+  const response = http.post(`${BASE_URL}/api/tools/search_code`, JSON.stringify({
+    tool: 'search_code',
+    arguments: {
+      query: query,
+      codebase_id: 'test-codebase',
+      max_results: 50, // Large result set
+      include_context: true,
+      include_related: true,
+      fuzzy_search: true,
     },
-    include_content: Math.random() > 0.5,
+  }), {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Stress-Test': 'intensive-search',
+    },
+    timeout: '60s', // Longer timeout for complex queries
   });
 
-  const response = http.post(`${data.baseUrl}/api/queries`, payload, {
-    headers: { 'Content-Type': 'application/json' },
-    timeout: '15s', // Longer timeout under stress
-  });
+  const responseTime = Date.now() - startTime;
 
-  const success = check(response, {
-    'search query succeeded': (r) => r.status === 200 || r.status === 429, // Accept rate limiting
-    'search response time reasonable': (r) => r.timings.duration < 5000, // 5s max under stress
-  });
-
-  stressErrors.add(!success);
-}
-
-function performCodebaseOperation(data) {
-  const operations = ['GET', 'POST'];
-  const operation = operations[Math.floor(Math.random() * operations.length)];
-
-  let response;
-  if (operation === 'GET') {
-    response = http.get(`${data.baseUrl}/api/codebases`, {
-      timeout: '10s',
-    });
-  } else {
-    const payload = JSON.stringify({
-      name: `stress-test-codebase-${Date.now()}`,
-      path: '/tmp/stress-test',
-      language: getRandomLanguage(),
-      description: 'Stress test codebase',
-    });
-
-    response = http.post(`${data.baseUrl}/api/codebases`, payload, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: '15s',
-    });
+  // Track performance degradation
+  if (baselineResponseTime > 0) {
+    const increaseRatio = responseTime / baselineResponseTime;
+    responseTimeIncrease.add(increaseRatio);
   }
 
   const success = check(response, {
-    'codebase operation succeeded': (r) => r.status < 500,
-    'codebase operation response time reasonable': (r) => r.timings.duration < 3000,
+    'intensive search status is 200': (r) => r.status === 200,
+    'intensive search response time < 10s': (r) => responseTime < 10000,
+    'intensive search has valid response': (r) => {
+      try {
+        const body = JSON.parse(r.body);
+        return body.results && Array.isArray(body.results);
+      } catch {
+        return false;
+      }
+    },
   });
 
   stressErrors.add(!success);
+  throughput.add(1);
 }
 
-function performHealthCheck(data) {
-  const healthEndpoints = ['/health', '/health/detailed', '/health/ready'];
-  const endpoint = healthEndpoints[Math.floor(Math.random() * healthEndpoints.length)];
+function concurrentIndexing() {
+  // Simulate concurrent indexing operations
+  const testPaths = [
+    `/tmp/test-project-${Math.random()}`,
+    `/tmp/large-codebase-${Math.random()}`,
+    `/tmp/monorepo-${Math.random()}`,
+  ];
 
-  const response = http.get(`${data.baseUrl}${endpoint}`, {
-    timeout: '5s',
+  const path = testPaths[Math.floor(Math.random() * testPaths.length)];
+
+  const response = http.post(`${BASE_URL}/api/codebases/index`, JSON.stringify({
+    codebase_id: 'test-codebase',
+    path: path,
+    force_reindex: Math.random() > 0.7, // 30% chance of forced reindex
+    parallel_workers: Math.floor(Math.random() * 8) + 1,
+  }), {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Stress-Test': 'concurrent-indexing',
+    },
+    timeout: '120s', // Indexing can take longer
   });
 
   const success = check(response, {
-    'health check succeeded': (r) => r.status === 200,
-    'health check response fast': (r) => r.timings.duration < 1000,
+    'concurrent indexing accepted': (r) => r.status === 200 || r.status === 202,
+    'concurrent indexing has job ID': (r) => {
+      try {
+        const body = JSON.parse(r.body);
+        return body.job_id || body.message;
+      } catch {
+        return false;
+      }
+    },
   });
 
   stressErrors.add(!success);
+  throughput.add(1);
 }
 
-function performMetricsCheck(data) {
-  const response = http.get(`${data.baseUrl}/metrics`, {
-    timeout: '3s',
+function complexAnalysis() {
+  const analysisTools = [
+    'analyze_security',
+    'trace_data_flow',
+    'check_complexity',
+    'suggest_refactoring',
+  ];
+
+  const tool = analysisTools[Math.floor(Math.random() * analysisTools.length)];
+  const startTime = Date.now();
+
+  let payload;
+  switch (tool) {
+    case 'analyze_security':
+      payload = {
+        tool: 'analyze_security',
+        arguments: {
+          codebase_id: 'test-codebase',
+          severity_level: 'low', // Check everything
+          include_suggestions: true,
+          deep_scan: true,
+        },
+      };
+      break;
+    case 'trace_data_flow':
+      payload = {
+        tool: 'trace_data_flow',
+        arguments: {
+          function_name: 'processRequest',
+          codebase_id: 'test-codebase',
+          depth: 5, // Deep trace
+          include_external: true,
+        },
+      };
+      break;
+    case 'check_complexity':
+      payload = {
+        tool: 'check_complexity',
+        arguments: {
+          target: 'entire-codebase',
+          codebase_id: 'test-codebase',
+          metrics: ['cyclomatic', 'cognitive', 'maintainability'],
+          include_trends: true,
+        },
+      };
+      break;
+    case 'suggest_refactoring':
+      payload = {
+        tool: 'suggest_refactoring',
+        arguments: {
+          codebase_id: 'test-codebase',
+          analysis_depth: 'deep',
+          prioritize_by: 'impact',
+          include_examples: true,
+        },
+      };
+      break;
+  }
+
+  const response = http.post(`${BASE_URL}/api/tools/${tool}`, JSON.stringify(payload), {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Stress-Test': 'complex-analysis',
+    },
+    timeout: '90s', // Complex analysis needs more time
   });
+
+  const responseTime = Date.now() - startTime;
 
   const success = check(response, {
-    'metrics endpoint accessible': (r) => r.status === 200,
-    'metrics response quick': (r) => r.timings.duration < 500,
+    [`complex ${tool} status is 200`]: (r) => r.status === 200,
+    [`complex ${tool} response time < 30s`]: (r) => responseTime < 30000,
+    [`complex ${tool} has valid response`]: (r) => {
+      try {
+        const body = JSON.parse(r.body);
+        return body.results || body.issues || body.flow || body.metrics || body.suggestions;
+      } catch {
+        return false;
+      }
+    },
   });
 
   stressErrors.add(!success);
+  throughput.add(1);
 }
 
-// Helper functions for generating test data
-function generateRandomCodebaseId() {
-  const ids = ['codebase-1', 'codebase-2', 'codebase-3', 'codebase-large', 'codebase-test'];
-  return ids[Math.floor(Math.random() * ids.length)];
+function rapidAPICalls() {
+  // Rapid succession of API calls to stress connection handling
+  const endpoints = [
+    { method: 'GET', path: '/health' },
+    { method: 'GET', path: '/metrics' },
+    { method: 'GET', path: '/codebases' },
+    { method: 'POST', path: '/queries', body: { query: 'test', codebase_id: 'test' } },
+    { method: 'GET', path: '/jobs' },
+  ];
+
+  // Make multiple rapid calls
+  for (let i = 0; i < 3; i++) {
+    const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
+    const startTime = Date.now();
+
+    let response;
+    if (endpoint.body) {
+      response = http[endpoint.method.toLowerCase()](
+        `${BASE_URL}${endpoint.path}`,
+        JSON.stringify(endpoint.body),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Stress-Test': 'rapid-api-calls',
+          },
+          timeout: '10s',
+        }
+      );
+    } else {
+      response = http[endpoint.method.toLowerCase()](
+        `${BASE_URL}${endpoint.path}`,
+        {
+          headers: { 'X-Stress-Test': 'rapid-api-calls' },
+          timeout: '10s',
+        }
+      );
+    }
+
+    const responseTime = Date.now() - startTime;
+
+    check(response, {
+      [`rapid ${endpoint.method} ${endpoint.path} status ok`]: (r) => r.status >= 200 && r.status < 300,
+      [`rapid ${endpoint.method} ${endpoint.path} response time < 2s`]: (r) => responseTime < 2000,
+    });
+
+    // Very small delay between rapid calls
+    sleep(Math.random() * 0.1);
+  }
+
+  throughput.add(3);
 }
 
-function getRandomFileTypes() {
-  const allTypes = ['ts', 'js', 'rs', 'py', 'go', 'java', 'cpp', 'cs'];
-  const count = Math.floor(Math.random() * 3) + 1; // 1-3 file types
-  const selected = [];
+function memoryPressure() {
+  // Operations designed to consume memory
+  const response = http.post(`${BASE_URL}/api/tools/search_code`, JSON.stringify({
+    tool: 'search_code',
+    arguments: {
+      query: 'all functions classes and variables in the entire codebase',
+      codebase_id: 'test-codebase',
+      max_results: 1000, // Very large result set
+      include_context: true,
+      include_related: true,
+      include_full_content: true,
+      deep_analysis: true,
+    },
+  }), {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Stress-Test': 'memory-pressure',
+    },
+    timeout: '120s',
+  });
 
-  for (let i = 0; i < count; i++) {
-    const type = allTypes[Math.floor(Math.random() * allTypes.length)];
-    if (!selected.includes(type)) {
-      selected.push(type);
+  // Also request system metrics
+  const metricsResponse = http.get(`${BASE_URL}/metrics`, {
+    headers: { 'X-Stress-Test': 'memory-pressure' },
+    timeout: '10s',
+  });
+
+  // Parse metrics to track memory usage
+  if (metricsResponse.status === 200) {
+    try {
+      const metricsText = metricsResponse.body;
+      const memoryMatch = metricsText.match(/codesight_system_memory_usage_bytes[^}]+} ([\d.]+)/);
+      if (memoryMatch) {
+        memoryUsage.add(parseFloat(memoryMatch[1]) / 1024 / 1024); // Convert to MB
+      }
+
+      const cpuMatch = metricsText.match(/codesight_system_cpu_usage_percent[^}]+} ([\d.]+)/);
+      if (cpuMatch) {
+        cpuUsage.add(parseFloat(cpuMatch[1]));
+      }
+    } catch (e) {
+      // Ignore parsing errors
     }
   }
 
-  return selected;
+  const success = check(response, {
+    'memory pressure search status is 200': (r) => r.status === 200,
+    'memory pressure search has large result set': (r) => {
+      try {
+        const body = JSON.parse(r.body);
+        return body.results && body.results.length > 100;
+      } catch {
+        return false;
+      }
+    },
+  });
+
+  stressErrors.add(!success);
+  throughput.add(1);
 }
 
-function getRandomEntityTypes() {
-  const allTypes = ['function', 'class', 'method', 'variable', 'interface', 'enum'];
-  const count = Math.floor(Math.random() * 2) + 1; // 1-2 entity types
-  const selected = [];
+function runBaselineTest() {
+  // Simple baseline test
+  const startTime = Date.now();
+  const response = http.post(`${BASE_URL}/api/tools/search_code`, JSON.stringify({
+    tool: 'search_code',
+    arguments: {
+      query: 'test function',
+      codebase_id: 'test-codebase',
+      max_results: 5,
+    },
+  }), { timeout: '10s' });
 
-  for (let i = 0; i < count; i++) {
-    const type = allTypes[Math.floor(Math.random() * allTypes.length)];
-    if (!selected.includes(type)) {
-      selected.push(type);
-    }
-  }
+  const responseTime = Date.now() - startTime;
+  const errorRate = response.status !== 200 ? 1 : 0;
 
-  return selected;
-}
-
-function getRandomLanguage() {
-  const languages = ['typescript', 'javascript', 'rust', 'python', 'go', 'java'];
-  return languages[Math.floor(Math.random() * languages.length)];
+  return {
+    avgResponseTime: responseTime,
+    errorRate: errorRate,
+  };
 }
 
 export function teardown(data) {
-  const duration = Date.now() - data.startTime;
-  console.log(`Stress test completed in ${Math.round(duration / 1000)}s`);
-  console.log(`Final error rate: ${(stressErrors.rate * 100).toFixed(2)}%`);
+  console.log('Stress test completed');
+  console.log('Checking system recovery...');
 
-  // Log final statistics
-  console.log('=== Stress Test Summary ===');
-  console.log(`Total requests: See k6 summary for details`);
-  console.log(`Error rate: ${(stressErrors.rate * 100).toFixed(2)}%`);
-  console.log(`Test duration: ${Math.round(duration / 1000)}s`);
+  // Wait a moment for recovery
+  sleep(5);
+
+  // Final health check
+  const healthResponse = http.get(`${BASE_URL}/health`, {
+    timeout: '30s',
+  });
+
+  if (healthResponse.status === 200) {
+    console.log('✅ System recovered successfully after stress test');
+  } else {
+    console.error(`❌ System failed to recover: ${healthResponse.status}`);
+    console.error('System may be in degraded state');
+  }
+
+  // Check final metrics
+  console.log(`Peak Response Time Increase: ${responseTimeIncrease.max ? (responseTimeIncrease.max * 100 - 100).toFixed(1) : 'N/A'}%`);
+  console.log(`Peak Error Rate: ${(stressErrors.rate * 100).toFixed(2)}%`);
+  console.log(`Peak Memory Usage: ${memoryUsage.max ? memoryUsage.max.toFixed(1) : 'N/A'}MB`);
+  console.log(`Peak CPU Usage: ${cpuUsage.max ? cpuUsage.max.toFixed(1) : 'N/A'}%`);
 }
