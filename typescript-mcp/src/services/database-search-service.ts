@@ -3,7 +3,6 @@ import Database from 'better-sqlite3';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
  
  
  

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
  
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { StringValue } from 'ms';
@@ -284,9 +283,8 @@ export class AuthMiddleware {
       }
 
       // Generate new token with same payload (minus exp, iat)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payloadObj = decoded;
-       
+      const payloadObj = decoded as Record<string, unknown>;
+
       const { exp: _exp, iat: _iat, ...payload } = payloadObj;
       const newToken = this.generateToken(payload);
 
@@ -361,10 +359,7 @@ export class AuthMiddleware {
    * Get current configuration (without sensitive data)
    */
   getConfig(): Omit<AuthConfig, 'jwtSecret'> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const configObj = this.config as any;
-     
-    const { jwtSecret: _jwtSecret, ...safeConfig } = configObj;
+    const { jwtSecret: _jwtSecret, ...safeConfig } = this.config;
     return safeConfig;
   }
 }

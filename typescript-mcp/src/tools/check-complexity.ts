@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
  
  
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation

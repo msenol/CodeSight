@@ -279,13 +279,15 @@ export async function readinessCheckHandler(
 export async function livenessCheckHandler(
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<{ alive: boolean; timestamp: string }> {
+): Promise<{ alive: boolean; timestamp: string; uptime: number }> {
   try {
     // Simple liveness check - if we can respond, we're alive
+    const uptime = Math.floor(process.uptime());
     reply.code(200);
     return {
       alive: true,
       timestamp: new Date().toISOString(),
+      uptime,
     };
   } catch (error) {
     logger.error('Liveness check failed:', error);
@@ -293,6 +295,7 @@ export async function livenessCheckHandler(
     return {
       alive: false,
       timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
     };
   }
 }
