@@ -79,7 +79,7 @@ export class HuggingFaceService {
     }
 
     try {
-      const response = await this.request('/models', { method: 'GET' });
+      await this.request('/models', { method: 'GET' });
       this.isAvailable = true;
       return true;
     } catch (error) {
@@ -289,7 +289,7 @@ export class HuggingFaceService {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {break;}
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');

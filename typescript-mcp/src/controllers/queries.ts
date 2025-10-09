@@ -61,7 +61,7 @@ export class QueriesController {
     let queryValue: string;
 
     try {
-      const { query, query_type = 'natural_language', limit = 10, offset = 0, codebase_id, filters, file_types } = request.body;
+      const { query, query_type = 'natural_language', limit = 10, offset = 0, codebase_id, file_types } = request.body;
 
       // Store query for use in catch block
       queryValue = query;

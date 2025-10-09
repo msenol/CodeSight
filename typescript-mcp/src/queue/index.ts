@@ -3,7 +3,7 @@
  * Handles background job processing for indexing and analysis tasks
  */
 
-import { Queue, Worker, Job, QueueScheduler } from 'bullmq';
+import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import { Logger } from '../services/logger';
 
@@ -228,14 +228,14 @@ export class MessageQueueService {
    */
   async clearQueues() {
     await Promise.all([
-      indexingQueue.clean(0, 'completed'),
-      indexingQueue.clean(0, 'failed'),
-      analysisQueue.clean(0, 'completed'),
-      analysisQueue.clean(0, 'failed'),
-      embeddingQueue.clean(0, 'completed'),
-      embeddingQueue.clean(0, 'failed'),
-      cleanupQueue.clean(0, 'completed'),
-      cleanupQueue.clean(0, 'failed'),
+      indexingQueue.clean(0, 0, 'completed'),
+      indexingQueue.clean(0, 0, 'failed'),
+      analysisQueue.clean(0, 0, 'completed'),
+      analysisQueue.clean(0, 0, 'failed'),
+      embeddingQueue.clean(0, 0, 'completed'),
+      embeddingQueue.clean(0, 0, 'failed'),
+      cleanupQueue.clean(0, 0, 'completed'),
+      cleanupQueue.clean(0, 0, 'failed'),
     ]);
     logger.info('All queues cleared');
   }

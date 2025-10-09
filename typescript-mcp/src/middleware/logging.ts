@@ -94,6 +94,7 @@ interface ResponseLogEntry extends RequestLogEntry {
   contentLength?: number;
   error?: string;
   stack?: string;
+  slow?: boolean;
 }
 
 // Log statistics
@@ -168,23 +169,8 @@ export class LoggingService {
         return originalSend(payload);
       };
 
-      // Handle response errors
-      reply.addHook('onError', (request, reply, error) => {
-        const responseTime = Date.now() - startTime;
-
-        const responseLog = this.createResponseLog(
-          request,
-          reply,
-          requestId,
-          startTime,
-          responseTime,
-          null,
-          error
-        );
-
-        this.logResponse(responseLog);
-        this.updateStats(responseLog);
-      });
+      // Error handling should be set up at the Fastify server level
+      // using server.addHook('onError', handler)
     };
   }
 
@@ -542,7 +528,7 @@ export class LoggingService {
       }),
 
       // Geographic info (if available)
-      (request, reply) => {
+      (request, _reply) => {
         const country = request.headers['x-country-code'] as string;
         const region = request.headers['x-region'] as string;
         return {
@@ -552,7 +538,7 @@ export class LoggingService {
       },
 
       // Device info
-      (request, reply) => {
+      (request, _reply) => {
         const userAgent = request.headers['user-agent'] || '';
         const isMobile = /mobile|android|iphone/i.test(userAgent);
         const isBot = /bot|crawler|spider|scraper/i.test(userAgent);
@@ -565,7 +551,7 @@ export class LoggingService {
       },
 
       // API version
-      (request, reply) => ({
+      (request, _reply) => ({
         apiVersion: request.headers['x-api-version'] || '1.0.0',
       }),
     ];
@@ -629,8 +615,8 @@ export const securityLogging = new LoggingService({
   customFields: [
     // Security-focused fields
     (request, reply) => ({
-      suspiciousActivity: this.detectSuspiciousActivity(request),
-      authRequired: this.requiresAuthentication(request.url),
+      suspiciousActivity: _detectSuspiciousActivity(request),
+      authRequired: _requiresAuthentication(request.url || ''),
       rateLimitExceeded: reply.statusCode === 429,
     }),
   ],
@@ -639,7 +625,7 @@ export const securityLogging = new LoggingService({
 /**
  * Utility functions for security logging
  */
-function detectSuspiciousActivity(request: FastifyRequest): boolean {
+function _detectSuspiciousActivity(request: FastifyRequest): boolean {
   const userAgent = request.headers['user-agent'] || '';
   const suspiciousPatterns = [
     /bot|crawler|scanner|sqlmap/i,
@@ -648,11 +634,11 @@ function detectSuspiciousActivity(request: FastifyRequest): boolean {
   ];
 
   return suspiciousPatterns.some(pattern => pattern.test(userAgent)) ||
-         request.url.includes('../') ||
-         request.url.length > 2048;
+         (request.url && request.url.includes('../')) ||
+         (request.url && request.url.length > 2048);
 }
 
-function requiresAuthentication(url: string): boolean {
+function _requiresAuthentication(url: string): boolean {
   const protectedPaths = [
     '/api/admin',
     '/api/user',

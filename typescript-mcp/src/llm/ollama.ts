@@ -88,10 +88,6 @@ export class OllamaService {
       timeout: config.timeout || 30000,
       modelName: config.modelName || 'codellama:7b',
       defaultOptions: {
-        temperature: 0.7,
-        top_p: 0.9,
-        num_predict: 256,
-        num_ctx: 2048,
         ...config.defaultOptions,
       },
     };
@@ -102,7 +98,7 @@ export class OllamaService {
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      const response = await this.request('/api/tags', { method: 'GET' });
+      await this.request('/api/tags', { method: 'GET' });
       this.isAvailable = true;
       return true;
     } catch (error) {
@@ -149,9 +145,9 @@ export class OllamaService {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {break;}
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -251,9 +247,9 @@ export class OllamaService {
       const decoder = new TextDecoder();
       let buffer = '';
 
-      while (true) {
+      for (;;) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {break;}
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
