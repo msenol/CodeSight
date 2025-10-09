@@ -1,0 +1,34 @@
+[package]
+name = "code-intelligence-benches"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+code-intelligence-core = { path = "../crates/core" }
+code-intelligence-search = { path = "../crates/search" }
+code-intelligence-indexer = { path = "../crates/indexer" }
+
+criterion = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tempfile = { workspace = true }
+
+[[bench]]
+name = "search_benchmark"
+harness = false
+
+[[bench]]
+name = "indexing_benchmark"
+harness = false
+
+[[bench]]
+name = "parsing_benchmark"
+harness = false
+
+[[bench]]
+name = "embedding_benchmark"
+harness = false

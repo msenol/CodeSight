@@ -147,28 +147,28 @@
 
 - [x] T069 Napi-rs bindings for Rust functions in rust-core/src/ffi/mod.rs ✅ IMPLEMENTED
 - [x] T070 TypeScript FFI client wrapper in typescript-mcp/src/ffi/rust-bridge.ts ✅ IMPLEMENTED
-- [ ] T071 Message queue setup with BullMQ in typescript-mcp/src/queue/index.ts
+- [x] T071 [P] Message queue setup with BullMQ in typescript-mcp/src/queue/index.ts ✅ IMPLEMENTED
 
 ### LLM Integration
 
-- [ ] T072 llama.cpp integration in typescript-mcp/src/llm/llama.ts
-- [ ] T073 Ollama client integration in typescript-mcp/src/llm/ollama.ts
-- [ ] T074 HuggingFace fallback in typescript-mcp/src/llm/huggingface.ts
-- [ ] T075 Model router with fallback logic in typescript-mcp/src/llm/router.ts
+- [x] T072 [P] llama.cpp integration in typescript-mcp/src/llm/llama.ts ✅ IMPLEMENTED
+- [x] T073 [P] Ollama client integration in typescript-mcp/src/llm/ollama.ts ✅ IMPLEMENTED
+- [x] T074 [P] HuggingFace fallback in typescript-mcp/src/llm/huggingface.ts ✅ IMPLEMENTED
+- [x] T075 [P] Model router with fallback logic in typescript-mcp/src/llm/router.ts ✅ IMPLEMENTED
 
 ### Database & Storage
 
-- [ ] T076 SQLite adapter in rust-core/src/storage/sqlite.rs
-- [ ] T077 PostgreSQL adapter in rust-core/src/storage/postgres.rs
-- [ ] T078 DuckDB vector store in rust-core/src/storage/duckdb.rs
-- [ ] T079 Redis cache adapter in rust-core/src/cache/redis.rs
+- [x] T076 [P] SQLite adapter in rust-core/src/storage/sqlite.rs ✅ IMPLEMENTED
+- [x] T077 [P] PostgreSQL adapter in rust-core/src/storage/postgres.rs ✅ IMPLEMENTED
+- [x] T078 [P] DuckDB vector store in rust-core/src/storage/duckdb.rs ✅ IMPLEMENTED
+- [x] T079 [P] Redis cache adapter in rust-core/src/cache/redis.rs ✅ IMPLEMENTED
 
 ### Middleware & Security
 
-- [ ] T080 JWT authentication middleware in typescript-mcp/src/middleware/auth.ts
-- [ ] T081 Rate limiting middleware in typescript-mcp/src/middleware/rate-limit.ts
-- [ ] T082 CORS and security headers in typescript-mcp/src/middleware/security.ts
-- [ ] T083 Request/response logging in typescript-mcp/src/middleware/logging.ts
+- [x] T080 [P] JWT authentication middleware in typescript-mcp/src/middleware/auth.ts ✅ IMPLEMENTED
+- [x] T081 [P] Rate limiting middleware in typescript-mcp/src/middleware/rate-limit.ts ✅ IMPLEMENTED
+- [x] T082 [P] CORS and security headers in typescript-mcp/src/middleware/security.ts ✅ IMPLEMENTED
+- [x] T083 [P] Request/response logging in typescript-mcp/src/middleware/logging.ts ✅ IMPLEMENTED
 
 ## Phase 3.5: Polish
 

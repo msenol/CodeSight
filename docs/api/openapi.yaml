@@ -1,60 +1,34 @@
 openapi: 3.0.3
 info:
-  title: Code Intelligence MCP Server API
+  title: CodeSight MCP Server API
   description: |
-    A comprehensive API for code intelligence operations including indexing, searching,
-    and analyzing codebases. This server implements the Model Context Protocol (MCP)
-    for seamless integration with AI assistants and development tools.
+    High-performance Code Intelligence MCP Server API providing natural language search,
+    code analysis, and comprehensive codebase insights through REST endpoints and MCP tools.
 
-    ## Features
-    - **Code Indexing**: Parse and index codebases with Tree-sitter (377+ entities indexed)
-    - **Semantic Search**: Find code using natural language queries with SQLite database
-    - **Code Analysis**: Extract functions, classes, dependencies with real-time processing
-    - **Security Auditing**: Identify potential security vulnerabilities
-    - **Performance Monitoring**: Track indexing and query performance
-    - **Integration Testing**: Comprehensive test suite with 27/27 tests passing
-    - **Claude Desktop Integration**: Full MCP protocol validation (9/9 tests passing)
-    - **VS Code Integration**: Complete workspace analysis (11/11 tests passing)
-    - **End-to-End Workflows**: Real-world scenario testing (7/7 tests passing)
-
-    ## Performance Metrics
-    - **Indexing Speed**: 47 files in 1-2 seconds (with Rust FFI)
-    - **Search Response**: 20-50ms query time
-    - **Memory Usage**: ~25MB during indexing
-    - **Multi-Language Support**: 15+ programming languages
-
-    ## Testing Coverage
-    - **Integration Tests**: 27/27 tests passing with real MCP protocol validation
-    - **Contract Tests**: All 9 MCP tools tested and validated
-    - **Performance Tests**: Benchmarked with Rust FFI optimization
-    - **Error Recovery**: Comprehensive error handling and resilience testing
-
-    ## Authentication
-    This API uses API key authentication. Include your API key in the `X-API-Key` header.
-  version: 1.0.0
+    This API enables AI assistants to understand and query codebases through natural language,
+    supporting 15+ programming languages with enterprise-grade performance and offline capabilities.
+  version: 0.1.0
   contact:
-    name: Code Intelligence MCP Server
-    url: https://github.com/your-org/code-intelligence-mcp
+    name: CodeSight Team
+    email: support@codesight-mcp.com
+    url: https://codesight-mcp.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
-
+    url: https://github.com/your-org/codesight-mcp/blob/main/LICENSE
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:4000
     description: Development server
-  - url: https://api.code-intelligence.dev
+  - url: https://api.codesight-mcp.com
     description: Production server
-
-security:
-  - ApiKeyAuth: []
 
 paths:
   /health:
     get:
-      summary: Health check endpoint
-      description: Returns the health status of the server
       tags:
         - Health
+      summary: Health check
+      description: Simple health check to verify server status
+      operationId: healthCheck
       responses:
         '200':
           description: Server is healthy
@@ -63,57 +37,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
         '503':
-          description: Server is unhealthy
+          description: Server unavailable
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/codebases:
+  /api/codebases:
     get:
-      summary: List all codebases
-      description: Retrieve a list of all indexed codebases
       tags:
         - Codebases
+      summary: List codebases
+      description: Retrieve all indexed codebases
+      operationId: listCodebases
       parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
         - name: limit
           in: query
-          description: Maximum number of codebases to return
+          description: Number of items per page
           schema:
             type: integer
             minimum: 1
             maximum: 100
             default: 20
-        - name: offset
-          in: query
-          description: Number of codebases to skip
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
       responses:
         '200':
-          description: List of codebases
+          description: Successfully retrieved codebases
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  codebases:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Codebase'
-                  total:
-                    type: integer
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
+                $ref: '#/components/schemas/CodebaseListResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
     post:
-      summary: Create a new codebase
-      description: Register a new codebase for indexing
       tags:
         - Codebases
+      summary: Create codebase
+      description: Create a new codebase entry for indexing
+      operationId: createCodebase
       requestBody:
         required: true
         content:
@@ -126,139 +98,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Codebase'
+                $ref: '#/components/schemas/CodebaseResponse'
         '400':
-          description: Invalid request
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/codebases/{codebaseId}:
-    get:
-      summary: Get codebase details
-      description: Retrieve detailed information about a specific codebase
-      tags:
-        - Codebases
-      parameters:
-        - name: codebaseId
-          in: path
-          required: true
-          description: Unique identifier of the codebase
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Codebase details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Codebase'
-        '404':
-          description: Codebase not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    put:
-      summary: Update codebase
-      description: Update codebase information and trigger re-indexing if needed
-      tags:
-        - Codebases
-      parameters:
-        - name: codebaseId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateCodebaseRequest'
-      responses:
-        '200':
-          description: Codebase updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Codebase'
-    delete:
-      summary: Delete codebase
-      description: Remove a codebase and all associated data
-      tags:
-        - Codebases
-      parameters:
-        - name: codebaseId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Codebase deleted successfully
-        '404':
-          description: Codebase not found
-
-  /api/v1/codebases/{codebaseId}/index:
+  /api/queries:
     post:
-      summary: Index codebase
-      description: Start indexing process for the specified codebase
       tags:
-        - Indexing
-      parameters:
-        - name: codebaseId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/IndexRequest'
-      responses:
-        '202':
-          description: Indexing started
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IndexingJob'
-        '409':
-          description: Indexing already in progress
-
-  /api/v1/codebases/{codebaseId}/stats:
-    get:
-      summary: Get codebase statistics
-      description: Retrieve indexing and usage statistics for a codebase
-      tags:
-        - Statistics
-      parameters:
-        - name: codebaseId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Codebase statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CodebaseStats'
-
-  /api/v1/search:
-    post:
+        - Queries
       summary: Search code
-      description: Perform semantic or keyword search across indexed codebases
-      tags:
-        - Search
+      description: Perform natural language or structured search across codebases
+      operationId: searchCode
       requestBody:
         required: true
         content:
@@ -267,107 +127,92 @@ paths:
               $ref: '#/components/schemas/SearchRequest'
       responses:
         '200':
-          description: Search results
+          description: Search completed successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchResponse'
         '400':
-          description: Invalid search request
-
-  /api/v1/queries:
-    get:
-      summary: Get query history
-      description: Retrieve recent queries and their performance metrics
-      tags:
-        - Queries
-      parameters:
-        - name: codebaseId
-          in: query
-          description: Filter by codebase ID
-          schema:
-            type: string
-            format: uuid
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-      responses:
-        '200':
-          description: Query history
+          description: Invalid search parameters
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  queries:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Query'
-
-  /mcp/tools:
-    get:
-      summary: List available MCP tools
-      description: Get list of all available MCP tools and their schemas
-      tags:
-        - MCP Protocol
-      responses:
-        '200':
-          description: Available MCP tools
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MCPToolsResponse'
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /mcp/tools/{toolName}:
+  /api/tools/search_code:
     post:
-      summary: Execute MCP tool
-      description: Execute a specific MCP tool with provided arguments
       tags:
-        - MCP Protocol
-      parameters:
-        - name: toolName
-          in: path
-          required: true
-          description: Name of the MCP tool to execute
-          schema:
-            type: string
-            enum:
-              - search_code
-              - explain_function
-              - find_references
-              - trace_data_flow
-              - analyze_security
-              - get_api_endpoints
-              - check_complexity
-              - find_duplicates
-              - suggest_refactoring
+        - MCP Tools
+      summary: Search code (MCP Tool)
+      description: MCP tool for natural language code search
+      operationId: mcpSearchCode
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MCPToolRequest'
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  description: Search query
+                codebase_id:
+                  type: string
+                  description: Codebase ID to search in
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
       responses:
         '200':
-          description: Tool execution result
+          description: Search completed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MCPToolResponse'
         '400':
-          description: Invalid tool arguments
-        '404':
-          description: Tool not found
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: Get metrics
+      description: Retrieve Prometheus-compatible metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-
   schemas:
     HealthResponse:
       type: object
@@ -382,201 +227,82 @@ components:
           type: string
         uptime:
           type: integer
-          description: Server uptime in seconds
-        services:
-          type: object
-          properties:
-            database:
-              type: string
-              enum: [healthy, unhealthy]
-            search_engine:
-              type: string
-              enum: [healthy, unhealthy]
-            embedding_service:
-              type: string
-              enum: [healthy, unhealthy]
 
     ErrorResponse:
       type: object
       properties:
+        success:
+          type: boolean
+          example: false
         error:
-          type: string
-        message:
-          type: string
-        code:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-        request_id:
-          type: string
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    CodebaseListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        codebases:
+          type: array
+          items:
+            $ref: '#/components/schemas/Codebase'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CodebaseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        codebase:
+          $ref: '#/components/schemas/Codebase'
 
     Codebase:
       type: object
+      required:
+        - id
+        - name
+        - path
+        - status
+        - created_at
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
-        description:
+        path:
           type: string
-        repository_url:
+        status:
           type: string
-          format: uri
-        local_path:
-          type: string
-        language:
-          type: string
-        framework:
-          type: string
+          enum: [unindexed, indexing, indexed, error]
         created_at:
           type: string
           format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        indexed_at:
-          type: string
-          format: date-time
-        indexing_status:
-          type: string
-          enum: [pending, indexing, completed, failed]
-        file_count:
-          type: integer
-        line_count:
-          type: integer
         size_bytes:
+          type: integer
+        file_count:
           type: integer
 
     CreateCodebaseRequest:
       type: object
       required:
         - name
-        - repository_url
+        - path
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 255
-        description:
-          type: string
-          maxLength: 1000
-        repository_url:
-          type: string
-          format: uri
-        local_path:
+        path:
           type: string
         language:
           type: string
-        framework:
-          type: string
-        auto_index:
-          type: boolean
-          default: true
-
-    UpdateCodebaseRequest:
-      type: object
-      properties:
-        name:
-          type: string
         description:
           type: string
-        repository_url:
-          type: string
-          format: uri
-        local_path:
-          type: string
-        language:
-          type: string
-        framework:
-          type: string
-
-    IndexRequest:
-      type: object
-      properties:
-        force_reindex:
-          type: boolean
-          default: false
-        include_patterns:
-          type: array
-          items:
-            type: string
-        exclude_patterns:
-          type: array
-          items:
-            type: string
-        parallel_workers:
-          type: integer
-          minimum: 1
-          maximum: 16
-          default: 4
-
-    IndexingJob:
-      type: object
-      properties:
-        job_id:
-          type: string
-          format: uuid
-        codebase_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [queued, running, completed, failed]
-        progress:
-          type: number
-          minimum: 0
-          maximum: 100
-        started_at:
-          type: string
-          format: date-time
-        estimated_completion:
-          type: string
-          format: date-time
-        files_processed:
-          type: integer
-        total_files:
-          type: integer
-        errors:
-          type: array
-          items:
-            type: string
-
-    CodebaseStats:
-      type: object
-      properties:
-        codebase_id:
-          type: string
-          format: uuid
-        total_files:
-          type: integer
-        total_lines:
-          type: integer
-        total_functions:
-          type: integer
-        total_classes:
-          type: integer
-        total_interfaces:
-          type: integer
-        languages:
-          type: object
-          additionalProperties:
-            type: integer
-        complexity_metrics:
-          type: object
-          properties:
-            average_cyclomatic_complexity:
-              type: number
-            max_cyclomatic_complexity:
-              type: number
-            total_cognitive_complexity:
-              type: number
-        last_indexed:
-          type: string
-          format: date-time
-        indexing_duration_ms:
-          type: integer
 
     SearchRequest:
       type: object
@@ -586,49 +312,27 @@ components:
       properties:
         query:
           type: string
-          minLength: 1
         codebase_id:
           type: string
-          format: uuid
-        search_type:
-          type: string
-          enum: [keyword, semantic, hybrid]
-          default: hybrid
         limit:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-        include_context:
-          type: boolean
-          default: true
-        file_types:
-          type: array
-          items:
-            type: string
-        exclude_patterns:
-          type: array
-          items:
-            type: string
+          default: 10
 
     SearchResponse:
       type: object
       properties:
+        success:
+          type: boolean
         results:
           type: array
           items:
-            $ref: '#/components/schemas/SearchResult'
-        total_results:
-          type: integer
+            $ref: '#/components/search/SearchResult'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
         execution_time_ms:
           type: integer
-        search_type:
-          type: string
-        cache_hit:
-          type: boolean
-        query_id:
-          type: string
-          format: uuid
 
     SearchResult:
       type: object
@@ -636,135 +340,53 @@ components:
         id:
           type: string
           format: uuid
-        entity_id:
+        name:
           type: string
-          format: uuid
+        type:
+          type: string
         file_path:
           type: string
-        start_line:
+        line_number:
           type: integer
-        end_line:
-          type: integer
-        code_snippet:
-          type: string
-        relevance_score:
+        score:
           type: number
-          minimum: 0
-          maximum: 1
-        entity_type:
+        snippet:
           type: string
-          enum: [function, class, interface, variable, constant, module]
-        context:
-          type: array
-          items:
-            type: string
-        match_type:
-          type: string
-          enum: [keyword, semantic, exact]
-        highlights:
-          type: array
-          items:
-            type: object
-            properties:
-              start:
-                type: integer
-              end:
-                type: integer
-              text:
-                type: string
 
-    Query:
+    Pagination:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        query_text:
-          type: string
-        query_type:
-          type: string
-          enum: [natural_language, code_pattern, regex]
-        intent:
-          type: string
-          enum: [find_function, explain_code, trace_flow, security_audit]
-        codebase_id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-        execution_time_ms:
+        page:
           type: integer
-        result_count:
+        limit:
           type: integer
-        cache_hit:
-          type: boolean
-
-    MCPToolsResponse:
-      type: object
-      properties:
-        tools:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              description:
-                type: string
-              input_schema:
-                type: object
-
-    MCPToolRequest:
-      type: object
-      required:
-        - arguments
-      properties:
-        arguments:
-          type: object
-          description: Tool-specific arguments
+        total:
+          type: integer
 
     MCPToolResponse:
       type: object
       properties:
-        content:
-          type: array
-          items:
-            type: object
-            properties:
-              type:
-                type: string
-                enum: [text, image, resource]
-              text:
-                type: string
-              data:
-                type: string
-              mimeType:
-                type: string
-        isError:
+        success:
           type: boolean
-        _meta:
+        result:
           type: object
-          properties:
-            execution_time_ms:
-              type: integer
-            cache_hit:
-              type: boolean
+        metadata:
+          type: object
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
 tags:
   - name: Health
-    description: Health check and monitoring endpoints
+    description: Health check endpoints
   - name: Codebases
-    description: Codebase management operations
-  - name: Indexing
-    description: Code indexing and parsing operations
-  - name: Search
-    description: Code search and query operations
-  - name: Statistics
-    description: Performance and usage statistics
+    description: Codebase management
   - name: Queries
-    description: Query history and analytics
-  - name: MCP Protocol
-    description: Model Context Protocol tool operations
+    description: Search operations
+  - name: MCP Tools
+    description: MCP protocol tools
+  - name: Monitoring
+    description: Metrics and monitoring
