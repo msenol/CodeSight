@@ -77,7 +77,7 @@ export class JobsController {
         id: jobId,
         codebase_id,
         job_type,
-        status: 'queued',
+        status: 'queued' as const,
         priority,
         created_at: now,
         started_at: null,
@@ -128,8 +128,8 @@ export class JobsController {
         codebase_id?: string;
       };
 
-      const limitNum = parseInt(limit, 10);
-      const offsetNum = parseInt(offset, 10);
+      const limitNum: number = limit ? Number(parseInt(limit, 10)) || 20 : 20;
+      const offsetNum: number = offset ? Number(parseInt(offset, 10)) || 0 : 0;
 
       let jobs = Array.from(jobStore.values());
 
@@ -149,7 +149,9 @@ export class JobsController {
 
       // Apply pagination
       const total = jobs.length;
-      const paginatedJobs = jobs.slice(offsetNum, offsetNum + limitNum);
+      const startIndex = Math.max(0, offsetNum);
+      const endIndex = Math.min(total, offsetNum + limitNum);
+      const paginatedJobs = jobs.slice(startIndex, endIndex);
 
       const response: JobListResponse = {
         success: true,
@@ -348,7 +350,9 @@ export class JobsController {
 
         const increment = Math.floor(Math.random() * 10) + 5;
         currentJob.files_processed = Math.min(currentJob.files_processed + increment, currentJob.files_total);
-        currentJob.progress_percentage = Math.floor((currentJob.files_processed / currentJob.files_total) * 100);
+        currentJob.progress_percentage = currentJob.files_total > 0
+          ? Math.floor((currentJob.files_processed / currentJob.files_total) * 100)
+          : 0;
 
         if (currentJob.files_processed >= currentJob.files_total) {
           clearInterval(progressInterval);
