@@ -29,6 +29,7 @@ The Rust core provides the computational backbone for code intelligence operatio
 ```
 
 **Enterprise Integration:**
+
 - **NAPI-RS Bridge**: Seamless TypeScript integration with graceful fallback
 - **Memory Management**: Zero-copy optimizations and efficient GC integration
 - **Thread Safety**: Concurrent operations with proper synchronization
@@ -124,68 +125,89 @@ cargo fmt
 ## Data Models (Phase 3.3 Complete - T034-T045)
 
 ### ✅ Codebase Model (T034)
+
 Project metadata and configuration management with language detection and file statistics.
 
 ### ✅ CodeEntity Model (T035)
+
 Functions, classes, interfaces, and types with location, signature, and relationship tracking.
 
 ### ✅ CodeRelationship Model (T036)
+
 Dependencies and references between entities with relationship types and confidence scoring.
 
 ### ✅ Index Model (T037)
+
 Search index management with metadata, statistics, and optimization status.
 
 ### ✅ Query Model (T038)
+
 Query history and analytics with performance metrics and result caching.
 
 ### ✅ Embedding Model (T039)
+
 Vector embeddings for semantic search with dimension and similarity metrics.
 
 ### ✅ CacheEntry Model (T040)
+
 Performance caching layer with TTL, size limits, and eviction policies.
 
 ### ✅ Plugin Model (T041)
+
 Plugin system management with configuration, dependencies, and lifecycle hooks.
 
 ### ✅ Configuration Model (T042)
+
 System configuration storage with validation, defaults, and environment variables.
 
 ### ✅ IndexJob Model (T043)
+
 Background job management with progress tracking, retry logic, and error handling.
 
 ### ✅ CodeMetric Model (T044)
+
 Code complexity and quality metrics with cyclomatic complexity, maintainability index, and technical debt analysis.
 
 ### ✅ APIEndpoint Model (T045)
+
 REST API endpoint documentation and discovery with HTTP methods, parameters, and response schemas.
 
 ## Services (Phase 3.3 Complete - T046-T054)
 
 ### ✅ Parser Service (T046)
+
 Multi-language Tree-sitter parsing engine with optimized grammars and parallel processing.
 
 ### ✅ Indexer Service (T047)
+
 Tantivy search indexing with parallel processing, incremental updates, and performance optimization.
 
 ### ✅ Search Service (T048)
+
 Hybrid search with ranking algorithms, relevance scoring, and result aggregation.
 
 ### ✅ Embedding Service (T049)
+
 ONNX-based vector embeddings with semantic similarity and clustering capabilities.
 
 ### ✅ Cache Service (T050)
+
 LRU/Redis caching with performance optimization, memory management, and distributed support.
 
 ### ✅ Storage Service (T051)
+
 SQLite/PostgreSQL database abstraction with connection pooling, transactions, and migrations.
 
 ### ✅ Analyzer Service (T052)
+
 AST analysis and static code analysis with complexity metrics, pattern detection, and quality scoring.
 
 ### ✅ Security Service (T053)
+
 Security vulnerability scanning with comprehensive checks, severity scoring, and remediation suggestions.
 
 ### ✅ Metrics Service (T054)
+
 Code quality and complexity calculation with technical debt analysis and trend tracking.
 
 ## FFI Interface
@@ -348,6 +370,7 @@ error!("Failed to parse: {}", error);
 ## Dependencies
 
 Key dependencies:
+
 - `tokio` - Async runtime
 - `rayon` - Parallel processing
 - `tree-sitter` - Language parsing

@@ -78,11 +78,13 @@ codesight-mcp/
 ### 1. Feature Development
 
 1. **Create Feature Branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. **Write Tests First (TDD)**
+
    ```bash
    # Create contract test for new MCP tool
    cd typescript-mcp
@@ -91,6 +93,7 @@ codesight-mcp/
    ```
 
 3. **Implement Feature**
+
    ```bash
    # Implement tool in src/tools/new-tool.ts
    npm run build
@@ -98,6 +101,7 @@ codesight-mcp/
    ```
 
 4. **Run Full Test Suite**
+
    ```bash
    npm run test:all
    npm run test:integration
@@ -107,6 +111,7 @@ codesight-mcp/
 ### 2. MCP Tool Development
 
 #### Contract Test First (Phase 3.2 Completed)
+
 Always write comprehensive contract tests before implementation:
 
 ```typescript
@@ -128,12 +133,14 @@ describe('new_tool MCP Tool - Contract Test', () => {
 ```
 
 **Current Status (Phase 3.2 Complete):**
+
 - ✅ **Contract Tests T009-T017**: All 7 remaining MCP tools have comprehensive contract tests
 - ✅ **TDD Foundation**: Complete specifications ready for Phase 3.3 implementation
 - ✅ **Test Infrastructure**: Robust test framework supporting rapid development
 - 🚧 **Phase 3.3**: Ready to convert contract tests to working implementations
 
 #### Tool Implementation
+
 ```typescript
 // src/tools/new-tool.ts
 import { z } from 'zod';
@@ -155,6 +162,7 @@ export async function handleNewTool(input: z.infer<typeof inputSchema>) {
 ### 3. Rust FFI Development
 
 #### Adding New Rust Functions
+
 ```rust
 // rust-core/src/lib.rs
 #[napi]
@@ -165,6 +173,7 @@ pub fn rust_function(input: String) -> Result<String, String> {
 ```
 
 #### TypeScript Integration
+
 ```typescript
 // typescript-mcp/src/ffi/rust-bridge.ts
 let rustModule: any;
@@ -190,6 +199,7 @@ export function callRustFunction(input: string): string {
 ### TypeScript Standards
 
 #### 1. Type Safety
+
 - **No `any` types**: Use proper TypeScript interfaces
 - **Strict mode**: All files must pass strict type checking
 - **Explicit returns**: All functions must have explicit return types
@@ -214,6 +224,7 @@ async function getUser(id: any): any {
 ```
 
 #### 2. Error Handling
+
 - **Comprehensive error handling**: All async operations must handle errors
 - **Typed errors**: Use custom error classes with proper types
 - **Graceful degradation**: Fallback implementations for FFI calls
@@ -244,6 +255,7 @@ async function safeOperation<T>(
 ```
 
 #### 3. Code Organization
+
 - **Single responsibility**: Each function/class has one clear purpose
 - **Dependency injection**: Use dependency injection for testability
 - **Module structure**: Clear module boundaries and interfaces
@@ -270,6 +282,7 @@ export class UserService {
 ### Rust Standards
 
 #### 1. Error Handling
+
 ```rust
 use thiserror::Error;
 
@@ -289,6 +302,7 @@ pub type Result<T> = std::result::Result<T, CodeSightError>;
 ```
 
 #### 2. Performance Optimization
+
 ```rust
 use rayon::prelude::*;
 
@@ -305,6 +319,7 @@ pub fn process_files_parallel(files: Vec<PathBuf>) -> Result<Vec<ProcessedFile>>
 ### 1. Test Categories
 
 #### Unit Tests
+
 - Test individual functions and classes
 - Mock external dependencies
 - Fast execution (< 100ms per test)
@@ -326,6 +341,7 @@ describe('UserService', () => {
 ```
 
 #### Integration Tests
+
 - Test component interactions
 - Use real database (testcontainers)
 - Test API endpoints
@@ -354,6 +370,7 @@ describe('User API', () => {
 ```
 
 #### Contract Tests
+
 - Test MCP tool specifications
 - Validate input/output schemas
 - Test error scenarios
@@ -370,6 +387,7 @@ describe('search_code MCP Tool - Contract Test', () => {
 ```
 
 #### Performance Tests
+
 - Benchmark critical operations
 - Validate performance requirements
 - Load testing
@@ -411,6 +429,7 @@ npm run test:contract          # All 7 MCP tools have comprehensive contract tes
 ```
 
 **Current Test Coverage:**
+
 - **Contract Tests**: T009-T017 complete (7 MCP tools)
 - **Integration Tests**: 27/27 tests passing
 - **Unit Tests**: Comprehensive unit test coverage
@@ -419,6 +438,7 @@ npm run test:contract          # All 7 MCP tools have comprehensive contract tes
 ## Build and Deployment
 
 ### Development Build
+
 ```bash
 # TypeScript build
 cd typescript-mcp
@@ -434,6 +454,7 @@ npm run build:hybrid
 ```
 
 ### Production Build
+
 ```bash
 # TypeScript build
 cd typescript-mcp
@@ -449,6 +470,7 @@ npm run dist
 ```
 
 ### Docker Development
+
 ```bash
 # Start development environment
 docker-compose -f docker-compose.dev.yml up -d
@@ -463,6 +485,7 @@ docker-compose -f docker-compose.dev.yml down
 ## Performance Optimization
 
 ### 1. TypeScript Optimization
+
 - **Lazy loading**: Load modules on demand
 - **Caching**: Cache expensive operations
 - **Batching**: Batch database operations
@@ -486,6 +509,7 @@ class SearchService {
 ```
 
 ### 2. Rust Optimization
+
 - **Parallel processing**: Use Rayon for CPU-bound tasks
 - **Memory efficiency**: Use efficient data structures
 - **Zero-copy**: Minimize memory allocations
@@ -508,6 +532,7 @@ pub fn index_files(files: &[PathBuf]) -> Result<Vec<IndexedFile>> {
 ## Code Review Process
 
 ### 1. Pre-commit Checklist
+
 - [ ] All tests pass
 - [ ] No TypeScript compilation errors
 - [ ] Code follows style guidelines
@@ -515,12 +540,14 @@ pub fn index_files(files: &[PathBuf]) -> Result<Vec<IndexedFile>> {
 - [ ] Performance impact is considered
 
 ### 2. Pull Request Requirements
+
 - **Clear description**: Explain what and why
 - **Test coverage**: New features have tests
 - **Documentation**: Updated where necessary
 - **Breaking changes**: Clearly documented
 
 ### 3. Review Guidelines
+
 - **Functionality**: Does it work as intended?
 - **Code quality**: Is it maintainable and readable?
 - **Performance**: Are there performance implications?
@@ -529,6 +556,7 @@ pub fn index_files(files: &[PathBuf]) -> Result<Vec<IndexedFile>> {
 ## Debugging
 
 ### 1. TypeScript Debugging
+
 ```bash
 # Debug with Node.js
 node --inspect-brk dist/index.js
@@ -538,6 +566,7 @@ node --inspect-brk dist/index.js
 ```
 
 ### 2. Rust Debugging
+
 ```bash
 # Debug with GDB
 cargo build
@@ -549,6 +578,7 @@ cargo clippy
 ```
 
 ### 3. Integration Debugging
+
 ```bash
 # Enable debug logging
 LOG_LEVEL=debug npm run dev
@@ -561,6 +591,7 @@ node dist/cli/index.js search "test query"
 ## Common Issues and Solutions
 
 ### 1. FFI Bridge Issues
+
 ```bash
 # Symptoms: Rust functions not found
 # Solution: Rebuild native module
@@ -573,6 +604,7 @@ napi build --platform
 ```
 
 ### 2. Database Issues
+
 ```bash
 # Symptoms: SQLite database locked
 # Solution: Check for open connections
@@ -585,6 +617,7 @@ npm run dev
 ```
 
 ### 3. Performance Issues
+
 ```bash
 # Symptoms: Slow indexing
 # Solution: Check Rust compilation
@@ -600,17 +633,20 @@ node --inspect dist/cli/index.js
 ## Contributing Guidelines
 
 ### 1. Before Contributing
+
 - Read this development guide
 - Set up development environment
 - Run existing tests to ensure everything works
 
 ### 2. Making Changes
+
 - Create feature branch from main
 - Write tests before implementation (TDD)
 - Follow code standards and patterns
 - Update documentation as needed
 
 ### 3. Submitting Changes
+
 - Create pull request with clear description
 - Ensure all tests pass
 - Address code review feedback
@@ -619,16 +655,19 @@ node --inspect dist/cli/index.js
 ## Getting Help
 
 ### Documentation
+
 - [API Reference](./api-reference.md)
 - [MCP Tools Documentation](./mcp-tools.md)
 - [Architecture Overview](../specs/codesight-mcp/)
 
 ### Community
+
 - GitHub Issues: Report bugs and request features
 - Discord: Real-time discussion and support
 - Documentation: Detailed guides and examples
 
 ### Development Support
+
 - Review existing code patterns
 - Check test files for usage examples
 - Use debug logging to troubleshoot issues

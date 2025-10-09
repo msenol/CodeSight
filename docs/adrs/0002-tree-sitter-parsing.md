@@ -19,6 +19,7 @@ The Code Intelligence MCP Server needs to parse source code from multiple progra
 5. **Performance**: Parse large codebases efficiently
 
 We need a parsing solution that:
+
 - Supports multiple programming languages
 - Provides incremental parsing for real-time updates
 - Offers robust error recovery
@@ -30,6 +31,7 @@ We need a parsing solution that:
 We will use **Tree-sitter** as our primary code parsing technology.
 
 Tree-sitter is an incremental parsing system that builds concrete syntax trees for source code and provides:
+
 - Multi-language support with grammar-based parsers
 - Incremental parsing for efficient updates
 - Error recovery and fault tolerance
@@ -72,6 +74,7 @@ Tree-sitter is an incremental parsing system that builds concrete syntax trees f
 ### Supported Languages (Priority Order)
 
 **Tier 1 (Full Support)**:
+
 - TypeScript/JavaScript
 - Python
 - Rust
@@ -79,6 +82,7 @@ Tree-sitter is an incremental parsing system that builds concrete syntax trees f
 - C/C++
 
 **Tier 2 (Good Support)**:
+
 - Go
 - C#
 - PHP
@@ -86,6 +90,7 @@ Tree-sitter is an incremental parsing system that builds concrete syntax trees f
 - Swift
 
 **Tier 3 (Basic Support)**:
+
 - Kotlin
 - Scala
 - Dart
@@ -226,17 +231,20 @@ pub enum ErrorSeverity {
 ### Benchmarks
 
 **Parsing Speed** (typical files):
+
 - Small files (<1KB): <1ms
 - Medium files (1-10KB): 1-5ms
 - Large files (10-100KB): 5-50ms
 - Very large files (>100KB): 50-500ms
 
 **Memory Usage**:
+
 - Base parser: ~10MB per language
 - Syntax tree: ~2-5x source file size
 - Query results: ~10-20% of tree size
 
 **Incremental Parsing Benefits**:
+
 - 10-100x faster for small changes
 - Memory reuse for unchanged subtrees
 - Enables real-time code analysis
@@ -256,11 +264,13 @@ pub enum ErrorSeverity {
 **Examples**: TypeScript Compiler API, Python AST, Rust syn
 
 **Pros**:
+
 - Native language support
 - Complete semantic information
 - Official maintenance
 
 **Cons**:
+
 - Different APIs for each language
 - Complex integration
 - Inconsistent error handling
@@ -271,11 +281,13 @@ pub enum ErrorSeverity {
 ### 2. ANTLR
 
 **Pros**:
+
 - Mature parsing framework
 - Grammar-based approach
 - Good tooling support
 
 **Cons**:
+
 - Java-based (JVM dependency)
 - Less efficient than Tree-sitter
 - Limited incremental parsing
@@ -286,11 +298,13 @@ pub enum ErrorSeverity {
 ### 3. Language Server Protocol (LSP)
 
 **Pros**:
+
 - Rich semantic information
 - Official language support
 - Real-time analysis
 
 **Cons**:
+
 - Requires running language servers
 - Complex process management
 - High resource usage
@@ -301,11 +315,13 @@ pub enum ErrorSeverity {
 ### 4. Regular Expressions
 
 **Pros**:
+
 - Simple implementation
 - Fast for basic patterns
 - No external dependencies
 
 **Cons**:
+
 - Cannot handle nested structures
 - Fragile and error-prone
 - No semantic understanding
@@ -316,24 +332,28 @@ pub enum ErrorSeverity {
 ## Implementation Plan
 
 ### Phase 1: Core Parser (Week 1-2)
+
 1. Basic Tree-sitter integration
 2. Language detection
 3. Simple entity extraction
 4. Error handling framework
 
 ### Phase 2: Multi-language Support (Week 3-4)
+
 1. TypeScript/JavaScript parser
 2. Python parser
 3. Rust parser
 4. Query pattern development
 
 ### Phase 3: Advanced Features (Week 5-6)
+
 1. Incremental parsing
 2. Performance optimization
 3. Parallel processing
 4. Memory management
 
 ### Phase 4: Extended Languages (Week 7-8)
+
 1. Java, C/C++, Go parsers
 2. Custom query patterns
 3. Language-specific optimizations
@@ -350,22 +370,28 @@ pub enum ErrorSeverity {
 ## Risks and Mitigation
 
 ### Risk 1: Grammar Quality
+
 **Risk**: Some language grammars may be incomplete or buggy
-**Mitigation**: 
+**Mitigation**:
+
 - Test with real-world codebases
 - Contribute fixes upstream
 - Maintain custom grammar forks if needed
 
 ### Risk 2: Performance Bottlenecks
+
 **Risk**: Large files may cause memory or performance issues
 **Mitigation**:
+
 - Implement file size limits
 - Use streaming parsing for very large files
 - Provide configuration options
 
 ### Risk 3: Language Evolution
+
 **Risk**: New language features may not be supported immediately
 **Mitigation**:
+
 - Monitor language grammar updates
 - Implement fallback parsing strategies
 - Graceful degradation for unsupported syntax

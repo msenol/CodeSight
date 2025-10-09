@@ -7,6 +7,7 @@ Your Code Intelligence MCP server is ready to integrate with Claude Desktop.
 ## What We've Built
 
 ✅ **9 MCP Tools Registered:**
+
 1. `search_code` - Natural language code search
 2. `explain_function` - Function explanation
 3. `find_references` - Find symbol references
@@ -56,13 +57,16 @@ Your Code Intelligence MCP server is ready to integrate with Claude Desktop.
 ## Testing the Integration
 
 ### Quick Test
+
 1. Double-click `start-mcp-server.bat` to test server startup
 2. Check logs in `typescript-mcp/logs/combined.log`
 
 ### In Claude Desktop
+
 1. Open a new conversation
 2. Type: `/tools` to see available tools
 3. Test a tool:
+
    ```
    Use the search_code tool to find functions related to "data processing" in codebase "my-project"
    ```
@@ -70,6 +74,7 @@ Your Code Intelligence MCP server is ready to integrate with Claude Desktop.
 ## Debugging
 
 ### Check Logs
+
 ```bash
 # View real-time logs
 tail -f typescript-mcp/logs/combined.log

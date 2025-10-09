@@ -51,6 +51,7 @@ docker-compose logs -f
 ### Environment Variables
 
 #### Core Application
+
 ```bash
 # Application Settings
 NODE_ENV=production
@@ -75,6 +76,7 @@ REDIS_PASSWORD=your-redis-password
 ```
 
 #### MCP Server Configuration
+
 ```bash
 # MCP Settings
 MCP_PORT=3001
@@ -91,6 +93,7 @@ MCP_SEARCH_TIMEOUT=5000
 ```
 
 #### Rust FFI Configuration
+
 ```bash
 # Rust FFI Bridge
 ENABLE_RUST_FFI=true
@@ -105,6 +108,7 @@ NAPI_DEBUG=false
 ```
 
 #### Performance Configuration
+
 ```bash
 # Indexing Performance
 INDEXING_BATCH_SIZE=100
@@ -125,6 +129,7 @@ CACHE_MAX_SIZE=1000
 ```
 
 #### Monitoring and Security
+
 ```bash
 # Metrics and Health
 ENABLE_METRICS=true
@@ -143,6 +148,7 @@ RATE_LIMIT_WINDOW=900000
 ### Configuration Files
 
 #### Development Configuration (.env)
+
 ```bash
 NODE_ENV=development
 DATABASE_URL=sqlite://./data/code_intelligence.db
@@ -154,6 +160,7 @@ LOG_LEVEL=debug
 ```
 
 #### Production Configuration (.env.production)
+
 ```bash
 NODE_ENV=production
 DATABASE_URL=postgresql://postgres:password@postgres:5432/code_intelligence
@@ -513,6 +520,7 @@ helm install codesight codesight/mcp-server \
 ### Custom Kubernetes Manifests
 
 #### Namespace and Configuration
+
 ```yaml
 # k8s/namespace.yaml
 apiVersion: v1
@@ -569,6 +577,7 @@ data:
 ```
 
 #### Deployment and Services
+
 ```yaml
 # k8s/deployment.yaml
 apiVersion: apps/v1
@@ -712,6 +721,7 @@ spec:
 ### GitHub Actions Workflows
 
 #### Main CI/CD Pipeline
+
 ```yaml
 # .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
@@ -914,6 +924,7 @@ jobs:
 ```
 
 #### Performance Benchmark Workflow
+
 ```yaml
 # .github/workflows/performance.yml
 name: Performance Benchmarks
@@ -1123,6 +1134,7 @@ scrape_configs:
 ## Security Configuration
 
 ### Network Policies
+
 ```yaml
 # k8s/network-policy.yaml
 apiVersion: networking.k8s.io/v1
@@ -1163,6 +1175,7 @@ spec:
 ```
 
 ### Resource Limits and Security Context
+
 ```yaml
 # Security context configuration
 securityContext:
@@ -1190,6 +1203,7 @@ resources:
 ## Backup and Recovery
 
 ### Database Backup Script
+
 ```bash
 #!/bin/bash
 # scripts/backup-db.sh
@@ -1220,6 +1234,7 @@ echo "Backup completed: ${BACKUP_DIR}/${DATE}"
 ```
 
 ### Restore Script
+
 ```bash
 #!/bin/bash
 # scripts/restore-db.sh
@@ -1251,6 +1266,7 @@ echo "Restore completed from: ${BACKUP_PATH}"
 ### Common Issues and Solutions
 
 #### Docker Issues
+
 ```bash
 # Check container status
 docker ps -a
@@ -1269,6 +1285,7 @@ docker exec -it codesight-mcp sh
 ```
 
 #### Kubernetes Issues
+
 ```bash
 # Check pod status
 kubectl get pods -n codesight
@@ -1287,6 +1304,7 @@ kubectl port-forward service/codesight-mcp 3001:80 -n codesight
 ```
 
 #### Performance Issues
+
 ```bash
 # Check FFI bridge status
 curl http://localhost:3001/health
@@ -1304,6 +1322,7 @@ kubectl exec -it <redis-pod> -n codesight -- redis-cli info
 ## Best Practices
 
 ### Development
+
 1. **Always test with both Rust FFI enabled and disabled**
 2. **Use environment-specific configuration files**
 3. **Implement proper error handling across FFI boundaries**
@@ -1311,6 +1330,7 @@ kubectl exec -it <redis-pod> -n codesight -- redis-cli info
 5. **Use Docker for consistent development environments**
 
 ### Production
+
 1. **Use non-root containers with proper security contexts**
 2. **Implement resource limits and requests**
 3. **Set up comprehensive monitoring and alerting**
@@ -1319,6 +1339,7 @@ kubectl exec -it <redis-pod> -n codesight -- redis-cli info
 6. **Implement proper secrets management**
 
 ### Performance
+
 1. **Enable caching with appropriate TTL values**
 2. **Configure connection pooling for databases**
 3. **Use horizontal pod autoscaling for variable loads**

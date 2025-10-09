@@ -9,6 +9,7 @@ This guide will walk you through installing the Code Intelligence MCP Server on 
 ## System Requirements
 
 ### Minimum Requirements
+
 - **OS**: Windows 10+, macOS 10.15+, or Linux (Ubuntu 18.04+)
 - **Memory**: 4GB RAM
 - **Storage**: 1GB free space
@@ -16,6 +17,7 @@ This guide will walk you through installing the Code Intelligence MCP Server on 
 - **Rust**: Version 1.70 or higher (for building from source)
 
 ### Recommended Requirements
+
 - **Memory**: 8GB+ RAM for large codebases
 - **Storage**: 5GB+ free space
 - **CPU**: Multi-core processor for parallel indexing
@@ -100,6 +102,7 @@ npm link
    - Run the installer with default settings
 
 2. **Install Rust** (if building from source):
+
    ```powershell
    # Install via rustup
    Invoke-WebRequest -Uri "https://win.rustup.rs/" -OutFile "rustup-init.exe"
@@ -107,6 +110,7 @@ npm link
    ```
 
 3. **Install Code Intelligence MCP**:
+
    ```powershell
    npm install -g code-intelligence-mcp
    ```
@@ -114,21 +118,25 @@ npm link
 ### macOS
 
 1. **Install Homebrew** (if not already installed):
+
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
 
 2. **Install Node.js**:
+
    ```bash
    brew install node
    ```
 
 3. **Install Rust** (if building from source):
+
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
 4. **Install Code Intelligence MCP**:
+
    ```bash
    npm install -g code-intelligence-mcp
    ```
@@ -136,11 +144,13 @@ npm link
 ### Linux (Ubuntu/Debian)
 
 1. **Update package manager**:
+
    ```bash
    sudo apt update
    ```
 
 2. **Install Node.js**:
+
    ```bash
    # Install Node.js 18.x
    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -148,12 +158,14 @@ npm link
    ```
 
 3. **Install Rust** (if building from source):
+
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    source ~/.cargo/env
    ```
 
 4. **Install Code Intelligence MCP**:
+
    ```bash
    sudo npm install -g code-intelligence-mcp
    ```
@@ -161,6 +173,7 @@ npm link
 ### Linux (CentOS/RHEL/Fedora)
 
 1. **Install Node.js**:
+
    ```bash
    # CentOS/RHEL
    curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
@@ -171,11 +184,13 @@ npm link
    ```
 
 2. **Install Rust** (if building from source):
+
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
 3. **Install Code Intelligence MCP**:
+
    ```bash
    sudo npm install -g code-intelligence-mcp
    ```
@@ -210,6 +225,7 @@ services:
 ```
 
 Run with:
+
 ```bash
 docker-compose up -d
 ```
@@ -309,6 +325,7 @@ code-intel index ./test-project
 ```
 
 Expected output:
+
 ```
 ✅ Code Intelligence MCP Server v1.0.0
 ✅ Rust core engine: OK
@@ -326,6 +343,7 @@ After installation, you'll want to configure the server for your environment. Se
 ### Common Issues
 
 **Permission denied errors on Linux/macOS:**
+
 ```bash
 # Fix npm permissions
 sudo chown -R $(whoami) ~/.npm
@@ -333,6 +351,7 @@ sudo chown -R $(whoami) ~/.npm
 ```
 
 **Rust compilation errors:**
+
 ```bash
 # Update Rust toolchain
 rustup update
@@ -341,6 +360,7 @@ rustup target add x86_64-unknown-linux-gnu
 ```
 
 **Docker permission issues:**
+
 ```bash
 # Add user to docker group (Linux)
 sudo usermod -aG docker $USER
@@ -348,6 +368,7 @@ sudo usermod -aG docker $USER
 ```
 
 **Port already in use:**
+
 ```bash
 # Find process using port 3000
 lsof -i :3000

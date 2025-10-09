@@ -13,30 +13,36 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 ## Quick Links
 
 ### 🚀 Getting Started
+
 - [Quick Start Guide](../specs/codesight-mcp/quickstart.md) - Get up and running in minutes
 - [Installation Guide](./configuration.md) - Complete setup instructions
 - [Development Guide](./development.md) - Development workflow and practices
 
 ### 🏗️ Architecture & Design
+
 - [Architecture Overview](./adrs/0001-hybrid-architecture.md) - Hybrid TypeScript/Rust architecture
 - [Rust FFI Bridge](./rust-ffi-bridge.md) - NAPI-RS integration details
 - [Performance Benchmarks](./performance-benchmarks.md) - Detailed performance metrics
 
 ### 🧪 Testing & Quality Assurance
+
 - [Integration Testing Guide](./testing/integration-testing.md) - Comprehensive test suite documentation
 - [MCP Tools Documentation](./MCP-TOOLS.md) - Complete MCP protocol tools reference
 - [API Contract Specifications](../specs/codesight-mcp/contracts/) - OpenAPI specifications
 
 ### 🔧 API & Integration
+
 - [API Documentation](./API.md) - REST API endpoints and usage
 
 ### 📦 Deployment & Operations
+
 - [Configuration Guide](./configuration.md) - Environment setup and configuration
 - [Docker Deployment](./deployment/docker.md) - Container deployment guide
 - [Kubernetes Deployment](./deployment/kubernetes.md) - K8s deployment manifests
 - [Development Documentation](../typescript-mcp/README.md) - TypeScript MCP server details
 
 ### 📊 Project Specifications
+
 - [Feature Specification](../specs/codesight-mcp/spec.md) - Complete feature requirements
 - [Data Model](../specs/codesight-mcp/data-model.md) - Data structures and relationships
 - [Implementation Tasks](../specs/codesight-mcp/tasks.md) - Development tasks and progress
@@ -78,6 +84,7 @@ docs/
 ### ✅ Production-Ready Features (v0.1.0)
 
 **Core Functionality:**
+
 - **Hybrid Architecture**: TypeScript + Rust with NAPI-RS FFI bridge
 - **Real Code Indexing**: SQLite database with 377+ entities indexed
 - **MCP Protocol**: Full compliance with 9 implemented tools
@@ -85,12 +92,14 @@ docs/
 - **Performance Optimized**: 1-2 second indexing, 20-50ms search queries
 
 **Enterprise Features:**
+
 - **CI/CD Pipelines**: 7 GitHub Actions workflows with comprehensive testing
 - **Production Docker**: Complete containerization with PostgreSQL, Redis, monitoring
 - **Professional Tooling**: Unified ESLint, TypeScript configs, security scanning
 - **Monitoring**: Prometheus metrics, Grafana dashboards, structured logging
 
 **Code Quality Excellence:**
+
 - 🏆 **62% Lint Improvement**: Reduced issues from 1000+ to 378 remaining
 - 🏆 **Rule 15 Compliance**: Enterprise-grade development standards
 - 🏆 **Type Safety Enhanced**: Comprehensive 'any' type elimination
@@ -98,10 +107,12 @@ docs/
 ### 🔧 MCP Tools Implementation
 
 **Fully Functional (Real Implementation):**
+
 - `search_code`: Natural language search with database integration
 - `explain_function`: Function explanation with codebase lookup
 
 **Protocol Ready (Working Implementation):**
+
 - `find_references`: Symbol reference finding
 - `trace_data_flow`: Data flow analysis
 - `analyze_security`: Security vulnerability detection
@@ -122,6 +133,7 @@ docs/
 | Multi-Language | 15+ languages | 7.5x coverage |
 
 **Performance Scaling:**
+
 | Project Size | Indexing Time | Query Response | Memory Usage |
 |--------------|---------------|----------------|--------------|
 | Small (<1K files) | <2 seconds | <20ms | <50MB |
@@ -132,26 +144,31 @@ docs/
 ## Getting Help
 
 ### Documentation Search
+
 Use the search functionality in your documentation viewer to find specific topics.
 
 ### Community Support
+
 - **GitHub Issues**: [Report bugs and request features](https://github.com/your-org/codesight-mcp/issues)
 - **GitHub Discussions**: [Community discussions and Q&A](https://github.com/your-org/codesight-mcp/discussions)
 - **Discord Server**: [Real-time chat and support](https://discord.gg/codesight)
 
 ### Professional Support
-- **Email**: support@codesight-mcp.com
+
+- **Email**: <support@codesight-mcp.com>
 - **Documentation Portal**: [https://docs.codesight-mcp.com](https://docs.codesight-mcp.com)
 
 ## Contributing to Documentation
 
 ### Documentation Standards
+
 - **English Only**: All documentation must be in English (non-negotiable requirement)
 - **Enterprise Quality**: Maintain professional, clear, and comprehensive documentation
 - **Consistency**: Follow established patterns and formatting
 - **Accuracy**: Ensure all technical details are current and verified
 
 ### Making Changes
+
 1. Identify the appropriate documentation file
 2. Make changes following the existing style
 3. Test all links and references
@@ -159,6 +176,7 @@ Use the search functionality in your documentation viewer to find specific topic
 5. Submit pull requests with clear descriptions
 
 ### Documentation Maintenance
+
 See [Documentation Maintenance Guide](./development/documentation-maintenance-guide.md) for detailed guidelines on maintaining and updating documentation.
 
 ## Version Information

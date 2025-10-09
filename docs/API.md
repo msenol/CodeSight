@@ -5,6 +5,7 @@
 The CodeSight MCP Server provides both MCP protocol tools and REST API endpoints for code intelligence operations with enterprise-grade reliability, performance, and comprehensive code quality achievements.
 
 **Current Implementation Status (v0.1.0):**
+
 - ✅ **Hybrid Architecture**: TypeScript + Rust with NAPI-RS FFI bridge
 - ✅ **Real Database Integration**: SQLite with 377+ entities indexed
 - ✅ **MCP Protocol**: Full compliance with 9 implemented tools
@@ -60,9 +61,11 @@ MCP tools are accessed through the Model Context Protocol. See [MCP-TOOLS.md](MC
 ### Health Check
 
 #### GET /health
+
 Check server health status.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -71,9 +74,11 @@ Check server health status.
 ```
 
 #### GET /api/health
+
 Detailed health check with version and FFI bridge status.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -105,9 +110,11 @@ Detailed health check with version and FFI bridge status.
 ### Codebase Management
 
 #### GET /api/codebase
+
 List all codebases.
 
 **Query Parameters:**
+
 - `page` (number): Page number for pagination (default: 1)
 - `limit` (number): Items per page (default: 20)
 - `status` (string): Filter by status (active, inactive, archived)
@@ -115,6 +122,7 @@ List all codebases.
 - `search` (string): Search term
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -139,12 +147,15 @@ List all codebases.
 ```
 
 #### GET /api/codebase/:id
+
 Get specific codebase details.
 
 **Parameters:**
+
 - `id` (uuid): Codebase ID
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -165,9 +176,11 @@ Get specific codebase details.
 ```
 
 #### POST /api/codebase
+
 Create a new codebase.
 
 **Request Body:**
+
 ```json
 {
   "name": "My Project",
@@ -181,6 +194,7 @@ Create a new codebase.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -193,12 +207,15 @@ Create a new codebase.
 ```
 
 #### PUT /api/codebase/:id
+
 Update codebase information.
 
 **Parameters:**
+
 - `id` (uuid): Codebase ID
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Name",
@@ -208,21 +225,26 @@ Update codebase information.
 ```
 
 #### DELETE /api/codebase/:id
+
 Delete a codebase.
 
 **Parameters:**
+
 - `id` (uuid): Codebase ID
 - `force` (boolean): Force delete even if active (query param)
 
 ### Indexing
 
 #### POST /api/codebase/:id/index
+
 Start or restart indexing for a codebase.
 
 **Parameters:**
+
 - `id` (uuid): Codebase ID
 
 **Request Body:**
+
 ```json
 {
   "force_reindex": false,
@@ -234,6 +256,7 @@ Start or restart indexing for a codebase.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -246,9 +269,11 @@ Start or restart indexing for a codebase.
 ```
 
 #### GET /api/codebase/:id/index/status
+
 Get indexing status.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -267,9 +292,11 @@ Get indexing status.
 ### FFI Bridge Status
 
 #### GET /api/ffi/status
+
 Check Rust FFI bridge status and performance metrics.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -303,9 +330,11 @@ Check Rust FFI bridge status and performance metrics.
 ```
 
 #### POST /api/ffi/test
+
 Test FFI bridge functionality.
 
 **Request Body:**
+
 ```json
 {
   "test_operation": "parse_and_index",
@@ -314,6 +343,7 @@ Test FFI bridge functionality.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -335,9 +365,11 @@ Test FFI bridge functionality.
 ### Code Analysis
 
 #### POST /api/analyze/complexity
+
 Analyze code complexity.
 
 **Request Body:**
+
 ```json
 {
   "entity_id": "550e8400-e29b-41d4-a716-446655440001",
@@ -346,6 +378,7 @@ Analyze code complexity.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -362,9 +395,11 @@ Analyze code complexity.
 ```
 
 #### POST /api/analyze/security
+
 Run security analysis.
 
 **Request Body:**
+
 ```json
 {
   "codebase_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -374,6 +409,7 @@ Run security analysis.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -402,9 +438,11 @@ Run security analysis.
 ### Search
 
 #### POST /api/search
+
 Search code with natural language.
 
 **Request Body:**
+
 ```json
 {
   "codebase_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -415,6 +453,7 @@ Search code with natural language.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -465,10 +504,12 @@ All error responses follow this format:
 ## Rate Limiting
 
 The API implements rate limiting in production:
+
 - 100 requests per minute for general endpoints
 - 10 requests per minute for heavy operations (indexing, analysis)
 
 Rate limit headers:
+
 - `X-RateLimit-Limit`: Request limit
 - `X-RateLimit-Remaining`: Remaining requests
 - `X-RateLimit-Reset`: Reset timestamp
@@ -485,6 +526,7 @@ wss://api.code-intelligence.example.com/ws
 ### Events
 
 #### indexing_progress
+
 Real-time indexing progress updates.
 
 ```json
@@ -499,6 +541,7 @@ Real-time indexing progress updates.
 ```
 
 #### analysis_complete
+
 Notification when analysis completes.
 
 ```json
@@ -567,6 +610,7 @@ GET /api/codebase?page=2&limit=50
 ```
 
 Pagination response includes:
+
 - `current_page`: Current page number
 - `total_pages`: Total number of pages
 - `total_items`: Total number of items
@@ -583,6 +627,7 @@ GET /api/codebase?status=active&language=TypeScript&sort_by=updated_at&sort_orde
 ```
 
 Common parameters:
+
 - `sort_by`: Field to sort by
 - `sort_order`: `asc` or `desc`
 - `search`: Text search
@@ -634,25 +679,30 @@ X-API-Version: 1.0
 Default version is the latest stable version (v0.1.0). Specify older versions for compatibility.
 
 ### Supported Versions
+
 - **v0.1.0** (Current): Hybrid TypeScript/Rust architecture with full MCP support
 - **v0.0.x** (Legacy): TypeScript-only implementation (deprecated)
 
 ### Deprecation Schedule
+
 - v0.0.x: Support ends 2025-12-31
 - v0.1.x: Current stable branch with active development
 
 ## Enterprise Features
 
 ### Multi-Language Support
+
 The API supports 15+ programming languages with Tree-sitter parsing:
 
 **Primary Languages:**
+
 - JavaScript, TypeScript
 - Python, Rust, Go
 - Java, C++, C#
 - PHP, Ruby, and more
 
 ### Performance Scaling
+
 | Project Size | Indexing Time | Query Response | Memory Usage |
 |--------------|---------------|----------------|--------------|
 | Small (<1K files) | <2 seconds | <20ms | <50MB |
@@ -661,6 +711,7 @@ The API supports 15+ programming languages with Tree-sitter parsing:
 | Monorepos (>100K files) | <15 minutes | <250ms | <4GB |
 
 ### Code Quality Integration
+
 All API responses include code quality metrics:
 
 ```json

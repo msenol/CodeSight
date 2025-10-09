@@ -34,6 +34,7 @@ This module implements the MCP protocol layer that enables AI assistants like Cl
 ## Features
 
 ✅ **Enterprise-Ready Implementation:**
+
 - **Real Code Indexing**: SQLite database with 377+ indexed entities
 - **Multi-Language Support**: 15+ programming languages with Tree-sitter parsers
 - **Functional Search**: Query intent detection with relevance scoring
@@ -58,6 +59,7 @@ This module implements the MCP protocol layer that enables AI assistants like Cl
 ## Available MCP Tools
 
 ✅ **All 9 Tools Fully Implemented (Phase 3.3 Complete):**
+
 1. **search_code** - Natural language search with SQLite database integration
 2. **explain_function** - Function explanation with comprehensive code analysis
 3. **find_references** - Find all references to a symbol with cross-file analysis
@@ -176,6 +178,7 @@ npm run test:quickstart
 #### Integration Test Coverage
 
 **Claude Desktop Integration (9 tests):**
+
 - ✅ MCP server startup and initialization
 - ✅ MCP protocol compliance (2024-11-05)
 - ✅ Tool listing and discovery (all 9 tools)
@@ -187,6 +190,7 @@ npm run test:quickstart
 - ✅ Debug logging and monitoring
 
 **VS Code Integration (11 tests):**
+
 - ✅ Workspace structure detection and analysis
 - ✅ TypeScript file parsing and understanding
 - ✅ Cross-reference finding across workspace
@@ -200,6 +204,7 @@ npm run test:quickstart
 - ✅ Extension configuration compatibility
 
 **End-to-End Workflows (7 tests):**
+
 - ✅ Complete Claude Desktop session workflow
 - ✅ VS Code development workflow simulation
 - ✅ Multi-language project analysis
@@ -370,6 +375,7 @@ const stats = indexingService.getStats();
 ```
 
 ### Entity Types Extracted
+
 - **Functions**: Regular functions, arrow functions, async functions
 - **Classes**: ES6 classes with export detection
 - **Interfaces**: TypeScript interfaces
@@ -378,6 +384,7 @@ const stats = indexingService.getStats();
 ## Real Performance Metrics
 
 **Current Hybrid Implementation (TypeScript + Rust FFI):**
+
 - **Indexing Speed**: 47 files in ~1-2 seconds (with Rust FFI)
 - **Database Size**: 377 entities in SQLite with concurrent access
 - **Search Response**: 20-50ms query time (with Rust FFI)
@@ -386,6 +393,7 @@ const stats = indexingService.getStats();
 - **Multi-Language Support**: 15+ languages with Tree-sitter
 
 **Performance Benchmarks:**
+
 | Operation | TypeScript Only | Hybrid (TS+Rust) | Improvement |
 |-----------|-----------------|-----------------|-------------|
 | File Indexing | 2-3 seconds | 1-2 seconds | 2x faster |
@@ -394,6 +402,7 @@ const stats = indexingService.getStats();
 | Multi-Language | JS/TS only | 15+ languages | 7.5x coverage |
 
 **Entity Breakdown:**
+
 - Functions: 175 (46.4%)
 - Interfaces: 140 (37.1%)
 - Classes: 48 (12.7%)
@@ -402,6 +411,7 @@ const stats = indexingService.getStats();
 ## Dependencies
 
 Key working dependencies:
+
 - `@modelcontextprotocol/sdk` - MCP protocol implementation
 - `better-sqlite3` - SQLite database with real indexing
 - `glob` - File pattern matching for indexing
@@ -409,16 +419,19 @@ Key working dependencies:
 - `chalk` - CLI output formatting
 
 FFI Bridge dependencies:
+
 - `@napi-rs/cli` - Rust FFI tooling for native module compilation
 - `node-gyp` - Native addon build tool
 - `bindings` - Node.js native module binding utilities
 
 Development dependencies:
+
 - `typescript` - TypeScript compiler
 - `jest` - Testing framework
 - `@types/node` - Node.js type definitions
 
 Rust workspace dependencies (see `../rust-core/Cargo.toml`):
+
 - `napi` & `napi-derive` - NAPI-RS for Node.js bindings
 - `tree-sitter` - Parser generation tool
 - `rusqlite` - SQLite bindings for Rust
@@ -434,7 +447,9 @@ Rust workspace dependencies (see `../rust-core/Cargo.toml`):
 6. Run performance benchmarks: `npm run test:performance`
 
 ### FFI Bridge Development
+
 When working on the Rust FFI bridge:
+
 1. Build Rust components first: `cd ../rust-core && cargo build --release`
 2. Test TypeScript integration: `npm run test:contract`
 3. Verify graceful fallback: `ENABLE_RUST_FFI=false npm test`

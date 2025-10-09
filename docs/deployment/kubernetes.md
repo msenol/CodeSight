@@ -902,6 +902,7 @@ fi
 ### Common Issues
 
 **Pods not starting:**
+
 ```bash
 # Check pod events
 kubectl describe pod <pod-name> -n code-intelligence
@@ -914,6 +915,7 @@ kubectl top pods -n code-intelligence
 ```
 
 **Service not accessible:**
+
 ```bash
 # Check service endpoints
 kubectl get endpoints code-intelligence -n code-intelligence
@@ -926,6 +928,7 @@ kubectl run test-pod --image=curlimages/curl -it --rm -- /bin/sh
 ```
 
 **Database connection issues:**
+
 ```bash
 # Check database pod
 kubectl logs postgres-0 -n code-intelligence

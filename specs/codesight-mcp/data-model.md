@@ -6,7 +6,9 @@
 ## Core Entities
 
 ### 1. Codebase
+
 **Description**: Root entity representing a project or repository being indexed
+
 ```yaml
 fields:
   id: UUID
@@ -39,7 +41,9 @@ state_transitions:
 ```
 
 ### 2. CodeEntity
+
 **Description**: A discrete element in code (function, class, method, variable, etc.)
+
 ```yaml
 fields:
   id: UUID
@@ -75,7 +79,9 @@ validations:
 ```
 
 ### 3. CodeRelationship
+
 **Description**: Represents relationships between code entities
+
 ```yaml
 fields:
   id: UUID
@@ -96,7 +102,9 @@ validations:
 ```
 
 ### 4. Index
+
 **Description**: Searchable index structure for a codebase
+
 ```yaml
 fields:
   id: UUID
@@ -125,7 +133,9 @@ state_transitions:
 ```
 
 ### 5. Query
+
 **Description**: Natural language or structured query request
+
 ```yaml
 fields:
   id: UUID
@@ -152,7 +162,9 @@ validations:
 ```
 
 ### 6. Embedding
+
 **Description**: Vector representation of code for semantic search
+
 ```yaml
 fields:
   id: UUID
@@ -176,7 +188,9 @@ validations:
 ```
 
 ### 7. CacheEntry
+
 **Description**: Cached results of expensive operations
+
 ```yaml
 fields:
   id: UUID
@@ -203,7 +217,9 @@ validations:
 ```
 
 ### 8. Plugin
+
 **Description**: Extension module for additional functionality
+
 ```yaml
 fields:
   id: UUID
@@ -228,7 +244,9 @@ validations:
 ```
 
 ### 9. Configuration
+
 **Description**: User settings for system behavior
+
 ```yaml
 fields:
   id: UUID
@@ -255,7 +273,9 @@ validations:
 ```
 
 ### 10. IndexJob
+
 **Description**: Background job for indexing operations
+
 ```yaml
 fields:
   id: UUID
@@ -287,7 +307,9 @@ state_transitions:
 ```
 
 ### 11. CodeMetric
+
 **Description**: Computed metrics for code quality and complexity
+
 ```yaml
 fields:
   id: UUID
@@ -307,7 +329,9 @@ validations:
 ```
 
 ### 12. APIEndpoint
+
 **Description**: Discovered REST or GraphQL API endpoints
+
 ```yaml
 fields:
   id: UUID
@@ -335,6 +359,7 @@ validations:
 ## Relationships Summary
 
 ### One-to-Many
+
 - Codebase → CodeEntity
 - Codebase → IndexJob
 - Codebase → Index
@@ -348,10 +373,12 @@ validations:
 - APIEndpoint → APIParameter
 
 ### Many-to-Many (via join tables)
+
 - CodeEntity ↔ CodeEntity (via CodeRelationship)
 - Query ↔ CacheEntry (via cache_key lookup)
 
 ### Optional Relationships
+
 - CodeEntity → Embedding (not all entities have embeddings)
 - CacheEntry → Codebase (some caches are global)
 - Embedding → CodeEntity (some embeddings are for queries)
@@ -359,17 +386,20 @@ validations:
 ## Data Integrity Rules
 
 ### Referential Integrity
+
 - Cascading delete: Codebase deletion removes all related entities
 - Restrict delete: Cannot delete Configuration if Codebases reference it
 - Set null: Plugin deletion sets null on historical execution records
 
 ### Unique Constraints
+
 - (codebase_id, qualified_name) unique for CodeEntity
 - cache_key unique globally for CacheEntry
 - (name, version) unique for Plugin
 - (codebase_id, path, method) unique for APIEndpoint
 
 ### Check Constraints
+
 - file_path in CodeEntity must be within codebase path
 - vector dimension must match model requirements
 - TTL must be positive for cache entries
@@ -378,6 +408,7 @@ validations:
 ## Performance Indexes
 
 ### Primary Indexes
+
 - CodeEntity: (codebase_id, entity_type, name)
 - CodeRelationship: (source_entity_id, relationship_type)
 - Embedding: (content_hash) for deduplication
@@ -385,22 +416,26 @@ validations:
 - Query: (codebase_id, timestamp DESC)
 
 ### Full-Text Search Indexes
+
 - CodeEntity.name, CodeEntity.documentation
 - Query.query_text
 - APIEndpoint.path
 
 ### Covering Indexes
+
 - CodeEntity: (codebase_id, file_path) INCLUDE (start_line, end_line)
 - CodeRelationship: (target_entity_id) INCLUDE (source_entity_id, relationship_type)
 
 ## Migration Strategy
 
 ### Version 1.0.0 (Initial)
+
 - All core entities as defined above
 - Basic indexes for primary access patterns
 - Default configuration profiles
 
 ### Future Versions (Planned)
+
 - Version 1.1.0: Add semantic versioning to CodeEntity
 - Version 1.2.0: Add collaboration features (shared queries, annotations)
 - Version 1.3.0: Add incremental embedding updates

@@ -1,42 +1,74 @@
 # CodeSight MCP Server - API Reference
 
+**Generated**: October 9, 2025
+**Version**: v0.1.0
+**Implementation Status**: Phase 3.4 Integration Complete
+
 ## Overview
 
-The CodeSight MCP Server provides a comprehensive REST API for code intelligence operations alongside the MCP protocol interface. This reference covers all available endpoints, authentication, and usage examples.
+The CodeSight MCP Server provides a comprehensive REST API for code intelligence operations alongside the MCP protocol interface. This reference covers all available endpoints, authentication, middleware, and usage examples with the latest Phase 3.4 integration features.
 
 ## Base Configuration
 
 ### Development Server
+
 - **Base URL**: `http://localhost:4000`
 - **Protocol**: HTTP/HTTPS
 - **Content-Type**: `application/json`
 
 ### Production Server
+
 - **Base URL**: `https://your-domain.com`
 - **Protocol**: HTTPS only
 - **Authentication**: JWT token required
 
-## Authentication
+## Authentication & Security
 
 ### Development
-No authentication required in development mode.
 
-### Production
+- **No authentication required** for basic functionality
+- **Rate limiting**: 100 requests per 15 minutes
+- **CORS**: Allow all origins
+
+### Production (Phase 3.4 Security Stack)
+
 ```bash
 # JWT Token Authentication
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
      -H "Content-Type: application/json" \
+     -H "X-API-Key: YOUR_API_KEY" \
      https://your-domain.com/api/codebases
 ```
+
+### Security Headers (Phase 3.4)
+
+All API responses include comprehensive security headers:
+
+```bash
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'
+```
+
+### Rate Limiting (Phase 3.4)
+
+- **Default**: 100 requests per 15 minutes per IP
+- **Authenticated**: 1000 requests per 15 minutes per user
+- **Admin**: 5000 requests per 15 minutes
+- **Endpoints**: Custom limits per endpoint type
 
 ## API Endpoints
 
 ### Health Check Endpoints
 
 #### GET /health
+
 Simple health check returning server status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -47,9 +79,11 @@ Simple health check returning server status.
 ```
 
 #### GET /health/detailed
+
 Comprehensive health check with component status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -70,9 +104,11 @@ Comprehensive health check with component status.
 ```
 
 #### GET /health/ready
+
 Readiness check for load balancer integration.
 
 **Response:**
+
 ```json
 {
   "ready": true,
@@ -85,9 +121,11 @@ Readiness check for load balancer integration.
 ```
 
 #### GET /health/live
+
 Liveness check for container orchestration.
 
 **Response:**
+
 ```json
 {
   "alive": true,
@@ -99,15 +137,18 @@ Liveness check for container orchestration.
 ### Codebase Management
 
 #### GET /api/codebases
+
 List all indexed codebases.
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 20)
 - `sort` (optional): Sort field (name, created_at, updated_at)
 - `order` (optional): Sort order (asc, desc)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -138,9 +179,11 @@ List all indexed codebases.
 ```
 
 #### POST /api/codebases
+
 Create a new codebase entry.
 
 **Request Body:**
+
 ```json
 {
   "name": "my-project",
@@ -151,6 +194,7 @@ Create a new codebase entry.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -168,12 +212,15 @@ Create a new codebase entry.
 ```
 
 #### GET /api/codebases/{id}
+
 Get details of a specific codebase.
 
 **Path Parameters:**
+
 - `id`: Codebase UUID
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -205,12 +252,15 @@ Get details of a specific codebase.
 ```
 
 #### DELETE /api/codebases/{id}
+
 Delete a codebase and all associated data.
 
 **Path Parameters:**
+
 - `id`: Codebase UUID
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -219,12 +269,15 @@ Delete a codebase and all associated data.
 ```
 
 #### POST /api/codebases/{id}/index
+
 Start indexing process for a codebase.
 
 **Path Parameters:**
+
 - `id`: Codebase UUID
 
 **Request Body (optional):**
+
 ```json
 {
   "force_reindex": false,
@@ -236,6 +289,7 @@ Start indexing process for a codebase.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -246,12 +300,15 @@ Start indexing process for a codebase.
 ```
 
 #### GET /api/codebases/{id}/stats
+
 Get detailed statistics for a codebase.
 
 **Path Parameters:**
+
 - `id`: Codebase UUID
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -284,9 +341,11 @@ Get detailed statistics for a codebase.
 ### Search Operations
 
 #### POST /api/queries
+
 Perform natural language search across codebases.
 
 **Request Body:**
+
 ```json
 {
   "query": "user authentication functions",
@@ -301,6 +360,7 @@ Perform natural language search across codebases.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -339,14 +399,17 @@ Perform natural language search across codebases.
 ### Job Management
 
 #### GET /api/jobs
+
 List all background jobs.
 
 **Query Parameters:**
+
 - `status` (optional): Filter by status (pending, running, completed, failed)
 - `type` (optional): Filter by job type (indexing, analysis)
 - `limit` (optional): Items per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -369,12 +432,15 @@ List all background jobs.
 ```
 
 #### GET /api/jobs/{id}
+
 Get details of a specific job.
 
 **Path Parameters:**
+
 - `id`: Job UUID
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -399,9 +465,11 @@ Get details of a specific job.
 ### MCP Tools (REST API Alternative)
 
 #### POST /api/tools/search_code
+
 REST API alternative to the `search_code` MCP tool.
 
 **Request Body:**
+
 ```json
 {
   "query": "authentication functions",
@@ -413,6 +481,7 @@ REST API alternative to the `search_code` MCP tool.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -434,9 +503,11 @@ REST API alternative to the `search_code` MCP tool.
 ```
 
 #### POST /api/tools/explain_function
+
 REST API alternative to the `explain_function` MCP tool.
 
 **Request Body:**
+
 ```json
 {
   "function_identifier": "authenticateUser",
@@ -447,6 +518,7 @@ REST API alternative to the `explain_function` MCP tool.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -479,9 +551,11 @@ REST API alternative to the `explain_function` MCP tool.
 ### Metrics and Monitoring
 
 #### GET /metrics
+
 Prometheus-compatible metrics endpoint.
 
 **Response (text/plain):**
+
 ```
 # HELP codesight_api_requests_total Total number of API requests
 # TYPE codesight_api_requests_total counter
@@ -550,12 +624,14 @@ All API endpoints return consistent error responses:
 ## Rate Limiting
 
 ### Default Limits
+
 - **Authentication endpoints**: 5 requests per minute
 - **Search endpoints**: 100 requests per minute
 - **Codebase management**: 20 requests per minute
 - **Health checks**: 1000 requests per minute
 
 ### Rate Limit Headers
+
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -632,6 +708,7 @@ curl -X GET http://localhost:4000/api/codebases/codebase-uuid \
 ## WebSocket API
 
 ### Connection
+
 ```javascript
 const ws = new WebSocket('ws://localhost:8080');
 
@@ -643,6 +720,7 @@ ws.send(JSON.stringify({
 ```
 
 ### Real-time Events
+
 ```javascript
 // Subscribe to indexing progress
 ws.send(JSON.stringify({
@@ -766,6 +844,7 @@ fi
 ## Changelog
 
 ### v0.1.0 (2025-01-08)
+
 - Initial API release
 - Core codebase management endpoints
 - Search functionality
