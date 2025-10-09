@@ -21,12 +21,14 @@ Code Intelligence MCP Server is a high-performance, AI-powered code analysis pla
 ## Key Features
 
 ### 🎯 **Intelligent Search**
+
 - **Keyword Search**: Fast, precise text-based search
 - **Semantic Search**: Natural language understanding for complex queries
 - **Hybrid Search**: Combines multiple search strategies for optimal results
 - **Context-aware Results**: Provides relevant code snippets with surrounding context
 
 ### 🔧 **Code Analysis Tools**
+
 - **Function Explanation**: Get detailed explanations of code functionality
 - **Reference Finding**: Trace usage and dependencies across your codebase
 - **Data Flow Tracing**: Follow variable and data transformations
@@ -34,6 +36,7 @@ Code Intelligence MCP Server is a high-performance, AI-powered code analysis pla
 - **Duplicate Detection**: Identify and eliminate code duplication
 
 ### 🛠️ **Developer Integration**
+
 - **Claude Desktop**: Native integration with Anthropic's Claude
 - **VS Code Extension**: Seamless IDE integration
 - **CI/CD Pipeline**: Automated code analysis in your build process
@@ -41,6 +44,7 @@ Code Intelligence MCP Server is a high-performance, AI-powered code analysis pla
 - **Command Line Interface**: Powerful CLI for automation and scripting
 
 ### ⚡ **Performance & Scalability**
+
 - **Rust Core**: High-performance indexing and search engine
 - **Parallel Processing**: Multi-threaded analysis for large codebases
 - **Incremental Indexing**: Only process changed files
@@ -86,28 +90,36 @@ code-intel serve
 ## Use Cases
 
 ### 🤖 **AI Assistant Integration**
+
 Enhance your AI coding assistant with deep codebase understanding:
+
 - Answer questions about your code architecture
 - Suggest improvements and refactoring opportunities
 - Explain complex code patterns and relationships
 - Generate documentation from code analysis
 
 ### 🔍 **Code Discovery**
+
 Quickly find what you're looking for in large codebases:
+
 - "Find all authentication-related functions"
 - "Show me how user data flows through the system"
 - "Locate all API endpoints that handle payments"
 - "Find similar code patterns across the project"
 
 ### 🛡️ **Security & Quality**
+
 Maintain code quality and security standards:
+
 - Identify potential security vulnerabilities
 - Detect code smells and anti-patterns
 - Monitor code complexity trends
 - Ensure consistent coding standards
 
 ### 📊 **Code Analytics**
+
 Gain insights into your codebase:
+
 - Track code complexity over time
 - Identify refactoring opportunities
 - Measure technical debt

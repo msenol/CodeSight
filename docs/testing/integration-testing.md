@@ -56,7 +56,8 @@ Integration Test Framework
 
 These tests validate complete integration with Claude Desktop, ensuring the MCP server works correctly with AI assistants.
 
-#### Test Coverage:
+#### Test Coverage
+
 - ✅ **MCP server startup and initialization**: Validate server startup with all 9 tools
 - ✅ **MCP protocol compliance (2024-11-05)**: Full specification validation
 - ✅ **Tool listing and discovery**: Verify all 9 MCP tools are properly discoverable
@@ -67,7 +68,8 @@ These tests validate complete integration with Claude Desktop, ensuring the MCP 
 - ✅ **Connection persistence**: Validate multiple request handling
 - ✅ **Debug logging and monitoring**: Ensure proper logging infrastructure
 
-#### Running Claude Desktop Tests:
+#### Running Claude Desktop Tests
+
 ```bash
 npm run test:claude-desktop
 ```
@@ -76,7 +78,8 @@ npm run test:claude-desktop
 
 These tests validate workspace analysis capabilities when integrated with VS Code extensions.
 
-#### Test Coverage:
+#### Test Coverage
+
 - ✅ **Workspace structure detection**: Analyze VS Code workspace layout
 - ✅ **TypeScript file parsing**: Parse and understand TypeScript files
 - ✅ **Cross-reference finding**: Find references across workspace files
@@ -89,7 +92,8 @@ These tests validate workspace analysis capabilities when integrated with VS Cod
 - ✅ **Dynamic file change handling**: Test real-time file change processing
 - ✅ **Extension configuration compatibility**: Validate VS Code extension setup
 
-#### Running VS Code Tests:
+#### Running VS Code Tests
+
 ```bash
 npm run test:vscode
 ```
@@ -98,7 +102,8 @@ npm run test:vscode
 
 These tests validate real-world usage scenarios and complete workflows.
 
-#### Test Coverage:
+#### Test Coverage
+
 - ✅ **Complete Claude Desktop session workflow**: Full AI assistant session simulation
 - ✅ **VS Code development workflow**: Developer workflow with code analysis
 - ✅ **Multi-language project analysis**: Cross-language codebase analysis
@@ -107,7 +112,8 @@ These tests validate real-world usage scenarios and complete workflows.
 - ✅ **Performance and load testing**: Concurrent request handling
 - ✅ **Concurrent request processing**: Multi-threaded operation validation
 
-#### Running Workflow Tests:
+#### Running Workflow Tests
+
 ```bash
 npm run test:e2e
 ```
@@ -195,11 +201,13 @@ TEST_DEBUG_LOGS=true
 ### Performance Benchmarks
 
 **Search Response Times:**
+
 - Average: 20-50ms (with Rust FFI)
 - 95th percentile: <100ms
 - 99th percentile: <200ms
 
 **Indexing Performance:**
+
 - Small codebase (<1K files): 1-2 seconds
 - Medium codebase (1K-10K files): <15 seconds
 - Large codebase (10K-100K files): <3 minutes
@@ -244,6 +252,7 @@ jobs:
 ### Quality Gates
 
 **Integration Test Quality Gates:**
+
 - **Pass Rate**: 100% (27/27 tests)
 - **Performance**: No regression beyond 10%
 - **Memory Usage**: No memory leaks detected
@@ -255,12 +264,14 @@ jobs:
 ### Common Issues
 
 **Test Failures:**
+
 1. **Database Connection Issues**: Ensure SQLite is accessible
 2. **FFI Bridge Problems**: Verify Rust build completed successfully
 3. **Port Conflicts**: Check for conflicting MCP server instances
 4. **Memory Issues**: Increase available memory for large test suites
 
 **Performance Issues:**
+
 1. **Slow Indexing**: Reduce parallel workers or increase timeout
 2. **High Memory Usage**: Optimize batch size and caching settings
 3. **Network Timeouts**: Increase timeout for external service calls
@@ -357,6 +368,7 @@ The CodeSight MCP Server integration testing suite provides comprehensive valida
 ---
 
 **For more information:**
+
 - [Main Project Documentation](../README.md)
 - [MCP Tools Reference](./MCP-TOOLS.md)
 - [Development Guide](./development.md)

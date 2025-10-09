@@ -1,12 +1,17 @@
 # MCP Tools Documentation
 
+**Generated**: October 9, 2025
+**Version**: v0.1.0
+**Implementation Status**: Phase 3.4 Integration Complete
+
 ## Overview
 
 The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Protocol) tools designed to provide AI assistants with deep code intelligence capabilities. This documentation covers the complete tool specification, usage examples, and implementation status.
 
 ## Tool Status
 
-### ✅ All 9 Tools Fully Implemented (Phase 3.3 Complete)
+### ✅ All 9 Tools Fully Implemented (Phase 3.3 + 3.4 Integration Complete)
+
 - `search_code` - Natural language code search with real database results
 - `explain_function` - Function explanation and comprehensive code analysis
 - `find_references` - Find all references to a symbol with cross-file analysis
@@ -19,6 +24,14 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 
 🏆 **Complete MCP Implementation** - All tools are fully functional with comprehensive implementations and integration testing.
 
+### 🚀 Phase 3.4 Integration Enhancements
+
+- **Advanced LLM Integration**: All tools now support intelligent LLM routing (llama.cpp, Ollama, HuggingFace)
+- **Enterprise Security**: Tools integrate with JWT authentication and rate limiting
+- **Performance Monitoring**: Comprehensive logging and performance tracking for all tool executions
+- **Background Processing**: Tools can leverage message queue system for long-running operations
+- **Database Scalability**: Tools work with SQLite, PostgreSQL, and DuckDB vector store
+
 ## Tool Specifications
 
 ### 1. search_code
@@ -26,6 +39,7 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 **Description**: Natural language code search across the codebase with semantic understanding and relevance scoring.
 
 **Input Schema**:
+
 ```json
 {
   "query": "string (required) - Natural language search query",
@@ -36,6 +50,7 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -58,6 +73,7 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Basic search
 await search_code({
@@ -87,6 +103,7 @@ await search_code({
 **Description**: Comprehensive function explanation including purpose, parameters, algorithm, and usage examples.
 
 **Input Schema**:
+
 ```json
 {
   "function_identifier": "string (required) - Function name or file:line reference",
@@ -98,6 +115,7 @@ await search_code({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -148,6 +166,7 @@ await search_code({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Explain function by name
 await explain_function({
@@ -177,6 +196,7 @@ await explain_function({
 **Description**: Find all references to a variable, function, class, or other symbol across the codebase.
 
 **Input Schema**:
+
 ```json
 {
   "target_identifier": "string (required) - Symbol name to find references for",
@@ -189,6 +209,7 @@ await explain_function({
 ```
 
 **Reference Types**:
+
 - `read` - Variable read operations
 - `write` - Variable write operations
 - `call` - Function/method calls
@@ -198,6 +219,7 @@ await explain_function({
 - `inheritance` - Class inheritance
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -245,6 +267,7 @@ await explain_function({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Find all references to a variable
 await find_references({
@@ -274,6 +297,7 @@ await find_references({
 **Description**: Trace data flow through functions and across modules to understand how data transforms and propagates.
 
 **Input Schema**:
+
 ```json
 {
   "entry_point": "string (required) - Function name or file:line to start tracing from",
@@ -286,6 +310,7 @@ await find_references({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -394,6 +419,7 @@ await find_references({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Trace data flow from function entry point
 await trace_data_flow({
@@ -424,6 +450,7 @@ await trace_data_flow({
 **Description**: Analyze code for security vulnerabilities, anti-patterns, and compliance issues.
 
 **Input Schema**:
+
 ```json
 {
   "target": "string (required) - File path, function name, or 'codebase' for full analysis",
@@ -435,6 +462,7 @@ await trace_data_flow({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -494,6 +522,7 @@ await trace_data_flow({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Full codebase security analysis
 await analyze_security({
@@ -524,6 +553,7 @@ await analyze_security({
 **Description**: Discover and catalog all API endpoints in the codebase, including REST, GraphQL, and internal APIs.
 
 **Input Schema**:
+
 ```json
 {
   "codebase_id": "string (optional) - Specific codebase UUID",
@@ -535,6 +565,7 @@ await analyze_security({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -589,6 +620,7 @@ await analyze_security({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Get all API endpoints
 await get_api_endpoints({
@@ -616,6 +648,7 @@ await get_api_endpoints({
 **Description**: Analyze code complexity metrics including cyclomatic complexity, cognitive complexity, and maintainability index.
 
 **Input Schema**:
+
 ```json
 {
   "target": "string (required) - File path, directory, or function name",
@@ -627,6 +660,7 @@ await get_api_endpoints({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -675,6 +709,7 @@ await get_api_endpoints({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Analyze entire codebase complexity
 await check_complexity({
@@ -706,6 +741,7 @@ await check_complexity({
 **Description**: Detect duplicate code patterns, similar functions, and redundant implementations across the codebase.
 
 **Input Schema**:
+
 ```json
 {
   "target": "string (required) - Directory path or 'codebase'",
@@ -718,6 +754,7 @@ await check_complexity({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -771,6 +808,7 @@ await check_complexity({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Find all duplicates in codebase
 await find_duplicates({
@@ -801,6 +839,7 @@ await find_duplicates({
 **Description**: Provide intelligent refactoring suggestions based on code analysis, best practices, and design patterns.
 
 **Input Schema**:
+
 ```json
 {
   "target": "string (required) - File path, directory, or function name",
@@ -812,6 +851,7 @@ await find_duplicates({
 ```
 
 **Output Schema**:
+
 ```json
 {
   "success": "boolean",
@@ -876,6 +916,7 @@ await find_duplicates({
 ```
 
 **Usage Examples**:
+
 ```typescript
 // Get comprehensive refactoring suggestions
 await suggest_refactoring({
@@ -935,6 +976,7 @@ All 9 MCP tools have been fully implemented based on the completed contract test
 ### Test Coverage
 
 Each contract test validates:
+
 - ✅ Tool registration and schema validation
 - ✅ Input/output format compliance
 - ✅ Error handling for invalid inputs
@@ -992,6 +1034,7 @@ The MCP tools are built on a hybrid TypeScript/Rust architecture:
 ### Error Handling
 
 All tools implement comprehensive error handling:
+
 - Graceful degradation when Rust components are unavailable
 - Detailed error messages with actionable suggestions
 - Timeout protection for long-running operations
@@ -1011,6 +1054,7 @@ When adding new MCP tools:
 ## Roadmap
 
 ### ✅ Phase 3.3: Core Implementation - **COMPLETED**
+
 - ✅ All 9 MCP tools implemented based on completed contract tests
 - ✅ Enhanced existing tools with advanced features
 - ✅ Optimized performance and added caching
@@ -1019,6 +1063,7 @@ When adding new MCP tools:
 - ✅ Complete REST API controllers (5 controllers)
 
 ### 🚧 Phase 3.4: Integration (Next Phase)
+
 - Vector embeddings for semantic search
 - Real-time collaboration features
 - Advanced code visualization

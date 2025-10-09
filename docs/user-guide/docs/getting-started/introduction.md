@@ -19,21 +19,27 @@ The current implementation provides:
 ## Current Architecture
 
 ### ✅ **TypeScript MCP Server** (Working)
+
 Complete MCP protocol implementation:
+
 - **9 MCP Tools**: 2 fully functional with real database, 7 with mock responses
 - **IndexingService**: Native TypeScript with SQLite database integration
 - **CLI Interface**: Working `index`, `search`, `stats` commands
 - **Claude Desktop**: Tested integration with stdio transport
 
 ### ✅ **Database Layer** (Working)
+
 Real SQLite storage:
+
 - **Entity Storage**: Functions, classes, interfaces, types
 - **Search Engine**: Query intent detection and relevance scoring
 - **Performance**: Fast queries on 377+ indexed entities
 - **File Tracking**: Monitors 47+ files with incremental updates
 
 ### 🚧 **Rust Core Engine** (Planned)
+
 Future high-performance layer:
+
 - **Tree-sitter Integration**: Multi-language parsing
 - **FFI Bridge**: Napi-rs TypeScript-Rust communication
 - **Tantivy Search**: Advanced full-text search capabilities
@@ -75,6 +81,7 @@ sequenceDiagram
 | JavaScript | ✅ | ✅ | ✅ |
 
 **Planned with Rust Core:**
+
 - Python, Rust, Java, C++, Go, C#, PHP, Ruby (via Tree-sitter)
 
 *Current implementation focuses on JavaScript/TypeScript with native parsing.*
@@ -82,18 +89,21 @@ sequenceDiagram
 ## Key Benefits
 
 ### For Developers
+
 - **Faster Code Discovery**: Find relevant code instantly with natural language
 - **Better Understanding**: Get explanations of complex code patterns
 - **Quality Insights**: Identify potential issues and improvements
 - **Refactoring Support**: Understand dependencies before making changes
 
 ### For Teams
+
 - **Knowledge Sharing**: Onboard new team members faster
 - **Code Standards**: Maintain consistency across the codebase
 - **Technical Debt**: Track and manage code quality over time
 - **Documentation**: Auto-generate insights about code architecture
 
 ### For Organizations
+
 - **Security Auditing**: Identify potential vulnerabilities
 - **Compliance**: Ensure coding standards and best practices
 - **Productivity**: Reduce time spent on code exploration
@@ -102,24 +112,28 @@ sequenceDiagram
 ## Use Case Examples
 
 ### 🔍 **Code Discovery**
+
 ```
 Query: "Find all functions that handle user authentication"
 Result: Semantic search returns relevant auth functions with context
 ```
 
 ### 🛡️ **Security Analysis**
+
 ```
 Query: "Check for potential SQL injection vulnerabilities"
 Result: Identifies risky database query patterns
 ```
 
 ### 📊 **Code Quality**
+
 ```
 Query: "Show me the most complex functions in the codebase"
 Result: Complexity analysis with refactoring suggestions
 ```
 
 ### 🔄 **Refactoring Support**
+
 ```
 Query: "What would break if I change this function signature?"
 Result: Impact analysis showing all affected code
@@ -138,6 +152,7 @@ The Code Intelligence MCP Server integrates with your existing development workf
 ## Performance Characteristics (Current Implementation)
 
 **Real Metrics:**
+
 - **Indexing Speed**: ~15-20 files per second (TypeScript implementation)
 - **Query Response**: 50-100ms for database searches
 - **Memory Usage**: ~30MB during indexing, ~10MB idle
@@ -145,6 +160,7 @@ The Code Intelligence MCP Server integrates with your existing development workf
 - **Scalability**: Tested with 47 files → 377 entities
 
 **Target with Rust Core:**
+
 - **Indexing Speed**: ~1000 files per second
 - **Query Response**: <50ms for complex searches
 - **Concurrent Users**: 100+ simultaneous queries

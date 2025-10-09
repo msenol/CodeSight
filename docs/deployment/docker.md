@@ -699,6 +699,7 @@ echo "Restore completed from: ${BACKUP_PATH}"
 ### Common Issues
 
 **Container won't start:**
+
 ```bash
 # Check logs
 docker logs code-intel-server
@@ -711,6 +712,7 @@ docker inspect code-intel-server
 ```
 
 **Performance issues:**
+
 ```bash
 # Monitor resource usage
 docker stats --no-stream
@@ -727,6 +729,7 @@ deploy:
 ```
 
 **Network connectivity:**
+
 ```bash
 # Test internal connectivity
 docker exec code-intel-server curl http://postgres:5432

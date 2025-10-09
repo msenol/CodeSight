@@ -23,6 +23,7 @@ Currently, the API operates without authentication in development mode. Producti
 Check server health status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -38,6 +39,7 @@ Check server health status.
 Search code using natural language queries.
 
 **Request Body:**
+
 ```json
 {
   "query": "find all React components with useState",
@@ -50,6 +52,7 @@ Search code using natural language queries.
 ```
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -71,6 +74,7 @@ Search code using natural language queries.
 Explain what a function does.
 
 **Request Body:**
+
 ```json
 {
   "function_name": "processUserData",
@@ -80,6 +84,7 @@ Explain what a function does.
 ```
 
 **Response:**
+
 ```json
 {
   "explanation": "This function processes user data by...",
@@ -104,6 +109,7 @@ Explain what a function does.
 Find all references to a symbol.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "UserContext",
@@ -113,6 +119,7 @@ Find all references to a symbol.
 ```
 
 **Response:**
+
 ```json
 {
   "references": [
@@ -138,6 +145,7 @@ Find all references to a symbol.
 Trace data flow through the code.
 
 **Request Body:**
+
 ```json
 {
   "variable": "apiKey",
@@ -147,6 +155,7 @@ Trace data flow through the code.
 ```
 
 **Response:**
+
 ```json
 {
   "flow": [
@@ -179,6 +188,7 @@ Trace data flow through the code.
 Analyze code for security vulnerabilities.
 
 **Request Body:**
+
 ```json
 {
   "codebase_id": "project-1",
@@ -188,6 +198,7 @@ Analyze code for security vulnerabilities.
 ```
 
 **Response:**
+
 ```json
 {
   "vulnerabilities": [
@@ -216,10 +227,12 @@ Analyze code for security vulnerabilities.
 List all API endpoints in the codebase.
 
 **Query Parameters:**
+
 - `codebase_id`: Project identifier
 - `framework`: Optional framework filter (express, fastify, etc.)
 
 **Response:**
+
 ```json
 {
   "endpoints": [
@@ -250,6 +263,7 @@ List all API endpoints in the codebase.
 Check code complexity metrics.
 
 **Request Body:**
+
 ```json
 {
   "file_path": "src/utils/calculator.ts",
@@ -259,6 +273,7 @@ Check code complexity metrics.
 ```
 
 **Response:**
+
 ```json
 {
   "file": "src/utils/calculator.ts",
@@ -289,6 +304,7 @@ Check code complexity metrics.
 Index a new codebase for analysis.
 
 **Request Body:**
+
 ```json
 {
   "id": "project-1",
@@ -300,6 +316,7 @@ Index a new codebase for analysis.
 ```
 
 **Response:**
+
 ```json
 {
   "codebase_id": "project-1",
@@ -314,6 +331,7 @@ Index a new codebase for analysis.
 Get indexing status for a codebase.
 
 **Response:**
+
 ```json
 {
   "codebase_id": "project-1",
@@ -341,6 +359,7 @@ Get indexing status for a codebase.
 Remove a codebase from the index.
 
 **Response:**
+
 ```json
 {
   "message": "Codebase removed successfully",
@@ -357,6 +376,7 @@ The following tools are available through the Model Context Protocol:
 Search for code patterns using natural language.
 
 **Parameters:**
+
 - `query` (string): Natural language search query
 - `codebase_id` (string): Target codebase identifier
 
@@ -365,6 +385,7 @@ Search for code patterns using natural language.
 Get detailed explanation of a function.
 
 **Parameters:**
+
 - `function_name` (string): Name of the function
 - `codebase_id` (string): Target codebase identifier
 
@@ -373,6 +394,7 @@ Get detailed explanation of a function.
 Find all references to a symbol.
 
 **Parameters:**
+
 - `symbol` (string): Symbol to find references for
 - `codebase_id` (string): Target codebase identifier
 
@@ -381,6 +403,7 @@ Find all references to a symbol.
 Trace how data flows through the code.
 
 **Parameters:**
+
 - `variable` (string): Variable to trace
 - `codebase_id` (string): Target codebase identifier
 
@@ -389,6 +412,7 @@ Trace how data flows through the code.
 Scan for security vulnerabilities.
 
 **Parameters:**
+
 - `codebase_id` (string): Target codebase identifier
 - `scan_type` (string): Type of scan (quick/full)
 
@@ -397,6 +421,7 @@ Scan for security vulnerabilities.
 List all API endpoints in the codebase.
 
 **Parameters:**
+
 - `codebase_id` (string): Target codebase identifier
 
 ### check_complexity
@@ -404,6 +429,7 @@ List all API endpoints in the codebase.
 Analyze code complexity metrics.
 
 **Parameters:**
+
 - `file_path` (string): File to analyze
 - `codebase_id` (string): Target codebase identifier
 

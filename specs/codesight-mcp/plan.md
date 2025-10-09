@@ -5,6 +5,7 @@
 **Input**: Feature specification from `F:\Development\Projects\ProjectAra\specs\codesight-mcp\spec.md`
 
 ## Execution Flow (/plan command scope)
+
 ```
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
@@ -27,13 +28,16 @@
 ```
 
 **IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
+
 - Phase 2: /tasks command creates tasks.md
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
+
 Develop a high-performance Code Intelligence MCP Server that enables AI assistants to understand and query codebases through natural language. The system must support 15+ programming languages, handle monorepos with 100K+ files, operate fully offline with local LLMs, and provide sub-second query responses through a hybrid Rust/TypeScript architecture.
 
 ## Technical Context
+
 **Language/Version**: Rust 1.75+ (core engine), TypeScript 5.3+/Node.js v20 LTS (MCP interface)
 **Primary Dependencies**: tokio, rayon, tree-sitter, tantivy (Rust); @modelcontextprotocol/sdk, fastify (TypeScript)
 **Storage**: SQLite (<10GB), PostgreSQL 16+ with pgvector (enterprise), DuckDB with VSS (vectors)
@@ -45,6 +49,7 @@ Develop a high-performance Code Intelligence MCP Server that enables AI assistan
 **Scale/Scope**: Small (<1K files) to monorepos (>100K files), 15+ languages, MCP protocol compliant
 
 ## Constitution Check
+
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - [x] **Local-First**: No mandatory cloud dependencies, LLMs optional ✓ (llama.cpp, Ollama primary; cloud APIs as fallback only)
@@ -56,6 +61,7 @@ Develop a high-performance Code Intelligence MCP Server that enables AI assistan
 ## Project Structure
 
 ### Documentation (this feature)
+
 ```
 specs/[###-feature]/
 ├── plan.md              # This file (/plan command output)
@@ -67,6 +73,7 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+
 ```
 # Option 1: Single project (DEFAULT)
 src/
@@ -106,12 +113,14 @@ ios/ or android/
 **Structure Decision**: Option 1 - Single project structure (hybrid Rust/TypeScript architecture)
 
 ## Phase 0: Outline & Research
+
 1. **Extract unknowns from Technical Context** above:
    - For each NEEDS CLARIFICATION → research task
    - For each dependency → best practices task
    - For each integration → patterns task
 
 2. **Generate and dispatch research agents**:
+
    ```
    For each unknown in Technical Context:
      Task: "Research {unknown} for {feature context}"
@@ -127,6 +136,7 @@ ios/ or android/
 **Output**: research.md with all NEEDS CLARIFICATION resolved
 
 ## Phase 1: Design & Contracts
+
 *Prerequisites: research.md complete*
 
 1. **Extract entities from feature spec** → `data-model.md`:
@@ -160,9 +170,11 @@ ios/ or android/
 **Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
 
 ## Phase 2: Task Planning Approach
+
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
+
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - MCP tools contract (9 tools) → 9 contract test tasks [P]
@@ -172,6 +184,7 @@ ios/ or android/
 - Integration scenarios from quickstart → 5 integration test tasks
 
 **Ordering Strategy**:
+
 - TDD order: Tests before implementation
 - Layer order: Rust core → TypeScript MCP → REST API
 - Dependency order: Models → Services → API endpoints → MCP tools
@@ -180,6 +193,7 @@ ios/ or android/
 **Estimated Output**: 50-60 numbered, ordered tasks in tasks.md
 
 **Task Categories**:
+
 1. **Setup Tasks** (T001-T005): Project structure, dependencies, build config
 2. **Rust Core Tests** (T006-T020): Parser tests, indexer tests, search tests
 3. **Data Model Tasks** (T021-T032): Entity implementations in Rust
@@ -193,6 +207,7 @@ ios/ or android/
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
 ## Phase 3+: Future Implementation
+
 *These phases are beyond the scope of the /plan command*
 
 **Phase 3**: Task execution (/tasks command creates tasks.md)  
@@ -200,6 +215,7 @@ ios/ or android/
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking
+
 *Fill ONLY if Constitution Check has violations that must be justified*
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
@@ -208,11 +224,12 @@ ios/ or android/
 
 *Note: Architecture fully complies with all constitutional principles. No violations require justification.*
 
-
 ## Progress Tracking
+
 *This checklist is updated during execution flow*
 
 **Phase Status**:
+
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
@@ -221,6 +238,7 @@ ios/ or android/
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
+
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved

@@ -7,11 +7,13 @@
 We take security seriously and appreciate your efforts to responsibly disclose your findings.
 
 **Please DO NOT**:
+
 - Create a public GitHub issue for security vulnerabilities
 - Discuss the vulnerability in public channels (Discord, social media, etc.)
 - Attempt to exploit the vulnerability beyond what's necessary to demonstrate it
 
 **Please DO**:
+
 - Report vulnerabilities privately to our security team
 - Provide as much detail as possible about the vulnerability
 - Include steps to reproduce the issue
@@ -19,10 +21,11 @@ We take security seriously and appreciate your efforts to responsibly disclose y
 
 ### How to Report
 
-**Email**: security@codesight-mcp.com
+**Email**: <security@codesight-mcp.com>
 **PGP Key**: [Available upon request]
 
 Please include the following information in your report:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
@@ -75,21 +78,25 @@ Security updates are provided for the latest stable version only.
 ### Severity Classification
 
 **Critical**:
+
 - Remote code execution
 - Privilege escalation
 - Data exfiltration
 
 **High**:
+
 - Local code execution
 - Bypass of security controls
 - Sensitive data exposure
 
 **Medium**:
+
 - Denial of service
 - Information disclosure
 - Authorization bypass
 
 **Low**:
+
 - Minor information leaks
 - Configuration issues
 - UI redress attacks
@@ -106,11 +113,13 @@ We regularly audit and update dependencies to address security vulnerabilities:
 ### Current Dependencies
 
 **TypeScript Dependencies**:
+
 - `@modelcontextprotocol/sdk` - MCP protocol implementation
 - `better-sqlite3` - SQLite database access
 - `zod` - Runtime type validation
 
 **Rust Dependencies**:
+
 - `napi` & `napi-derive` - Node.js bindings
 - `tree-sitter` - Parser generation
 - `serde` - Serialization
@@ -169,13 +178,14 @@ We currently do not offer a formal bug bounty program, but significant security 
 
 ## 📞 Contact
 
-- **Security Team**: security@codesight-mcp.com
+- **Security Team**: <security@codesight-mcp.com>
 - **GitHub Security**: [Private vulnerability reporting](https://github.com/your-org/codesight-mcp/security/advisories/new)
 - **Emergencies**: Contact maintainers directly via PGP encrypted email
 
 ## 🔄 Updates
 
 This security policy will be reviewed and updated:
+
 - Every 6 months
 - After significant security incidents
 - When new threats or vulnerabilities are identified

@@ -156,6 +156,7 @@ Version format: `vMAJOR.MINOR.PATCH[-SUFFIX]`
 ### Issue: Version Mismatch
 
 **Solution:**
+
 ```bash
 # Update all version references
 npm version 0.1.0-dev --no-git-tag-version
@@ -166,6 +167,7 @@ cd typescript-mcp && npm version 0.1.0-dev --no-git-tag-version
 ### Issue: CLAUDE.md Too Large
 
 **Solution:**
+
 1. Move detailed content to specialized docs
 2. Keep only critical information
 3. Use references to other documents
@@ -173,6 +175,7 @@ cd typescript-mcp && npm version 0.1.0-dev --no-git-tag-version
 ### Issue: Broken Links
 
 **Solution:**
+
 ```bash
 # Find broken links
 grep -r "\[.*\](" docs/ --include="*.md" | grep -v http
@@ -182,6 +185,7 @@ grep -r "\[.*\](" docs/ --include="*.md" | grep -v http
 ### Issue: Outdated Examples
 
 **Solution:**
+
 1. Test all examples in current environment
 2. Update with current API/syntax
 3. Add version notes if needed
@@ -193,6 +197,7 @@ grep -r "\[.*\](" docs/ --include="*.md" | grep -v http
 Location: `./scripts/check-version-consistency.sh`
 
 Features:
+
 - Version synchronization check
 - Date consistency verification
 - File size monitoring
@@ -202,6 +207,7 @@ Features:
 ### Documentation Generator (Future)
 
 Planned features:
+
 - Auto-generate API docs from code
 - Extract JSDoc/RustDoc comments
 - Create dependency graphs
