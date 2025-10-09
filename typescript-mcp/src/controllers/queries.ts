@@ -58,8 +58,13 @@ export class QueriesController {
   async searchQuery(request: FastifyRequest<{ Body: QueryRequest }>, reply: FastifyReply) {
     const startTime = Date.now();
 
+    let queryValue: string;
+
     try {
-      const { query, query_type = 'natural_language', limit = 10, offset = 0, codebase_id, filters } = request.body;
+      const { query, query_type = 'natural_language', limit = 10, offset = 0, codebase_id, filters, file_types } = request.body;
+
+      // Store query for use in catch block
+      queryValue = query;
 
       if (!query || query.trim().length === 0) {
         return reply.status(400).send({
@@ -68,25 +73,34 @@ export class QueriesController {
         } as QueryResponse);
       }
 
-      logger.info('Processing search query', { query, query_type, limit, offset, codebase_id });
+      logger.info('Processing search query', { query: queryValue, query_type, limit, offset, codebase_id });
 
       // Perform search using the existing search service
-      const searchResults = await this.searchService.search({
-        query,
-        limit,
-        offset,
-        codebaseId: codebase_id,
-        filters: {
-          fileTypes: filters?.file_types,
-          entityTypes: filters?.entity_types,
-          languages: filters?.languages
-        }
-      });
+      let searchResults;
+      const searchOptions = {
+        codebase_id: codebase_id || 'default',
+        max_results: limit || 10,
+        file_types: file_types || ['ts', 'js', 'jsx', 'tsx'],
+        exclude_patterns: ['**/node_modules/**', '**/dist/**', '**/.git/**']
+      };
+
+      switch (query_type) {
+        case 'structured':
+          searchResults = await this.searchService.structuredSearch(queryValue, searchOptions);
+          break;
+        case 'regex':
+          searchResults = await this.searchService.regexSearch(queryValue, searchOptions);
+          break;
+        case 'natural_language':
+        default:
+          searchResults = await this.searchService.keywordSearch(queryValue, searchOptions);
+          break;
+      }
 
       const executionTime = Date.now() - startTime;
 
       // Map search results to the expected format
-      const results = searchResults.results.map(result => ({
+      const results = searchResults.map(result => ({
         id: result.id,
         name: result.name,
         type: result.type,
@@ -94,7 +108,7 @@ export class QueriesController {
         line_number: result.line_number,
         content: result.content,
         score: result.score,
-        match_type: result.match_type as 'exact' | 'fuzzy' | 'semantic',
+        match_type: 'exact' as const, // Database search returns exact matches
         context: result.context
       }));
 
@@ -104,29 +118,29 @@ export class QueriesController {
         pagination: {
           limit,
           offset,
-          total: searchResults.total || results.length,
-          has_more: searchResults.has_more || false
+          total: results.length,
+          has_more: false // Database search doesn't support pagination metadata
         },
-        query_intent: searchResults.intent || 'general_search',
+        query_intent: 'general_search',
         execution_time_ms: executionTime,
         metadata: {
           results_count: results.length,
           search_time_ms: executionTime,
-          files_searched: searchResults.files_searched || 0,
-          codebase_name: searchResults.codebase_name
+          files_searched: 0, // Database search doesn't provide this metadata
+          codebase_name: codebase_id || 'default'
         }
       };
 
       logger.info('Search query completed', {
         resultsCount: results.length,
         executionTime,
-        query
+        query: queryValue
       });
 
       return reply.send(response);
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      logger.error('Search query failed', { error: error.message, query, executionTime });
+      logger.error('Search query failed', { error: error.message, query: queryValue, executionTime });
 
       return reply.status(500).send({
         success: false,
