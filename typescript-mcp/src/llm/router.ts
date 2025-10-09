@@ -136,7 +136,7 @@ export class LLMRouter extends EventEmitter {
   private async createProvider(config: ProviderConfig): Promise<LLMProvider | null> {
     try {
       switch (config.type) {
-        case 'llamacpp':
+        case 'llamacpp': {
           const llamaService = new LlamaCppService(config.config as LlamaModelConfig);
           await llamaService.initialize();
           return {
@@ -162,8 +162,9 @@ export class LLMRouter extends EventEmitter {
               }
             },
           };
+        }
 
-        case 'ollama':
+        case 'ollama': {
           const ollamaService = new OllamaService(config.config as OllamaConfig);
           await ollamaService.checkAvailability();
           return {
@@ -191,8 +192,9 @@ export class LLMRouter extends EventEmitter {
               return await ollamaService.generateEmbedding(text);
             },
           };
+        }
 
-        case 'huggingface':
+        case 'huggingface': {
           const hfService = new HuggingFaceService(config.config as HuggingFaceConfig);
           await hfService.checkAvailability();
           return {
@@ -222,10 +224,12 @@ export class LLMRouter extends EventEmitter {
               return result.embeddings;
             },
           };
+        }
 
-        default:
+        default: {
           logger.warn('Unknown provider type', { type: config.type });
           return null;
+        }
       }
     } catch (error) {
       logger.error('Failed to create provider', { name: config.name, error: error.message });
@@ -399,20 +403,24 @@ export class LLMRouter extends EventEmitter {
     const available = Array.from(this.providers.values()).filter(p => p.available);
 
     switch (this.config.fallbackStrategy) {
-      case 'priority':
+      case 'priority': {
         return available.sort((a, b) => a.priority - b.priority);
+      }
 
-      case 'round-robin':
+      case 'round-robin': {
         const sorted = [...available].sort((a, b) => a.priority - b.priority);
         const start = this.roundRobinIndex % sorted.length;
         this.roundRobinIndex++;
         return [...sorted.slice(start), ...sorted.slice(0, start)];
+      }
 
-      case 'random':
+      case 'random': {
         return available.sort(() => Math.random() - 0.5);
+      }
 
-      default:
+      default: {
         return available;
+      }
     }
   }
 
@@ -425,7 +433,8 @@ export class LLMRouter extends EventEmitter {
     }
 
     this.healthCheckTimer = setInterval(async () => {
-      for (const [name, provider] of this.providers) {
+      const providerEntries = Array.from(this.providers.entries());
+      for (const [name, provider] of providerEntries) {
         try {
           const isHealthy = await provider.health();
           const wasHealthy = provider.available;
@@ -491,7 +500,8 @@ export class LLMRouter extends EventEmitter {
     }
 
     // Shutdown providers
-    for (const provider of this.providers.values()) {
+    const providers = Array.from(this.providers.values());
+    for (const provider of providers) {
       try {
         // Check if provider has shutdown method
         if ('shutdown' in provider && typeof provider.shutdown === 'function') {

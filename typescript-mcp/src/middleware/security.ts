@@ -101,15 +101,15 @@ const defaultSecurityConfig: SecurityConfig = {
   securityHeaders: {
     contentSecurityPolicy: {
       directives: {
-        "default-src": ["'self'"],
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        "style-src": ["'self'", "'unsafe-inline'"],
-        "img-src": ["'self'", "data:", "https:"],
-        "font-src": ["'self'", "data:"],
-        "connect-src": ["'self'"],
-        "frame-ancestors": ["'none'"],
-        "base-uri": ["'self'"],
-        "form-action": ["'self'"],
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", 'data:', 'https:'],
+        'font-src': ["'self'", 'data:'],
+        'connect-src': ["'self'"],
+        'frame-ancestors': ["'none'"],
+        'base-uri': ["'self'"],
+        'form-action': ["'self'"],
       },
       reportOnly: false,
     },
@@ -253,7 +253,7 @@ export class SecurityService {
    */
   private handleCORS(request: FastifyRequest, reply: FastifyReply): void {
     const corsConfig = this.config.cors;
-    if (!corsConfig) return;
+    if (!corsConfig) {return;}
 
     const origin = request.headers.origin;
     const allowedOrigins = Array.isArray(corsConfig.origin)
@@ -311,7 +311,7 @@ export class SecurityService {
    */
   private setSecurityHeaders(reply: FastifyReply): void {
     const headers = this.config.securityHeaders;
-    if (!headers) return;
+    if (!headers) {return;}
 
     // Content Security Policy
     if (headers.contentSecurityPolicy) {
@@ -389,7 +389,7 @@ export class SecurityService {
    * Build CSP header value
    */
   private buildCSPHeader(csp: SecurityConfig['securityHeaders']['contentSecurityPolicy']): string {
-    if (!csp?.directives) return '';
+    if (!csp?.directives) {return '';}
 
     const directives: string[] = [];
 
@@ -417,7 +417,7 @@ export class SecurityService {
    */
   private checkIPFilter(ip: string): boolean {
     const ipFilter = this.config.ipFilter;
-    if (!ipFilter) return true;
+    if (!ipFilter) {return true;}
 
     // Check blocklist first
     if (ipFilter.blocklist && ipFilter.blocklist.length > 0) {
@@ -452,7 +452,7 @@ export class SecurityService {
    */
   private validateRequestSize(request: FastifyRequest): boolean {
     const limits = this.config.requestLimits;
-    if (!limits) return true;
+    if (!limits) {return true;}
 
     // Check content length
     const contentLength = request.headers['content-length'];
@@ -529,7 +529,8 @@ export class SecurityService {
     const now = Date.now();
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
 
-    for (const [id, info] of this.requestStore.entries()) {
+    const entries = Array.from(this.requestStore.entries());
+    for (const [id, info] of entries) {
       if (now - info.timestamp > maxAge) {
         this.requestStore.delete(id);
       }
@@ -685,9 +686,9 @@ export const developmentSecurity = createSecurityMiddleware({
   securityHeaders: {
     contentSecurityPolicy: {
       directives: {
-        "default-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        "connect-src": ["'self'", "ws:", "wss:"],
+        'default-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        'connect-src': ["'self'", 'ws:', 'wss:'],
       },
       reportOnly: true,
     },
@@ -695,6 +696,8 @@ export const developmentSecurity = createSecurityMiddleware({
   },
   rateLimit: {
     enabled: false, // No rate limiting in development
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 1000, // High limit for development
   },
 });
 

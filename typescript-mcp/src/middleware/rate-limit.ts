@@ -57,7 +57,8 @@ class MemoryStore {
 
   cleanup(): void {
     const now = Date.now();
-    for (const [key, window] of this.windows.entries()) {
+    const entries = Array.from(this.windows.entries());
+    for (const [key, window] of entries) {
       if (window.resetTime < now) {
         this.windows.delete(key);
       }
@@ -86,7 +87,7 @@ class RedisStore {
 
   async set(key: string, window: RateLimitWindow): Promise<void> {
     const redisKey = this.keyPrefix + key;
-    const value = JSON.stringify(window);
+    const _value = JSON.stringify(window);
     const ttlMs = Math.max(0, window.resetTime - Date.now());
 
     try {
@@ -187,7 +188,7 @@ export class RateLimitService {
 
     // Check if request should be skipped based on success/failure
     // Note: This would be checked after the request in a real implementation
-    const shouldSkip = false; // Placeholder logic
+    // Placeholder logic - would check if request should be skipped
 
     // Increment counter
     window.count++;
