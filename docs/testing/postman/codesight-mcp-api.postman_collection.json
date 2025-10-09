@@ -1,0 +1,1209 @@
+{
+	"info": {
+		"_postman_id": "codesight-mcp-server-api",
+		"name": "CodeSight MCP Server API",
+		"description": "Comprehensive API testing collection for CodeSight MCP Server with natural language code search and analysis capabilities",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "codesight-mcp"
+	},
+	"item": [
+		{
+			"name": "Health Checks",
+			"item": [
+				{
+					"name": "Basic Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has status field\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"});",
+									"",
+									"pm.test(\"Server is healthy\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"});",
+									"",
+									"pm.test(\"Response time is reasonable\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Detailed Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has comprehensive health info\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('timestamp');",
+									"    pm.expect(jsonData).to.have.property('version');",
+									"    pm.expect(jsonData).to.have.property('uptime');",
+									"});",
+									"",
+									"pm.test(\"System components are healthy\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.components) {",
+									"        Object.keys(jsonData.components).forEach(component => {",
+									"            pm.expect(jsonData.components[component]).to.have.property('status');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health/detailed",
+							"host": ["{{baseUrl}}"],
+							"path": ["health", "detailed"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness Probe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 503\", function () {",
+									"    pm.expect([200, 503]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Response has ready status\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('ready');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health/ready",
+							"host": ["{{baseUrl}}"],
+							"path": ["health", "ready"]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Codebase Management",
+			"item": [
+				{
+					"name": "List All Codebases",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has codebase list\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('codebases');",
+									"    pm.expect(jsonData.codebases).to.be.an('array');",
+									"});",
+									"",
+									"// Store first codebase ID for use in other requests",
+									"if (pm.response.json().codebases && pm.response.json().codebases.length > 0) {",
+									"    pm.collectionVariables.set('codebaseId', pm.response.json().codebases[0].id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/codebases?page=1&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "codebases"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Codebase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Codebase created successfully\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('codebase');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Codebase has required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.codebase).to.have.property('id');",
+									"    pm.expect(jsonData.codebase).to.have.property('name');",
+									"    pm.expect(jsonData.codebase).to.have.property('path');",
+									"    pm.expect(jsonData.codebase).to.have.property('status');",
+									"});",
+									"",
+									"// Store new codebase ID",
+									"if (pm.response.json().codebase) {",
+									"    pm.collectionVariables.set('newCodebaseId', pm.response.json().codebase.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"test-codebase-{{$randomUUID}}\",\n  \"path\": \"/tmp/test-codebase\",\n  \"language\": \"typescript\",\n  \"description\": \"Test codebase created via Postman\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/codebases",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "codebases"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Codebase Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Codebase details retrieved\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('codebase');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/codebases/{{codebaseId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "codebases", "{{codebaseId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Codebase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 404\", function () {",
+									"    pm.expect([200, 404]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Codebase deletion response\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/codebases/{{newCodebaseId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "codebases", "{{newCodebaseId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Search Operations",
+			"item": [
+				{
+					"name": "Natural Language Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Search response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"    pm.expect(jsonData).to.have.property('execution_time_ms');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Search performance is acceptable\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.execution_time_ms).to.be.below(2000);",
+									"});",
+									"",
+									"pm.test(\"Results have required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        const result = jsonData.results[0];",
+									"        pm.expect(result).to.have.property('id');",
+									"        pm.expect(result).to.have.property('name');",
+									"        pm.expect(result).to.have.property('file_path');",
+									"        pm.expect(result).to.have.property('score');",
+									"        pm.expect(result).to.have.property('snippet');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"authentication function with JWT validation\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"limit\": 10,\n  \"filters\": {\n    \"file_types\": [\"ts\", \"js\"],\n    \"entity_types\": [\"function\", \"method\"]\n  },\n  \"include_content\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/queries",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "queries"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search with Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Filtered search results\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"error handling patterns\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"limit\": 5,\n  \"filters\": {\n    \"file_types\": [\"ts\", \"js\"],\n    \"entity_types\": [\"function\"],\n    \"visibility\": [\"public\"],\n    \"min_line_count\": 5\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/queries",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "queries"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Query Suggestions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Suggestions returned\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('suggestions');",
+									"    pm.expect(jsonData.suggestions).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"partial_query\": \"auth\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"limit\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/queries/suggest",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "queries", "suggest"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "MCP Tools",
+			"item": [
+				{
+					"name": "Search Code (MCP Tool)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"MCP tool response format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('result');",
+									"    pm.expect(jsonData).to.have.property('metadata');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"authentication function\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"limit\": 10,\n  \"file_types\": [\"ts\", \"js\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/search_code",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "search_code"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Explain Function",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Function explanation returned\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('explanation');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"function_identifier\": \"authenticateUser\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"detail_level\": \"comprehensive\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/explain_function",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "explain_function"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find References",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"References found\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('references');",
+									"    pm.expect(jsonData.result.references).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entity_name\": \"User\",\n  \"entity_type\": \"class\",\n  \"codebase_id\": \"{{codebaseId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/find_references",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "find_references"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check Complexity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Complexity analysis returned\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('complexity_score');",
+									"    pm.expect(jsonData.result).to.have.property('metrics');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"file_path\": \"src/auth/auth.service.ts\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"include_suggestions\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/check_complexity",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "check_complexity"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Analyze Security",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Security analysis completed\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('vulnerabilities');",
+									"    pm.expect(jsonData.result).to.have.property('recommendations');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"file_path\": \"src/auth/auth.service.ts\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"analysis_level\": \"comprehensive\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/analyze_security",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "analyze_security"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find Duplicates",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Duplicate analysis completed\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('duplicates');",
+									"    pm.expect(jsonData.result.duplicates).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"similarity_threshold\": 0.8,\n  \"include_suggestions\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/find_duplicates",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "find_duplicates"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Suggest Refactoring",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Refactoring suggestions provided\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('suggestions');",
+									"    pm.expect(jsonData.result.suggestions).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"file_path\": \"src/auth/auth.service.ts\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"refactoring_types\": [\"extract\", \"simplify\", \"optimize\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/suggest_refactoring",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "suggest_refactoring"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get API Endpoints",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"API endpoints discovered\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('endpoints');",
+									"    pm.expect(jsonData.result.endpoints).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"include_methods\": [\"GET\", \"POST\", \"PUT\", \"DELETE\"],\n  \"include_documentation\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/get_api_endpoints",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "get_api_endpoints"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Trace Data Flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Data flow traced\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.result).to.have.property('flow');",
+									"    pm.expect(jsonData.result.flow).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entity_name\": \"userData\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"max_depth\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tools/trace_data_flow",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tools", "trace_data_flow"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Monitoring & Metrics",
+			"item": [
+				{
+					"name": "Get Prometheus Metrics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Metrics format is valid\", function () {",
+									"    pm.expect(pm.response.text()).to.include('HELP');",
+									"    pm.expect(pm.response.text()).to.include('TYPE');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/metrics",
+							"host": ["{{baseUrl}}"],
+							"path": ["metrics"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Usage Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics structure is valid\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('stats');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stats"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Handling Tests",
+			"item": [
+				{
+					"name": "Invalid Search Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.have.property('code');",
+									"    pm.expect(jsonData.error).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"\",\n  \"codebase_id\": \"invalid-id\",\n  \"limit\": 1000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/queries",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "queries"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unauthorized Request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Unauthorized error response\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"    pm.expect(jsonData.error.code).to.eql('AUTHENTICATION_ERROR');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/codebases",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "codebases"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rate Limit Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 429 or 200\", function () {",
+									"    pm.expect([200, 429]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 429) {",
+									"    pm.test(\"Rate limit headers present\", function () {",
+									"        pm.expect(pm.response.headers.get('X-RateLimit-Limit')).to.exist;",
+									"        pm.expect(pm.response.headers.get('X-RateLimit-Remaining')).to.exist;",
+									"        pm.expect(pm.response.headers.get('X-RateLimit-Reset')).to.exist;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"test query\",\n  \"codebase_id\": \"{{codebaseId}}\",\n  \"limit\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/queries",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "queries"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global pre-request script",
+					"console.log('Executing request: ' + pm.info.requestName);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script",
+					"console.log('Response received for: ' + pm.info.requestName);",
+					"",
+					"// Log response time for all requests",
+					"if (pm.response.responseTime) {",
+					"    console.log('Response time: ' + pm.response.responseTime + 'ms');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "codebaseId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "newCodebaseId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

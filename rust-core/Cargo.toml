@@ -7,7 +7,8 @@ members = [
     "crates/embedding",
     "crates/storage",
     "crates/cache",
-    "crates/ffi"
+    "crates/ffi",
+    "benches"
 ]
 resolver = "2"
 

@@ -1,0 +1,37 @@
+{
+	"id": "codesight-mcp-dev-environment",
+	"name": "CodeSight MCP Development Environment",
+	"values": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:4000",
+			"type": "default",
+			"enabled": true,
+			"description": "Base URL for the CodeSight MCP Server API"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "secret",
+			"enabled": true,
+			"description": "JWT Bearer token for authentication. Generate this using your authentication endpoint."
+		},
+		{
+			"key": "codebaseId",
+			"value": "",
+			"type": "default",
+			"enabled": true,
+			"description": "ID of an existing codebase for testing. This is automatically populated by the 'List All Codebases' request."
+		},
+		{
+			"key": "newCodebaseId",
+			"value": "",
+			"type": "default",
+			"enabled": true,
+			"description": "ID of a newly created codebase. This is automatically populated by the 'Create New Codebase' request."
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2025-01-01T00:00:00.000Z",
+	"_postman_exported_using": "Postman/10.20.0"
+}

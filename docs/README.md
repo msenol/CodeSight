@@ -9,13 +9,14 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 **Code Quality**: Enterprise-grade with 62% lint improvement achievement
 **Integration Testing**: 27/27 tests passing with comprehensive MCP protocol validation
 **Test Coverage**: Claude Desktop (9/9), VS Code (11/11), E2E Workflows (7/7)
+**Phase 3.5 Features**: Interactive CLI, Advanced Monitoring, Enhanced Error Handling, Load Testing
 
 ## Quick Links
 
 ### 🚀 Getting Started
 
-- [Quick Start Guide](../specs/codesight-mcp/quickstart.md) - Get up and running in minutes
 - [Installation Guide](./configuration.md) - Complete setup instructions
+- [Interactive CLI Setup](./cli-setup.md) - Guided configuration wizard (New in Phase 3.5)
 - [Development Guide](./development.md) - Development workflow and practices
 
 ### 🏗️ Architecture & Design
@@ -24,59 +25,57 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 - [Rust FFI Bridge](./rust-ffi-bridge.md) - NAPI-RS integration details
 - [Performance Benchmarks](./performance-benchmarks.md) - Detailed performance metrics
 
+### 📊 Monitoring & Observability (New in Phase 3.5)
+
+- [Monitoring Guide](./monitoring/README.md) - Comprehensive monitoring setup
+- [Prometheus Metrics](./monitoring/prometheus.md) - Metrics collection and configuration
+- [OpenTelemetry Tracing](./monitoring/tracing.md) - Distributed tracing setup
+
 ### 🧪 Testing & Quality Assurance
 
-- [Integration Testing Guide](./testing/integration-testing.md) - Comprehensive test suite documentation
 - [MCP Tools Documentation](./MCP-TOOLS.md) - Complete MCP protocol tools reference
-- [API Contract Specifications](../specs/codesight-mcp/contracts/) - OpenAPI specifications
+- [API Contract Specifications](./api/openapi.yaml) - OpenAPI specifications
+- [Postman Collection](./testing/postman/README.md) - API testing collection
 
 ### 🔧 API & Integration
 
-- [API Documentation](./API.md) - REST API endpoints and usage
+- [OpenAPI Specification](./api/openapi.yaml) - Complete API specification (Phase 3.5)
 
 ### 📦 Deployment & Operations
 
 - [Configuration Guide](./configuration.md) - Environment setup and configuration
-- [Docker Deployment](./deployment/docker.md) - Container deployment guide
-- [Kubernetes Deployment](./deployment/kubernetes.md) - K8s deployment manifests
 - [Development Documentation](../typescript-mcp/README.md) - TypeScript MCP server details
 
 ### 📊 Project Specifications
 
-- [Feature Specification](../specs/codesight-mcp/spec.md) - Complete feature requirements
-- [Data Model](../specs/codesight-mcp/data-model.md) - Data structures and relationships
-- [Implementation Tasks](../specs/codesight-mcp/tasks.md) - Development tasks and progress
+- [MCP Tools Documentation](./MCP-TOOLS.md) - Complete MCP protocol tools reference
+- [Architecture Decision Records](./adrs/) - Design decisions and rationale
 
 ## Documentation Structure
 
 ```
 docs/
 ├── README.md                    # This file - documentation index
-├── API.md                       # REST API documentation
 ├── MCP-TOOLS.md                 # MCP protocol tools reference
 ├── configuration.md             # Configuration and deployment guide
-├── development.md               # Development workflow and practices
+├── cli-setup.md                 # Interactive CLI setup guide (Phase 3.5)
 ├── rust-ffi-bridge.md           # Rust FFI bridge documentation
-├── performance-benchmarks.md    # Performance metrics and benchmarks
 ├── CHANGELOG.md                 # Version history and changes
 ├── adrs/                        # Architecture Decision Records
 │   ├── 0001-hybrid-architecture.md
 │   └── 0002-tree-sitter-parsing.md
-├── deployment/                  # Deployment guides
-│   ├── docker.md
-│   └── kubernetes.md
+├── monitoring/                  # Monitoring & observability (Phase 3.5)
+│   ├── README.md                # Comprehensive monitoring guide
+│   ├── prometheus.md            # Prometheus metrics documentation
+│   ├── tracing.md               # OpenTelemetry tracing setup
+│   └── grafana/                 # Grafana dashboards
+│       ├── codesight-overview.json
+│       └── codesight-database.json
 ├── api/                         # API reference documentation
-│   └── endpoint-reference.md
-├── plugins/                     # Plugin development
-│   └── development-guide.md
-├── user-guide/                  # User documentation
-│   └── docs/
-│       ├── index.md
-│       └── getting-started/
-│           ├── installation.md
-│           └── introduction.md
-└── development/                 # Development documentation
-    └── documentation-maintenance-guide.md
+│   └── openapi.yaml             # OpenAPI 3.0 specification
+└── testing/                     # Testing documentation
+    └── postman/                 # API testing collection
+        └── README.md
 ```
 
 ## Key Features & Achievements
@@ -97,6 +96,8 @@ docs/
 - **Production Docker**: Complete containerization with PostgreSQL, Redis, monitoring
 - **Professional Tooling**: Unified ESLint, TypeScript configs, security scanning
 - **Monitoring**: Prometheus metrics, Grafana dashboards, structured logging
+- **Advanced Observability**: OpenTelemetry tracing, distributed system monitoring (Phase 3.5)
+- **Interactive CLI**: Guided setup wizard with progress tracking and error handling (Phase 3.5)
 
 **Code Quality Excellence:**
 

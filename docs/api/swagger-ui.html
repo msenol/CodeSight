@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSight MCP Server API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #fafafa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .swagger-ui .topbar {
+            background-color: #2d3748;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .swagger-ui .topbar .download-url-wrapper {
+            display: none;
+        }
+        .swagger-ui .info {
+            margin: 50px 0;
+        }
+        .swagger-ui .info .title {
+            color: #2d3748;
+            font-size: 36px;
+        }
+        .api-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .api-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .api-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .api-info {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .api-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .api-info-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        .api-info-card h3 {
+            margin: 0 0 1rem 0;
+            color: #2d3748;
+            font-size: 1.25rem;
+        }
+        .api-info-card p {
+            margin: 0;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        .endpoint-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 0.5rem;
+        }
+        .endpoint-get { background: #c6f6d5; color: #22543d; }
+        .endpoint-post { background: #fed7d7; color: #742a2a; }
+        .endpoint-put { background: #feebc8; color: #7c2d12; }
+        .endpoint-delete { background: #fed7e2; color: #702459; }
+        .endpoint-patch { background: #e6fffa; color: #234e52; }
+    </style>
+</head>
+<body>
+    <div class="api-header">
+        <div class="api-info">
+            <h1>CodeSight MCP Server API</h1>
+            <p>High-performance Code Intelligence API with natural language search and comprehensive codebase insights</p>
+        </div>
+    </div>
+
+    <div class="api-info">
+        <div class="api-info-grid">
+            <div class="api-info-card">
+                <h3>🚀 Quick Start</h3>
+                <p>
+                    <strong>Base URL:</strong> <code>http://localhost:4000</code><br>
+                    <strong>API Version:</strong> v0.1.0<br>
+                    <strong>Authentication:</strong> Bearer Token (JWT)
+                </p>
+            </div>
+            <div class="api-info-card">
+                <h3>📊 Key Endpoints</h3>
+                <p>
+                    <span class="endpoint-badge endpoint-get">GET</span> Health checks<br>
+                    <span class="endpoint-badge endpoint-post">POST</span> Search code<br>
+                    <span class="endpoint-badge endpoint-get">GET</span> List codebases<br>
+                    <span class="endpoint-badge endpoint-post">POST</span> Create codebase
+                </p>
+            </div>
+            <div class="api-info-card">
+                <h3>🔧 MCP Tools</h3>
+                <p>
+                    Natural language code search, function explanation,
+                    reference finding, security analysis, complexity checking,
+                    and comprehensive refactoring suggestions.
+                </p>
+            </div>
+            <div class="api-info-card">
+                <h3>📈 Performance</h3>
+                <p>
+                    Supports 15+ programming languages with sub-second search times
+                    and enterprise-grade scalability. Built with Rust FFI for
+                    optimal performance.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 1,
+                defaultModelExpandDepth: 1,
+                displayRequestDuration: true,
+                docExpansion: "list",
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true,
+                requestInterceptor: function(request) {
+                    // Add CORS headers if needed
+                    request.headers['Accept'] = 'application/json';
+                    return request;
+                },
+                responseInterceptor: function(response) {
+                    // Log responses for debugging
+                    console.log('Response:', response);
+                    return response;
+                },
+                onComplete: function() {
+                    console.log("Swagger UI loaded successfully");
+                },
+                onError: function(error) {
+                    console.error("Swagger UI error:", error);
+                }
+            });
+
+            // Add custom CSS for better readability
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .swagger-ui .info {
+                    margin: 20px 0;
+                }
+                .swagger-ui .info .title {
+                    color: #2d3748;
+                    font-size: 28px;
+                }
+                .swagger-ui .scheme-container {
+                    background: #f7fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 6px;
+                    padding: 1rem;
+                    margin: 1rem 0;
+                }
+                .swagger-ui .opblock.opblock-post {
+                    border-color: #f56565;
+                    background: rgba(245, 101, 101, 0.1);
+                }
+                .swagger-ui .opblock.opblock-get {
+                    border-color: #48bb78;
+                    background: rgba(72, 187, 120, 0.1);
+                }
+                .swagger-ui .opblock.opblock-put {
+                    border-color: #ed8936;
+                    background: rgba(237, 137, 54, 0.1);
+                }
+                .swagger-ui .opblock.opblock-delete {
+                    border-color: #e53e3e;
+                    background: rgba(229, 62, 62, 0.1);
+                }
+                .swagger-ui .highlight-code {
+                    background: #2d3748;
+                    color: #e2e8f0;
+                }
+                .swagger-ui .tab li {
+                    padding: 0 10px;
+                }
+                .swagger-ui .tab li.active h4 {
+                    background: #667eea;
+                    color: white;
+                }
+            `;
+            document.head.appendChild(style);
+        };
+    </script>
+</body>
+</html>

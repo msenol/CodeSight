@@ -203,23 +203,47 @@ kubectl logs -f deployment/codesight-server
 
 ## 🚀 Quick Start
 
-### 1. Index Your Codebase
+### 1. Interactive Setup (New in Phase 3.5)
 
 ```bash
 cd typescript-mcp
 
-# Index a project (currently supports JS/TS)
+# Run the interactive configuration wizard
+node dist/cli/index.js setup
+
+# Follow the guided setup to configure:
+# • Server settings (port, host, environment)
+# • Database backend (SQLite or PostgreSQL)
+# • Performance tuning (workers, batch sizes)
+# • Rust FFI bridge configuration
+# • Authentication and security settings
+# • Logging and monitoring preferences
+```
+
+### 2. Index Your Codebase with Progress Tracking
+
+```bash
+cd typescript-mcp
+
+# Index a project with real-time progress indicators
 node dist/cli/index.js index /path/to/your/project
 
-# Check what was indexed
+# Output shows live progress:
+# ████████████████████████████████████ 100.0% (47/47 files) 25 files/s (2.1s)
+# ✅ Indexing completed!
+#    Files indexed: 47
+#    Duration: 2.13s
+#    Rate: 22 files/sec
+
+# Check detailed statistics
 node dist/cli/index.js stats
 # Output: Total entities: 377 (class: 48, function: 175, interface: 140, type: 14)
 
-# Test search functionality
-node dist/cli/index.js search "IndexingService"
+# Test search with performance metrics
+node dist/cli/index.js search "authentication functions"
 ```
 
-### 2. Connect with Claude Desktop
+### 3. Connect with Claude Desktop
 
 Add to your Claude Desktop MCP configuration:
 
@@ -235,7 +259,7 @@ Add to your Claude Desktop MCP configuration:
 }
 ```
 
-### 3. Test Integration
+### 4. Test Integration
 
 Verify the integration with comprehensive test suite:
 
@@ -253,7 +277,7 @@ npm run test:integration:all
 npm run test:quickstart
 ```
 
-### 4. Working MCP Tools
+### 5. Working MCP Tools
 
 ✅ **Fully Implemented (Phase 3.3 Complete):**
 
@@ -268,6 +292,69 @@ npm run test:quickstart
 - `suggest_refactoring`: Provide refactoring suggestions with implementation guidance
 
 🏆 **All 9 MCP Tools Fully Functional** with comprehensive implementations and integration testing
+
+## 📊 Monitoring & Observability (New in Phase 3.5)
+
+### Prometheus Metrics
+
+Access comprehensive metrics at `http://localhost:4000/metrics`:
+
+**Available Metrics:**
+- `codesight_http_requests_total` - HTTP request counts by method, route, status
+- `codesight_http_request_duration_ms` - Request duration histograms
+- `codesight_search_operations_total` - Search operation counts
+- `codesight_search_duration_ms` - Search performance metrics
+- `codesight_indexing_operations_total` - Indexing operation tracking
+- `codesight_mcp_tool_calls_total` - MCP tool usage statistics
+- `codesight_rust_ffi_calls_total` - Rust FFI performance tracking
+- `codesight_system_memory_usage_bytes` - Memory usage by type
+- `codesight_errors_total` - Error tracking by type and component
+
+### OpenTelemetry Tracing
+
+Configure distributed tracing for end-to-end visibility:
+
+```bash
+# Enable tracing in production
+TRACING_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+OTEL_SERVICE_NAME=codesight-mcp-server
+OTEL_RESOURCE_ATTRIBUTES=service.version=0.1.0,deployment.environment=production
+```
+
+**Supported Exporters:**
+- **Jaeger**: `http://localhost:14268/api/traces`
+- **Zipkin**: `http://localhost:9411/api/v2/spans`
+- **OTLP**: `http://localhost:4318/v1/traces`
+- **Console**: Development logging
+
+### Grafana Dashboards
+
+Pre-built dashboards available for:
+- **System Overview**: CPU, memory, and request metrics
+- **API Performance**: Response times and error rates
+- **MCP Tools**: Tool usage and performance analytics
+- **Database Operations**: Query performance and connection metrics
+
+### Enhanced Error Handling
+
+Actionable error messages with contextual suggestions:
+
+```bash
+# Example error with suggestions:
+❌ Indexing failed: ENOENT: no such file or directory
+
+🔧 Possible solutions:
+💡 The specified file or directory does not exist.
+   Please check the path and ensure it's correct.
+   Use absolute paths or ensure you're in the right directory.
+
+📝 Indexing tips:
+   • Ensure files contain supported code (TS, JS, Python, Rust, etc.)
+   • Check that files are not corrupted or binary files
+   • Try excluding problematic directories: --exclude node_modules,build,dist
+   • Use verbose mode for more details: --verbose
+```
 
 ## 🔧 Configuration
 
@@ -330,6 +417,12 @@ CORS_ORIGIN=https://yourdomain.com
 # Metrics Export
 PROMETHEUS_ENDPOINT=http://prometheus:9090
 GRAFANA_ENDPOINT=http://grafana:3000
+
+# Distributed Tracing (New in Phase 3.5)
+TRACING_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+OTEL_SERVICE_NAME=codesight-mcp-server
+TRACING_SAMPLER_RATIO=0.1
 
 # Logging
 LOG_LEVEL=info
@@ -501,12 +594,16 @@ npm run test:coverage
 - **Enterprise Caching**: Redis distributed caching with LRU eviction and TTL management
 - **Production Security**: Advanced threat detection, IP filtering, and request validation
 
-**🚧 Next Phase (Phase 3.5 - Polish):**
+**✅ Phase 3.5 Polish Complete:**
 
-- **Performance Optimization**: Benchmarking and load testing
-- **Documentation**: API documentation and deployment guides
-- **CLI Enhancements**: Interactive configuration and progress indicators
-- **Monitoring**: Prometheus metrics and Grafana dashboards
+- **Interactive CLI Setup**: Comprehensive configuration wizard with guided setup and validation
+- **Progress Indicators**: Real-time progress bars and spinners for indexing and search operations
+- **Enhanced Error Handling**: Actionable error messages with contextual suggestions and troubleshooting tips
+- **Prometheus Metrics**: Comprehensive monitoring with 15+ custom metrics for performance and health
+- **OpenTelemetry Tracing**: Distributed tracing with Jaeger, Zipkin, and OTLP support
+- **Advanced Load Testing**: Concurrent request handling and performance benchmarking suite
+- **Complete API Documentation**: OpenAPI 3.0 specifications with detailed endpoint documentation
+- **Grafana Dashboards**: Pre-built monitoring dashboards for production observability
 
 **Project Structure:**
 
@@ -547,8 +644,7 @@ docs/              # ✅ Comprehensive documentation
 
 - [Architecture Overview](./docs/adrs/0001-hybrid-architecture.md) - Hybrid TypeScript/Rust architecture
 - [Development Guide](./docs/development.md) - Complete development standards and workflows
-- [API Reference](./docs/api-reference.md) - Comprehensive REST API documentation
-- [MCP Tools Documentation](./docs/mcp-tools.md) - Complete MCP tools reference
+- [MCP Tools Documentation](./docs/MCP-TOOLS.md) - Complete MCP tools reference
 - [TypeScript MCP Implementation](./typescript-mcp/README.md) - Implementation details
 - [Rust FFI Bridge Documentation](./docs/rust-ffi-bridge.md) - Native integration guide
 - [Performance Benchmarks](./docs/performance-benchmarks.md) - Performance analysis
@@ -573,10 +669,6 @@ npm install
 docker-compose -f docker-compose.dev.yml up -d
 npm run dev
 ```
-
-### Code of Conduct
-
-Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md) to ensure a welcoming and inclusive community.
 
 ## 📊 Performance
 
