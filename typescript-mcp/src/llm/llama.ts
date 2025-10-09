@@ -5,7 +5,7 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

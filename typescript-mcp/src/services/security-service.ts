@@ -111,7 +111,7 @@ export class DefaultSecurityService implements SecurityService {
         type: 'sql_injection',
         severity: 'high',
         message: 'Potential SQL injection vulnerability detected',
-        file: input.entity_id || '/src/example.ts',
+        file: '/src/example.ts',
         line: 10,
         column: 5,
         code: 'SELECT * FROM users WHERE id = ' + 'userId',
@@ -161,15 +161,7 @@ export class DefaultSecurityService implements SecurityService {
         ignore: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
       });
 
-      const patternResults = new Map<
-        string,
-        {
-          matches: number;
-          severity: 'low' | 'medium' | 'high' | 'critical';
-          description: string;
-          files: string[];
-        }
-      >();
+      const patternResults = new Map<string, { count: number; matches: SecurityPattern[] }>();
 
       for (const filePath of files) {
         try {
@@ -182,15 +174,19 @@ export class DefaultSecurityService implements SecurityService {
 
       // Convert map to array
       for (const [patternName, data] of patternResults) {
-        patterns.push({
-          id: patternName,
-          name: patternName,
-          pattern: new RegExp(patternName, 'g'),
-          matches: data.matches,
-          severity: data.severity,
-          description: data.description,
-          files: data.files,
-        });
+        // Get the first match as representative for severity and description
+        const representative = data.matches[0];
+        if (representative) {
+          patterns.push({
+            id: patternName,
+            name: patternName,
+            pattern: representative.pattern,
+            matches: data.count,
+            severity: representative.severity,
+            description: representative.description,
+            files: representative.files || [],
+          });
+        }
       }
 
       return patterns.sort(
@@ -233,12 +229,12 @@ export class DefaultSecurityService implements SecurityService {
 
   private detectSQLInjection(content: string, issues: SecurityIssue[], filePath: string): void {
     const patterns = [
-      /query]*\(]*['"\`].*\$\{.*\}.*['"\`]]*)/g,
-      /execute]*\(]*['"\`].*\+.*['"\`]]*)/g,
-      /SELECT]+.*\+.*FROM/gi,
-      /INSERT]+.*\+.*VALUES/gi,
-      /UPDATE]+.*\+.*SET/gi,
-      /DELETE]+.*\+.*WHERE/gi,
+      /query\s*\(\s*['"`].*\$\{.*\}.*['"`]\s*\)/g,
+      /execute\s*\(\s*['"`].*\+.*['"`]\s*\)/g,
+      /SELECT\s+.*\+.*FROM/gi,
+      /INSERT\s+.*\+.*VALUES/gi,
+      /UPDATE\s+.*\+.*SET/gi,
+      /DELETE\s+.*\+.*WHERE/gi,
     ];
 
     patterns.forEach(pattern => {
@@ -318,7 +314,7 @@ export class DefaultSecurityService implements SecurityService {
   }
 
   private detectInsecureRandom(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [/Math\.random]*\(]*)/g, /new]+Date]*\(]*)\.getTime]*\(]*)/g];
+    const patterns = [/Math\.random\s*\(\s*\)/g, /new\s+Date\s*\(\s*\)\.getTime\s*\(\s*\)/g];
 
     patterns.forEach(pattern => {
       let match;
@@ -341,7 +337,7 @@ export class DefaultSecurityService implements SecurityService {
   }
 
   private detectPathTraversal(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [/readFile]*\(]*.*\+.*)/g, /writeFile]*\(]*.*\+.*)/g, /\.\.]|\.\.]/g];
+    const patterns = [/readFile\s*\([^)]*\+.*)/g, /writeFile\s*\([^)]*\+.*)/g, /\.\.[\/\\]/g];
 
     patterns.forEach(pattern => {
       let match;
@@ -393,9 +389,9 @@ export class DefaultSecurityService implements SecurityService {
   ): void {
     // Hardcoded secrets pattern
     const secretPatterns = [
-      /(?:password|pwd|pass)]*[=:]]*['"\`][^'"\` ]{8,}['"\`]/gi,
-      /(?:api[_-]?key|apikey)]*[=:]]*['"\`][^'"\` ]{16,}['"\`]/gi,
-      /(?:secret|token)]*[=:]]*['"\`][^'"\` ]{16,}['"\`]/gi,
+      /(?:password|pwd|pass)\s*[=:]\s*['"`][^'"` ]{8,}['"`]/gi,
+      /(?:api[_-]?key|apikey)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
+      /(?:secret|token)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
     ];
 
     let secretMatches = 0;
@@ -406,6 +402,9 @@ export class DefaultSecurityService implements SecurityService {
 
     if (secretMatches > 0) {
       this.updatePatternResult(patternResults, 'hardcoded_secrets', {
+        id: 'hardcoded_secrets',
+        name: 'Hardcoded Secrets',
+        pattern: /(?:password|pwd|pass)\s*[=:]\s*['"`][^'"` ]{8,}['"`]/gi,
         matches: secretMatches,
         severity: 'critical',
         description: 'Hardcoded API keys or passwords found',
@@ -414,7 +413,7 @@ export class DefaultSecurityService implements SecurityService {
     }
 
     // SQL injection patterns
-    const sqlPatterns = [/query]*\(]*['"\`].*\$\{.*\}.*['"\`]]*)/g, /SELECT]+.*\+.*FROM/gi];
+    const sqlPatterns = [/query\s*\(\s*['"`].*\$\{.*\}.*['"`]\s*\)/g, /SELECT\s+.*\+.*FROM/gi];
 
     let sqlMatches = 0;
     sqlPatterns.forEach(pattern => {
@@ -424,6 +423,9 @@ export class DefaultSecurityService implements SecurityService {
 
     if (sqlMatches > 0) {
       this.updatePatternResult(patternResults, 'sql_injection', {
+        id: 'sql_injection',
+        name: 'SQL Injection',
+        pattern: /SELECT\s+.*\+.*FROM/gi,
         matches: sqlMatches,
         severity: 'high',
         description: 'Potential SQL injection vulnerabilities',
@@ -432,7 +434,7 @@ export class DefaultSecurityService implements SecurityService {
     }
 
     // XSS patterns
-    const xssPatterns = [/innerHTML]*=]*.*\+/g, /dangerouslySetInnerHTML/g];
+    const xssPatterns = [/innerHTML\s*=.*\+/g, /dangerouslySetInnerHTML/g];
 
     let xssMatches = 0;
     xssPatterns.forEach(pattern => {
@@ -442,6 +444,9 @@ export class DefaultSecurityService implements SecurityService {
 
     if (xssMatches > 0) {
       this.updatePatternResult(patternResults, 'xss_vulnerabilities', {
+        id: 'xss_vulnerabilities',
+        name: 'XSS Vulnerabilities',
+        pattern: /innerHTML\s*=.*\+/g,
         matches: xssMatches,
         severity: 'medium',
         description: 'Potential XSS vulnerabilities',
@@ -452,11 +457,14 @@ export class DefaultSecurityService implements SecurityService {
 
   private updatePatternResult(patternResults: Map<string, { count: number; matches: SecurityPattern[] }>, pattern: string, data: SecurityPattern): void {
     if (patternResults.has(pattern)) {
-      const existing = patternResults.get(pattern);
-      existing.matches += data.matches;
-      existing.files.push(...data.files);
+      const existing = patternResults.get(pattern)!;
+      existing.count += 1;
+      existing.matches.push(data);
     } else {
-      patternResults.set(pattern, data);
+      patternResults.set(pattern, {
+        count: 1,
+        matches: [data]
+      });
     }
   }
 

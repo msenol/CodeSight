@@ -256,6 +256,7 @@ export class IndexingService {
     return {
       total: Number(total.total),
       byType: results as any,
+      byLanguage: [], // Add empty array for byLanguage
       totalFiles: 0,
       totalEntities: Number(total.total),
       totalLines: 0,
@@ -269,6 +270,56 @@ export class IndexingService {
   // Alias methods for tool compatibility
   search(query: string, options?: { limit?: number }): SearchResult[] {
     return this.searchCode(query, options?.limit || 20);
+  }
+
+  // Progress indexing method
+  async indexCodebaseWithProgress(
+    codebasePath: string,
+    onProgress?: (current: number, total: number, message?: string) => void
+  ): Promise<number> {
+    logger.info(`Starting progressive indexing of: ${codebasePath}`);
+
+    // Clear existing entries for this codebase
+    const stmt = this.db.prepare('DELETE FROM code_entities WHERE file_path LIKE ?');
+    stmt.run(`${codebasePath}%`);
+
+    let fileCount = 0;
+    let processedCount = 0;
+
+    // Find all relevant files first to get total count
+    const patterns = this.extensions.map(ext => `**/*${ext}`);
+    const allFiles: string[] = [];
+
+    for (const pattern of patterns) {
+      const files = await glob(pattern, {
+        cwd: codebasePath,
+        ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
+        absolute: false,
+      });
+      allFiles.push(...files);
+    }
+
+    const totalFiles = allFiles.length;
+
+    // Process files with progress callback
+    for (const file of allFiles) {
+      const fullPath = path.join(codebasePath, file);
+
+      if (onProgress) {
+        onProgress(processedCount, totalFiles, `Indexing ${file}`);
+      }
+
+      await this.indexFile(fullPath);
+      processedCount++;
+      fileCount++;
+    }
+
+    if (onProgress) {
+      onProgress(totalFiles, totalFiles, 'Indexing complete!');
+    }
+
+    logger.info(`Indexed ${fileCount} files from ${codebasePath}`);
+    return fileCount;
   }
 
   // Additional methods to fix missing signatures

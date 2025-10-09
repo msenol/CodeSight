@@ -3,7 +3,7 @@
  * Provides seamless integration with Ollama for offline AI capabilities
  */
 
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 
 const logger = new Logger('Ollama');
 

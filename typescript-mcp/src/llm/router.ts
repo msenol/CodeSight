@@ -4,10 +4,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { Logger } from '../services/logger';
-import { LlamaCppService, LlamaModelConfig } from './llama';
-import { OllamaService, OllamaConfig } from './ollama';
-import { HuggingFaceService, HuggingFaceConfig } from './huggingface';
+import { Logger } from '../services/logger.js';
+import { LlamaCppService, LlamaModelConfig } from './llama.js';
+import { OllamaService, OllamaConfig } from './ollama.js';
+import { HuggingFaceService, HuggingFaceConfig } from './huggingface.js';
 
 const logger = new Logger('LLMRouter');
 

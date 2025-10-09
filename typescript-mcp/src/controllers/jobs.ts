@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 
 const logger = new Logger('JobsController');
 
@@ -128,8 +128,8 @@ export class JobsController {
         codebase_id?: string;
       };
 
-      const limitNum: number = limit ? Number(parseInt(limit, 10)) || 20 : 20;
-      const offsetNum: number = offset ? Number(parseInt(offset, 10)) || 0 : 0;
+      const limitNum: number = limit ? parseInt(limit.toString(), 10) : 20;
+      const offsetNum: number = offset ? parseInt(offset, 10) : 0;
 
       let jobs = Array.from(jobStore.values());
 

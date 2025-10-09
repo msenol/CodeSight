@@ -5,7 +5,7 @@
 
 import { FastifyRequest, FastifyReply } from 'fastify';
 import * as jwt from 'jsonwebtoken';
-import { Logger } from '../services/logger';
+import { Logger } from '../services/logger.js';
 
 const logger = new Logger('AuthMiddleware');
 

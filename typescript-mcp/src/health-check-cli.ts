@@ -81,11 +81,7 @@ async function healthCheck() {
     };
 
     // Log results
-    cliLogger.info('Health check completed', {
-      status: healthStatus.status,
-      memory: healthStatus.memory,
-      checks: healthStatus.checks,
-    });
+    cliLogger.info('Health check completed');
 
     // Output for monitoring systems
     console.log(JSON.stringify(healthStatus, null, 2));

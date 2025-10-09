@@ -16,7 +16,7 @@ import chalk from 'chalk';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as readline from 'readline';
-import * as os from 'os';
+import process from 'process';
 
 // Progress indicator utilities
 class ProgressIndicator {
@@ -39,7 +39,9 @@ class ProgressIndicator {
     const now = Date.now();
 
     // Update only every 100ms to avoid flickering
-    if (now - this.lastUpdate < 100) return;
+    if (now - this.lastUpdate < 100) {
+      return;
+    }
     this.lastUpdate = now;
 
     const percentage = this.total > 0 ? (current / this.total) : 0;
@@ -294,18 +296,6 @@ class CLIErrorHandler {
   }
 }
 
-// Node.js global declarations
-declare const process: {
-  env: Record<string, string | undefined>;
-  cwd: () => string;
-  exit: () => never;
-};
-
-
-declare const console: {
-  log: (...args: unknown[]) => void;
-  error: (...args: unknown[]) => void;
-};
 
 const program = new Command();
 
@@ -359,10 +349,9 @@ program
       if (typeof indexingService.indexCodebaseWithProgress === 'function') {
         indexedCount = await indexingService.indexCodebaseWithProgress(
           absolutePath,
-          (current: number, currentFile?: string) => {
+          (current: number, total: number, message?: string) => {
             if (progress && options.progress !== false) {
-              const fileName = currentFile ? path.basename(currentFile) : '';
-              progress.update(current, `Indexing: ${fileName}`);
+              progress.update(current, message);
             }
           }
         );
@@ -382,7 +371,7 @@ program
       const durationSec = (duration / 1000).toFixed(2);
       const filesPerSec = Math.round(indexedCount / (duration / 1000));
 
-      console.log(chalk.green(`\n✅ Indexing completed!`));
+      console.log(chalk.green('\n✅ Indexing completed!'));
       console.log(chalk.blue(`   Files indexed: ${chalk.bold(indexedCount)}`));
       console.log(chalk.blue(`   Duration: ${chalk.bold(durationSec)}s`));
       console.log(chalk.blue(`   Rate: ${chalk.bold(filesPerSec)} files/sec`));

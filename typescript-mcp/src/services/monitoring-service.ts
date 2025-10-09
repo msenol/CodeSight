@@ -466,14 +466,19 @@ export class MonitoringService extends EventEmitter {
         // Create new alert
         const alert: Alert = {
           id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          ruleId: rule.id,
-          ruleName: rule.name,
-          metric: rule.metric,
-          value: latestValue,
-          threshold: rule.threshold,
-          condition: rule.condition,
+          type: 'monitoring',
+          severity: 'medium', // Default severity since AlertRule doesn't have severity property
+          message: `Alert: ${rule.name} - ${rule.metric} ${rule.condition} ${rule.threshold}`,
           timestamp: String(Date.now()),
-          resolved: false,
+          context: {
+            ruleId: rule.id,
+            ruleName: rule.name,
+            metric: rule.metric,
+            value: latestValue,
+            threshold: rule.threshold,
+            condition: rule.condition,
+            resolved: false,
+          },
         };
 
         this.alerts.set(alert.id, alert);
@@ -570,7 +575,7 @@ export class MonitoringService extends EventEmitter {
         this.cleanupOldMetrics();
         this.cleanupOldAlerts();
       },
-      60 * 60 * 1000,
+      (60 * 60 * 1000),
     ); // Every hour
   }
 
@@ -578,7 +583,7 @@ export class MonitoringService extends EventEmitter {
    * Clean up old metrics
    */
   private cleanupOldMetrics(): void {
-    const cutoff = Date.now() - this.config.metricsRetentionMs;
+    const cutoff = Date.now() - Number(this.config.metricsRetentionMs);
 
     for (const [name, metrics] of this.metrics) {
       const filtered = metrics.filter(m => m.timestamp >= cutoff);
@@ -593,7 +598,8 @@ export class MonitoringService extends EventEmitter {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days
 
     for (const [id, alert] of this.alerts) {
-      if (alert.resolved && alert.resolvedAt && alert.resolvedAt < cutoff) {
+      const alertContext = alert.context as any;
+      if (alertContext?.resolved && alertContext?.resolvedAt && alertContext.resolvedAt < cutoff) {
         this.alerts.delete(id);
       }
     }
