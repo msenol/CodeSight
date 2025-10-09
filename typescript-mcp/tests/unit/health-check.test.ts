@@ -14,7 +14,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
  * a full server setup or database connections.
  */
 
-describe.skip('Health Check Handlers (Temporarily Skipped)', () => {
+describe('Health Check Handlers', () => {
   let mockRequest: Partial<FastifyRequest>;
   let mockReply: Partial<FastifyReply>;
 
