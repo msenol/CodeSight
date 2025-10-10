@@ -9,9 +9,9 @@ import * as path from 'path';
 import { glob } from 'glob';
 import { distance } from 'fast-levenshtein';
  
-import * as acorn from 'acorn';
+// import * as acorn from 'acorn'; // Unused import
  
-import * as walk from 'acorn-walk';
+// import * as walk from 'acorn-walk'; // Unused import
 
 export interface DuplicationService {
    
@@ -352,7 +352,7 @@ export class DuplicationServiceImpl implements DuplicationService {
     return { type, description, impact, estimatedEffort };
   }
 
-  async findDuplicateCode(codebaseId: string, options: Record<string, unknown>): Promise<DuplicateCode[]> {
+  async findDuplicateCode(codebaseId: string, _options: Record<string, unknown>): Promise<DuplicateCode[]> {
     // Implementation for MCP tool compatibility
     const duplicates = await this.detectDuplicates(codebaseId);
     return duplicates.map(dup => ({
@@ -361,7 +361,7 @@ export class DuplicationServiceImpl implements DuplicationService {
     }));
   }
 
-  async findDuplicates(files: string[], options: Record<string, unknown>): Promise<DuplicateCode[]> {
+  async findDuplicates(files: string[], _options: Record<string, unknown>): Promise<DuplicateCode[]> {
     const allDuplicates: DuplicateCode[] = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -415,7 +415,7 @@ export class DuplicationServiceImpl implements DuplicationService {
     const functions: FunctionInfo[] = [];
 
     try {
-      const ast = parse(content, {
+      const _ast = parse(content, {
         jsx: filePath.endsWith('.jsx') || filePath.endsWith('.tsx'),
         loc: true,
       });
@@ -434,7 +434,7 @@ export class DuplicationServiceImpl implements DuplicationService {
     const classes: ClassInfo[] = [];
 
     try {
-      const ast = parse(content, {
+      const _ast = parse(content, {
         jsx: filePath.endsWith('.jsx') || filePath.endsWith('.tsx'),
         loc: true,
       });

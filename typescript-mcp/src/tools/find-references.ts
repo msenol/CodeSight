@@ -5,9 +5,9 @@
  
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
  
-import type { AnalysisService } from '../services/analysis-service.js';
+import { analysisService } from '../services/analysis-service.js';
  
-import type { CodebaseService } from '../services/codebase-service.js';
+import { codebaseService } from '../services/codebase-service.js';
 import { z } from 'zod';
 
 // Input validation schema
@@ -78,13 +78,7 @@ export class FindReferencesTool {
   name = 'find_references';
   description = 'Find all references to a code entity with detailed usage analysis';
 
-  private codebaseService: CodebaseService;
-  private analysisService: AnalysisService;
-
-  constructor() {
-    this.codebaseService = new CodebaseService();
-    this.analysisService = new AnalysisService();
-  }
+  // Services imported directly
 
   inputSchema = {
     type: 'object',
@@ -145,7 +139,7 @@ export class FindReferencesTool {
       const input = FindReferencesInputSchema.parse(args);
 
       // Get the target entity
-      const entity = await this.codebaseService.getCodeEntity(input.entity_id);
+      const entity = await codebaseService.getCodeEntity(input.entity_id);
       if (!entity) {
         throw new Error(`Code entity with ID ${input.entity_id} not found`);
       }
@@ -176,7 +170,7 @@ export class FindReferencesTool {
 
       return {
         entity_id: entity.id,
-        entity_name: entity.name,
+        entity_name: (entity as any).name,
         entity_type: entity.entity_type,
         total_count: categorizedReferences.length,
         direct_references: directRefs,
@@ -205,7 +199,7 @@ export class FindReferencesTool {
     const references: Reference[] = [];
 
     // Find direct references through relationships
-    const directRefs = await this.analysisService.findDirectReferences(entity.id);
+    const directRefs = await analysisService.findDirectReferences((entity as any).id);
     references.push(...directRefs.map(ref => this.convertToReference(ref, 'direct')));
 
     // Find references through text search
@@ -240,7 +234,7 @@ export class FindReferencesTool {
     const references: Reference[] = [];
 
     // Search for entity name in code
-    const searchResults = await this.analysisService.searchText(entity.codebase_id, entity.name, {
+    const searchResults = await analysisService.searchText((entity as any).codebase_id, (entity as any).name, {
       file_types: input.file_types,
       exclude_patterns: input.exclude_patterns,
     });
@@ -248,9 +242,9 @@ export class FindReferencesTool {
     for (const result of searchResults) {
       // Skip the definition itself
       if (
-        result.file_path === entity.file_path &&
-        result.line_number >= entity.start_line &&
-        result.line_number <= entity.end_line
+        (result as any).file_path === (entity as any).file_path &&
+        (result as any).line_number >= (entity as any).start_line &&
+        (result as any).line_number <= (entity as any).end_line
       ) {
         continue;
       }
@@ -269,20 +263,20 @@ export class FindReferencesTool {
    */
   private async findIndirectReferences(
     entity: unknown,
-    input: FindReferencesInput,
+    _input: FindReferencesInput,
   ): Promise<Reference[]> {
     const references: Reference[] = [];
 
     // Find functions that directly use this entity
-    const directUsers = await this.analysisService.findDirectUsers(entity.id);
+    const directUsers = await analysisService.findDirectUsers((entity as any).id);
 
     // For each direct user, find their references
     for (const user of directUsers) {
-      const userRefs = await this.analysisService.findDirectReferences(user.id);
+      const userRefs = await analysisService.findDirectReferences((user as any).id);
 
       for (const ref of userRefs) {
         const indirectRef = this.convertToReference(ref, 'indirect');
-        indirectRef.containing_function = user.name;
+        indirectRef.containing_function = (user as any).name;
         references.push(indirectRef);
       }
     }
@@ -299,9 +293,9 @@ export class FindReferencesTool {
   ): Promise<Reference[]> {
     const references: Reference[] = [];
 
-    const commentMatches = await this.analysisService.searchInComments(
-      entity.codebase_id,
-      entity.name,
+    const commentMatches = await analysisService.searchInComments(
+      (entity as any).codebase_id,
+      (entity as any).name,
     );
 
     for (const match of commentMatches) {
@@ -323,9 +317,9 @@ export class FindReferencesTool {
   ): Promise<Reference[]> {
     const references: Reference[] = [];
 
-    const stringMatches = await this.analysisService.searchInStrings(
-      entity.codebase_id,
-      entity.name,
+    const stringMatches = await analysisService.searchInStrings(
+      (entity as any).codebase_id,
+      (entity as any).name,
     );
 
     for (const match of stringMatches) {
@@ -343,19 +337,19 @@ export class FindReferencesTool {
    */
   private convertToReference(result: unknown, type: 'direct' | 'indirect'): Reference {
     return {
-      id: result.id || `${result.file_path}:${result.line_number}`,
-      file_path: result.file_path,
-      line_number: result.line_number,
-      column_number: result.column_number || 0,
+      id: (result as any).id || `${(result as any).file_path}:${(result as any).line_number}`,
+      file_path: (result as any).file_path,
+      line_number: (result as any).line_number,
+      column_number: (result as any).column_number || 0,
       reference_type: type,
-      context: result.context || '',
-      surrounding_code: result.surrounding_code || [],
-      confidence: result.confidence || 1.0,
-      usage_type: this.determineUsageType(result.context || ''),
-      containing_function: result.containing_function,
-      containing_class: result.containing_class,
-      is_modification: this.isModification(result.context || ''),
-      language: this.detectLanguage(result.file_path),
+      context: (result as any).context || '',
+      surrounding_code: (result as any).surrounding_code || [],
+      confidence: (result as any).confidence || 1.0,
+      usage_type: this.determineUsageType((result as any).context || ''),
+      containing_function: (result as any).containing_function,
+      containing_class: (result as any).containing_class,
+      is_modification: this.isModification((result as any).context || ''),
+      language: this.detectLanguage((result as any).file_path),
     };
   }
 
@@ -369,10 +363,10 @@ export class FindReferencesTool {
   ): Promise<Reference | null> {
     try {
       // Get surrounding code for context
-      const surroundingCode = await this.codebaseService.getCodeLines(
-        result.file_path,
-        Math.max(1, result.line_number - input.context_lines),
-        result.line_number + input.context_lines,
+      const surroundingCode = await codebaseService.getCodeLines(
+        (result as any).file_path,
+        Math.max(1, (result as any).line_number - input.context_lines),
+        (result as any).line_number + input.context_lines,
       );
 
       // Analyze the context to determine usage type
@@ -380,25 +374,25 @@ export class FindReferencesTool {
       const usageType = this.determineUsageType(context);
 
       // Calculate confidence based on context
-      const confidence = this.calculateConfidence(context, entity.name);
+      const confidence = this.calculateConfidence(context, (entity as any).name);
 
       return {
-        id: `${result.file_path}:${result.line_number}`,
-        file_path: result.file_path,
-        line_number: result.line_number,
-        column_number: result.column_number || 0,
+        id: `${(result as any).file_path}:${(result as any).line_number}`,
+        file_path: (result as any).file_path,
+        line_number: (result as any).line_number,
+        column_number: (result as any).column_number || 0,
         reference_type: 'direct',
         context,
-        surrounding_code: surroundingCode,
+        surrounding_code: (result as any). surroundingCode,
         confidence,
         usage_type: usageType,
         containing_function: await this.findContainingFunction(
-          result.file_path,
-          result.line_number,
+          (result as any).file_path,
+          (result as any).line_number,
         ),
-        containing_class: await this.findContainingClass(result.file_path, result.line_number),
+        containing_class: await this.findContainingClass((result as any).file_path, (result as any).line_number),
         is_modification: this.isModification(context),
-        language: this.detectLanguage(result.file_path),
+        language: this.detectLanguage((result as any).file_path),
       };
     } catch (error) {
       return null;
@@ -415,24 +409,24 @@ export class FindReferencesTool {
     input: FindReferencesInput,
   ): Promise<Reference | null> {
     try {
-      const surroundingCode = await this.codebaseService.getCodeLines(
-        match.file_path,
-        Math.max(1, match.line_number - input.context_lines),
-        match.line_number + input.context_lines,
+      const _surroundingCode = await codebaseService.getCodeLines(
+        (match as any).file_path,
+        Math.max(1, (match as any).line_number - input.context_lines),
+        (match as any).line_number + input.context_lines,
       );
 
       return {
-        id: `${match.file_path}:${match.line_number}:${type}`,
-        file_path: match.file_path,
-        line_number: match.line_number,
-        column_number: match.column_number || 0,
+        id: `${(match as any).file_path}:${(match as any).line_number}:${type}`,
+        file_path: (match as any).file_path,
+        line_number: (match as any).line_number,
+        column_number: (match as any).column_number || 0,
         reference_type: type,
-        context: match.context || '',
-        surrounding_code: surroundingCode,
+        context: (match as any).context || '',
+        surrounding_code: [],
         confidence: 0.7, // Lower confidence for comments and strings
         usage_type: 'other',
         is_modification: false,
-        language: this.detectLanguage(match.file_path),
+        language: this.detectLanguage((match as any).file_path),
       };
     } catch (error) {
       return null;
@@ -447,13 +441,13 @@ export class FindReferencesTool {
 
     // Filter by test files
     if (!input.include_tests) {
-      filtered = filtered.filter(ref => !this.isTestFile(ref.file_path));
+      filtered = filtered.filter(ref => !this.isTestFile((ref as any).file_path));
     }
 
     // Filter by file types
     if (input.file_types && input.file_types.length > 0) {
       filtered = filtered.filter(ref => {
-        const ext = `.${  ref.file_path.split('.').pop()}`;
+        const ext = `.${  (ref as any).file_path.split('.').pop()}`;
         return input.file_types!.includes(ext);
       });
     }
@@ -461,14 +455,14 @@ export class FindReferencesTool {
     // Filter by exclude patterns
     if (input.exclude_patterns && input.exclude_patterns.length > 0) {
       filtered = filtered.filter(ref => {
-        return !input.exclude_patterns!.some(pattern => ref.file_path.includes(pattern));
+        return !input.exclude_patterns!.some(pattern => (ref as any).file_path.includes(pattern));
       });
     }
 
     // Remove duplicates
     const seen = new Set<string>();
     filtered = filtered.filter(ref => {
-      const key = `${ref.file_path}:${ref.line_number}:${ref.column_number}`;
+      const key = `${(ref as any).file_path}:${(ref as any).line_number}:${ref.column_number}`;
       if (seen.has(key)) {
         return false;
       }
@@ -509,10 +503,10 @@ export class FindReferencesTool {
     const groups = new Map<string, Reference[]>();
 
     for (const ref of references) {
-      if (!groups.has(ref.file_path)) {
-        groups.set(ref.file_path, []);
+      if (!groups.has((ref as any).file_path)) {
+        groups.set((ref as any).file_path, []);
       }
-      groups.get(ref.file_path)!.push(ref);
+      groups.get((ref as any).file_path)!.push(ref);
     }
 
     return Array.from(groups.entries())
@@ -568,7 +562,7 @@ export class FindReferencesTool {
   private determineUsageType(
     context: string,
   ): 'call' | 'assignment' | 'declaration' | 'parameter' | 'return' | 'property_access' | 'other' {
-    const lowerContext = context.toLowerCase();
+    const lowerContext = (context as any).toLowerCase();
 
     if (lowerContext.includes('(') && lowerContext.includes(')')) {
       return 'call';
@@ -637,17 +631,17 @@ export class FindReferencesTool {
     }
 
     // Function call pattern increases confidence
-    if (context.includes(`${entityName}(`)) {
+    if ((context as any).includes(`${entityName}(`)) {
       confidence += 0.2;
     }
 
     // Property access increases confidence
-    if (context.includes(`${entityName}.`) || context.includes(`.${entityName}`)) {
+    if ((context as any).includes(`${entityName}.`) || (context as any).includes(`.${entityName}`)) {
       confidence += 0.15;
     }
 
     // Import statement increases confidence
-    if (context.includes('import') && context.includes(entityName)) {
+    if ((context as any).includes('import') && (context as any).includes(entityName)) {
       confidence += 0.25;
     }
 
@@ -707,12 +701,12 @@ export class FindReferencesTool {
     lineNumber: number,
   ): Promise<string | undefined> {
     try {
-      const containingEntity = await this.analysisService.findContainingEntity(
+      const containingEntity = await analysisService.findContainingEntity(
         filePath,
         lineNumber,
         0,
       );
-      return containingEntity?.name;
+      return (containingEntity as any)?.name;
     } catch (error) {
       return undefined;
     }
@@ -726,12 +720,12 @@ export class FindReferencesTool {
     lineNumber: number,
   ): Promise<string | undefined> {
     try {
-      const containingEntity = await this.analysisService.findContainingEntity(
+      const containingEntity = await analysisService.findContainingEntity(
         filePath,
         lineNumber,
         0,
       );
-      return containingEntity?.name;
+      return (containingEntity as any)?.name;
     } catch (error) {
       return undefined;
     }

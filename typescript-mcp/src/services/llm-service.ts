@@ -82,7 +82,7 @@ const LLMRequestSchema = z.object({
 });
 
 export interface ILLMService {
-  generateResponse(request: LLMRequest): Promise<LLMResponse>;
+  generateResponse(_request: LLMRequest): Promise<LLMResponse>;
   isConfigured(): boolean;
   getConfig(): LLMConfig;
   generateExplanation(prompt: string): Promise<string>;
@@ -253,7 +253,7 @@ The function has moderate complexity due to:
 - Functional programming principles`;
   }
 
-  private generateMockRefactoring(request: LLMRequest): string {
+  private generateMockRefactoring(_request: LLMRequest): string {
     return `## Refactoring Suggestions
 
 Based on the analysis of your code, here are the recommended refactoring improvements:
@@ -295,7 +295,7 @@ function processUserData(userData: any) {
 3. Add comprehensive types (Medium effort)`;
   }
 
-  private generateMockSecurity(request: LLMRequest): string {
+  private generateMockSecurity(_request: LLMRequest): string {
     return `## Security Analysis
 
 Security assessment of the provided code:
@@ -329,7 +329,7 @@ Security assessment of the provided code:
 The code follows most security best practices but has room for improvement in input validation and error handling.`;
   }
 
-  private generateMockComplexity(request: LLMRequest): string {
+  private generateMockComplexity(_request: LLMRequest): string {
     return `## Complexity Analysis
 
 ### Metrics Overview
@@ -373,7 +373,7 @@ The code follows most security best practices but has room for improvement in in
 - Test coverage improvement: 25%`;
   }
 
-  private generateGenericMockResponse(request: LLMRequest): string {
+  private generateGenericMockResponse(_request: LLMRequest): string {
     return `## Analysis Response
 
 Based on your request, here's a comprehensive analysis:
@@ -508,7 +508,7 @@ This analysis provides a starting point for code improvement. For more specific 
     };
   }
 
-  private parseRefactoringSuggestions(content: string): RefactoringSuggestion[] {
+  private parseRefactoringSuggestions(_content: string): RefactoringSuggestion[] {
     // Simple parsing logic - in a real implementation, this would be more sophisticated
     return [
       {
@@ -643,4 +643,6 @@ export const defaultLLMConfig: LLMConfig = {
   timeout: 30000,
 };
 
-export default LLMService;
+// Export a default instance for use in tools
+export const llmService = new LLMService(defaultLLMConfig);
+export default llmService;

@@ -292,7 +292,7 @@ export class AuthMiddleware {
       res.setHeader('X-New-Token', newToken);
 
       // Update request user
-      req.user = payload;
+      req.user = payload as ExtendedRequest['user'];
 
       next();
     } catch (error) {

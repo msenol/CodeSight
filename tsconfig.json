@@ -35,6 +35,7 @@
     "noPropertyAccessFromIndexSignature": false,
     "allowUnusedLabels": true,
     "allowUnreachableCode": true,
+    "skipLibCheck": true,
 
     // Additional checks
     "noUnusedLocals": false,

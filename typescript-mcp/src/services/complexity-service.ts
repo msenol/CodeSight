@@ -88,7 +88,7 @@ export class DefaultComplexityService implements ComplexityService {
     return null;
   }
 
-  async calculateCodeComplexity(code: string, language = 'typescript'): Promise<ComplexityMetrics> {
+  async calculateCodeComplexity(code: string, _language = 'typescript'): Promise<ComplexityMetrics> {
     const cyclomaticComplexity = await this.analyzeCyclomaticComplexity(code);
     const cognitiveComplexity = await this.analyzeCognitiveComplexity(code);
     const linesOfCode = this.countLinesOfCode(code);
@@ -477,7 +477,7 @@ export class DefaultComplexityService implements ComplexityService {
 
   private async analyzeFunctionComplexities(
     content: string,
-    filePath: string,
+    _filePath: string,
   ): Promise<FunctionComplexityInfo[]> {
     const functions: FunctionComplexityInfo[] = [];
 
@@ -565,7 +565,7 @@ export class DefaultComplexityService implements ComplexityService {
 
   private async analyzeClassComplexities(
     content: string,
-    filePath: string,
+    _filePath: string,
   ): Promise<ClassComplexityInfo[]> {
     const classes: ClassComplexityInfo[] = [];
 
@@ -866,3 +866,7 @@ export class DefaultComplexityService implements ComplexityService {
     return suggestions;
   }
 }
+
+// Export a default instance for use in tools
+export const complexityService = new DefaultComplexityService();
+export default complexityService;

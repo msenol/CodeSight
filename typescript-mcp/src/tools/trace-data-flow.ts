@@ -124,10 +124,10 @@ export class TraceDataFlowTool {
 
   private codebaseService = codebaseService;
   private analysisService = {
-    findApiEndpoints: async (codebaseId: string, options: any) => [],
-    searchEntities: async (codebaseId: string, options: any) => [],
-    findCallees: async (functionName: string) => [],
-    findCallers: async (functionName: string) => [],
+    findApiEndpoints: async (_codebaseId: string, _options: any) => [],
+    searchEntities: async (_codebaseId: string, _options: any) => [],
+    findCallees: async (_functionName: string) => [],
+    findCallers: async (_functionName: string) => [],
   };
 
   inputSchema = {

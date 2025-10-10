@@ -369,7 +369,7 @@ export class CodebaseController {
   async getCodebaseStats(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { include_trends = false, period = '30d', granularity = 'daily' } = req.query;
+      const { include_trends = false, period = '30d', granularity: _granularity = 'daily' } = req.query;
 
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
@@ -448,7 +448,7 @@ export class CodebaseController {
         format = 'json' as 'json' | 'csv' | 'xml',
         include_entities = true,
         include_analysis = false,
-        compress = false,
+        compress: _compress = false,
       } = req.query;
 
       if (!id || !this.isValidUUID(id)) {
@@ -537,7 +537,7 @@ export class CodebaseController {
       );
     }
 
-    const total = filtered.length;
+    const _total = filtered.length;
     const startIndex = (options.page - 1) * options.limit;
     const endIndex = startIndex + options.limit;
     const paginatedResults = filtered.slice(startIndex, endIndex);
@@ -645,7 +645,7 @@ export class CodebaseController {
     return { success: true, message: 'Codebase removed successfully' };
   }
 
-  private async performCodebaseIndexing(id: string, options: IndexingOptions): Promise<{ success: boolean; job_id: string; message: string }> {
+  private async performCodebaseIndexing(id: string, _options: IndexingOptions): Promise<{ success: boolean; job_id: string; message: string }> {
     // This would typically trigger the actual indexing process
     // For now, return mock indexing result
     const jobId = `idx_${Date.now()}`;
@@ -656,7 +656,7 @@ export class CodebaseController {
     };
   }
 
-  private async getCodebaseIndexingStatus(id: string): Promise<{ status: string; progress?: number; message?: string }> {
+  private async getCodebaseIndexingStatus(_id: string): Promise<{ status: string; progress?: number; message?: string }> {
     // This would typically fetch current indexing status
     // For now, return mock status
     return {
@@ -666,7 +666,7 @@ export class CodebaseController {
     };
   }
 
-  private async performCodebaseSync(id: string, options: SyncOptions): Promise<{ success: boolean; changes_detected?: number; message: string }> {
+  private async performCodebaseSync(id: string, _options: SyncOptions): Promise<{ success: boolean; changes_detected?: number; message: string }> {
     // This would typically perform the actual sync
     // For now, return mock sync result
     return {
@@ -778,7 +778,7 @@ export class CodebaseController {
       );
     }
 
-    const total = filtered.length;
+    const _total = filtered.length;
     const startIndex = (options.page - 1) * options.limit;
     const endIndex = startIndex + options.limit;
     const paginatedResults = filtered.slice(startIndex, endIndex);
