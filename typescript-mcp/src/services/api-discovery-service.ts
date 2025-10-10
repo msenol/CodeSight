@@ -172,3 +172,7 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     return true;
   }
 }
+
+// Export a default instance for use in tools
+export const apiDiscoveryService = new DefaultApiDiscoveryService();
+export default apiDiscoveryService;

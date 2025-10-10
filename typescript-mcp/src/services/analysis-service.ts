@@ -1968,3 +1968,7 @@ export class DefaultAnalysisService implements AnalysisService {
     return calls;
   }
 }
+
+// Export a default instance for use in tools
+export const analysisService = new DefaultAnalysisService();
+export default analysisService;

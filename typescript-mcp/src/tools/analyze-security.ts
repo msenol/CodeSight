@@ -3,7 +3,7 @@
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
  
 import { codebaseService } from '../services/codebase-service.js';
-import { securityService } from '../services/security-service.js';
+// import { securityService } from '../services/security-service.js'; // Unused import
 import { z } from 'zod';
 
 const AnalyzeSecurityInputSchema = z.object({

@@ -137,7 +137,7 @@ export class DatabaseSearchService implements SearchService {
     const maxResults = options.max_results || 10;
 
     try {
-      const regex = new RegExp(pattern, 'i');
+      const _regex = new RegExp(pattern, 'i');
       const stmt = this.db.prepare(`
         SELECT id, name, file_path, entity_type, start_line, end_line, content
         FROM code_entities

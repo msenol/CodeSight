@@ -1,10 +1,10 @@
  
  
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
-import type { AnalysisService } from '../services/analysis-service.js';
-import type { CodebaseService } from '../services/codebase-service.js';
-import type { LLMService } from '../services/llm-service.js';
 import type { DatabaseRow, SignatureAnalysis } from '../types/index.js';
+import { codebaseService } from '../services/codebase-service.js';
+import { analysisService } from '../services/analysis-service.js';
+import { llmService } from '../services/llm-service.js';
 import { z } from 'zod';
 
 // Input validation schema
@@ -139,7 +139,7 @@ export class ExplainFunctionTool {
       const input = ExplainFunctionInputSchema.parse(args);
 
       // Get the code entity
-      const entity = await this.codebaseService.getCodeEntity(input.entity_id);
+      const entity = await codebaseService.getCodeEntity(input.entity_id);
       if (!entity) {
         throw new Error(`Code entity with ID ${input.entity_id} not found`);
       }
@@ -152,21 +152,21 @@ export class ExplainFunctionTool {
       }
 
       // Get code snippet
-      const codeSnippet = await this.codebaseService.getCodeSnippet(
+      const codeSnippet = await codebaseService.getCodeSnippet(
         entity.file_path,
         entity.start_line,
         entity.end_line,
       );
 
       // Analyze function signature and parameters
-      const signatureAnalysis = await this.analysisService.analyzeFunctionSignature(
+      const signatureAnalysis = await analysisService.analyzeFunctionSignature(
         input.entity_id,
-      );
+      ) as SignatureAnalysis;
 
       // Get complexity metrics if requested
       let complexityMetrics: ComplexityMetrics | undefined;
       if (input.include_complexity) {
-        complexityMetrics = await this.analysisService.calculateComplexityMetrics(input.entity_id);
+        complexityMetrics = await analysisService.calculateComplexityMetrics(input.entity_id) as ComplexityMetrics;
       }
 
       // Get relationships if requested
@@ -175,22 +175,22 @@ export class ExplainFunctionTool {
       let dependencies: CodeRelationship[] = [];
 
       if (input.include_callers) {
-        callers = await this.analysisService.findCallers(input.entity_id);
+        callers = (await analysisService.findCallers(input.entity_id)) as CodeRelationship[];
       }
 
       if (input.include_callees) {
-        callees = await this.analysisService.findCallees(input.entity_id);
+        callees = (await analysisService.findCallees(input.entity_id)) as CodeRelationship[];
       }
 
       if (input.include_dependencies) {
-        dependencies = await this.analysisService.findDependencies(input.entity_id);
+        dependencies = (await analysisService.findDependencies(input.entity_id)) as CodeRelationship[];
       }
 
       // Analyze side effects and behavior
-      const behaviorAnalysis = await this.analysisService.analyzeFunctionBehavior(input.entity_id, {
+      const behaviorAnalysis = (await analysisService.analyzeFunctionBehavior(input.entity_id, {
         include_side_effects: true,
         include_performance: true,
-      });
+      })) as any;
 
       // Get AI-powered explanation
       const aiExplanation = await this.generateAIExplanation(
@@ -221,8 +221,8 @@ export class ExplainFunctionTool {
         signature: entity.signature || this.extractSignature(codeSnippet, entity.language),
         description: this.generateDescription(entity, signatureAnalysis),
         purpose: this.inferPurpose(entity.name, codeSnippet, aiExplanation),
-        parameters: signatureAnalysis.parameters,
-        return_info: signatureAnalysis.return_info,
+        parameters: (signatureAnalysis.parameters as any[]) || [],
+        return_info: (signatureAnalysis as any).return_info || (signatureAnalysis as any).returnType,
         complexity_metrics: complexityMetrics,
         callers: input.include_callers ? callers : undefined,
         callees: input.include_callees ? callees : undefined,
@@ -267,7 +267,7 @@ export class ExplainFunctionTool {
     );
 
     try {
-      return await this.llmService.generateExplanation(prompt);
+      return await llmService.generateExplanation(prompt);
     } catch (error) {
       // Fallback to static analysis if LLM fails
       return this.generateStaticExplanation(entity, codeSnippet, signatureAnalysis);
@@ -330,8 +330,8 @@ export class ExplainFunctionTool {
       explanation += ` that takes ${signatureAnalysis.parameters.length} parameter(s)`;
     }
 
-    if (signatureAnalysis.return_info.type !== 'void') {
-      explanation += ` and returns ${signatureAnalysis.return_info.type}`;
+    if ((signatureAnalysis as any).return_info.type !== 'void') {
+      explanation += ` and returns ${(signatureAnalysis as any).return_info.type}`;
     }
 
     explanation += '. ';
@@ -387,7 +387,7 @@ export class ExplainFunctionTool {
 
     let example = '// Basic usage\n';
 
-    if (signatureAnalysis.return_info.type !== 'void') {
+    if ((signatureAnalysis as any).return_info.type !== 'void') {
       example += 'const result = ';
     }
 
@@ -408,7 +408,7 @@ export class ExplainFunctionTool {
     caller: CodeRelationship,
   ): Promise<string | null> {
     try {
-      const callerCode = await this.codebaseService.getCodeSnippet(
+      const callerCode = await codebaseService.getCodeSnippet(
         caller.file_path,
         Math.max(1, caller.line_number - 2),
         caller.line_number + 2,
@@ -476,15 +476,15 @@ export class ExplainFunctionTool {
   /**
    * Generate description from entity and analysis
    */
-  private generateDescription(entity: DatabaseRow, signatureAnalysis: SignatureAnalysis): string {
+  private generateDescription(entity: DatabaseRow, _signatureAnalysis: SignatureAnalysis): string {
     if (entity.documentation) {
-      return entity.documentation;
+      return String(entity.documentation);
     }
 
-    let description = `A ${entity.entity_type} that`;
+    let description = `A ${String(entity.entity_type)} that`;
 
     // Infer description from name
-    const name = entity.name.toLowerCase();
+    const name = String(entity.name).toLowerCase();
     if (name.startsWith('get')) {
       description += ' retrieves';
     } else if (name.startsWith('set')) {

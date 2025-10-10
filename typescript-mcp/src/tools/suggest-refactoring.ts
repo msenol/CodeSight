@@ -104,9 +104,9 @@ export class SuggestRefactoringTool {
 
   private codebaseService = codebaseService;
   private refactoringService = {
-    analyzeMetrics: async (entity: any) => ({ complexity: 5, maintainability: 7 }),
-    detectCodeSmells: async (entity: any) => [],
-    generateSuggestions: async (entity: any, types: string[], focus: string) => [],
+    analyzeMetrics: async (_entity: any) => ({ complexity: 5, maintainability: 7 }),
+    detectCodeSmells: async (_entity: any) => [],
+    generateSuggestions: async (_entity: any, _types: string[], _focus: string) => [],
   };
 
   inputSchema = {

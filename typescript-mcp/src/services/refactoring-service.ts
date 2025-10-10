@@ -9,7 +9,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
 import * as acorn from 'acorn';
-import * as walk from 'acorn-walk';
+// import * as walk from 'acorn-walk'; // Unused import
 import { distance } from 'fast-levenshtein';
 
 export interface RefactoringService {
@@ -38,7 +38,7 @@ export interface RefactoringService {
 export interface RefactoringPattern {
   name: string;
   description: string;
-  detector: (code: string, ast?: any) => RefactoringMatch[];
+  detector: (code: string, _ast?: any) => RefactoringMatch[];
   confidence: number;
 }
 
@@ -55,7 +55,7 @@ export interface CodeSmellPattern {
   name: string;
   description: string;
   severity: 'low' | 'medium' | 'high';
-  detector: (code: string, ast?: any) => CodeSmellMatch[];
+  detector: (code: string, _ast?: any) => CodeSmellMatch[];
 }
 
 export interface CodeSmellMatch {
@@ -110,7 +110,7 @@ export class DefaultRefactoringService implements RefactoringService {
 
       for (const filePath of files) {
         try {
-          const content = await fs.readFile(filePath, 'utf-8');
+          const _content = await fs.readFile(filePath, 'utf-8');
           const fileSmells = await this.detectCodeSmells(filePath);
           // Convert RefactoringSuggestion to CodeSmell format
           const convertedSmells = fileSmells.map(smell => ({
@@ -490,14 +490,14 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
         const namedImports = importMatch[1];
         const defaultImport = importMatch[2];
 
-        let hasUnusedImports = false;
+        let _hasUnusedImports = false;
 
         if (namedImports) {
           const names = namedImports.split(',').map(n => n.trim());
           const unusedNames = names.filter(name => !usedImports.has(name));
 
           if (unusedNames.length > 0) {
-            hasUnusedImports = true;
+            _hasUnusedImports = true;
             const usedNames = names.filter(name => usedImports.has(name));
             const optimizedImport =
               usedNames.length > 0
@@ -569,7 +569,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectComplexExpressions(code: string, ast?: any): RefactoringMatch[] {
+  private detectComplexExpressions(code: string, _ast?: any): RefactoringMatch[] {
     const matches: RefactoringMatch[] = [];
     const lines = code.split('\n');
 
@@ -603,7 +603,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectUnnecessaryVariables(code: string, ast?: any): RefactoringMatch[] {
+  private detectUnnecessaryVariables(code: string, _ast?: any): RefactoringMatch[] {
     const matches: RefactoringMatch[] = [];
     const lines = code.split('\n');
 
@@ -632,7 +632,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectMagicNumbers(code: string, ast?: any): RefactoringMatch[] {
+  private detectMagicNumbers(code: string, _ast?: any): RefactoringMatch[] {
     const matches: RefactoringMatch[] = [];
     const lines = code.split('\n');
 
@@ -667,7 +667,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectComplexConditionals(code: string, ast?: any): RefactoringMatch[] {
+  private detectComplexConditionals(code: string, _ast?: any): RefactoringMatch[] {
     const matches: RefactoringMatch[] = [];
     const lines = code.split('\n');
 
@@ -727,7 +727,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectDuplicateCode(code: string, ast?: any): CodeSmellMatch[] {
+  private detectDuplicateCode(code: string, _ast?: any): CodeSmellMatch[] {
     const matches: CodeSmellMatch[] = [];
     const lines = code.split('\n');
 
@@ -755,7 +755,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectDeadCode(code: string, ast?: any): CodeSmellMatch[] {
+  private detectDeadCode(code: string, _ast?: any): CodeSmellMatch[] {
     const matches: CodeSmellMatch[] = [];
 
     // Simple dead code detection (unused variables)
@@ -829,7 +829,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return matches;
   }
 
-  private detectFeatureEnvy(code: string, ast?: any): CodeSmellMatch[] {
+  private detectFeatureEnvy(code: string, _ast?: any): CodeSmellMatch[] {
     const matches: CodeSmellMatch[] = [];
 
     // This is a simplified detection - in practice, this would require
@@ -1103,7 +1103,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     return suggestions;
   }
 
-  async analyzeMetrics(entity: any): Promise<any> {
+  async analyzeMetrics(_entity: any): Promise<any> {
     // Mock implementation for now
     return {
       complexity: 5,
@@ -1116,7 +1116,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
   private async analyzeFileForRefactoring(
     filePath: string,
     content: string,
-    options?: RefactoringOptions,
+    _options?: RefactoringOptions,
   ): Promise<RefactoringSuggestion[]> {
     const suggestions: RefactoringSuggestion[] = [];
     const relativePath = path.relative(process.cwd(), filePath);

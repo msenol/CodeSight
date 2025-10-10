@@ -94,7 +94,7 @@ export class CheckComplexityTool {
         throw new Error(`Code entity with ID ${input.entity_id} not found`);
       }
 
-      const metrics = await complexityService.calculateMetrics(entity, input.metric_types);
+      const metrics = await complexityService.calculateMetrics(entity, input.metric_types) as unknown as Record<string, number>;
       const rating = this.calculateComplexityRating(metrics);
       const suggestions = input.include_suggestions
         ? this.generateSuggestions(metrics, rating)
@@ -108,10 +108,10 @@ export class CheckComplexityTool {
         entity_name: entity.name,
         entity_type: entity.entity_type,
         file_path: entity.file_path,
-        cyclomatic_complexity: metrics.cyclomatic_complexity,
-        cognitive_complexity: metrics.cognitive_complexity,
-        lines_of_code: metrics.lines_of_code,
-        maintainability_index: metrics.maintainability_index,
+        cyclomatic_complexity: (metrics as any).cyclomaticComplexity || (metrics as any).cyclomatic_complexity,
+        cognitive_complexity: (metrics as any).cognitiveComplexity || (metrics as any).cognitive_complexity,
+        lines_of_code: (metrics as any).linesOfCode || (metrics as any).lines_of_code,
+        maintainability_index: (metrics as any).maintainabilityIndex || (metrics as any).maintainability_index,
         complexity_rating: rating,
         metrics_details: this.buildMetricsDetails(metrics),
         suggestions,

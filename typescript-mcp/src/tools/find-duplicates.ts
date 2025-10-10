@@ -4,8 +4,8 @@
  
  
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
-import type { CodebaseService } from '../services/codebase-service.js';
-import type { DuplicationService } from '../services/duplication-service.js';
+import { codebaseService } from '../services/codebase-service.js';
+import { duplicationService } from '../services/duplication-service.js';
 import { z } from 'zod';
 
 const FindDuplicatesInputSchema = z.object({
@@ -125,7 +125,7 @@ export class FindDuplicatesTool {
     try {
       const input = FindDuplicatesInputSchema.parse(args);
 
-      const codebase = await this.codebaseService.getCodebase(input.codebase_id);
+      const codebase = await codebaseService.getCodebase(input.codebase_id);
       if (!codebase) {
         throw new Error(`Codebase with ID ${input.codebase_id} not found`);
       }
@@ -153,7 +153,7 @@ export class FindDuplicatesTool {
   }
 
   private async getFilesToAnalyze(input: FindDuplicatesInput): Promise<string[]> {
-    let files = await this.codebaseService.getFiles(input.codebase_id);
+    let files = await codebaseService.getFiles(input.codebase_id);
 
     // Filter by file types
     if (input.file_types && input.file_types.length > 0) {
@@ -192,7 +192,7 @@ export class FindDuplicatesTool {
       : (input.detection_types as ('exact' | 'structural' | 'semantic')[]);
 
     for (const detectionType of detectionTypes) {
-      const duplicates = await this.duplicationService.findDuplicates(files, {
+      const duplicates = await duplicationService.findDuplicates(files, {
         detection_type: detectionType,
         similarity_threshold: input.similarity_threshold,
         min_lines: input.min_lines,
@@ -201,9 +201,9 @@ export class FindDuplicatesTool {
       for (const duplicate of duplicates) {
         const group: DuplicateGroup = {
           group_id: this.generateGroupId(),
-          similarity_score: duplicate.similarity_score,
+          similarity_score: (duplicate as any).similarity_score,
           detection_type: detectionType,
-          instances: duplicate.instances.map(instance => ({
+          instances: (duplicate as any).instances?.map((instance: any) => ({
             file_path: instance.file_path,
             start_line: instance.start_line,
             end_line: instance.end_line,
@@ -212,7 +212,7 @@ export class FindDuplicatesTool {
             entity_id: instance.entity_id,
             entity_name: instance.entity_name,
           })),
-          common_pattern: duplicate.common_pattern,
+          common_pattern: (duplicate as any).common_pattern,
           refactoring_suggestion: this.generateRefactoringSuggestion(duplicate),
           estimated_savings: this.calculateSavings(duplicate),
         };
@@ -228,8 +228,8 @@ export class FindDuplicatesTool {
   }
 
   private generateRefactoringSuggestion(duplicate: unknown): string {
-    const instanceCount = duplicate.instances.length;
-    const linesCount = duplicate.instances[0].end_line - duplicate.instances[0].start_line + 1;
+    const instanceCount = (duplicate as any).instances.length;
+    const linesCount = (duplicate as any).instances[0].end_line - (duplicate as any).instances[0].start_line + 1;
 
     if (linesCount < 10) {
       return `Extract ${instanceCount} similar code blocks into a shared utility function`;
@@ -244,9 +244,9 @@ export class FindDuplicatesTool {
     lines_of_code: number;
     maintenance_effort: 'low' | 'medium' | 'high';
   } {
-    const instanceCount = duplicate.instances.length;
+    const instanceCount = (duplicate as any).instances.length;
     const linesPerInstance =
-      duplicate.instances[0].end_line - duplicate.instances[0].start_line + 1;
+      (duplicate as any).instances[0].end_line - (duplicate as any).instances[0].start_line + 1;
     const totalDuplicateLines = (instanceCount - 1) * linesPerInstance;
 
     let maintenanceEffort: 'low' | 'medium' | 'high' = 'low';

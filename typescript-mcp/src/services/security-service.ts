@@ -3,7 +3,7 @@
  
  
 import type { SecurityIssue, SecurityPattern, SecurityScanOptions } from '../types/index.js';
-import { z } from 'zod';
+// import { z } from 'zod'; // Unused import
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
@@ -46,7 +46,7 @@ export class DefaultSecurityService implements SecurityService {
     },
   ];
 
-  async analyzeCode(code: string, language: string): Promise<SecurityIssue[]> {
+  async analyzeCode(code: string, _language: string): Promise<SecurityIssue[]> {
     const issues: SecurityIssue[] = [];
     const lines = code.split('\n');
 
@@ -73,7 +73,7 @@ export class DefaultSecurityService implements SecurityService {
     return issues;
   }
 
-  async scanFile(filePath: string, codebaseId: string): Promise<SecurityIssue[]> {
+  async scanFile(filePath: string, _codebaseId: string): Promise<SecurityIssue[]> {
     // Mock implementation - would read file and analyze
     return [
       {
@@ -101,7 +101,7 @@ export class DefaultSecurityService implements SecurityService {
     return !dangerousPatterns.some(pattern => pattern.test(input));
   }
 
-  async analyzeVulnerabilities(input: { code: string; language: string; }): Promise<SecurityIssue[]> {
+  async analyzeVulnerabilities(_input: { code: string; language: string; }): Promise<SecurityIssue[]> {
     // Mock implementation
     return [
       {
@@ -199,7 +199,7 @@ export class DefaultSecurityService implements SecurityService {
   private async analyzeFileForVulnerabilities(
     filePath: string,
     content: string,
-    options?: SecurityScanOptions,
+    _options?: SecurityScanOptions,
   ): Promise<SecurityIssue[]> {
     const issues: SecurityIssue[] = [];
     const relativePath = path.relative(process.cwd(), filePath);
@@ -285,10 +285,10 @@ export class DefaultSecurityService implements SecurityService {
 
   private detectHardcodedSecrets(content: string, issues: SecurityIssue[], filePath: string): void {
     const patterns = [
-      /(?:password|pwd|pass)]*[=:]]*['"\`][^'"\` ]{8,}['"\`]/gi,
-      /(?:api[_-]?key|apikey)]*[=:]]*['"\`][^'"\` ]{16,}['"\`]/gi,
-      /(?:secret|token)]*[=:]]*['"\`][^'"\` ]{16,}['"\`]/gi,
-      /(?:private[_-]?key|privatekey)]*[=:]]*['"\`][^'"\` ]{32,}['"\`]/gi,
+      /(?:password|pwd|pass)\s*[=:]\s*['"`][^'"` ]{8,}['"`]/gi,
+      /(?:api[_-]?key|apikey)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
+      /(?:secret|token)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
+      /(?:private[_-]?key|privatekey)\s*[=:]\s*['"`][^'"` ]{32,}['"`]/gi,
     ];
 
     patterns.forEach(pattern => {
@@ -335,7 +335,7 @@ export class DefaultSecurityService implements SecurityService {
   }
 
   private detectPathTraversal(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [/readFile\s*\([^)]*\+.*)/g, /writeFile\s*\([^)]*\+.*)/g, /\.\.[\/\\]/g];
+    const patterns = [/readFile\s*\([^)]*\+.*\)/g, /writeFile\s*\([^)]*\+.*\)/g, /\.\.[/\\]/g];
 
     patterns.forEach(pattern => {
       let match;

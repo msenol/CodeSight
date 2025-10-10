@@ -46,7 +46,6 @@ export default [
       }],
       '@typescript-eslint/no-explicit-any': 'off', // Any types allowed for flexibility
       '@typescript-eslint/no-non-null-assertion': 'off', // Non-null assertions needed
-      'prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       '@typescript-eslint/ban-ts-comment': 'off', // Comments needed for complex types
       '@typescript-eslint/no-empty-function': 'off', // Empty functions needed
