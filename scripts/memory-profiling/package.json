@@ -1,0 +1,44 @@
+{
+  "name": "codesight-mcp-memory-profiling",
+  "version": "1.0.0",
+  "description": "Memory profiling and optimization tools for CodeSight MCP Server",
+  "main": "memory-profiler.js",
+  "scripts": {
+    "profile": "node memory-profiler.js",
+    "profile:detailed": "node memory-profiler.js --detailed --gc",
+    "heap:monitor": "node --inspect heap-analyzer.js monitor",
+    "heap:monitor:long": "node --inspect heap-analyzer.js monitor 300000",
+    "optimize": "node memory-optimizer.js",
+    "test": "npm run profile && npm run heap:monitor",
+    "help": "echo 'Available scripts: profile, profile:detailed, heap:monitor, heap:monitor:long, optimize, test, help'",
+    "install:global": "npm install -g lru-cache"
+  },
+  "keywords": [
+    "memory-profiling",
+    "heap-analysis",
+    "optimization",
+    "nodejs",
+    "performance",
+    "codesight-mcp"
+  ],
+  "author": "CodeSight Team",
+  "license": "MIT",
+  "dependencies": {
+    "lru-cache": "^7.18.3"
+  },
+  "devDependencies": {
+    "v8": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/codesight-mcp.git",
+    "directory": "scripts/memory-profiling"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/codesight-mcp/issues"
+  },
+  "homepage": "https://github.com/your-org/codesight-mcp#readme"
+}
