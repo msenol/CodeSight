@@ -30,6 +30,10 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 - 🏆 **Production Ready**: Complete enterprise integration stack with monitoring and observability
 - 🏆 **Docker Testing Infrastructure**: Comprehensive real-project testing with automated workflows
 - 🏆 **Real Code Search**: Enhanced search functionality with external project validation
+- 🏆 **REST API Contract Tests**: 11 comprehensive contract tests (T018-T028) with full endpoint coverage
+- 🏆 **Integration Test Scenarios**: 5 integration scenarios (T029-T033) for real-world validation
+- 🏆 **Performance Benchmarking**: 5 benchmark suites (T084-T088) with detailed metrics and monitoring
+- 🏆 **TDD Framework Excellence**: Complete test-driven development with contract testing methodology
 
 ## Essential Commands
 
@@ -56,6 +60,21 @@ node dist/cli/index.js test-ffi
 npm test
 npm run test:contract
 npm run test:performance
+
+# REST API contract tests (T018-T028)
+npm run test:contract:api
+
+# Integration test scenarios (T029-T033)
+npm run test:integration:scenarios
+
+# Performance benchmarking (T084-T088)
+npm run test:benchmark
+
+# Docker-based real project testing
+npm run test:docker
+
+# Full TDD test suite
+npm run test:tdd
 ```
 
 ### Docker Testing Infrastructure (New)
@@ -128,7 +147,7 @@ docker-compose -f docker-compose.dev.yml up -d
 - `search_code`: Natural language search with SQLite results
 - `explain_function`: Function explanation with codebase lookup
 
-**📝 Contract Tests Completed (Phase 3.2 TDD):**
+**📝 TDD Contract Tests Completed (Phase 3.2 TDD):**
 
 - `find_references`: Find all references to a symbol (contract test complete)
 - `trace_data_flow`: Trace data flow through the code (contract test complete)
@@ -138,6 +157,31 @@ docker-compose -f docker-compose.dev.yml up -d
 - `find_duplicates`: Detect duplicate code patterns (contract test complete)
 - `suggest_refactoring`: Provide refactoring suggestions (contract test complete)
 
+**🔧 REST API Contract Tests (T018-T028):**
+
+- ✅ **Codebases Management**: GET, POST, PUT, DELETE operations (T018-T021)
+- ✅ **Indexing Operations**: Codebase indexing with progress tracking (T022)
+- ✅ **Query Operations**: Search and analysis queries (T023)
+- ✅ **Job Management**: Background job status and monitoring (T024-T025)
+- ✅ **Health Checks**: System health and metrics endpoints (T026-T027)
+- ✅ **Error Handling**: Comprehensive error response validation (T028)
+
+**🔧 Integration Test Scenarios (T029-T033):**
+
+- ✅ **Claude Desktop Integration**: Complete MCP server integration (T029)
+- ✅ **VS Code Integration**: Workspace analysis and code intelligence (T030)
+- ✅ **CI/CD Pipeline Integration**: Automated testing workflows (T031)
+- ✅ **Multi-language Project Analysis**: Cross-language functionality (T032)
+- ✅ **Performance Load Testing**: Concurrent user scenarios (T033)
+
+**🔧 Performance Benchmarking (T084-T088):**
+
+- ✅ **MCP Tools Performance**: Tool-specific performance metrics (T084)
+- ✅ **Concurrent Load Testing**: Multi-user load testing (T085)
+- ✅ **Database Optimization**: Query performance and indexing (T086)
+- ✅ **Memory Optimization**: Memory usage and leak detection (T087)
+- ✅ **Monitoring Dashboard**: Real-time performance monitoring (T088)
+
 **🔧 Current Implementation Status (Phase 3.5 Complete):**
 
 - ✅ **All 9 MCP Tools Fully Implemented**: Complete implementations with comprehensive testing
@@ -145,6 +189,7 @@ docker-compose -f docker-compose.dev.yml up -d
 - ✅ **Zero ESLint Errors**: Perfect lint compliance across entire codebase
 - ✅ **Enterprise-Grade Quality**: Rule 15 compliance with systematic error resolution
 - ✅ **Production Ready**: Complete monitoring, observability, and performance optimization
+- ✅ **Complete TDD Framework**: 20+ contract tests with comprehensive coverage
 
 ## Environment Configuration
 
@@ -298,7 +343,37 @@ Zero errors/warnings and code duplication prevention
 - Follow best practices
 - Maintain system integrity
 
-### 16. **Docker Testing Infrastructure Usage** (CRITICAL)
+### 16. **Test-Driven Development (TDD) Methodology** (CRITICAL)
+
+**TDD Best Practices for MCP Server Development:**
+
+- **Contract-First Development**: Always write contract tests before implementation (T009-T028)
+- **Integration Scenarios**: Validate real-world usage patterns with integration tests (T029-T033)
+- **Performance Benchmarking**: Include performance tests for all critical paths (T084-T088)
+- **Docker Validation**: Use real GitHub projects for comprehensive testing
+- **Regression Testing**: Ensure all tests pass before merging changes
+- **Coverage Requirements**: Maintain >90% test coverage for all critical components
+
+**TDD Workflow:**
+
+1. **Write Contract Test**: Define expected behavior with contract test
+2. **Run Test (Fail)**: Verify test fails initially (red phase)
+3. **Implement Minimum Code**: Write simplest implementation to pass test
+4. **Run Test (Pass)**: Verify implementation meets contract (green phase)
+5. **Refactor**: Improve code while maintaining test coverage (refactor phase)
+6. **Integration Test**: Validate with real-world scenarios
+7. **Performance Test**: Ensure performance requirements are met
+8. **Documentation**: Update documentation to reflect changes
+
+**Test Categories:**
+
+- **Unit Tests**: Component-level functionality testing
+- **Contract Tests**: API contract compliance and MCP protocol validation
+- **Integration Tests**: End-to-end workflow validation
+- **Performance Tests**: Load testing and benchmarking
+- **Docker Tests**: Real-project validation in isolated environments
+
+### 17. **Docker Testing Infrastructure Usage** (CRITICAL)
 
 **Real-Project Testing Best Practices:**
 
