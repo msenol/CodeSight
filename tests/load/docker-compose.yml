@@ -1,0 +1,262 @@
+# Docker Compose for CodeSight MCP Load Testing Environment (T085)
+# Complete load testing stack with monitoring and reporting
+
+version: '3.8'
+
+services:
+  # CodeSight MCP Server (Target for load testing)
+  codesight-server:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/codesight
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+      - ENABLE_METRICS=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../typescript-mcp:/app
+      - ./test-data:/app/test-data:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - load-test-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=codesight
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d codesight"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - load-test-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - load-test-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.40.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - load-test-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:9.3.0
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - load-test-network
+
+  # k6 Load Testing Container
+  k6-load-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BASE_URL=http://codesight-server:4000
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - TEST_TIMEOUT=60s
+      - MAX_VUS=50
+    volumes:
+      - ./results:/results
+      - ./reports:/reports
+    depends_on:
+      codesight-server:
+        condition: service_healthy
+    command: ["k6", "run", "--out", "prometheus", "k6.config.js"]
+    networks:
+      - load-test-network
+    profiles:
+      - load-test
+
+  # k6 Search Performance Test
+  k6-search-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BASE_URL=http://codesight-server:4000
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+    volumes:
+      - ./results:/results
+      - ./reports:/reports
+    depends_on:
+      codesight-server:
+        condition: service_healthy
+    command: ["k6", "run", "--out", "prometheus", "search_performance.js"]
+    networks:
+      - load-test-network
+    profiles:
+      - search-test
+
+  # k6 Indexing Performance Test
+  k6-indexing-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BASE_URL=http://codesight-server:4000
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+    volumes:
+      - ./results:/results
+      - ./reports:/reports
+    depends_on:
+      codesight-server:
+        condition: service_healthy
+    command: ["k6", "run", "--out", "prometheus", "indexing_performance.js"]
+    networks:
+      - load-test-network
+    profiles:
+      - indexing-test
+
+  # k6 Quick Test (Development)
+  k6-quick-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BASE_URL=http://codesight-server:4000
+    volumes:
+      - ./results:/results
+    depends_on:
+      codesight-server:
+        condition: service_healthy
+    command: ["k6", "run", "--vus", "10", "--duration", "2m", "k6.config.js"]
+    networks:
+      - load-test-network
+    profiles:
+      - quick-test
+
+  # k6 Stress Test
+  k6-stress-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BASE_URL=http://codesight-server:4000
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+    volumes:
+      - ./results:/results
+      - ./reports:/reports
+    depends_on:
+      codesight-server:
+        condition: service_healthy
+    command: ["k6", "run", "--vus", "100", "--duration", "5m", "k6.config.js"]
+    networks:
+      - load-test-network
+    profiles:
+      - stress-test
+
+  # Results Processor (Python script for generating reports)
+  results-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.results
+    volumes:
+      - ./results:/results:ro
+      - ./reports:/reports
+      - ./scripts:/scripts:ro
+    command: ["python", "/scripts/process_results.py"]
+    depends_on:
+      - k6-load-test
+    networks:
+      - load-test-network
+    profiles:
+      - reports
+
+  # InfluxDB for alternative metrics storage
+  influxdb:
+    image: influxdb:2.6-alpine
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password123
+      - DOCKER_INFLUXDB_INIT_ORG=codesight
+      - DOCKER_INFLUXDB_INIT_BUCKET=load-tests
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - load-test-network
+    profiles:
+      - influxdb
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  influxdb_data:
+    driver: local
+
+networks:
+  load-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
