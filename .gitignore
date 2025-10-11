@@ -223,3 +223,4 @@ typescript-mcp/config/
 # Sequential thoughts cache
 .sequential-thoughts/
 *.sequential-thoughts
+external-test-projects/*/
