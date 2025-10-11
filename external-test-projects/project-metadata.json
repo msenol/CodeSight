@@ -1,0 +1,69 @@
+{
+  "projects": {
+    "react": {
+      "name": "React",
+      "type": "frontend-framework",
+      "language": "typescript",
+      "description": "A JavaScript library for building user interfaces",
+      "url": "https://github.com/facebook/react"
+    },
+    "nextjs": {
+      "name": "Next.js",
+      "type": "fullstack-framework",
+      "language": "typescript",
+      "description": "The React Framework for Production",
+      "url": "https://github.com/vercel/next.js"
+    },
+    "vite": {
+      "name": "Vite",
+      "type": "build-tool",
+      "language": "typescript",
+      "description": "Next Generation Frontend Tooling",
+      "url": "https://github.com/vitejs/vite"
+    },
+    "express": {
+      "name": "Express.js",
+      "type": "backend-framework",
+      "language": "javascript",
+      "description": "Fast, unopinionated, minimalist web framework for Node.js",
+      "url": "https://github.com/expressjs/express"
+    },
+    "lodash": {
+      "name": "Lodash",
+      "type": "utility-library",
+      "language": "javascript",
+      "description": "A modern JavaScript utility library",
+      "url": "https://github.com/lodash/lodash"
+    },
+    "axios": {
+      "name": "Axios",
+      "type": "http-client",
+      "language": "typescript",
+      "description": "Promise based HTTP client for the browser and node.js",
+      "url": "https://github.com/axios/axios"
+    },
+    "prettier": {
+      "name": "Prettier",
+      "type": "code-formatter",
+      "language": "typescript",
+      "description": "An opinionated code formatter",
+      "url": "https://github.com/prettier/prettier"
+    },
+    "tokio": {
+      "name": "Tokio",
+      "type": "async-runtime",
+      "language": "rust",
+      "description": "A runtime for writing reliable asynchronous applications with Rust",
+      "url": "https://github.com/tokio-rs/tokio"
+    },
+    "fastapi": {
+      "name": "FastAPI",
+      "type": "api-framework",
+      "language": "python",
+      "description": "FastAPI framework, high performance, easy to learn, fast to code",
+      "url": "https://github.com/tiangolo/fastapi"
+    }
+  },
+  "download_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "total_projects": 9
+}

@@ -1,0 +1,224 @@
+version: '3.8'
+
+services:
+  # Test Code Intelligence MCP Server
+  test-code-intelligence:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: projectara-test-mcp
+    ports:
+      - "4000:4000"  # REST API
+      - "8080:8080"  # WebSocket/MCP
+    environment:
+      - NODE_ENV=test
+      - LOG_LEVEL=debug
+      - DATABASE_URL=postgresql://test_user:test_password@test-postgres:5432/projectara_test
+      - REDIS_URL=redis://test-redis:6379
+      - STORAGE_BACKEND=postgresql
+      - CACHE_BACKEND=redis
+      - TEST_DATA_DIR=/app/test-data
+      - EXTERNAL_PROJECTS_DIR=/app/external-projects
+      - TEST_RESULTS_DIR=/app/test-results
+      - NODE_OPTIONS=--max-old-space-size=3072
+      - ENABLE_REAL_PROJECT_TESTING=true
+      - PERFORMANCE_MONITORING=true
+    volumes:
+      # Main application code
+      - ./typescript-mcp/src:/app/src
+      - ./typescript-mcp/dist:/app/dist
+      - ./typescript-mcp/package.json:/app/package.json
+      - ./typescript-mcp/tsconfig.json:/app/tsconfig.json
+
+      # External GitHub projects (read-only)
+      - ./external-test-projects:/app/external-projects:ro
+
+      # Test data and results
+      - ./test-data:/app/test-data
+      - ./test-results:/app/test-results
+      - ./project-stats:/app/project-stats
+      - ./coverage-reports:/app/coverage-reports
+
+      # Scripts
+      - ./scripts:/app/scripts:ro
+
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+
+    restart: unless-stopped
+    networks:
+      - projectara-test-network
+
+    # Health check for the test server
+    healthcheck:
+      test: ["CMD", "node", "dist/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Resource limits for testing
+    mem_limit: 4g
+    memswap_limit: 4g
+    cpus: 2.0
+
+  # Test PostgreSQL Database with pgvector
+  test-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: projectara-test-postgres
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    environment:
+      - POSTGRES_DB=projectara_test
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/test-init.sql:/docker-entrypoint-initdb.d/test-init.sql:ro
+    restart: unless-stopped
+    networks:
+      - projectara-test-network
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d projectara_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Test Redis Cache
+  test-redis:
+    image: redis:7-alpine
+    container_name: projectara-test-redis
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - test_redis_data:/data
+    restart: unless-stopped
+    networks:
+      - projectara-test-network
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Test Prometheus for monitoring
+  test-prometheus:
+    image: prom/prometheus:latest
+    container_name: projectara-test-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=24h'  # Shorter retention for tests
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./docker/prometheus/test-prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - test_prometheus_data:/prometheus
+    ports:
+      - "9092:9090"  # Different port to avoid conflicts
+    restart: unless-stopped
+    networks:
+      - projectara-test-network
+    profiles:
+      - monitoring
+
+  # Test Grafana for dashboards
+  test-grafana:
+    image: grafana/grafana:latest
+    container_name: projectara-test-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=test_admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - test_grafana_data:/var/lib/grafana
+      - ./docker/grafana/test-provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/test-dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "4002:3000"  # Different port to avoid conflicts (internal Grafana port is 3000)
+    restart: unless-stopped
+    networks:
+      - projectara-test-network
+    profiles:
+      - monitoring
+    depends_on:
+      - test-prometheus
+
+  # Test Ollama for LLM (optional)
+  test-ollama:
+    image: ollama/ollama:latest
+    container_name: projectara-test-ollama
+    volumes:
+      - test_ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    networks:
+      - projectara-test-network
+    profiles:
+      - llm
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Test Runner Service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: projectara-test-runner
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test_user:test_password@test-postgres:5432/projectara_test
+      - REDIS_URL=redis://test-redis:6379
+      - MCP_SERVER_URL=http://test-code-intelligence:4000
+      - WEBSOCKET_URL=ws://test-code-intelligence:8080
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./test-results:/app/test-results
+      - ./external-test-projects:/app/external-projects:ro
+    depends_on:
+      test-code-intelligence:
+        condition: service_healthy
+    networks:
+      - projectara-test-network
+    profiles:
+      - test-runner
+    command: ["npm", "run", "test:all"]
+
+# Test-specific volumes
+volumes:
+  test_postgres_data:
+    driver: local
+  test_redis_data:
+    driver: local
+  test_prometheus_data:
+    driver: local
+  test_grafana_data:
+    driver: local
+  test_ollama_data:
+    driver: local
+
+# Isolated test network
+networks:
+  projectara-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1

@@ -46,6 +46,8 @@
 - 🏆 **Phase 3.4 Integration Complete**: Advanced LLM integration, database adapters, and security middleware
 - 🏆 **Enterprise Infrastructure**: Message queuing, caching, authentication, and comprehensive logging
 - 🏆 **Production Ready**: Complete integration stack with Redis, PostgreSQL, and advanced security features
+- 🏆 **Docker Testing Infrastructure**: Comprehensive real-project testing with automated GitHub Actions workflows
+- 🏆 **Real Code Search**: Enhanced search functionality with external project validation and performance testing
 
 ## 🏗️ Enterprise Architecture
 
@@ -193,6 +195,34 @@ docker-compose logs -f
 # Grafana: http://localhost:3000 (admin/admin)
 # Prometheus: http://localhost:9090
 ```
+
+### Docker Testing Infrastructure (New)
+
+Comprehensive testing with real GitHub projects in isolated Docker containers:
+
+```bash
+# Quick start Docker testing (5 minutes)
+./scripts/download-test-projects.sh    # Download real GitHub projects
+docker-compose -f docker-compose.test.yml up -d  # Start test environment
+./scripts/index-test-projects.sh       # Index projects for MCP testing
+./scripts/test-real-projects.sh        # Run comprehensive tests
+./scripts/generate-project-report.sh   # Generate detailed performance report
+
+# Access test monitoring dashboards
+# Test Grafana: http://localhost:4002 (admin/test_admin)
+# Test Prometheus: http://localhost:9092
+# MCP Server Test API: http://localhost:4000
+```
+
+**Features:**
+- ✅ **Real Project Testing**: Uses actual GitHub projects (React, Next.js, Express, etc.)
+- ✅ **Isolated Environment**: Separate PostgreSQL, Redis, and monitoring for testing
+- ✅ **Performance Benchmarking**: Automated performance testing with detailed metrics
+- ✅ **Comprehensive Reports**: HTML and JSON reports with search performance analysis
+- ✅ **Cross-Project Analysis**: Search and analyze across multiple codebases simultaneously
+- ✅ **CI/CD Integration**: GitHub Actions workflows for automated testing
+
+See [QUICKSTART-Docker-Testing.md](./QUICKSTART-Docker-Testing.md) for detailed usage instructions.
 
 ### Production Deployment
 
@@ -656,6 +686,7 @@ docs/              # ✅ Comprehensive documentation
 - [Architecture Overview](./docs/adrs/0001-hybrid-architecture.md) - Hybrid TypeScript/Rust architecture
 - [Development Guide](./docs/development.md) - Complete development standards and workflows
 - [MCP Tools Documentation](./docs/MCP-TOOLS.md) - Complete MCP tools reference
+- [Docker Testing Guide](./QUICKSTART-Docker-Testing.md) - Real-project testing infrastructure
 - [TypeScript MCP Implementation](./typescript-mcp/README.md) - Implementation details
 - [Rust FFI Bridge Documentation](./docs/rust-ffi-bridge.md) - Native integration guide
 - [Performance Benchmarks](./docs/performance-benchmarks.md) - Performance analysis

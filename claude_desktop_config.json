@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "codesight": {
+      "command": "node",
+      "args": ["F:/Development/Projects/ProjectAra/typescript-mcp/dist/minimal-index.js"],
+      "cwd": "F:/Development/Projects/ProjectAra/typescript-mcp",
+      "env": {
+        "NODE_ENV": "development",
+        "LOG_LEVEL": "debug",
+        "DATABASE_URL": "sqlite:./data/codesight.db",
+        "RUST_FFI_PATH": "../rust-core/target/release",
+        "ENABLE_RUST_FFI": "true"
+      }
+    }
+  }
+}

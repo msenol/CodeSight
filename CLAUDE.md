@@ -28,6 +28,8 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 - 🏆 **Rule 15 Compliance**: Enterprise-grade code with proper root cause analysis and permanent fixes
 - 🏆 **Type Safety Enhanced**: Comprehensive 'any' type elimination and systematic interface improvements
 - 🏆 **Production Ready**: Complete enterprise integration stack with monitoring and observability
+- 🏆 **Docker Testing Infrastructure**: Comprehensive real-project testing with automated workflows
+- 🏆 **Real Code Search**: Enhanced search functionality with external project validation
 
 ## Essential Commands
 
@@ -54,6 +56,29 @@ node dist/cli/index.js test-ffi
 npm test
 npm run test:contract
 npm run test:performance
+```
+
+### Docker Testing Infrastructure (New)
+
+```bash
+# Quick start Docker testing with real GitHub projects
+./scripts/download-test-projects.sh           # Download test projects
+docker-compose -f docker-compose.test.yml up -d  # Start test environment
+./scripts/index-test-projects.sh             # Index projects
+./scripts/test-real-projects.sh              # Run comprehensive tests
+./scripts/generate-project-report.sh         # Generate performance report
+
+# Monitor test environment
+docker-compose -f docker-compose.test.yml logs -f test-code-intelligence
+curl http://localhost:4000/health             # Check MCP server health
+
+# Access test dashboards
+# Test Grafana: http://localhost:4002 (admin/test_admin)
+# Test Prometheus: http://localhost:9092
+
+# Test individual components
+docker exec projectara-test-mcp node dist/minimal-index.js search --query="function"
+curl -X POST http://localhost:4000/api/search -H "Content-Type: application/json" -d '{"query": "useState"}'
 ```
 
 ### Claude Desktop Integration
@@ -272,6 +297,37 @@ Zero errors/warnings and code duplication prevention
 - Apply proper configuration
 - Follow best practices
 - Maintain system integrity
+
+### 16. **Docker Testing Infrastructure Usage** (CRITICAL)
+
+**Real-Project Testing Best Practices:**
+
+- Always use Docker testing infrastructure when validating MCP functionality with real projects
+- Test with multiple project sizes: small (<1K files), medium (1K-10K), large (10K+ files)
+- Verify search performance meets benchmarks: <50ms for small, <100ms for medium, <200ms for large projects
+- Monitor memory usage during testing: ensure <400MB for small, <800MB for medium projects
+- Use test environment isolation: separate PostgreSQL, Redis, and monitoring for testing
+- Validate cross-project search functionality and multi-language parsing capabilities
+- Generate comprehensive performance reports after each testing session
+- Check that all test containers are healthy before running test suites
+
+**Docker Testing Workflow:**
+
+1. Download test projects using standardized scripts
+2. Start isolated test environment with dedicated databases
+3. Index projects with progress tracking and performance monitoring
+4. Run comprehensive MCP tool tests across all project sizes
+5. Validate search functionality with real-world queries
+6. Generate detailed performance and functionality reports
+7. Clean up test environment after validation complete
+
+**Test Environment Requirements:**
+
+- Minimum 4GB RAM for small/medium project testing
+- 10GB+ disk space for external test projects and databases
+- Isolated network configuration (172.21.0.0/16 subnet)
+- Separate port allocations to avoid conflicts with development environment
+- Health checks for all services before testing begins
 
 # important-instruction-reminders
 

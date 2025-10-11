@@ -1,0 +1,131 @@
+# Multi-stage Docker build for Code Intelligence MCP Server (Test Version)
+# Optimized for development and testing with GitHub projects
+
+# Stage 1: Rust build environment
+FROM rust:1.80-slim as rust-builder
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy Rust workspace files
+COPY rust-core/Cargo.toml rust-core/Cargo.lock ./
+COPY rust-core/crates ./crates
+
+# Build Rust components in release mode for performance testing
+RUN cargo build --release
+
+# Stage 2: Node.js build environment (test-optimized)
+FROM node:20-slim as node-builder
+
+# Install system dependencies for native modules and testing
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    curl \
+    git \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy TypeScript MCP files (Linux optimized)
+COPY typescript-mcp/package-linux.json ./package.json
+
+# Install all dependencies (including test dependencies)
+RUN npm install
+
+# Copy source code and configuration
+COPY typescript-mcp/src ./src
+COPY tsconfig.json ./tsconfig.root.json
+COPY typescript-mcp/tsconfig.json ./
+COPY typescript-mcp/vitest.config.ts ./
+
+# Update tsconfig.json to use the correct path for Docker build
+RUN sed -i 's|"../tsconfig.json"|"./tsconfig.root.json"|' tsconfig.json
+
+# Build the application
+RUN npm run build
+
+# Install additional test utilities
+RUN npm install -g \
+    vitest \
+    @vitest/coverage-v8 \
+    http-server \
+    pm2
+
+# Stage 3: Runtime environment (test-optimized)
+FROM node:20-slim as runtime
+
+# Install runtime and testing dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    git \
+    jq \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r codeint \
+    && useradd -r -g codeint codeint
+
+# Set working directory
+WORKDIR /app
+
+# Copy built artifacts from previous stages
+COPY --from=rust-builder /app/target/release/libcode_intelligence_ffi.so ./lib/
+COPY --from=node-builder /app/dist ./dist
+COPY --from=node-builder /app/node_modules ./node_modules
+COPY --from=node-builder /app/package.json ./
+COPY --from=node-builder /app/tsconfig.json ./
+COPY --from=node-builder /app/vitest.config.ts ./
+
+# Copy configuration files
+COPY docker/config.json ./config/
+COPY docker/entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+# Copy test-specific scripts
+COPY scripts/ ./scripts/
+
+# Create test directories
+RUN mkdir -p /app/test-data /app/test-results /app/project-stats /app/coverage-reports /app/logs /app/cache \
+    && chown -R codeint:codeint /app
+
+# Copy test database initialization
+COPY docker/postgres/test-init.sql ./docker/postgres/
+
+# Switch to non-root user
+USER codeint
+
+# Expose ports
+EXPOSE 4000 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD node dist/health-check.js
+
+# Set environment variables
+ENV NODE_ENV=test
+ENV LOG_LEVEL=debug
+ENV DATA_DIR=/app/data
+ENV CACHE_DIR=/app/cache
+ENV TEST_RESULTS_DIR=/app/test-results
+ENV ENABLE_REAL_PROJECT_TESTING=true
+ENV PERFORMANCE_MONITORING=true
+
+# Default command - start the server in test mode
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["test"]
+
+# Additional test commands
+# To run tests: docker exec -it container npm run test
+# To run coverage: docker exec -it container npm run test:coverage
+# To run benchmarks: docker exec -it container npm run test:performance
