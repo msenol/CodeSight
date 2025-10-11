@@ -7,6 +7,9 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { readFile, readdir } from 'fs/promises';
+import { join, extname } from 'path';
 
 const server = new Server({
   name: 'codesight-minimal',
@@ -45,17 +48,72 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+// Simple code search function
+async function searchInCodebase(query: string, basePath: string = 'F:/Development/Projects/ProjectAra/typescript-mcp'): Promise<string> {
+  try {
+    const results: string[] = [];
+
+    // Search in src directory
+    const srcPath = join(basePath, 'src');
+
+    async function searchDirectory(dirPath: string, depth = 0): Promise<void> {
+      if (depth > 3) return; // Limit depth to avoid infinite recursion
+
+      try {
+        const entries = await readdir(dirPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const fullPath = join(dirPath, entry.name);
+
+          if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+            await searchDirectory(fullPath, depth + 1);
+          } else if (entry.isFile() && (extname(entry.name) === '.ts' || extname(entry.name) === '.js')) {
+            try {
+              const content = await readFile(fullPath, 'utf-8');
+              const lines = content.split('\n');
+
+              lines.forEach((line, index) => {
+                if (line.toLowerCase().includes(query.toLowerCase())) {
+                  const relativePath = fullPath.replace(basePath, '');
+                  results.push(`${relativePath}:${index + 1} - ${line.trim()}`);
+                }
+              });
+            } catch (fileError) {
+              // Skip files that can't be read
+            }
+          }
+        }
+      } catch (dirError) {
+        // Skip directories that can't be read
+      }
+    }
+
+    await searchDirectory(srcPath);
+
+    if (results.length === 0) {
+      return `No matches found for "${query}" in the codebase.`;
+    }
+
+    return `Found ${results.length} match${results.length === 1 ? '' : 'es'}:\n${results.slice(0, 10).join('\n')}${results.length > 10 ? `\n... and ${results.length - 10} more` : ''}`;
+
+  } catch (error) {
+    return `Search error: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
     switch (name) {
       case 'search_code':
+        const query = args.query as string;
+        const searchResults = await searchInCodebase(query);
         return {
           content: [
             {
               type: 'text',
-              text: `🔍 Search results for "${args.query}":\n\nFound 3 matches:\n1. src/index.ts:15 - Function definition\n2. src/utils.ts:42 - Variable usage\n3. tests/index.test.ts:10 - Test case`,
+              text: `🔍 Search results for "${query}":\n\n${searchResults}`,
             },
           ],
         };
@@ -87,17 +145,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start server
 async function main() {
-  console.log('🚀 CodeSight Minimal MCP Server starting...');
-
-  // Simple stdio transport
-  const transport = {
-    async start() {},
-    async send(_message: any) {},
-    async close() {},
-  };
-
+  // Use proper stdio transport for MCP protocol
+  const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.log('✅ Server connected and ready');
 }
 
 main().catch(console.error);

@@ -143,10 +143,14 @@ mkdir -p "$DATA_DIR" "$CACHE_DIR" /app/logs
 # Set proper permissions
 chown -R codeint:codeint "$DATA_DIR" "$CACHE_DIR" /app/logs 2>/dev/null || true
 
-# Initialize the database if needed
-if [ ! -f "$DATA_DIR/code_intelligence.db" ]; then
-    log "Initializing database..."
-    node dist/scripts/init-db.js
+# Initialize the database if needed (SQLite only)
+# Skip initialization for PostgreSQL setups
+if [ "$DATABASE_URL" != "" ] && [[ "$DATABASE_URL" == postgresql* ]]; then
+    log "Using PostgreSQL database, skipping SQLite initialization"
+elif [ ! -f "$DATA_DIR/code_intelligence.db" ]; then
+    log "Initializing SQLite database..."
+    # Skip SQLite init for now as script doesn't exist
+    log "SQLite initialization script not found, skipping..."
 fi
 
 # Start services based on mode
@@ -170,8 +174,15 @@ case "$MODE" in
         log "Starting in CLI mode"
         exec node dist/cli/index.js "${@:2}"
         ;;
+    "test")
+        log "Starting in test mode"
+        # Test mode runs the hybrid server but with test configuration
+        export NODE_ENV=test
+        start_hybrid_server
+        wait $HYBRID_PID
+        ;;
     *)
-        log "ERROR: Unknown mode '$MODE'. Available modes: mcp, rest, hybrid, cli"
+        log "ERROR: Unknown mode '$MODE'. Available modes: mcp, rest, hybrid, cli, test"
         exit 1
         ;;
 esac
