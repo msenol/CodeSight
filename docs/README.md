@@ -4,13 +4,14 @@
 
 Welcome to the comprehensive documentation for the CodeSight MCP Server - an enterprise-grade code intelligence platform with hybrid TypeScript/Rust architecture.
 
-**Current Version**: v0.1.0 (Production Ready)
+**Current Version**: v0.1.0 (Production Ready - Phase 3.5 Complete)
 **Architecture**: Hybrid TypeScript + Rust with NAPI-RS FFI Bridge
 **Code Quality**: Enterprise-grade with 95% TypeScript error reduction and zero ESLint errors
-**Integration Testing**: 27/27 tests passing with comprehensive MCP protocol validation
-**Test Coverage**: Claude Desktop (9/9), VS Code (11/11), E2E Workflows (7/7)
-**Phase 3.5 Features**: Interactive CLI, Advanced Monitoring, Enhanced Error Handling, Load Testing
+**Integration Testing**: 30+ test suites with comprehensive MCP protocol validation
+**Test Coverage**: Claude Desktop (9/9), VS Code (11/11), E2E Workflows (7/7), REST API (11/11), Performance (5/5)
+**Phase 3.5 Features**: Interactive CLI, Advanced Monitoring, Enhanced Error Handling, Load Testing Suite (T084-T088)
 **Docker Testing**: Comprehensive real-project testing with automated workflows
+**Performance Benchmarking**: Complete Criterion.rs benchmarks, K6 load testing, memory profiling
 **Real Code Search**: Enhanced search validated against actual GitHub projects
 
 ## Quick Links

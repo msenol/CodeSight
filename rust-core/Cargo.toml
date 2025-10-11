@@ -34,6 +34,7 @@ thiserror = "1.0"
 anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 # Tree-sitter for parsing
 tree-sitter = "0.20"
@@ -82,6 +83,23 @@ proptest = "1.4"
 tokio-test = "0.4"
 
 # Virtual workspace - no dependencies or bench sections allowed
+
+# Benchmark configuration
+[[bench]]
+name = "benchmark_runner"
+harness = false
+
+[[bench]]
+name = "bench_parsing"
+harness = false
+
+[[bench]]
+name = "bench_indexing"
+harness = false
+
+[[bench]]
+name = "bench_search"
+harness = false
 
 [profile.release]
 opt-level = 3
