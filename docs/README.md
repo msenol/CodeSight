@@ -25,7 +25,8 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 
 - [Architecture Overview](./adrs/0001-hybrid-architecture.md) - Hybrid TypeScript/Rust architecture
 - [Rust FFI Bridge](./rust-ffi-bridge.md) - NAPI-RS integration details
-- [Performance Benchmarks](./performance-benchmarks.md) - Detailed performance metrics
+- [Performance Benchmarks](./PERFORMANCE-BENCHMARKING.md) - Comprehensive performance analysis and benchmarking
+- [Getting Started Guide](./GETTING-STARTED.md) - Complete setup and testing framework guide
 
 ### 📊 Monitoring & Observability (New in Phase 3.5)
 
@@ -35,7 +36,10 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 
 ### 🧪 Testing & Quality Assurance
 
-- [MCP Tools Documentation](./MCP-TOOLS.md) - Complete MCP protocol tools reference
+- [MCP Tools Documentation](./MCP-TOOLS.md) - Complete MCP protocol tools reference with comprehensive testing framework
+- [API Documentation](./API.md) - REST API endpoints with contract testing (T018-T028)
+- [Performance Benchmarking](./PERFORMANCE-BENCHMARKING.md) - Performance testing suites (T084-T088)
+- [Getting Started Guide](./GETTING-STARTED.md) - Complete setup and testing framework guide
 - [API Contract Specifications](./api/openapi.yaml) - OpenAPI specifications
 - [Postman Collection](./testing/postman/README.md) - API testing collection
 

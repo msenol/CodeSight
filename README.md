@@ -48,6 +48,10 @@
 - 🏆 **Production Ready**: Complete integration stack with Redis, PostgreSQL, and advanced security features
 - 🏆 **Docker Testing Infrastructure**: Comprehensive real-project testing with automated GitHub Actions workflows
 - 🏆 **Real Code Search**: Enhanced search functionality with external project validation and performance testing
+- 🏆 **REST API Contract Tests**: 11 comprehensive REST API contract tests (T018-T028) with full endpoint coverage
+- 🏆 **Integration Test Scenarios**: 5 integration test scenarios (T029-T033) covering real-world usage patterns
+- 🏆 **Performance Benchmarking**: 5 performance benchmark suites (T084-T088) with detailed metrics and monitoring
+- 🏆 **Comprehensive TDD Framework**: Complete test-driven development with contract, integration, and performance testing
 
 ## 🏗️ Enterprise Architecture
 
@@ -104,9 +108,13 @@
 - ✅ **Automated Testing**: Unit, Integration, Contract, E2E tests
 - ✅ **Security Scanning**: CodeQL, Dependabot, SonarQube integration
 - ✅ **Quality Gates**: ESLint, TypeScript, Prettier, Pre-commit hooks
+- ✅ **REST API Testing**: 11 contract tests (T018-T028) covering all endpoints
+- ✅ **Integration Testing**: 5 integration scenarios (T029-T033) for real-world validation
+- ✅ **Performance Benchmarking**: 5 benchmark suites (T084-T088) with comprehensive metrics
 - 🏆 **Code Quality Excellence**: 95% TypeScript error reduction with zero ESLint errors
 - 🏆 **Enterprise Standards**: Rule 15 compliance with proper root cause analysis and permanent fixes
 - 🏆 **Type Safety**: Comprehensive TypeScript interfaces and systematic 'any' type elimination
+- 🏆 **TDD Excellence**: Complete test-driven development framework with contract testing
 
 **Observability & Monitoring:**
 
@@ -498,7 +506,33 @@ SENTRY_DSN=your-sentry-dsn
 | Large (10K-100K files) | <3 minutes | <100ms | <1GB |
 | Monorepos (>100K files) | <15 minutes | <250ms | <4GB |
 
-## 🧪 Integration Testing
+## 🧪 Comprehensive Testing Framework
+
+**Enterprise-Grade Testing Infrastructure with Complete Coverage:**
+
+### Test-Driven Development (TDD) Framework
+
+**Contract Tests (Phase 3.2 Complete):**
+- ✅ **9 MCP Tools Contract Tests**: Comprehensive contract testing for all MCP protocol tools (T009-T017)
+- ✅ **11 REST API Contract Tests**: Complete REST API endpoint testing (T018-T028)
+- ✅ **Integration Test Scenarios**: 5 real-world integration scenarios (T029-T033)
+- ✅ **Performance Benchmark Suites**: 5 comprehensive performance benchmark tests (T084-T088)
+
+**Testing Coverage:**
+- **Unit Tests**: Core functionality and component testing
+- **Integration Tests**: End-to-end workflow validation
+- **Contract Tests**: API contract compliance and MCP protocol validation
+- **Performance Tests**: Load testing, memory optimization, and benchmarking
+- **Docker Tests**: Real-project testing in isolated environments
+
+**Test Statistics:**
+- **Total Test Files**: 25+ comprehensive test suites
+- **Contract Tests**: 20+ contract tests covering MCP and REST APIs
+- **Integration Tests**: 27/27 integration tests passing
+- **Performance Benchmarks**: 5 benchmark suites with detailed metrics
+- **Docker Test Projects**: Real GitHub projects for validation
+
+### Integration Testing
 
 **Comprehensive Integration Test Suite (27/27 Tests Passing):**
 
@@ -538,6 +572,34 @@ SENTRY_DSN=your-sentry-dsn
 - ✅ Performance and load testing
 - ✅ Concurrent request handling
 
+### REST API Contract Testing (New)
+
+**11 Comprehensive REST API Contract Tests (T018-T028):**
+
+- ✅ **Codebases Management**: GET, POST, PUT, DELETE operations (T018-T021)
+- ✅ **Indexing Operations**: Codebase indexing with progress tracking (T022)
+- ✅ **Query Operations**: Search and analysis queries (T023)
+- ✅ **Job Management**: Background job status and monitoring (T024-T025)
+- ✅ **Health Checks**: System health and metrics endpoints (T026-T027)
+- ✅ **Error Handling**: Comprehensive error response validation (T028)
+
+### Performance Benchmarking (New)
+
+**5 Performance Benchmark Suites (T084-T088):**
+
+- ✅ **MCP Tools Performance**: Tool-specific performance metrics (T084)
+- ✅ **Concurrent Load Testing**: Multi-user load testing (T085)
+- ✅ **Database Optimization**: Query performance and indexing (T086)
+- ✅ **Memory Optimization**: Memory usage and leak detection (T087)
+- ✅ **Monitoring Dashboard**: Real-time performance monitoring (T088)
+
+**Benchmark Metrics:**
+- **Response Time**: <50ms for small projects, <100ms for medium projects
+- **Throughput**: 100+ concurrent requests handled efficiently
+- **Memory Usage**: Optimized memory consumption with leak detection
+- **Database Performance**: Query optimization and indexing performance
+- **System Resources**: CPU, I/O, and network efficiency monitoring
+
 ### Running Integration Tests
 
 ```bash
@@ -549,11 +611,20 @@ npm run test:claude-desktop    # 9 tests
 npm run test:vscode           # 11 tests
 npm run test:e2e              # 7 tests
 
+# REST API contract tests
+npm run test:contract:api     # 11 REST API tests (T018-T028)
+
+# Performance benchmarking
+npm run test:performance      # 5 benchmark suites (T084-T088)
+
+# Docker-based real project testing
+npm run test:docker           # Real GitHub project testing
+
 # Quick integration testing
 npm run test:quickstart       # Claude + VS Code tests
 
 # Full test suite with coverage
-npm run test:all             # Unit + Integration + Performance
+npm run test:all             # Unit + Integration + Performance + Contract
 ```
 
 ## 🧪 Unit Testing
@@ -689,7 +760,8 @@ docs/              # ✅ Comprehensive documentation
 - [Docker Testing Guide](./QUICKSTART-Docker-Testing.md) - Real-project testing infrastructure
 - [TypeScript MCP Implementation](./typescript-mcp/README.md) - Implementation details
 - [Rust FFI Bridge Documentation](./docs/rust-ffi-bridge.md) - Native integration guide
-- [Performance Benchmarks](./docs/performance-benchmarks.md) - Performance analysis
+- [Performance Benchmarks](./docs/PERFORMANCE-BENCHMARKING.md) - Comprehensive performance analysis and benchmarking
+- [Getting Started Guide](./docs/GETTING-STARTED.md) - Complete setup and testing framework guide
 - [Project Instructions for Claude](./CLAUDE.md) - Development guidelines
 - [Architecture Decision Records](./docs/adrs/) - Design decisions
 

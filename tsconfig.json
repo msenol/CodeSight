@@ -56,7 +56,6 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": false,
-    "skipLibCheck": true,
 
     // Path mapping
     "baseUrl": "./",

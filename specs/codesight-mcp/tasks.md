@@ -72,17 +72,17 @@
 
 ### REST API Contract Tests (11 endpoints)
 
-- [ ] T018 [P] Contract test GET /codebases in tests/contract/test_codebases_get.ts
-- [ ] T019 [P] Contract test POST /codebases in tests/contract/test_codebases_post.ts
-- [ ] T020 [P] Contract test GET /codebases/{id} in tests/contract/test_codebases_id_get.ts
-- [ ] T021 [P] Contract test DELETE /codebases/{id} in tests/contract/test_codebases_id_delete.ts
-- [ ] T022 [P] Contract test POST /codebases/{id}/index in tests/contract/test_codebases_index.ts
-- [ ] T023 [P] Contract test GET /codebases/{id}/stats in tests/contract/test_codebases_stats.ts
-- [ ] T024 [P] Contract test POST /queries in tests/contract/test_queries_post.ts
-- [ ] T025 [P] Contract test GET /jobs in tests/contract/test_jobs_get.ts
-- [ ] T026 [P] Contract test GET /jobs/{id} in tests/contract/test_jobs_id_get.ts
-- [ ] T027 [P] Contract test GET /health in tests/contract/test_health.ts
-- [ ] T028 [P] Contract test GET /metrics in tests/contract/test_metrics.ts
+- [x] T018 [P] Contract test GET /codebases in tests/contract/test_codebases_get.ts ✅ COMPLETED
+- [x] T019 [P] Contract test POST /codebases in tests/contract/test_codebases_post.ts ✅ COMPLETED
+- [x] T020 [P] Contract test GET /codebases/{id} in tests/contract/test_codebases_id_get.ts ✅ COMPLETED
+- [x] T021 [P] Contract test DELETE /codebases/{id} in tests/contract/test_codebases_id_delete.ts ✅ COMPLETED
+- [x] T022 [P] Contract test POST /codebases/{id}/index in tests/contract/test_codebases_index.ts ✅ COMPLETED
+- [x] T023 [P] Contract test GET /codebases/{id}/stats in tests/contract/test_codebases_stats.ts ✅ COMPLETED
+- [x] T024 [P] Contract test POST /queries in tests/contract/test_queries_post.ts ✅ COMPLETED
+- [x] T025 [P] Contract test GET /jobs in tests/contract/test_jobs_get.ts ✅ COMPLETED
+- [x] T026 [P] Contract test GET /jobs/{id} in tests/contract/test_jobs_id_get.ts ✅ COMPLETED
+- [x] T027 [P] Contract test GET /health in tests/contract/test_health.ts ✅ COMPLETED
+- [x] T028 [P] Contract test GET /metrics in tests/contract/test_metrics.ts ✅ COMPLETED
 
 ### Integration Tests (5 scenarios from quickstart)
 
