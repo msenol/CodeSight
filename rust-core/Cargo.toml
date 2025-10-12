@@ -60,7 +60,6 @@ napi = { version = "2.14", features = ["full"] }
 napi-derive = "2.14"
 
 # Utilities
-chrono = { version = "0.4", features = ["serde"] }
 walkdir = "2.4"
 notify = "6.1"
 sha2 = "0.10"
@@ -84,22 +83,7 @@ tokio-test = "0.4"
 
 # Virtual workspace - no dependencies or bench sections allowed
 
-# Benchmark configuration
-[[bench]]
-name = "benchmark_runner"
-harness = false
-
-[[bench]]
-name = "bench_parsing"
-harness = false
-
-[[bench]]
-name = "bench_indexing"
-harness = false
-
-[[bench]]
-name = "bench_search"
-harness = false
+# Benchmark configuration (moved to individual crates)
 
 [profile.release]
 opt-level = 3
