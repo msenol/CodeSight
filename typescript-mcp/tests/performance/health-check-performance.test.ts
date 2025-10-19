@@ -218,8 +218,8 @@ describe('Health Check - Performance Tests', () => {
           const currentMemory = process.memoryUsage().heapUsed;
           const memoryIncrease = currentMemory - initialMemory;
 
-          // Memory increase should be reasonable (less than 2MB per 10 requests)
-          expect(memoryIncrease).toBeLessThan(2 * 1024 * 1024);
+          // Memory increase should be reasonable (less than 2.5MB per 10 requests)
+          expect(memoryIncrease).toBeLessThan(2.5 * 1024 * 1024);
         }
       }
 

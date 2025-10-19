@@ -258,14 +258,25 @@ mod tests {
 
     #[test]
     fn test_validation() {
-        let mut codebase = Codebase::new("".to_string(), "/test".to_string());
-        assert!(codebase.validate().is_err());
-        
-        codebase.name = "test".to_string();
-        codebase.path = "relative/path".to_string();
-        assert!(codebase.validate().is_err());
-        
-        codebase.path = "/absolute/path".to_string();
-        assert!(codebase.validate().is_ok());
+        // Test with a platform-appropriate absolute path
+        let absolute_path = if cfg!(target_os = "windows") {
+            "C:\\absolute\\path".to_string()
+        } else {
+            "/absolute/path".to_string()
+        };
+
+        let codebase = Codebase::new("test".to_string(), absolute_path.clone());
+        let validation_result = codebase.validate();
+        assert!(validation_result.is_ok(), "Valid codebase should pass validation, got error: {:?}", validation_result.err());
+
+        // Test empty name
+        let empty_name_codebase = Codebase::new("".to_string(), absolute_path.clone());
+        let validation_result = empty_name_codebase.validate();
+        assert!(validation_result.is_err(), "Empty name should fail validation");
+
+        // Test relative path
+        let relative_path_codebase = Codebase::new("test".to_string(), "relative/path".to_string());
+        let validation_result = relative_path_codebase.validate();
+        assert!(validation_result.is_err(), "Relative path should fail validation");
     }
 }

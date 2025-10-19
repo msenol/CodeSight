@@ -23,57 +23,80 @@ describe('Health Check Handlers', () => {
       query: {},
     };
     mockReply = {
-      code: vi.fn(),
-      send: vi.fn(),
+      code: vi.fn().mockReturnThis(),
+      // Fastify's reply.send is automatically called when handlers return values
+      // In unit tests, we don't need to test send() since handlers use return
+      send: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
     };
   });
 
   describe('healthCheckHandler', () => {
     it('should return health status', async () => {
-      await healthCheckHandler(
+      const result = await healthCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      // Verify reply.code was called to set HTTP status
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      // Verify result is returned (Fastify handles sending automatically)
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('status');
+      expect(result).toHaveProperty('timestamp');
     });
   });
 
   describe('simpleHealthCheckHandler', () => {
     it('should return simple health status', async () => {
-      await simpleHealthCheckHandler(
+      const result = await simpleHealthCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      // Verify reply.code was called to set HTTP status
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      // Verify result is returned (Fastify handles sending automatically)
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('status');
+      expect(result).toHaveProperty('timestamp');
     });
   });
 
   describe('readinessCheckHandler', () => {
     it('should return readiness status', async () => {
-      await readinessCheckHandler(
+      const result = await readinessCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      // Verify reply.code was called to set HTTP status
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      // Verify result is returned with correct structure
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('ready');
+      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('checks');
+      expect(typeof result.ready).toBe('boolean');
     });
   });
 
   describe('livenessCheckHandler', () => {
     it('should return liveness status', async () => {
-      await livenessCheckHandler(
+      const result = await livenessCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      // Verify reply.code was called to set HTTP status
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      // Verify result is returned with correct structure
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('alive');
+      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('uptime');
+      expect(typeof result.alive).toBe('boolean');
+      expect(typeof result.uptime).toBe('number');
     });
   });
 });
