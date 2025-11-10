@@ -1,6 +1,6 @@
 # Multi-stage Docker build for Code Intelligence MCP Server
 # Stage 1: Rust build environment
-FROM rust:1.80-slim as rust-builder
+FROM rust:1.91-slim as rust-builder
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
