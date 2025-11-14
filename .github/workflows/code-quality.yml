@@ -1,0 +1,255 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # TypeScript Code Quality
+  typescript-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd typescript-mcp && npm ci
+
+    - name: ESLint check
+      run: |
+        npm run lint
+        cd typescript-mcp && npm run lint
+
+    - name: Prettier check
+      run: |
+        npm run format:check
+        cd typescript-mcp && npm run format:check
+
+    - name: TypeScript complexity analysis
+      run: |
+        cd typescript-mcp
+        npx complexity-report --output json --format json src/ || true
+
+    - name: Dependency check
+      run: |
+        cd typescript-mcp
+        npx depcheck
+
+    - name: Bundle size analysis
+      run: |
+        cd typescript-mcp
+        npm run build
+        npx bundlesize
+
+    - name: Security audit
+      run: |
+        cd typescript-mcp
+        npm audit --audit-level=moderate
+
+  # Rust Code Quality
+  rust-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Rust formatting check
+      working-directory: rust-core
+      run: cargo fmt --all -- --check
+
+    - name: Clippy with all features
+      working-directory: rust-core
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    - name: Check documentation
+      working-directory: rust-core
+      run: cargo doc --no-deps --all-features --document-private-items
+
+    - name: Check unused dependencies
+      working-directory: rust-core
+      run: cargo machete || true
+
+    - name: Audit dependencies
+      working-directory: rust-core
+      run: cargo install cargo-audit && cargo audit
+
+    - name: Code coverage
+      working-directory: rust-core
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin --out Xml --output-dir ./coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: rust-core/coverage/cobertura.xml
+        flags: rust
+        name: rust-coverage
+
+  # Documentation Quality
+  documentation-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install markdownlint
+      run: npm install -g markdownlint-cli
+
+    - name: Check markdown files
+      run: |
+        markdownlint '**/*.md' --ignore node_modules --ignore target --ignore dist
+
+    - name: Check for broken links
+      run: |
+        npm install -g markdown-link-check
+        find . -name "*.md" -not -path "./node_modules/*" -not -path "./target/*" -not -path "./dist/*" -exec markdown-link-check {} \;
+
+    - name: Spell check
+      run: |
+        npm install -g cspell
+        cspell "**/*.md" --config .vscode/cspell.json || true
+
+  # Performance Quality
+  performance-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Run benchmarks
+      working-directory: rust-core
+      run: |
+        cargo bench --no-run
+        # Save benchmark results for comparison
+        cargo bench -- --output-format json > benchmark-results.json || true
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: rust-core/benchmark-results.json
+
+    - name: Memory leak check
+      working-directory: rust-core
+      run: |
+        # Run memory profiling tests
+        cargo test --release --features memory-profiling || true
+
+  # Integration Quality
+  integration-quality:
+    runs-on: ubuntu-latest
+    needs: [typescript-quality, rust-quality]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: codesight_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd typescript-mcp && npm ci
+
+    - name: Build project
+      run: |
+        cd typescript-mcp
+        source ~/.cargo/env || true
+        npm run build:full
+
+    - name: Run integration tests with coverage
+      working-directory: typescript-mcp
+      run: |
+        npm run test:contract
+        npm run test:integration
+      env:
+        POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/codesight_test
+        REDIS_URL: redis://localhost:6379
+
+    - name: Test API endpoints
+      run: |
+        cd typescript-mcp
+        node dist/server.js &
+        sleep 10
+        curl -f http://localhost:4000/health || true
+        curl -f http://localhost:4000/api/stats || true
+        pkill -f "node dist/server.js" || true
+
+  # Quality Gate
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [typescript-quality, rust-quality, documentation-quality, integration-quality]
+    if: always()
+
+    steps:
+    - name: Check job results
+      run: |
+        echo "TypeScript Quality: ${{ needs.typescript-quality.result }}"
+        echo "Rust Quality: ${{ needs.rust-quality.result }}"
+        echo "Documentation Quality: ${{ needs.documentation-quality.result }}"
+        echo "Integration Quality: ${{ needs.integration-quality.result }}"
+
+        if [[ "${{ needs.typescript-quality.result }}" == "failure" || \
+              "${{ needs.rust-quality.result }}" == "failure" || \
+              "${{ needs.documentation-quality.result }}" == "failure" || \
+              "${{ needs.integration-quality.result }}" == "failure" ]]; then
+          echo "❌ Quality gate failed!"
+          exit 1
+        else
+          echo "✅ Quality gate passed!"
+        fi

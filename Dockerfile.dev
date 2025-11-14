@@ -1,0 +1,70 @@
+# Development Dockerfile for CodeSight MCP Server
+# Optimized for hot reloading and debugging
+
+FROM node:20-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    git \
+    python3 \
+    make \
+    g++ \
+    pkgconfig \
+    openssl-dev \
+    sqlite-dev \
+    postgresql-dev \
+    musl-dev
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo install cargo-watch
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY typescript-mcp/package*.json ./typescript-mcp/
+COPY rust-core/Cargo.toml ./rust-core/
+COPY rust-core/Cargo.lock ./rust-core/
+
+# Install Node.js dependencies
+RUN npm ci
+RUN cd typescript-mcp && npm ci
+
+# Copy Rust source files
+COPY rust-core ./rust-core/
+
+# Build Rust core (development build with debug symbols)
+RUN cd rust-core && cargo build
+
+# Copy TypeScript source files
+COPY typescript-mcp ./typescript-mcp/
+COPY . .
+
+# Build TypeScript once
+RUN cd typescript-mcp && npm run build
+
+# Development stage with hot reloading
+FROM base AS development
+
+# Create non-root user for development
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S codesight -u 1001
+
+# Change ownership of app directory
+RUN chown -R codesight:nodejs /app
+USER codesight
+
+# Expose ports
+EXPOSE 4000 8080 9229
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:4000/health || exit 1
+
+# Start development server with hot reload
+CMD ["npm", "run", "dev"]
