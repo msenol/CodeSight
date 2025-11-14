@@ -26,6 +26,7 @@ describe('Health Check Handlers', () => {
       code: vi.fn().mockReturnThis(),
       send: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
+      header: vi.fn().mockReturnThis(),
     };
   });
 

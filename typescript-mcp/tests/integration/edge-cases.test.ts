@@ -107,7 +107,8 @@ describe('Edge Case Handling', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = buildApp();
+    app = await buildApp();
+    await app.ready();
   });
 
   describe('Empty and Null Inputs', () => {
@@ -480,5 +481,9 @@ describe('Edge Case Handling', () => {
         expect(result).toHaveProperty('overall_score');
       }
     });
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });
