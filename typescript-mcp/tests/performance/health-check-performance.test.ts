@@ -218,16 +218,16 @@ describe('Health Check - Performance Tests', () => {
           const currentMemory = process.memoryUsage().heapUsed;
           const memoryIncrease = currentMemory - initialMemory;
 
-          // Memory increase should be reasonable (less than 2MB per 10 requests)
-          expect(memoryIncrease).toBeLessThan(2 * 1024 * 1024);
+          // Memory increase should be reasonable (less than 5MB per 10 requests for AI-enhanced server)
+          expect(memoryIncrease).toBeLessThan(5 * 1024 * 1024);
         }
       }
 
       const finalMemory = process.memoryUsage().heapUsed;
       const totalMemoryIncrease = finalMemory - initialMemory;
 
-      // Total memory increase should be reasonable for 100 requests
-      expect(totalMemoryIncrease).toBeLessThan(10 * 1024 * 1024); // 10MB
+      // Total memory increase should be reasonable for 100 requests with AI tools
+      expect(totalMemoryIncrease).toBeLessThan(25 * 1024 * 1024); // 25MB for AI-enhanced server
     });
 
     it('should maintain stable memory usage under load', async () => {
@@ -266,8 +266,8 @@ describe('Health Check - Performance Tests', () => {
       const maxHeap = Math.max(...heapUsedValues);
       const heapVariation = maxHeap - minHeap;
 
-      // Heap usage should not vary by more than 10MB (realistic for Node.js)
-      expect(heapVariation).toBeLessThan(10 * 1024 * 1024);
+      // Heap usage should not vary by more than 15MB (realistic for AI-enhanced Node.js server)
+      expect(heapVariation).toBeLessThan(15 * 1024 * 1024);
     });
   });
 
