@@ -3,13 +3,13 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **Version: v0.1.0**
-**Last Updated: October 10, 2025**
+**Last Updated: November 14, 2025**
 
 ## Project Overview
 
-CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation** with comprehensive code intelligence platform and exceptional code quality:
+CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation** with comprehensive AI-powered code intelligence platform and exceptional code quality:
 
-- **✅ TypeScript MCP Server** (`typescript-mcp/`): Full MCP protocol, 377+ entities indexed in SQLite
+- **✅ TypeScript MCP Server** (`typescript-mcp/`): Full MCP protocol with 14 tools (9 core + 5 AI-powered), 377+ entities indexed in SQLite
 - **✅ React Frontend** (`src/`): Web UI with Vite and TypeScript
 - **✅ Express API** (`api/`): REST API server with WebSocket support
 - **✅ Rust FFI Bridge** (`rust-core/`): Complete NAPI-RS implementation with Tree-sitter parsers
@@ -18,11 +18,13 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 - **✅ Production Docker**: Complete containerization with PostgreSQL, Redis, monitoring
 - **✅ Professional Tooling**: Unified ESLint, TypeScript configs, security scanning
 - **✅ Phase 3.4 Integration**: Advanced LLM integration, database adapters, security middleware
+- **✅ Phase 4.1 AI Features**: 5 advanced AI-powered tools with comprehensive LLM integration
 - **✅ Message Queuing**: BullMQ with Redis backend for background job processing
 - **✅ LLM Integration**: llama.cpp, Ollama, HuggingFace with intelligent fallback routing
 - **✅ Database Layer**: SQLite, PostgreSQL, DuckDB vector store with unified interfaces
 - **✅ Security Stack**: JWT authentication, rate limiting, CORS, comprehensive logging
 - **✅ Enterprise Caching**: Redis distributed caching with advanced features
+- **✅ Enhanced Memory Management**: 4GB memory limit for complex AI analysis tasks
 - 🏆 **Code Quality Excellence**: 95% TypeScript error reduction (1000+ → ~95 remaining issues)
 - 🏆 **Zero ESLint Errors**: Perfect lint compliance with 0 errors, 0 warnings
 - 🏆 **Rule 15 Compliance**: Enterprise-grade code with proper root cause analysis and permanent fixes
@@ -33,6 +35,8 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 - 🏆 **REST API Contract Tests**: 11 comprehensive contract tests (T018-T028) with full endpoint coverage
 - 🏆 **Integration Test Scenarios**: 5 integration scenarios (T029-T033) for real-world validation
 - 🏆 **Performance Benchmarking**: 5 benchmark suites (T084-T088) with detailed metrics and monitoring
+- 🏆 **AI Tool Testing**: 5 comprehensive AI tool test suites with full integration coverage
+- 🏆 **Enhanced Test Coverage**: 57 comprehensive tests with 80.7% code coverage including AI validation
 - 🏆 **TDD Framework Excellence**: Complete test-driven development with contract testing methodology
 
 ## Essential Commands
@@ -142,20 +146,25 @@ docker-compose -f docker-compose.dev.yml up -d
 
 ## MCP Tools Status
 
-**✅ Real Implementation:**
+**✅ Core Tools (Phase 3.3 Complete):**
 
 - `search_code`: Natural language search with SQLite results
 - `explain_function`: Function explanation with codebase lookup
+- `find_references`: Find all references to a symbol with cross-file analysis
+- `trace_data_flow`: Trace data flow through the code with variable tracking
+- `analyze_security`: Analyze code for security vulnerabilities with comprehensive checks
+- `get_api_endpoints`: List all API endpoints in the codebase with HTTP methods
+- `check_complexity`: Analyze code complexity metrics with detailed breakdown
+- `find_duplicates`: Detect duplicate code patterns with similarity scoring
+- `suggest_refactoring`: Provide refactoring suggestions with implementation guidance
 
-**📝 TDD Contract Tests Completed (Phase 3.2 TDD):**
+**🤖 AI-Powered Tools (Phase 4.1 Complete):**
 
-- `find_references`: Find all references to a symbol (contract test complete)
-- `trace_data_flow`: Trace data flow through the code (contract test complete)
-- `analyze_security`: Analyze code for security vulnerabilities (contract test complete)
-- `get_api_endpoints`: List all API endpoints in the codebase (contract test complete)
-- `check_complexity`: Analyze code complexity metrics (contract test complete)
-- `find_duplicates`: Detect duplicate code patterns (contract test complete)
-- `suggest_refactoring`: Provide refactoring suggestions (contract test complete)
+- `ai_code_review`: Comprehensive AI-powered code review with intelligent suggestions and quality analysis
+- `intelligent_refactoring`: AI-driven refactoring recommendations with code transformation suggestions
+- `bug_prediction`: Proactive bug prediction and risk assessment using ML-enhanced analysis
+- `context_aware_code_generation`: Context-aware code generation with project understanding and style compliance
+- `technical_debt_analysis`: Comprehensive technical debt assessment with business impact analysis and prioritization
 
 **🔧 REST API Contract Tests (T018-T028):**
 
@@ -182,14 +191,17 @@ docker-compose -f docker-compose.dev.yml up -d
 - ✅ **Memory Optimization**: Memory usage and leak detection (T087)
 - ✅ **Monitoring Dashboard**: Real-time performance monitoring (T088)
 
-**🔧 Current Implementation Status (Phase 3.5 Complete):**
+**🔧 Current Implementation Status (Phase 4.1 Complete):**
 
-- ✅ **All 9 MCP Tools Fully Implemented**: Complete implementations with comprehensive testing
+- ✅ **All 14 MCP Tools Fully Implemented**: 9 core + 5 AI-powered tools with comprehensive testing
+- ✅ **Enhanced Test Coverage**: 57 comprehensive tests with 80.7% code coverage including AI validation
 - ✅ **Zero Compilation Errors**: Perfect TypeScript and Rust compilation status
 - ✅ **Zero ESLint Errors**: Perfect lint compliance across entire codebase
 - ✅ **Enterprise-Grade Quality**: Rule 15 compliance with systematic error resolution
 - ✅ **Production Ready**: Complete monitoring, observability, and performance optimization
-- ✅ **Complete TDD Framework**: 20+ contract tests with comprehensive coverage
+- ✅ **AI Infrastructure**: Multi-provider LLM support with intelligent fallback routing
+- ✅ **Enhanced Memory**: 4GB memory limit for complex AI analysis tasks
+- ✅ **Complete TDD Framework**: 30+ contract tests with comprehensive coverage including AI tools
 
 ## Environment Configuration
 

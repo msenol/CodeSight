@@ -1,8 +1,8 @@
 # MCP Tools Documentation
 
-**Generated**: October 11, 2025
+**Generated**: November 14, 2025
 **Version**: v0.1.0
-**Implementation Status**: Phase 3.5 Polish Complete - Enterprise Ready with Comprehensive Testing Framework
+**Implementation Status**: Phase 4.1 Complete - Advanced AI Features with Enhanced Testing Coverage
 
 ## Overview
 
@@ -10,8 +10,9 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 
 ## Tool Status
 
-### ✅ All 9 Tools Fully Implemented (Phase 3.5 Polish Complete - Enterprise Ready)
+### ✅ All 14 Tools Fully Implemented (Phase 4.1 Complete - Advanced AI Features)
 
+**Core Tools (9):**
 - `search_code` - Natural language code search with real database results
 - `explain_function` - Function explanation and comprehensive code analysis
 - `find_references` - Find all references to a symbol with cross-file analysis
@@ -22,7 +23,14 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 - `find_duplicates` - Detect duplicate code patterns with similarity scoring
 - `suggest_refactoring` - Provide refactoring suggestions with implementation guidance
 
-🏆 **Complete MCP Implementation** - All tools are fully functional with comprehensive implementations and integration testing.
+**AI-Powered Tools (5) - New in Phase 4.1:**
+- `ai_code_review` - Comprehensive AI-powered code review with intelligent suggestions and quality analysis
+- `intelligent_refactoring` - AI-driven refactoring recommendations with code transformation suggestions
+- `bug_prediction` - Proactive bug prediction and risk assessment using ML-enhanced analysis
+- `context_aware_code_generation` - Context-aware code generation with project understanding and style compliance
+- `technical_debt_analysis` - Comprehensive technical debt assessment with business impact analysis and prioritization
+
+🏆 **Complete MCP Implementation** - All 14 tools (9 core + 5 AI-powered) are fully functional with comprehensive implementations and integration testing.
 
 ### 🚀 Phase 3.5 Polish Enhancements (Enterprise Ready)
 
@@ -958,6 +966,691 @@ await suggest_refactoring({
 
 **Implementation Status**: ✅ **Fully Implemented** (Phase 3.3 Complete)
 
+### 10. ai_code_review
+
+**Description**: Comprehensive AI-powered code review with intelligent suggestions and quality analysis. Provides multi-dimensional code assessment including complexity, maintainability, security, and performance analysis.
+
+**Input Schema**:
+
+```json
+{
+  "file_path": "string (optional) - File path to review",
+  "code_snippet": "string (optional) - Code snippet to review",
+  "review_type": "string (required) - 'basic' | 'comprehensive' | 'security-focused' | 'performance-focused'",
+  "codebase_id": "string (required) - Codebase identifier",
+  "context": {
+    "pr_description": "string (optional) - Pull request description",
+    "changed_files": "array (optional) - List of changed files in PR",
+    "target_branch": "string (optional) - Target branch for PR"
+  }
+}
+```
+
+**Output Schema**:
+
+```json
+{
+  "success": "boolean",
+  "overall_score": "number (0-100) - Overall code quality score",
+  "metrics": {
+    "complexity_score": "number (0-100)",
+    "maintainability_index": "number (0-100)",
+    "security_score": "number (0-100)",
+    "performance_score": "number (0-100)",
+    "readability_score": "number (0-100)"
+  },
+  "issues": [
+    {
+      "id": "string",
+      "title": "string",
+      "severity": "'low' | 'medium' | 'high' | 'critical'",
+      "category": "string",
+      "description": "string",
+      "location": {
+        "file_path": "string",
+        "line_number": "number",
+        "column_number": "number"
+      },
+      "code_snippet": "string",
+      "suggestion": "string",
+      "confidence": "number (0-100)"
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "string",
+      "priority": "'low' | 'medium' | 'high'",
+      "rationale": "string",
+      "estimated_effort": "string"
+    }
+  ],
+  "best_practices": [
+    {
+      "practice": "string",
+      "status": "'followed' | 'violated'",
+      "description": "string"
+    }
+  ],
+  "metadata": {
+    "review_time_ms": "number",
+    "lines_analyzed": "number",
+    "ai_model_used": "string"
+  }
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// Comprehensive code review
+await ai_code_review({
+  file_path: "src/auth/user-service.ts",
+  review_type: "comprehensive",
+  codebase_id: "my-project",
+  context: {
+    pr_description: "Add user authentication with JWT tokens",
+    changed_files: ["src/auth/user-service.ts", "src/middleware/auth.ts"],
+    target_branch: "main"
+  }
+});
+
+// Security-focused review
+await ai_code_review({
+  code_snippet: `
+    function login(username, password) {
+      const query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
+      return db.query(query);
+    }
+  `,
+  review_type: "security-focused",
+  codebase_id: "my-project"
+});
+
+// Performance-focused review
+await ai_code_review({
+  file_path: "src/api/data-processor.ts",
+  review_type: "performance-focused",
+  codebase_id: "my-project"
+});
+```
+
+**Implementation Status**: ✅ **Fully Implemented** (Phase 4.1 Complete)
+
+### 11. intelligent_refactoring
+
+**Description**: AI-driven refactoring recommendations with code transformation suggestions. Analyzes code for refactoring opportunities and provides detailed before/after examples with impact assessment.
+
+**Input Schema**:
+
+```json
+{
+  "file_path": "string (optional) - File path to refactor",
+  "code_snippet": "string (optional) - Code snippet to refactor",
+  "refactoring_type": "string (required) - 'extract-method' | 'rename-variable' | 'reduce-complexity' | 'optimize-performance' | 'improve-readability' | 'apply-pattern'",
+  "target_scope": "string (optional, default: 'function') - 'function' | 'class' | 'module' | 'entire-file'",
+  "codebase_id": "string (required) - Codebase identifier",
+  "preferences": {
+    "preserve_behavior": "boolean (optional, default: true)",
+    "backward_compatible": "boolean (optional, default: true)",
+    "test_driven": "boolean (optional, default: false)"
+  }
+}
+```
+
+**Output Schema**:
+
+```json
+{
+  "success": "boolean",
+  "overall_assessment": {
+    "refactoring_potential": "number (0-100)",
+    "code_quality_score": "number (0-100)",
+    "maintainability_improvement": "number",
+    "effort_required": "number (0-100)"
+  },
+  "suggestions": [
+    {
+      "id": "string",
+      "title": "string",
+      "category": "string",
+      "impact": "'low' | 'medium' | 'high'",
+      "effort": "'low' | 'medium' | 'high'",
+      "confidence": "number (0-100)",
+      "description": "string",
+      "benefits": ["string"],
+      "location": {
+        "file_path": "string",
+        "line_number": "number",
+        "line_range": {
+          "start": "number",
+          "end": "number"
+        }
+      },
+      "original_code": "string",
+      "refactored_code": "string",
+      "explanation": "string",
+      "risks": ["string"],
+      "dependencies": ["string"]
+    }
+  ],
+  "pattern_suggestions": [
+    {
+      "pattern": "string",
+      "description": "string",
+      "applicable_locations": ["object"],
+      "benefits": ["string"]
+    }
+  ],
+  "metrics": {
+    "complexity_reduction": "number",
+    "maintainability_gain": "number",
+    "duplication_eliminated": "number"
+  },
+  "metadata": {
+    "analysis_time_ms": "number",
+    "lines_analyzed": "number",
+    "refactoring_opportunities": "number"
+  }
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// Reduce complexity refactoring
+await intelligent_refactoring({
+  file_path: "src/services/data-processor.ts",
+  refactoring_type: "reduce-complexity",
+  target_scope: "function",
+  codebase_id: "my-project",
+  preferences: {
+    preserve_behavior: true,
+    test_driven: true
+  }
+});
+
+// Extract method refactoring
+await intelligent_refactoring({
+  code_snippet: `
+    function processOrder(order) {
+      // Validate order
+      if (!order.id) throw new Error('Missing ID');
+      if (!order.items || order.items.length === 0) throw new Error('No items');
+      if (order.total <= 0) throw new Error('Invalid total');
+
+      // Calculate tax
+      const tax = order.total * 0.08;
+      const shipping = order.total > 100 ? 0 : 9.99;
+
+      // Apply discounts
+      let discount = 0;
+      if (order.coupon) {
+        discount = order.total * 0.1;
+      }
+
+      // Final total
+      const finalTotal = order.total + tax + shipping - discount;
+
+      return { total: finalTotal, tax, shipping, discount };
+    }
+  `,
+  refactoring_type: "extract-method",
+  codebase_id: "my-project"
+});
+
+// Apply design pattern
+await intelligent_refactoring({
+  file_path: "src/utils/notification.js",
+  refactoring_type: "apply-pattern",
+  target_scope: "class",
+  codebase_id: "my-project"
+});
+```
+
+**Implementation Status**: ✅ **Fully Implemented** (Phase 4.1 Complete)
+
+### 12. bug_prediction
+
+**Description**: Proactive bug prediction and risk assessment using ML-enhanced analysis. Identifies potential bugs before they occur and provides mitigation strategies.
+
+**Input Schema**:
+
+```json
+{
+  "file_path": "string (optional) - File path to analyze",
+  "code_snippet": "string (optional) - Code snippet to analyze",
+  "prediction_type": "string (required) - 'proactive' | 'reactive' | 'pattern-based' | 'ml-enhanced'",
+  "scope": "string (required) - 'function' | 'class' | 'module' | 'system'",
+  "codebase_id": "string (required) - Codebase identifier",
+  "historical_data": {
+    "bug_history": "array (optional) - Historical bug data",
+    "test_coverage": "object (optional) - Test coverage metrics",
+    "complexity_metrics": "object (optional) - Historical complexity data"
+  }
+}
+```
+
+**Output Schema**:
+
+```json
+{
+  "success": "boolean",
+  "overall_risk_assessment": {
+    "risk_category": "'low' | 'medium' | 'high' | 'critical'",
+    "bug_risk_score": "number (0-100)",
+    "predicted_bugs": "number",
+    "confidence_level": "number (0-100)"
+  },
+  "identified_risks": [
+    {
+      "id": "string",
+      "title": "string",
+      "category": "string",
+      "severity": "'low' | 'medium' | 'high' | 'critical'",
+      "likelihood": "number (0-100)",
+      "impact": "'low' | 'medium' | 'high'",
+      "description": "string",
+      "location": {
+        "file_path": "string",
+        "line_start": "number",
+        "line_end": "number"
+      },
+      "code_snippet": "string",
+      "risk_factors": ["string"],
+      "mitigation_strategies": ["string"],
+      "prevention_measures": ["string"]
+    }
+  ],
+  "hotspots": [
+    {
+      "location": "string",
+      "risk_concentration": "number (0-100)",
+      "bug_types": ["string"],
+      "recommendations": ["string"]
+    }
+  ],
+  "predictive_metrics": {
+    "complexity_correlation": "number",
+    "coupling_risk": "number",
+    "cohesion_risk": "number",
+    "maintainability_risk": "number"
+  },
+  "trending_analysis": {
+    "risk_trajectory": "'improving' | 'stable' | 'degrading'",
+    "predicted_bugs_timeline": "array",
+    "recommendation_priority": "array"
+  },
+  "metadata": {
+    "prediction_time_ms": "number",
+    "ml_model_version": "string",
+    "training_data_size": "number",
+    "accuracy_score": "number (0-100)"
+  }
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// ML-enhanced bug prediction
+await bug_prediction({
+  file_path: "src/payment/payment-processor.ts",
+  prediction_type: "ml-enhanced",
+  scope: "function",
+  codebase_id: "my-project",
+  historical_data: {
+    bug_history: [
+      { file: "src/payment/payment-processor.ts", type: "null_pointer", date: "2024-01-15" },
+      { file: "src/payment/payment-processor.ts", type: "race_condition", date: "2024-02-20" }
+    ],
+    test_coverage: { lines: 85, functions: 90, branches: 75 }
+  }
+});
+
+// System-level risk assessment
+await bug_prediction({
+  prediction_type: "proactive",
+  scope: "system",
+  codebase_id: "my-project",
+  historical_data: {
+    complexity_metrics: {
+      average_complexity: 12.5,
+      trend: "increasing",
+      hotspots_count: 5
+    }
+  }
+});
+
+// Pattern-based analysis
+await bug_prediction({
+  code_snippet: `
+    async function processPayment(paymentData) {
+      const result = await externalPaymentAPI.charge(paymentData.amount);
+      return result.success;
+    }
+  `,
+  prediction_type: "pattern-based",
+  scope: "function",
+  codebase_id: "my-project"
+});
+```
+
+**Implementation Status**: ✅ **Fully Implemented** (Phase 4.1 Complete)
+
+### 13. context_aware_code_generation
+
+**Description**: Context-aware code generation with project understanding and style compliance. Generates code that matches project patterns, coding standards, and architectural styles.
+
+**Input Schema**:
+
+```json
+{
+  "prompt": "string (required) - Natural language description of code to generate",
+  "context": {
+    "file_path": "string (optional) - Location where code will be placed",
+    "surrounding_code": "string (optional) - Code around generation location",
+    "project_structure": "string (optional) - Project structure information",
+    "existing_patterns": "array (optional) - Existing code patterns to follow",
+    "dependencies": "array (optional) - Available dependencies",
+    "coding_standards": {
+      "language": "string (optional) - Programming language",
+      "style_guide": "string (optional) - Style guide to follow",
+      "naming_conventions": "array (optional) - Naming conventions"
+    }
+  },
+  "generation_type": "string (required) - 'function' | 'class' | 'module' | 'test' | 'documentation' | 'configuration'",
+  "constraints": {
+    "max_lines": "number (optional) - Maximum lines of code",
+    "complexity_limit": "number (optional) - Maximum complexity score",
+    "test_required": "boolean (optional, default: false)",
+    "documentation_required": "boolean (optional, default: false)",
+    "performance_optimized": "boolean (optional, default: false)"
+  },
+  "codebase_id": "string (required) - Codebase identifier"
+}
+```
+
+**Output Schema**:
+
+```json
+{
+  "success": "boolean",
+  "generated_code": "string",
+  "code_metadata": {
+    "type": "string",
+    "language": "string",
+    "estimated_lines": "number",
+    "complexity_estimate": "number",
+    "dependencies": ["string"],
+    "imports": ["string"]
+  },
+  "confidence_score": "number (0-100)",
+  "validation_results": {
+    "syntax_valid": "boolean",
+    "lint_compliant": "boolean",
+    "security_issues": ["string"],
+    "potential_issues": ["string"],
+    "style_violations": ["string"]
+  },
+  "context_analysis": {
+    "style_compliance": "number (0-100)",
+    "naming_convention_compliance": "number (0-100)",
+    "architectural_alignment": "number (0-100)",
+    "pattern_consistency": "number (0-100)"
+  },
+  "suggestions": {
+    "optimization_opportunities": ["string"],
+    "further_improvements": ["string"],
+    "alternative_approaches": ["string"]
+  },
+  "test_suggestions": {
+    "unit_test_needed": "boolean",
+    "integration_test_needed": "boolean",
+    "test_scenarios": ["string"]
+  },
+  "metadata": {
+    "generation_time_ms": "number",
+    "ai_model_used": "string",
+    "context_sources_used": ["string"],
+    "tokens_generated": "number"
+  }
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// Generate function with context
+await context_aware_code_generation({
+  prompt: "Create a function to validate user input with email format check and password strength validation",
+  context: {
+    file_path: "src/utils/validation.ts",
+    existing_patterns: ["validateEmail", "validatePassword"],
+    dependencies: ["validator", "bcrypt"],
+    coding_standards: {
+      language: "typescript",
+      style_guide: "eslint-config-standard",
+      naming_conventions: ["camelCase", "descriptive function names"]
+    }
+  },
+  generation_type: "function",
+  constraints: {
+    max_lines: 20,
+    complexity_limit: 5,
+    test_required: true,
+    documentation_required: true
+  },
+  codebase_id: "my-project"
+});
+
+// Generate test cases
+await context_aware_code_generation({
+  prompt: "Create unit tests for the user authentication service",
+  context: {
+    file_path: "tests/auth/user-service.test.ts",
+    surrounding_code: `
+      import { UserService } from '../../src/services/user-service';
+      import { mockDatabase } from '../helpers/database';
+    `,
+    existing_patterns: ["describe", "it", "expect", "beforeEach", "afterEach"]
+  },
+  generation_type: "test",
+  constraints: {
+    test_required: false,
+    documentation_required: true
+  },
+  codebase_id: "my-project"
+});
+
+// Generate API endpoint
+await context_aware_code_generation({
+  prompt: "Create a REST API endpoint to handle user registration with validation and error handling",
+  context: {
+    file_path: "src/api/users.ts",
+    project_structure: "Express.js with TypeScript",
+    existing_patterns: ["async/await", "try/catch", "status codes"],
+    dependencies: ["express", "joi", "bcrypt"]
+  },
+  generation_type: "module",
+  constraints: {
+    max_lines: 50,
+    performance_optimized: true
+  },
+  codebase_id: "my-project"
+});
+```
+
+**Implementation Status**: ✅ **Fully Implemented** (Phase 4.1 Complete)
+
+### 14. technical_debt_analysis
+
+**Description**: Comprehensive technical debt assessment with business impact analysis and prioritization. Quantifies technical debt in financial terms and provides actionable remediation plans.
+
+**Input Schema**:
+
+```json
+{
+  "file_path": "string (optional) - File path to analyze",
+  "scope": "string (required) - 'function' | 'class' | 'module' | 'system'",
+  "analysis_depth": "string (required) - 'basic' | 'comprehensive' | 'deep'",
+  "include_recommendations": "boolean (optional, default: true)",
+  "codebase_id": "string (required) - Codebase identifier",
+  "historical_data": {
+    "previous_debt_scores": "array (optional) - Historical debt measurements",
+    "development_velocity": "object (optional) - Development speed metrics",
+    "bug_frequency": "object (optional) - Bug occurrence data",
+    "team_size": "number (optional) - Team size for cost calculation"
+  }
+}
+```
+
+**Output Schema**:
+
+```json
+{
+  "success": "boolean",
+  "overall_assessment": {
+    "debt_category": "'low' | 'medium' | 'high' | 'critical'",
+    "total_debt_score": "number (0-100)",
+    "interest_rate": "number (%)",
+    "principal": "number (financial estimate)",
+    "estimated_interest": "number (financial estimate)"
+  },
+  "financial_impact": {
+    "current_cost_per_month": "number",
+    "projected_cost_6_months": "number",
+    "projected_cost_12_months": "number",
+    "roi_potential": "number (%)",
+    "cost_of_delay": "number",
+    "remediation_cost_estimate": "number"
+  },
+  "debt_breakdown": {
+    "code_quality": {
+      "score": "number (0-100)",
+      "issues": "number",
+      "estimated_cost": "number"
+    },
+    "complexity": {
+      "score": "number (0-100)",
+      "issues": "number",
+      "estimated_cost": "number"
+    },
+    "duplication": {
+      "score": "number (0-100)",
+      "issues": "number",
+      "estimated_cost": "number"
+    },
+    "documentation": {
+      "score": "number (0-100)",
+      "issues": "number",
+      "estimated_cost": "number"
+    },
+    "testing": {
+      "score": "number (0-100)",
+      "issues": "number",
+      "estimated_cost": "number"
+    },
+    "security": {
+      "score": "number (0-100)",
+      "issues": "number",
+      "estimated_cost": "number"
+    }
+  },
+  "hotspots": [
+    {
+      "location": "string",
+      "debt_concentration": "number (0-100)",
+      "primary_issues": ["string"],
+      "recommended_actions": ["string"],
+      "estimated_remediation_effort": "string",
+      "business_impact": "string"
+    }
+  ],
+  "priority_matrix": {
+    "quick_wins": [
+      {
+        "title": "string",
+        "impact_score": "number (0-100)",
+        "effort_score": "number (0-100)",
+        "roi": "number (%)",
+        "estimated_time": "string"
+      }
+    ],
+    "strategic_initiatives": [
+      {
+        "title": "string",
+        "impact_score": "number (0-100)",
+        "effort_score": "number (0-100)",
+        "timeline": "string",
+        "dependencies": ["string"]
+      }
+    ]
+  },
+  "trending_analysis": {
+    "debt_trajectory": "'improving' | 'stable' | 'degrading'",
+    "predicted_future_debt": "array",
+    "recommended_investment": "number",
+    "break_even_point": "string"
+  },
+  "actionable_roadmap": {
+    "immediate_actions": ["string"],
+    "short_term_goals": ["string"],
+    "long_term_strategy": ["string"],
+    "success_metrics": ["string"]
+  },
+  "metadata": {
+    "analysis_time_ms": "number",
+    "files_analyzed": "number",
+    "metrics_calculated": "number",
+    "financial_model_used": "string"
+  }
+}
+```
+
+**Usage Examples**:
+
+```typescript
+// Comprehensive system-level analysis
+await technical_debt_analysis({
+  scope: "system",
+  analysis_depth: "comprehensive",
+  include_recommendations: true,
+  codebase_id: "my-project",
+  historical_data: {
+    previous_debt_scores: [
+      { date: "2024-01", score: 65 },
+      { date: "2024-02", score: 70 },
+      { date: "2024-03", score: 75 }
+    ],
+    development_velocity: {
+      story_points_per_sprint: 45,
+      average_cycle_time: "3 days",
+      defect_rate: "15%"
+    },
+    team_size: 8
+  }
+});
+
+// Module-specific analysis
+await technical_debt_analysis({
+  file_path: "src/legacy/payment-system.js",
+  scope: "module",
+  analysis_depth: "deep",
+  include_recommendations: true,
+  codebase_id: "my-project"
+});
+
+// Quick assessment
+await technical_debt_analysis({
+  scope: "class",
+  analysis_depth: "basic",
+  include_recommendations: false,
+  codebase_id: "my-project"
+});
+```
+
+**Implementation Status**: ✅ **Fully Implemented** (Phase 4.1 Complete)
+
 ## Comprehensive Testing Framework
 
 ### Test-Driven Development (TDD) Excellence ✅ **COMPLETED**
@@ -1200,13 +1893,26 @@ When adding new MCP tools:
 - ✅ Comprehensive performance benchmarking and reporting suite
 - ✅ Automated testing workflows for continuous validation
 
-### 🎯 Phase 4.0: Advanced Features (Future)
+### ✅ Phase 4.1: Advanced AI Features - **COMPLETED**
 
-- AI-powered code generation and assistance
+- ✅ **AI Code Review**: Comprehensive AI-powered code review with intelligent suggestions and quality analysis
+- ✅ **Intelligent Refactoring**: AI-driven refactoring recommendations with code transformation suggestions
+- ✅ **Bug Prediction**: Proactive bug prediction and risk assessment using ML-enhanced analysis
+- ✅ **Context-Aware Code Generation**: Context-aware code generation with project understanding and style compliance
+- ✅ **Technical Debt Analysis**: Comprehensive technical debt assessment with business impact analysis and prioritization
+- ✅ **Multi-Provider LLM Support**: Ollama, llama.cpp, and HuggingFace integration with intelligent fallback routing
+- ✅ **Enhanced Memory Management**: 4GB memory limit for complex AI analysis tasks with optimized performance
+- ✅ **AI Tool Testing**: 5 comprehensive AI tool test suites with full integration coverage
+- ✅ **Enhanced Test Coverage**: 57 comprehensive tests with 80.7% code coverage including AI validation
+- ✅ **AI Infrastructure**: Comprehensive AI tooling with multi-provider support and intelligent routing
+
+### 🎯 Phase 4.2: Future Enhancements (Planning)
+
 - Advanced semantic search with vector databases
 - Real-time collaborative code analysis
 - Custom plugin development framework
 - Enterprise multi-tenant architecture
+- AI-powered code generation and assistance (expanded beyond Phase 4.1)
 
 - Vector embeddings for semantic search
 - Real-time collaboration features
