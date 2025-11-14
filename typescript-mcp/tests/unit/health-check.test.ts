@@ -23,57 +23,67 @@ describe('Health Check Handlers', () => {
       query: {},
     };
     mockReply = {
-      code: vi.fn(),
-      send: vi.fn(),
+      code: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
     };
   });
 
   describe('healthCheckHandler', () => {
     it('should return health status', async () => {
-      await healthCheckHandler(
+      const result = await healthCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      expect(result).toHaveProperty('status');
+      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('uptime');
+      expect(['healthy', 'degraded', 'unhealthy']).toContain(result.status);
     });
   });
 
   describe('simpleHealthCheckHandler', () => {
     it('should return simple health status', async () => {
-      await simpleHealthCheckHandler(
+      const result = await simpleHealthCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      expect(result).toHaveProperty('status', 'healthy');
+      expect(result).toHaveProperty('timestamp');
     });
   });
 
   describe('readinessCheckHandler', () => {
     it('should return readiness status', async () => {
-      await readinessCheckHandler(
+      const result = await readinessCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      expect(result).toHaveProperty('ready');
+      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('checks');
+      expect(typeof result.ready).toBe('boolean');
     });
   });
 
   describe('livenessCheckHandler', () => {
     it('should return liveness status', async () => {
-      await livenessCheckHandler(
+      const result = await livenessCheckHandler(
         mockRequest as FastifyRequest,
         mockReply as FastifyReply,
       );
 
-      expect(mockReply.status).toHaveBeenCalledWith(200);
-      expect(mockReply.send).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(200);
+      expect(result).toHaveProperty('alive', true);
+      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('uptime');
+      expect(typeof result.uptime).toBe('number');
     });
   });
 });

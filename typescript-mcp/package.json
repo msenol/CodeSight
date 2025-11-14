@@ -76,7 +76,6 @@
     "@opentelemetry/sdk-node": "^0.206.0",
     "@opentelemetry/sdk-trace-node": "^2.1.0",
     "@opentelemetry/semantic-conventions": "^1.37.0",
-    "@rollup/rollup-win32-x64-msvc": "^4.52.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsonwebtoken": "^9.0.10",
     "@typescript-eslint/typescript-estree": "^6.15.0",
