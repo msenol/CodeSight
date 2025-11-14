@@ -63,7 +63,13 @@ node dist/cli/index.js test-ffi
 # Run comprehensive tests
 npm test
 npm run test:contract
+npm run test:ai-tools
 npm run test:performance
+
+# AI tool tests (Phase 4.1)
+npm run test:ai-tools
+npm run test:ai-providers
+npm run test:ai-performance
 
 # REST API contract tests (T018-T028)
 npm run test:contract:api
@@ -136,11 +142,17 @@ cargo test          # Run Rust tests
 cargo bench         # Run performance benchmarks
 cargo clippy        # Lint Rust code
 
-# Hybrid development (TypeScript + Rust)
+# Hybrid development (TypeScript + Rust + AI)
 npm run build:hybrid # Build both TypeScript and Rust components
 npm run test:ffi     # Test FFI bridge integration
+npm run test:ai      # Test AI integrations
 
-# Docker development
+# AI provider testing
+npm run test:ai-claude    # Test Claude integration
+npm run test:ai-openai    # Test OpenAI integration
+npm run test:ai-ollama    # Test Ollama integration
+
+# Docker development with AI services
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
@@ -202,6 +214,94 @@ docker-compose -f docker-compose.dev.yml up -d
 - ✅ **AI Infrastructure**: Multi-provider LLM support with intelligent fallback routing
 - ✅ **Enhanced Memory**: 4GB memory limit for complex AI analysis tasks
 - ✅ **Complete TDD Framework**: 30+ contract tests with comprehensive coverage including AI tools
+- ✅ **AI Performance Optimization**: Sub-second AI responses with intelligent caching
+- ✅ **AI Provider Testing**: Comprehensive testing for Claude, GPT-4, Ollama, and rule-based fallbacks
+
+## AI Development Guidelines (Phase 4.1)
+
+### 18. **AI/LLM Integration Development** (CRITICAL)
+
+**Multi-Provider AI Architecture Best Practices:**
+
+- **Provider Selection**: Always implement multiple AI providers with intelligent routing
+  - Primary: Anthropic Claude (best for code analysis)
+  - Secondary: OpenAI GPT-4 (good all-rounder with multimodal)
+  - Local: Ollama (offline capability, privacy-focused)
+  - Fallback: Rule-based (always available, basic analysis)
+
+- **Intelligent Fallback Strategy**:
+  1. Try preferred provider (Claude)
+  2. Fall back to secondary provider (GPT-4)
+  3. Use local provider if available (Ollama)
+  4. Always have rule-based fallback as last resort
+  5. Log all fallback events for monitoring
+
+- **AI Prompt Engineering**:
+  - Use context-aware prompts with project structure information
+  - Include coding standards and architectural patterns in prompts
+  - Implement prompt templates for consistent AI interactions
+  - Validate AI outputs with rule-based checks
+  - Cache expensive AI operations with intelligent invalidation
+
+- **Performance Optimization**:
+  - Implement response caching at multiple levels (memory, Redis)
+  - Batch AI operations when possible to reduce API calls
+  - Use streaming responses for long-running AI operations
+  - Monitor AI costs and implement usage quotas
+  - Optimize prompt size to reduce token usage
+
+- **Privacy and Security**:
+  - Never send sensitive data (passwords, API keys) to external AI services
+  - Implement code scanning to detect sensitive information before AI processing
+  - Provide user controls for enabling/disabling AI features
+  - Log AI interactions for audit and compliance
+  - Use environment-specific AI configurations (dev vs prod)
+
+**AI Tool Development Workflow:**
+
+1. **Design AI Interface**: Define clear input/output contracts for AI tools
+2. **Implement Provider Abstraction**: Create common interface for all AI providers
+3. **Add Rule-Based Fallback**: Ensure functionality works without AI providers
+4. **Implement Caching Layer**: Add intelligent caching for AI responses
+5. **Test All Providers**: Validate functionality with Claude, GPT-4, Ollama, rule-based
+6. **Performance Testing**: Measure response times and optimize bottlenecks
+7. **Cost Monitoring**: Track AI usage and implement cost controls
+8. **Error Handling**: Graceful degradation when AI providers fail
+
+**AI Tool Testing Strategy:**
+
+- **Unit Tests**: Test individual AI tool logic with mock providers
+- **Integration Tests**: Test with real AI providers (Claude, GPT-4, Ollama)
+- **Fallback Tests**: Verify rule-based fallback functionality
+- **Performance Tests**: Measure AI response times and resource usage
+- **Cost Tests**: Validate AI cost tracking and quota enforcement
+- **Privacy Tests**: Ensure sensitive data is not sent to external services
+
+### 19. **AI Performance and Cost Management** (CRITICAL)
+
+**Performance Requirements:**
+
+- **AI Response Times**: Target <1 second for most AI operations
+- **Memory Overhead**: Keep AI-related memory usage under 30MB additional
+- **Concurrency**: Support multiple concurrent AI operations with proper queuing
+- **Caching Hit Rate**: Aim for >70% cache hit rate for repeated AI queries
+- **Error Recovery**: <5 second recovery time when AI providers fail
+
+**Cost Optimization Strategies:**
+
+- **Prompt Optimization**: Minimize token usage while maintaining quality
+- **Smart Caching**: Cache responses with intelligent cache invalidation
+- **Batch Processing**: Combine multiple small AI requests into batches
+- **Provider Selection**: Choose cost-effective providers for different use cases
+- **Usage Monitoring**: Real-time cost tracking with configurable limits
+
+**Quality Assurance:**
+
+- **Confidence Scoring**: Rate AI suggestions with confidence levels
+- **Validation Rules**: Use rule-based validation to filter bad AI suggestions
+- **Human Review**: Implement review workflows for critical AI recommendations
+- **Continuous Learning**: Learn from user feedback to improve AI quality
+- **A/B Testing**: Compare different AI providers and prompt strategies
 
 ## Environment Configuration
 
@@ -223,6 +323,15 @@ FFI_GRACEFUL_FALLBACK=true
 INDEXING_PARALLEL_WORKERS=4
 INDEXING_BATCH_SIZE=500
 CACHE_SIZE_MB=512
+
+# AI/LLM Configuration (Development)
+ANTHROPIC_API_KEY=your-anthropic-api-key
+OPENAI_API_KEY=your-openai-api-key
+OLLAMA_BASE_URL=http://localhost:11434
+PREFERRED_AI_PROVIDER=anthropic-claude
+ENABLE_AI_FALLBACK=true
+AI_CACHE_ENABLED=true
+AI_TIMEOUT_MS=30000
 ```
 
 **Production Configuration:**
@@ -249,6 +358,17 @@ CACHE_SIZE_MB=1024
 JWT_SECRET=your-jwt-secret
 API_KEY=your-api-key
 CORS_ORIGIN=https://yourdomain.com
+
+# AI/LLM Configuration (Production)
+ANTHROPIC_API_KEY=your-production-anthropic-key
+OPENAI_API_KEY=your-production-openai-key
+OLLAMA_BASE_URL=http://ollama:11434
+PREFERRED_AI_PROVIDER=anthropic-claude
+ENABLE_AI_FALLBACK=true
+AI_CACHE_ENABLED=true
+AI_TIMEOUT_MS=45000
+AI_COST_LIMIT_PER_HOUR=50.00
+AI_RATE_LIMIT_PER_MINUTE=100
 
 # Monitoring
 LOG_LEVEL=info
