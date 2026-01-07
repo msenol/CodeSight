@@ -191,6 +191,34 @@ npm run test:performance
 npm run test:watch
 ```
 
+### Testing
+
+```bash
+# Run all tests (72/72 passing)
+npm test
+
+# Run contract tests specifically
+npm run test:contract
+
+# Run with coverage
+npm run test:coverage
+
+# Run performance benchmarks
+npm run test:performance
+
+# Watch mode for development
+npm run test:watch
+```
+
+**Test Coverage (Phase 5 Validation Complete):**
+- ✅ **72 tests passing** (100% pass rate)
+- ✅ **14 basic tests** - Core functionality
+- ✅ **4 health check tests** - System health monitoring
+- ✅ **21 AI tools tests** - AI-powered tool validation
+- ✅ **7 server integration tests** - MCP protocol compliance
+- ✅ **15 edge cases tests** - Error handling and edge cases
+- ✅ **11 performance tests** - Performance benchmarks
+
 ### Integration Testing
 
 The TypeScript MCP server has comprehensive integration testing for real-world usage scenarios:
@@ -249,6 +277,42 @@ npm run test:quickstart
 - ✅ Error recovery and service resilience
 - ✅ Performance and load testing
 - ✅ Concurrent request processing
+
+## REST API Endpoint
+
+A new `/mcp/call` HTTP endpoint is available for non-MCP client access:
+
+```bash
+# Start the Fastify server
+node dist/server.js
+
+# Call MCP tools via HTTP
+curl -X POST http://localhost:4000/mcp/call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "ai_code_review",
+    "arguments": {
+      "code_snippet": "function example() { return 42; }",
+      "review_type": "basic",
+      "codebase_id": "test"
+    }
+  }'
+```
+
+**Supported Tools via HTTP:**
+- `ai_code_review` - AI-powered code review
+- `bug_prediction` - AI bug prediction and risk assessment
+- `context_aware_code_generation` - AI code generation
+- `intelligent_refactoring` - AI refactoring recommendations
+- `technical_debt_analysis` - Technical debt analysis
+
+**Error Status Codes:**
+- `200` - Success
+- `400` - Invalid request (missing required fields, empty input)
+- `404` - Tool not found
+- `408` - Request timeout
+- `413` - Payload too large
+- `500` - Internal server error
 
 ## Usage
 

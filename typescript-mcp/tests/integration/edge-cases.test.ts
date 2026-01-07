@@ -4,7 +4,7 @@
  * Tests unusual scenarios, error conditions, and boundary cases
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../helper.js';
 
@@ -68,10 +68,15 @@ vi.mock('../../src/services/code-analysis.js', () => ({
         return Promise.reject(new Error('Syntax error in code'));
       }
 
+      const functionCount = code.split('function').length - 1;
       return Promise.resolve({
         complexity: {
           overall_score: Math.min(code.length / 100, 100),
-          functions: code.split('function').length - 1
+          functions: Array(functionCount).fill(0).map((_, i) => ({
+            name: `function${i}`,
+            cyclomatic_complexity: Math.floor(Math.random() * 10) + 1,
+            lines: Math.floor(Math.random() * 50) + 10
+          }))
         },
         testing: {
           coverage_percentage: Math.floor(Math.random() * 100),
@@ -92,7 +97,13 @@ vi.mock('../../src/services/code-analysis.js', () => ({
       return Promise.resolve({
         complexity: {
           overall_score: 60,
-          functions: 5
+          functions: [
+            { name: 'func1', cyclomatic_complexity: 3, lines: 20 },
+            { name: 'func2', cyclomatic_complexity: 5, lines: 30 },
+            { name: 'func3', cyclomatic_complexity: 2, lines: 15 },
+            { name: 'func4', cyclomatic_complexity: 7, lines: 40 },
+            { name: 'func5', cyclomatic_complexity: 4, lines: 25 }
+          ]
         },
         testing: {
           coverage_percentage: 80,

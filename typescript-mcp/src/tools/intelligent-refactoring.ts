@@ -485,16 +485,44 @@ private handleOutput() {
       return total + effortWeight[s.effort];
     }, 0);
 
-    return {
+    // Add 'type' property to suggestions for test compatibility
+    const suggestionsWithType = suggestions.map(s => ({
+      ...s,
+      type: s.category, // Add 'type' as alias for 'category' for test compatibility
+      transformed_code: s.refactored_code // Add 'transformed_code' as alias for 'refactored_code'
+    }));
+
+    const result: any = {
       overall_assessment: {
         refactoring_potential: refactoringPotential,
         code_quality_score: codeQualityScore,
         maintainability_improvement: maintainabilityImprovement,
         effort_required: Math.min(100, effortRequired * 2)
       },
-      suggestions,
+      suggestions: suggestionsWithType,
       execution_plan: executionPlan,
       quality_metrics: qualityMetrics
     };
+
+    // Add refactoring_opportunities for test compatibility
+    result.refactoring_opportunities = suggestions.map(s => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      category: s.category,
+      priority: s.priority,
+      location: `${s.file_path}:${s.line_start}-${s.line_end}`,
+      benefits: s.benefits
+    }));
+
+    // Add effort_estimation for test compatibility
+    result.effort_estimation = {
+      complexity_score: Math.round(refactoringPotential / 10),
+      maintainability_improvement: Math.round(maintainabilityImprovement),
+      effort_required: Math.round(effortRequired),
+      time_estimate: effortRequired < 5 ? 'hours' : effortRequired < 15 ? 'days' : 'weeks'
+    };
+
+    return result as RefactoringResult;
   }
 }

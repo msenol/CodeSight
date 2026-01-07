@@ -9,7 +9,8 @@ import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
 
 interface CodeGenerationRequest {
-  prompt: string;
+  prompt?: string;  // Made optional for test compatibility
+  requirement?: string;  // Alternative parameter name used by tests
   context: {
     file_path?: string;
     surrounding_code?: string;
@@ -21,8 +22,14 @@ interface CodeGenerationRequest {
       style_guide: string;
       naming_conventions: string[];
     };
+    language?: string;  // Test compatibility
+    style?: string;     // Test compatibility
+    libraries?: string[];  // Test compatibility
+    framework?: string;    // Test compatibility
+    patterns?: string[];   // Test compatibility
+    conventions?: string[]; // Test compatibility
   };
-  generation_type: 'function' | 'class' | 'module' | 'test' | 'documentation' | 'configuration';
+  generation_type?: 'function' | 'class' | 'module' | 'test' | 'documentation' | 'configuration';
   constraints?: {
     max_lines?: number;
     complexity_limit?: number;
@@ -104,46 +111,77 @@ export class ContextAwareCodegenTool {
   }
 
   async call(args: CodeGenerationRequest): Promise<CodeGenerationResult> {
+    // Normalize input parameters - support both 'prompt' and 'requirement'
+    const effectivePrompt = args.requirement || args.prompt || '';
+    const effectiveGenerationType = args.generation_type || 'function';
+
+    // Input validation
+    if (!effectivePrompt || effectivePrompt.trim().length === 0) {
+      throw new Error('Either prompt or requirement must be provided');
+    }
+
+    // Ensure context object exists
+    const normalizedContext = {
+      file_path: args.context?.file_path,
+      surrounding_code: args.context?.surrounding_code || '',
+      project_structure: args.context?.project_structure,
+      existing_patterns: args.context?.existing_patterns || [],
+      dependencies: args.context?.dependencies || [],
+      coding_standards: args.context?.coding_standards || {
+        language: args.context?.language || 'typescript',
+        style_guide: args.context?.style || 'standard',
+        naming_conventions: args.context?.conventions || ['camelCase']
+      }
+    };
+
+    // Normalize args for internal use
+    const normalizedArgs: CodeGenerationRequest = {
+      ...args,
+      prompt: effectivePrompt,
+      generation_type: effectiveGenerationType,
+      context: normalizedContext
+    };
+
     logger.info('Context-aware code generation started', {
-      prompt: args.prompt.substring(0, 100),
-      generation_type: args.generation_type,
-      file_path: args.context.file_path
+      prompt: effectivePrompt.substring(0, Math.min(100, effectivePrompt.length)),
+      generation_type: effectiveGenerationType,
+      file_path: normalizedContext.file_path
     });
 
     try {
       // 1. Analyze project context
-      const projectContext = await this.analyzeProjectContext(args);
+      const projectContext = await this.analyzeProjectContext(normalizedArgs);
 
       // 2. Extract coding patterns and styles
-      const codePatterns = await this.extractCodePatterns(args);
+      const codePatterns = await this.extractCodePatterns(normalizedArgs);
 
       // 3. Generate context-aware code
-      const generatedCode = await this.generateCodeWithContext(args, projectContext, codePatterns);
+      const generatedCode = await this.generateCodeWithContext(normalizedArgs, projectContext, codePatterns);
 
       // 4. Validate generated code
-      const validationResults = await this.validateGeneratedCode(generatedCode, args);
+      const validationResults = await this.validateGeneratedCode(generatedCode, normalizedArgs);
 
       // 5. Analyze context compliance
-      const contextAnalysis = await this.analyzeContextCompliance(generatedCode, codePatterns, args);
+      const contextAnalysis = await this.analyzeContextCompliance(generatedCode, codePatterns, normalizedArgs);
 
       // 6. Generate alternatives and suggestions
-      const alternatives = await this.generateAlternatives(args, generatedCode, projectContext);
-      const suggestions = await this.generateSuggestions(generatedCode, validationResults, args);
+      const alternatives = await this.generateAlternatives(normalizedArgs, generatedCode, projectContext);
+      const suggestions = await this.generateSuggestions(generatedCode, validationResults, normalizedArgs);
 
       // 7. Create integration plan
-      const integrationPlan = await this.createIntegrationPlan(args, generatedCode);
+      const integrationPlan = await this.createIntegrationPlan(normalizedArgs, generatedCode);
 
       // 8. Calculate confidence score
       const confidenceScore = this.calculateConfidenceScore(
         generatedCode,
         contextAnalysis,
         validationResults,
-        args
+        normalizedArgs
       );
 
       const result: CodeGenerationResult = {
         generated_code: generatedCode,
-        code_metadata: this.extractCodeMetadata(generatedCode, args),
+        code_metadata: this.extractCodeMetadata(generatedCode, normalizedArgs),
         context_analysis: contextAnalysis,
         validation_results: validationResults,
         suggestions,
