@@ -24,10 +24,9 @@ describe('Health Check Handlers', () => {
     };
     mockReply = {
       code: vi.fn().mockReturnThis(),
-      // Fastify's reply.send is automatically called when handlers return values
-      // In unit tests, we don't need to test send() since handlers use return
       send: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
+      header: vi.fn().mockReturnThis(),
     };
   });
 
@@ -38,12 +37,11 @@ describe('Health Check Handlers', () => {
         mockReply as FastifyReply,
       );
 
-      // Verify reply.code was called to set HTTP status
       expect(mockReply.code).toHaveBeenCalledWith(200);
-      // Verify result is returned (Fastify handles sending automatically)
-      expect(result).toBeDefined();
       expect(result).toHaveProperty('status');
       expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('uptime');
+      expect(['healthy', 'degraded', 'unhealthy']).toContain(result.status);
     });
   });
 
@@ -54,11 +52,8 @@ describe('Health Check Handlers', () => {
         mockReply as FastifyReply,
       );
 
-      // Verify reply.code was called to set HTTP status
       expect(mockReply.code).toHaveBeenCalledWith(200);
-      // Verify result is returned (Fastify handles sending automatically)
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('status');
+      expect(result).toHaveProperty('status', 'healthy');
       expect(result).toHaveProperty('timestamp');
     });
   });
@@ -70,10 +65,7 @@ describe('Health Check Handlers', () => {
         mockReply as FastifyReply,
       );
 
-      // Verify reply.code was called to set HTTP status
       expect(mockReply.code).toHaveBeenCalledWith(200);
-      // Verify result is returned with correct structure
-      expect(result).toBeDefined();
       expect(result).toHaveProperty('ready');
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('checks');
@@ -88,14 +80,10 @@ describe('Health Check Handlers', () => {
         mockReply as FastifyReply,
       );
 
-      // Verify reply.code was called to set HTTP status
       expect(mockReply.code).toHaveBeenCalledWith(200);
-      // Verify result is returned with correct structure
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('alive');
+      expect(result).toHaveProperty('alive', true);
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('uptime');
-      expect(typeof result.alive).toBe('boolean');
       expect(typeof result.uptime).toBe('number');
     });
   });

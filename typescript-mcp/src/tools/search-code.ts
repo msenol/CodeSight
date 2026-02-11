@@ -1,7 +1,7 @@
 import type { SearchResult } from '../types/index.js';
 import { z } from 'zod';
 import { logger } from '../services/logger.js';
-import { indexingService } from '../services/indexing-service.js';
+import { getIndexingService } from '../services/indexing-service.js';
 import { codebaseService } from '../services/codebase-service.js';
 
 // Input validation schema
@@ -48,7 +48,10 @@ export class SearchCodeTool {
   description = 'Search code using natural language queries with semantic understanding';
 
   private codebaseService = codebaseService;
-  private searchService = indexingService;
+  // Use factory function to get IndexingService with correct DATABASE_PATH
+  private get searchService() {
+    return getIndexingService();
+  }
 
   inputSchema = {
     type: 'object',
@@ -114,9 +117,12 @@ export class SearchCodeTool {
         );
       }
 
-      // Perform search
-      logger.debug(`[DEBUG] Starting search with query: "${input.query}"`);
-      const searchResults = this.searchService.search(input.query, { limit: input.max_results });
+      // Perform search with codebase ID filtering (Rule 15: Validate before use)
+      logger.debug(`[DEBUG] Starting search with query: "${input.query}" in codebase: ${codebase.id}`);
+      const searchResults = this.searchService.search(input.query, {
+        limit: input.max_results,
+        codebaseId: codebase.id,  // Pass codebase ID for filtering
+      });
       logger.debug(
         '[DEBUG] Raw search results:',
         searchResults.length,

@@ -1,6 +1,7 @@
 import type { SearchResult } from '../types/index.js';
 import Database from 'better-sqlite3';
-import * as fs from 'fs/promises';
+import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 import * as path from 'path';
 
  
@@ -42,6 +43,13 @@ export class DatabaseSearchService implements SearchService {
     this.databasePath =
       dbPath || process.env.DATABASE_PATH || path.join(process.cwd(), 'code-intelligence.db');
 
+    // Ensure directory exists before opening database
+    const dbDir = path.dirname(this.databasePath);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+      console.log(`[DEBUG] Created database directory: ${dbDir}`);
+    }
+
     console.log('[DEBUG] DatabaseSearchService using path:', this.databasePath);
     this.db = new Database(this.databasePath);
 
@@ -77,11 +85,11 @@ export class DatabaseSearchService implements SearchService {
       console.error('[DEBUG] Error checking entity count:', error);
     }
 
-    // Search in database
+    // Search in database with codebase_id filter
     const stmt = this.db.prepare(`
       SELECT id, name, file_path, entity_type, start_line, end_line, content
       FROM code_entities
-      WHERE (LOWER(name) LIKE ? OR LOWER(content) LIKE ?)
+      WHERE (LOWER(name) LIKE ? OR LOWER(content) LIKE ?) AND codebase_id = ?
       ORDER BY
         CASE
           WHEN LOWER(name) = ? THEN 1
@@ -101,6 +109,7 @@ export class DatabaseSearchService implements SearchService {
     const rows = stmt.all(
       likeQuery,
       likeQuery,
+      options.codebase_id,
       exactMatch,
       startsWithQuery,
       containsQuery,
@@ -141,12 +150,12 @@ export class DatabaseSearchService implements SearchService {
       const stmt = this.db.prepare(`
         SELECT id, name, file_path, entity_type, start_line, end_line, content
         FROM code_entities
-        WHERE name REGEXP ? OR content REGEXP ?
+        WHERE (name REGEXP ? OR content REGEXP ?) AND codebase_id = ?
         ORDER BY name
         LIMIT ?
       `);
 
-      const rows = stmt.all(pattern, pattern, maxResults) as any[];
+      const rows = stmt.all(pattern, pattern, options.codebase_id, maxResults) as any[];
 
       return rows.map(row => ({
         file: row.file_path,
@@ -166,15 +175,16 @@ export class DatabaseSearchService implements SearchService {
     const maxResults = options.max_results || 10;
     const searchQuery = query.toLowerCase();
 
-    // Get all entities and filter by fuzzy match
+    // Get all entities from this codebase and filter by fuzzy match
     const stmt = this.db.prepare(`
       SELECT id, name, file_path, entity_type, start_line, end_line, content
       FROM code_entities
+      WHERE codebase_id = ?
       ORDER BY name
       LIMIT 100
     `);
 
-    const rows = stmt.all() as any[];
+    const rows = stmt.all(options.codebase_id) as any[];
     const results: SearchResult[] = [];
 
     for (const row of rows) {
@@ -202,7 +212,7 @@ export class DatabaseSearchService implements SearchService {
 
   async getCodeSnippet(filePath: string, line: number, contextLines: number): Promise<string> {
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fsp.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       const start = Math.max(0, line - contextLines - 1);
       const end = Math.min(lines.length, line + contextLines);
@@ -217,7 +227,7 @@ export class DatabaseSearchService implements SearchService {
 
   async getContextLines(filePath: string, line: number, contextLines: number): Promise<string[]> {
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fsp.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       const start = Math.max(0, line - contextLines - 1);
       const end = Math.min(lines.length, line + contextLines);
