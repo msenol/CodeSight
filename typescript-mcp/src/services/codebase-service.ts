@@ -37,13 +37,37 @@ export interface CodebaseService {
 export class DefaultCodebaseService implements CodebaseService {
   private codebases = new Map<string, CodebaseInfo>();
   private searchService: DatabaseSearchService;
+  private aliases: Map<string, string>;
 
   constructor() {
     this.searchService = new DatabaseSearchService();
+    this.aliases = this.loadAliases();
+  }
+
+  private loadAliases(): Map<string, string> {
+    const aliasMap = new Map<string, string>();
+
+    // Load aliases from environment variable (JSON format)
+    // Example: {"axon": "/home/msenol/Projects/Axon", "codesight": "/home/msenol/Projects/CodeSight"}
+    const aliasesEnv = process.env.CODEBASE_ALIASES;
+    if (aliasesEnv) {
+      try {
+        const parsed = JSON.parse(aliasesEnv);
+        for (const [name, path] of Object.entries(parsed)) {
+          aliasMap.set(name, path as string);
+        }
+      } catch (e) {
+        // Invalid JSON, ignore
+      }
+    }
+
+    return aliasMap;
   }
 
   async addCodebase(name: string, path: string, languages: string[]): Promise<string> {
-    const id = `codebase_${Date.now()}`;
+    // Use the provided name as the ID for consistency
+    // This ensures the codebase can be found by the same ID used in indexing
+    const id = name;
     const codebase: CodebaseInfo = {
       id,
       name,
@@ -52,8 +76,8 @@ export class DefaultCodebaseService implements CodebaseService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       fileCount: 0,
-      indexedAt: null,
-      status: 'active',
+      indexedAt: new Date().toISOString(),
+      status: 'indexed',
     };
     this.codebases.set(id, codebase);
     return id;
@@ -70,16 +94,35 @@ export class DefaultCodebaseService implements CodebaseService {
       return memoryCodebase;
     }
 
-    // Handle "default" codebase ID - use current working directory
+    // Check for codebase aliases first
+    const aliasPath = this.aliases.get(id);
+    if (aliasPath) {
+      const codebase: CodebaseInfo = {
+        id,
+        name: id,
+        path: aliasPath,
+        languages: ['typescript', 'javascript'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        fileCount: 0,
+        indexedAt: new Date().toISOString(),
+        status: 'indexed',
+      };
+      this.codebases.set(id, codebase);
+      return codebase;
+    }
+
+    // Handle "default" codebase ID - use environment variable or current working directory
     if (id === 'default' || id === 'Default') {
-      const defaultPath = process.cwd();
+      // Check for DEFAULT_CODEBASE_PATH environment variable first
+      const defaultPath = process.env.DEFAULT_CODEBASE_PATH || process.cwd();
       // Using logger for debugging instead of console
       // TODO: Replace with proper logger when available
       // logger.debug('[DEBUG] Using default codebase path:', defaultPath);
 
       const codebase: CodebaseInfo = {
         id: 'default',
-        name: 'Default Project',
+        name: process.env.DEFAULT_CODEBASE_NAME || 'Default Project',
         path: defaultPath,
         languages: ['typescript', 'javascript'],
         createdAt: new Date().toISOString(),

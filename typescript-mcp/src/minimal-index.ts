@@ -56,8 +56,11 @@ async function searchInCodebase(query: string, basePath: string = 'F:/Developmen
     // Search in src directory
     const srcPath = join(basePath, 'src');
 
-    async function searchDirectory(dirPath: string, depth = 0): Promise<void> {
-      if (depth > 3) return; // Limit depth to avoid infinite recursion
+    // Move function declaration outside of try block to fix ESLint error
+    const searchDirectory = async function(dirPath: string, depth = 0): Promise<void> {
+      if (depth > 3) {
+        return; // Limit depth to avoid infinite recursion
+      }
 
       try {
         const entries = await readdir(dirPath, { withFileTypes: true });
@@ -86,7 +89,7 @@ async function searchInCodebase(query: string, basePath: string = 'F:/Developmen
       } catch (dirError) {
         // Skip directories that can't be read
       }
-    }
+    };
 
     await searchDirectory(srcPath);
 
@@ -106,7 +109,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'search_code':
+      case 'search_code': {
         const query = args.query as string;
         const searchResults = await searchInCodebase(query);
         return {
@@ -117,8 +120,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
 
-      case 'explain_function':
+      case 'explain_function': {
         return {
           content: [
             {
@@ -127,6 +131,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);

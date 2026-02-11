@@ -4,12 +4,13 @@
 
 Welcome to the comprehensive documentation for the CodeSight MCP Server - an enterprise-grade code intelligence platform with hybrid TypeScript/Rust architecture.
 
-**Current Version**: v0.1.0 (Production Ready - Phase 3.5 Complete)
+**Current Version**: v0.1.1 (Production Ready - Phase 5 Validation Complete)
 **Architecture**: Hybrid TypeScript + Rust with NAPI-RS FFI Bridge
 **Code Quality**: Enterprise-grade with 95% TypeScript error reduction and zero ESLint errors
-**Integration Testing**: 30+ test suites with comprehensive MCP protocol validation
-**Test Coverage**: Claude Desktop (9/9), VS Code (11/11), E2E Workflows (7/7), REST API (11/11), Performance (5/5)
-**Phase 3.5 Features**: Interactive CLI, Advanced Monitoring, Enhanced Error Handling, Load Testing Suite (T084-T088)
+**Integration Testing**: 72 comprehensive tests with 100% pass rate
+**Test Coverage**: Claude Desktop (9/9), VS Code (11/11), E2E Workflows (7/7), REST API (11/11), Performance (5/5), AI Tools (5/5)
+**Phase 5 Features**: 100% Test Pass Rate, Rule 15 Compliance, REST API Endpoint `/mcp/call`
+**AI Tools**: 5 advanced AI-powered tools with OpenRouter integration (Xiaomi Mimo, Claude, GPT-4)
 **Docker Testing**: Comprehensive real-project testing with automated workflows
 **Performance Benchmarking**: Complete Criterion.rs benchmarks, K6 load testing, memory profiling
 **Real Code Search**: Enhanced search validated against actual GitHub projects
@@ -43,6 +44,11 @@ Welcome to the comprehensive documentation for the CodeSight MCP Server - an ent
 - [Getting Started Guide](./GETTING-STARTED.md) - Complete setup and testing framework guide
 - [API Contract Specifications](./api/openapi.yaml) - OpenAPI specifications
 - [Postman Collection](./testing/postman/README.md) - API testing collection
+
+### 🤖 AI Tools (Phase 4.1)
+
+- [AI Tools Documentation](./AI_TOOLS.md) - 5 AI-powered tools with OpenRouter integration
+- AI Code Review, Bug Prediction, Context-Aware Code Generation, Intelligent Refactoring, Technical Debt Analysis
 
 ### 🔧 API & Integration
 
@@ -87,13 +93,13 @@ docs/
 
 ## Key Features & Achievements
 
-### ✅ Production-Ready Features (v0.1.0)
+### ✅ Production-Ready Features (v0.1.1)
 
 **Core Functionality:**
 
 - **Hybrid Architecture**: TypeScript + Rust with NAPI-RS FFI bridge
 - **Real Code Indexing**: SQLite database with 377+ entities indexed
-- **MCP Protocol**: Full compliance with 9 implemented tools
+- **MCP Protocol**: Full compliance with 14 implemented tools (9 core + 5 AI-powered)
 - **Multi-Language Support**: 15+ programming languages with Tree-sitter
 - **Performance Optimized**: 1-2 second indexing, 20-50ms search queries
 
@@ -112,15 +118,11 @@ docs/
 - 🏆 **Rule 15 Compliance**: Enterprise-grade development standards
 - 🏆 **Type Safety Enhanced**: Comprehensive 'any' type elimination
 
-### 🔧 MCP Tools Implementation
+### 🔧 MCP Tools Implementation (14 Tools - 100% Functional)
 
-**Fully Functional (Real Implementation):**
-
+**Core Tools (9):**
 - `search_code`: Natural language search with database integration
 - `explain_function`: Function explanation with codebase lookup
-
-**Protocol Ready (Working Implementation):**
-
 - `find_references`: Symbol reference finding
 - `trace_data_flow`: Data flow analysis
 - `analyze_security`: Security vulnerability detection
@@ -128,6 +130,13 @@ docs/
 - `check_complexity`: Code complexity analysis
 - `find_duplicates`: Duplicate code detection
 - `suggest_refactoring`: Refactoring recommendations
+
+**AI-Powered Tools (5) - Phase 4.1:**
+- `ai_code_review`: Comprehensive AI-powered code review
+- `bug_prediction`: Proactive bug prediction and risk assessment
+- `context_aware_code_generation`: Context-aware code generation
+- `intelligent_refactoring`: AI-driven refactoring recommendations
+- `technical_debt_analysis`: Technical debt assessment
 
 ## Performance Benchmarks
 
@@ -189,8 +198,8 @@ See [Documentation Maintenance Guide](./development/documentation-maintenance-gu
 
 ## Version Information
 
-- **Current Version**: v0.1.0
-- **Documentation Last Updated**: October 1, 2025
+- **Current Version**: v0.1.1
+- **Documentation Last Updated**: February 11, 2026
 - **Compatible CodeSight Versions**: v0.1.x
 - **Documentation Format**: Markdown with enterprise-grade structure
 

@@ -81,9 +81,7 @@ tempfile = "3.8"
 proptest = "1.4"
 tokio-test = "0.4"
 
-# Virtual workspace - no dependencies or bench sections allowed
-
-# Benchmark configuration (moved to individual crates)
+# Benchmark configurations moved to individual crates
 
 [profile.release]
 opt-level = 3
