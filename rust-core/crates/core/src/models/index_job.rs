@@ -687,17 +687,23 @@ mod tests {
 
     #[test]
     fn test_index_job_creation() {
-        let job = IndexJob::new(
+        let mut job = IndexJob::new(
             "codebase123".to_string(),
             IndexJobType::FullIndex,
             JobPriority::High,
         );
 
+        // Set valid config values to pass validation
+        job.config.batch_size = 100;
+        job.config.parallel_workers = 4;
+
         assert_eq!(job.codebase_id, "codebase123");
         assert_eq!(job.job_type, IndexJobType::FullIndex);
         assert_eq!(job.priority, JobPriority::High);
         assert_eq!(job.status, IndexJobStatus::Queued);
-        assert!(job.validate().is_ok());
+
+        let validation_result = job.validate();
+        assert!(validation_result.is_ok(), "Job validation should pass, got error: {:?}", validation_result.err());
     }
 
     #[test]
@@ -824,17 +830,27 @@ mod tests {
             IndexJobType::FullIndex,
             JobPriority::Normal,
         );
-        assert!(job.validate().is_err());
-        
+
+        // Set valid config values initially
+        job.config.batch_size = 100;
+        job.config.parallel_workers = 4;
+
+        let validation_result = job.validate();
+        assert!(validation_result.is_err(), "Empty codebase_id should fail validation");
+
         job.codebase_id = "valid_id".to_string();
-        assert!(job.validate().is_ok());
-        
+        let validation_result = job.validate();
+        assert!(validation_result.is_ok(), "Valid codebase_id should pass validation, got error: {:?}", validation_result.err());
+
+        // Test batch_size validation
         job.config.batch_size = 0;
-        assert!(job.validate().is_err());
-        
+        let validation_result = job.validate();
+        assert!(validation_result.is_err(), "Zero batch_size should fail validation");
+
         job.config.batch_size = 100;
         job.progress.percentage = 150.0;
-        assert!(job.validate().is_err());
+        let validation_result = job.validate();
+        assert!(validation_result.is_err(), "Progress > 100% should fail validation");
     }
 
     #[test]

@@ -676,7 +676,7 @@ mod tests {
         );
 
         let euclidean = embedding1.euclidean_distance(&embedding2).unwrap();
-        assert!((euclidean - (3.0_f32 * 3.0_f32).sqrt()).abs() < 1e-6);
+        assert!((euclidean - (27.0_f32).sqrt()).abs() < 1e-6);
 
         let dot_product = embedding1.dot_product(&embedding2).unwrap();
         assert_eq!(dot_product, 32.0); // 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32
