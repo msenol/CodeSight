@@ -3,10 +3,10 @@
  * AI-powered refactoring recommendations with code transformation suggestions
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
+import { deduplicateSuggestions } from '../utils/ai-helpers.js';
 
 interface RefactoringRequest {
   file_path?: string;
@@ -233,8 +233,10 @@ Focus on:
   private async createDetailedSuggestions(args: RefactoringRequest, aiInsights: any, codeAnalysis: any): Promise<RefactoringSuggestion[]> {
     const suggestions: RefactoringSuggestion[] = [];
 
-    // Process AI insights into detailed suggestions
-    aiInsights.suggestions.forEach((insight: any, index: number) => {
+    // Process AI insights into detailed suggestions with deduplication
+    const deduplicatedSuggestions = deduplicateSuggestions(aiInsights.suggestions || []);
+
+    deduplicatedSuggestions.forEach((insight: any, index: number) => {
       const suggestion = this.createRefactoringSuggestion(insight, args, codeAnalysis);
       if (suggestion) {
         suggestions.push(suggestion);
@@ -503,6 +505,9 @@ private handleOutput() {
       execution_plan: executionPlan,
       quality_metrics: qualityMetrics
     };
+
+    // Add refactoring_suggestions as alias for test compatibility
+    result.refactoring_suggestions = suggestionsWithType;
 
     // Add refactoring_opportunities for test compatibility
     result.refactoring_opportunities = suggestions.map(s => ({

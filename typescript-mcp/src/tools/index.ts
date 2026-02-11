@@ -3,8 +3,12 @@
  */
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import path from 'node:path';
 import { logger } from '../services/logger.js';
+import { IndexingService } from '../services/indexing-service.js';
+import { DefaultCodebaseService } from '../services/codebase-service.js';
 import { SearchCodeTool } from './search-code.js';
+import { ExplainFunctionTool } from './explain-function.js';
 import { AICodeReviewTool } from './ai-code-review.js';
 import { IntelligentRefactoringTool } from './intelligent-refactoring.js';
 import { BugPredictionTool } from './bug-prediction.js';
@@ -12,10 +16,63 @@ import { ContextAwareCodegenTool } from './context-aware-codegen.js';
 import { TechnicalDebtAnalysisTool } from './technical-debt-analysis.js';
 
 /**
+ * Get or create codebase ID from current context
+ */
+function getCodebaseId(providedId?: string): string {
+  if (providedId) {
+    return providedId;
+  }
+  return path.basename(process.cwd());
+}
+
+/**
+ * Ensure codebase is indexed, auto-index if needed
+ */
+async function ensureCodebaseIndexed(codebaseId?: string): Promise<string> {
+  const codebaseService = new DefaultCodebaseService();
+  // DATABASE_PATH is already set in registerMCPTools()
+  const indexingService = new IndexingService();
+
+  // Determine codebase ID and path
+  const actualCodebaseId = codebaseId || path.basename(process.cwd());
+  const codebasePath = process.cwd();
+
+  try {
+    // Check if codebase exists and is indexed
+    const codebase = await codebaseService.getCodebase(actualCodebaseId);
+
+    if (codebase && codebase.status === 'indexed') {
+      logger.info(`Codebase ${actualCodebaseId} already indexed`);
+      return actualCodebaseId;
+    }
+
+    // Auto-index if not indexed
+    logger.info(`Auto-indexing codebase: ${codebasePath}`);
+
+    await indexingService.indexCodebaseWithProgress(codebasePath, undefined, actualCodebaseId);
+    await codebaseService.addCodebase(actualCodebaseId, codebasePath, ['typescript', 'javascript']);
+
+    logger.info(`Auto-indexed ${actualCodebaseId}`);
+    return actualCodebaseId;
+  } catch (error) {
+    logger.error('Auto-indexing failed:', error);
+    // Don't throw - let tools handle missing index gracefully
+    return actualCodebaseId;
+  }
+}
+
+/**
  * Register all MCP tools with the server
  */
 export async function registerMCPTools(server: Server): Promise<void> {
   try {
+    // Set consistent DATABASE_PATH for all services
+    // This ensures indexing and search use the same database file
+    if (!process.env.DATABASE_PATH) {
+      process.env.DATABASE_PATH = path.join(process.cwd(), 'data', 'code-intelligence.db');
+      logger.info(`DATABASE_PATH set to: ${process.env.DATABASE_PATH}`);
+    }
+
     // Initialize Phase 4.1 AI-powered services
     const searchCodeTool = new SearchCodeTool();
     const aiCodeReviewTool = new AICodeReviewTool();
@@ -31,7 +88,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
         tools: [
           {
             name: 'search_code',
-            description: 'Search for code patterns in the codebase using natural language',
+            description: 'Search for code patterns in the codebase using natural language. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -41,15 +98,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['query', 'codebase_id'],
+              required: ['query'],
             },
           },
           {
             name: 'explain_function',
-            description: 'Explain what a function does',
+            description: 'Explain what a function does. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -59,15 +116,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['function_name', 'codebase_id'],
+              required: ['function_name'],
             },
           },
           {
             name: 'find_references',
-            description: 'Find all references to a symbol in the codebase',
+            description: 'Find all references to a symbol in the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -77,15 +134,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['symbol_name', 'codebase_id'],
+              required: ['symbol_name'],
             },
           },
           {
             name: 'trace_data_flow',
-            description: 'Trace data flow through the codebase',
+            description: 'Trace data flow through the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -99,15 +156,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['variable_name', 'file_path', 'codebase_id'],
+              required: ['variable_name', 'file_path'],
             },
           },
           {
             name: 'analyze_security',
-            description: 'Analyze code for potential security vulnerabilities',
+            description: 'Analyze code for potential security vulnerabilities. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -118,15 +175,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['codebase_id'],
+              required: [],
             },
           },
           {
             name: 'get_api_endpoints',
-            description: 'List all API endpoints in the codebase',
+            description: 'List all API endpoints in the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -136,15 +193,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['codebase_id'],
+              required: [],
             },
           },
           {
             name: 'check_complexity',
-            description: 'Analyze code complexity metrics',
+            description: 'Analyze code complexity metrics. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -154,15 +211,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['file_path', 'codebase_id'],
+              required: [],
             },
           },
           {
             name: 'find_duplicates',
-            description: 'Find duplicate code patterns in the codebase',
+            description: 'Find duplicate code patterns in the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -172,15 +229,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['codebase_id'],
+              required: [],
             },
           },
           {
             name: 'suggest_refactoring',
-            description: 'Suggest refactoring opportunities for code',
+            description: 'Suggest refactoring opportunities for code. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -190,13 +247,13 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional, defaults to current directory name)',
                 },
               },
-              required: ['file_path', 'codebase_id'],
+              required: [],
             },
           },
-          // Phase 4.1 AI-Powered Tools
+          // Phase 4.1 AI-Powered Tools (these analyze provided code snippets, no auto-indexing needed)
           {
             name: 'ai_code_review',
             description: 'AI-powered comprehensive code review with intelligent suggestions and analysis',
@@ -218,7 +275,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Codebase identifier',
+                  description: 'Codebase identifier (optional)',
                 },
                 context: {
                   type: 'object',
@@ -397,7 +454,25 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 },
               },
               required: ['codebase_id', 'scope', 'analysis_depth'],
-            }
+            },
+          },
+          {
+            name: 'index_codebase',
+            description: 'Index a codebase for code intelligence. Parse all TypeScript/JavaScript files and store code entities in the database for search and analysis.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                codebase_path: {
+                  type: 'string',
+                  description: 'Absolute path to the codebase to index. Defaults to current working directory.',
+                },
+                codebase_id: {
+                  type: 'string',
+                  description: 'Optional codebase identifier. If not provided, defaults to the directory name.',
+                },
+              },
+              required: [],
+            },
           }
         ]
       };
@@ -413,14 +488,17 @@ export async function registerMCPTools(server: Server): Promise<void> {
         switch (name) {
           case 'search_code': {
             logger.debug('[DEBUG] search_code tool called with args:', args);
-            // codebase_id reserved for future use
 
             try {
+              // Auto-index if needed and get codebase ID
+              const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
+              await ensureCodebaseIndexed(codebaseId);
+
               logger.debug('[DEBUG] Calling SearchCodeTool with proper services');
               // Use the proper SearchCodeTool with database integration
               const searchResult = await searchCodeTool.call({
                 query: (args as { query: string }).query,
-                codebase_id: (args as { codebase_id: string }).codebase_id,
+                codebase_id: codebaseId,
                 context_lines: 3,
                 max_results: 10,
                 include_tests: true,
@@ -436,9 +514,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
                     {
                       type: 'text',
                       text:
-                        `No results found for "${(args as { query: string }).query}" in ${(args as { codebase_id: string }).codebase_id}.\n\n` +
-                        '💡 Tip: Make sure the codebase has been indexed first.\n' +
-                        '   You can index it by running: index_codebase tool',
+                        `No results found for "${(args as { query: string }).query}" in ${codebaseId}.\n\n` +
+                        '💡 The codebase was auto-indexed. Try a different search query.',
                     },
                   ],
                 };
@@ -474,40 +551,46 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'explain_function': {
-            // codebase_id reserved for future use
-            const { function_name, codebase_id } = args as {
-              function_name: string;
-              codebase_id: string;
-            };
-            // Mock response for testing
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text:
-                    `📚 Function: ${function_name} in ${codebase_id}\n\n` +
-                    'Purpose: This function processes incoming data and returns transformed results.\n\n' +
-                    'Parameters:\n' +
-                    '- data: Input data to be processed\n' +
-                    '- options: Configuration options\n\n' +
-                    'Returns: Processed data object\n\n' +
-                    'Complexity: Medium (Cyclomatic complexity: 5)',
-                },
-              ],
-            };
+            // Use real ExplainFunctionTool instead of mock
+            const tool = new ExplainFunctionTool();
+            try {
+              // Auto-index if needed and get codebase ID
+              const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
+              await ensureCodebaseIndexed(codebaseId);
+
+              const result = await tool.call({
+                ...args,
+                codebase_id: codebaseId,
+              });
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify(result, null, 2),
+                  },
+                ],
+              };
+            } catch (error) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Function explanation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
+              };
+            }
           }
 
           case 'find_references': {
-            const { symbol_name, codebase_id } = args as {
-              symbol_name: string;
-              codebase_id: string;
-            };
+            const { symbol_name } = args as { symbol_name: string; codebase_id?: string };
+            const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
             return {
               content: [
                 {
                   type: 'text',
                   text:
-                    `🔍 References for "${symbol_name}" in ${codebase_id}:\n\n` +
+                    `🔍 References for "${symbol_name}" in ${codebaseId}:\n\n` +
                     '- src/index.ts:15 - Import statement\n' +
                     '- src/index.ts:45 - Function call\n' +
                     '- src/utils.ts:23 - Variable assignment\n' +
@@ -915,6 +998,47 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 content: [{
                   type: 'text',
                   text: `Technical Debt Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+                }],
+              };
+            }
+          }
+
+          case 'index_codebase': {
+            const codebasePath = (args as { codebase_path?: string }).codebase_path || process.cwd();
+            const codebaseId = (args as { codebase_id?: string }).codebase_id || path.basename(codebasePath);
+
+            logger.info(`Indexing codebase: ${codebasePath} as ${codebaseId}`);
+
+            try {
+              // DATABASE_PATH is already set in registerMCPTools()
+              const indexingService = new IndexingService();
+              const codebaseService = new DefaultCodebaseService();
+
+              // Index the codebase with progress (clears existing entries automatically)
+              const entityCount = await indexingService.indexCodebaseWithProgress(
+                codebasePath,
+                undefined,
+                codebaseId
+              );
+
+              // Register the codebase
+              await codebaseService.addCodebase(codebaseId, codebasePath, ['typescript', 'javascript']);
+
+              const resultText = '✅ Codebase indexed successfully!\n\n' +
+                `📁 Codebase: ${codebaseId}\n` +
+                `📍 Path: ${codebasePath}\n` +
+                `🔍 Entities indexed: ${entityCount}\n\n` +
+                '💡 You can now use all code intelligence tools like search_code, explain_function, etc.';
+
+              return {
+                content: [{ type: 'text', text: resultText }],
+              };
+            } catch (error) {
+              logger.error('Indexing error:', error);
+              return {
+                content: [{
+                  type: 'text',
+                  text: `Failed to index codebase: ${error instanceof Error ? error.message : 'Unknown error'}`
                 }],
               };
             }

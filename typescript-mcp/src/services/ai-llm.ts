@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger.js';
+import OpenAI from 'openai';
 
 export interface LLMProvider {
   name: string;
@@ -51,7 +52,7 @@ export interface AIInsights {
  */
 export class AILLMService {
   private providers: Map<string, LLMProvider> = new Map();
-  private preferredProvider: string = 'anthropic-claude';
+  private preferredProvider: string = process.env.PREFERRED_AI_PROVIDER || 'anthropic-claude';
 
   constructor() {
     this.initializeProviders();
@@ -66,6 +67,9 @@ export class AILLMService {
 
     // Initialize Ollama (Local)
     this.providers.set('ollama-local', new OllamaProvider());
+
+    // Initialize OpenRouter with user-configurable API key and model
+    this.providers.set('openrouter', new OpenRouterProvider());
 
     // Initialize fallback rule-based provider
     this.providers.set('rule-based', new RuleBasedProvider());
@@ -343,6 +347,180 @@ class OllamaProvider implements LLMProvider {
       supportsMultiModal: false,
       latency: 'fast',
       costPerToken: 0
+    };
+  }
+}
+
+/**
+ * OpenRouter Provider - User-configurable AI models via OpenRouter API
+ */
+class OpenRouterProvider implements LLMProvider {
+  name = 'openrouter';
+  private client: OpenAI | null = null;
+  private modelName: string;
+  private apiKey: string;
+
+  constructor() {
+    this.apiKey = process.env.OPENROUTER_API_KEY || '';
+    this.modelName = process.env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet';
+
+    if (this.apiKey) {
+      this.client = new OpenAI({
+        apiKey: this.apiKey,
+        baseURL: 'https://openrouter.ai/api/v1',
+      });
+    }
+  }
+
+  async generateInsights(prompts: string[]): Promise<AIInsights> {
+    if (!this.client) {
+      throw new Error('OpenRouter client not initialized. Set OPENROUTER_API_KEY environment variable.');
+    }
+
+    const systemPrompt = this.buildSystemPrompt();
+    const userPrompt = prompts.join('\n\n');
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: this.modelName,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 4000, // Increased for longer responses
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      return this.parseAIResponse(content);
+
+    } catch (error) {
+      logger.error('OpenRouter API error:', error);
+      throw new Error(`OpenRouter request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  isAvailable(): boolean {
+    return !!this.client;
+  }
+
+  getCapabilities(): LLMCapabilities {
+    return {
+      maxTokens: 128000, // Depends on model, using conservative default
+      supportsCodeAnalysis: true,
+      supportsMultiModal: true, // Depends on model
+      latency: 'medium',
+      costPerToken: 0.001 // Varies by model on OpenRouter
+    };
+  }
+
+  private buildSystemPrompt(): string {
+    return `You are a code analyst. Analyze the provided code and return ONLY a valid JSON object. Do NOT include any text outside the JSON.
+
+Return exactly this JSON structure:
+{
+  "suggestions": [
+    {
+      "title": "string",
+      "description": "string",
+      "category": "security",
+      "impact": "low",
+      "confidence": 80,
+      "suggestion": "string"
+    }
+  ],
+  "patterns": [],
+  "summary": {
+    "overall_quality": 75,
+    "main_concerns": [],
+    "positive_aspects": ["string"],
+    "next_steps": []
+  }
+}
+
+IMPORTANT: Return ONLY the JSON. No markdown, no code blocks, no explanations.`;
+  }
+
+  private parseAIResponse(content: string): AIInsights {
+    const parseAttempts = [
+      // Attempt 1: Direct JSON parse
+      () => {
+        return JSON.parse(content);
+      },
+      // Attempt 2: Remove markdown code blocks
+      () => {
+        let cleaned = content.trim();
+        cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        return JSON.parse(cleaned);
+      },
+      // Attempt 3: Extract JSON between first { and last }
+      () => {
+        const firstBrace = content.indexOf('{');
+        const lastBrace = content.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          return JSON.parse(content.substring(firstBrace, lastBrace + 1));
+        }
+        throw new Error('No JSON object found');
+      },
+      // Attempt 4: Fix common JSON errors (trailing commas, quotes)
+      () => {
+        let cleaned = content;
+        // Remove markdown first
+        cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        // Extract JSON
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
+        // Fix trailing commas
+        cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+        return JSON.parse(cleaned);
+      }
+    ];
+
+    let lastError: Error | null = null;
+
+    for (const attempt of parseAttempts) {
+      try {
+        const parsed = attempt() as any;
+
+        // Validate and fix structure
+        if (!parsed.summary) {
+          parsed.summary = {
+            overall_quality: parsed.overall_quality || 50,
+            main_concerns: parsed.main_concerns || [],
+            positive_aspects: parsed.positive_aspects || [],
+            next_steps: parsed.next_steps || []
+          };
+        }
+        if (!parsed.suggestions) {
+          parsed.suggestions = parsed.suggestions || [];
+        }
+        if (!parsed.patterns) {
+          parsed.patterns = parsed.patterns || [];
+        }
+
+        return parsed as AIInsights;
+      } catch (error) {
+        lastError = error as Error;
+        continue;
+      }
+    }
+
+    // All attempts failed - return fallback
+    logger.error('Failed to parse OpenRouter response after multiple attempts:', lastError);
+    logger.debug('Raw response content (first 500 chars):', content.substring(0, 500));
+
+    return {
+      suggestions: [],
+      patterns: [],
+      summary: {
+        overall_quality: 50,
+        main_concerns: ['Failed to parse AI response'],
+        positive_aspects: [],
+        next_steps: ['Check AI provider configuration or try a different model']
+      }
     };
   }
 }

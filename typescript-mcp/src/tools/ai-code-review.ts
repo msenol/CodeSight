@@ -8,6 +8,7 @@ import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { SecurityAnalyzer } from '../services/security-analyzer.js';
 import { logger } from '../services/logger.js';
+import { deduplicateSuggestions } from '../utils/ai-helpers.js';
 
 interface CodeReviewRequest {
   file_path?: string;
@@ -274,9 +275,12 @@ Consider the changes in the context of this pull request and provide feedback sp
       });
     }
 
-    // AI-generated insights
+    // AI-generated insights with deduplication
     if (aiInsights.suggestions) {
-      aiInsights.suggestions.forEach((insight: any) => {
+      // Deduplicate suggestions to avoid duplicate issues
+      const deduplicatedSuggestions = deduplicateSuggestions(aiInsights.suggestions);
+
+      deduplicatedSuggestions.forEach((insight: any) => {
         issues.push({
           type: insight.impact === 'critical' ? 'error' :
                 insight.impact === 'high' ? 'warning' : 'suggestion',

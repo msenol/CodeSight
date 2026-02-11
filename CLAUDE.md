@@ -227,17 +227,25 @@ docker-compose -f docker-compose.dev.yml up -d
 **Multi-Provider AI Architecture Best Practices:**
 
 - **Provider Selection**: Always implement multiple AI providers with intelligent routing
-  - Primary: Anthropic Claude (best for code analysis)
-  - Secondary: OpenAI GPT-4 (good all-rounder with multimodal)
+  - Primary: OpenRouter (recommended - user-configurable, 100+ models available)
+  - OpenRouter Models:
+    - `xiaomi/mimo-v2-flash:free` (**RECOMMENDED** - Free tier, best quality, detects specific vulnerabilities)
+    - `z-ai/glm-4.5-air:free` (Free tier, basic analysis)
+    - `anthropic/claude-3.5-haiku` (Fast, cost-effective)
+    - `openai/gpt-4o-mini` (Balanced cost/quality)
+    - `anthropic/claude-3.5-sonnet` (Best for code analysis)
+  - Secondary: Anthropic Claude (direct API, best for code analysis)
+  - Tertiary: OpenAI GPT-4 (good all-rounder with multimodal)
   - Local: Ollama (offline capability, privacy-focused)
   - Fallback: Rule-based (always available, basic analysis)
 
 - **Intelligent Fallback Strategy**:
-  1. Try preferred provider (Claude)
-  2. Fall back to secondary provider (GPT-4)
-  3. Use local provider if available (Ollama)
-  4. Always have rule-based fallback as last resort
-  5. Log all fallback events for monitoring
+  1. Try preferred provider (OpenRouter with user-configured model)
+  2. Fall back to Anthropic Claude (if API key configured)
+  3. Fall back to OpenAI GPT-4 (if API key configured)
+  4. Use local provider if available (Ollama)
+  5. Always have rule-based fallback as last resort
+  6. Log all fallback events for monitoring
 
 - **AI Prompt Engineering**:
   - Use context-aware prompts with project structure information
@@ -266,15 +274,15 @@ docker-compose -f docker-compose.dev.yml up -d
 2. **Implement Provider Abstraction**: Create common interface for all AI providers
 3. **Add Rule-Based Fallback**: Ensure functionality works without AI providers
 4. **Implement Caching Layer**: Add intelligent caching for AI responses
-5. **Test All Providers**: Validate functionality with Claude, GPT-4, Ollama, rule-based
+5. **Test All Providers**: Validate functionality with OpenRouter, Claude, GPT-4, Ollama, rule-based
 6. **Performance Testing**: Measure response times and optimize bottlenecks
-7. **Cost Monitoring**: Track AI usage and implement cost controls
+7. **Cost Monitoring**: Track AI usage and implement cost controls (especially for OpenRouter)
 8. **Error Handling**: Graceful degradation when AI providers fail
 
 **AI Tool Testing Strategy:**
 
 - **Unit Tests**: Test individual AI tool logic with mock providers
-- **Integration Tests**: Test with real AI providers (Claude, GPT-4, Ollama)
+- **Integration Tests**: Test with real AI providers (OpenRouter, Claude, GPT-4, Ollama)
 - **Fallback Tests**: Verify rule-based fallback functionality
 - **Performance Tests**: Measure AI response times and resource usage
 - **Cost Tests**: Validate AI cost tracking and quota enforcement
@@ -328,10 +336,20 @@ INDEXING_BATCH_SIZE=500
 CACHE_SIZE_MB=512
 
 # AI/LLM Configuration (Development)
+PREFERRED_AI_PROVIDER=openrouter
+
+# OpenRouter Configuration (Recommended)
+# Get your API key from https://openrouter.ai/keys
+OPENROUTER_API_KEY=your-openrouter-api-key
+# Free tier model for testing (Xiaomi Mimo - best quality free tier)
+OPENROUTER_MODEL=xiaomi/mimo-v2-flash:free
+# Other options: z-ai/glm-4.5-air:free, anthropic/claude-3.5-haiku, openai/gpt-4o-mini, anthropic/claude-3.5-sonnet
+
+# Optional: Direct AI provider access (for fallback)
 ANTHROPIC_API_KEY=your-anthropic-api-key
 OPENAI_API_KEY=your-openai-api-key
 OLLAMA_BASE_URL=http://localhost:11434
-PREFERRED_AI_PROVIDER=anthropic-claude
+
 ENABLE_AI_FALLBACK=true
 AI_CACHE_ENABLED=true
 AI_TIMEOUT_MS=30000
@@ -363,10 +381,19 @@ API_KEY=your-api-key
 CORS_ORIGIN=https://yourdomain.com
 
 # AI/LLM Configuration (Production)
+PREFERRED_AI_PROVIDER=openrouter
+
+# OpenRouter Configuration (Recommended for production)
+OPENROUTER_API_KEY=your-production-openrouter-key
+# Production models (higher quality, cost applies):
+OPENROUTER_MODEL=anthropic/claude-3.5-haiku
+# Alternatives: openai/gpt-4o-mini, anthropic/claude-3.5-sonnet, xiaomi/mimo-v2-flash:free
+
+# Optional: Direct AI provider access (for fallback)
 ANTHROPIC_API_KEY=your-production-anthropic-key
 OPENAI_API_KEY=your-production-openai-key
 OLLAMA_BASE_URL=http://ollama:11434
-PREFERRED_AI_PROVIDER=anthropic-claude
+
 ENABLE_AI_FALLBACK=true
 AI_CACHE_ENABLED=true
 AI_TIMEOUT_MS=45000

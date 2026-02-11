@@ -3,10 +3,10 @@
  * Comprehensive technical debt assessment and prioritization
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
+import { deduplicateSuggestions } from '../utils/ai-helpers.js';
 
 interface TechnicalDebtRequest {
   file_path?: string;
@@ -231,6 +231,28 @@ export class TechnicalDebtAnalysisTool {
 
       // Add debt_items as alias for itemsWithImpact
       result.debt_items = itemsWithImpact;
+
+      // Add remediation_estimate for test compatibility
+      result.remediation_estimate = {
+        time: actionablePlan.immediate_actions[0]?.estimated_timeframe || '1-2 weeks',
+        effort_hours: itemsWithImpact.reduce((sum, item) => {
+          const effortHours = {
+            'hours': 4,
+            'days': 24,
+            'weeks': 120,
+            'months': 480
+          };
+          return sum + (effortHours[item.remediation.estimated_effort] || 24);
+        }, 0),
+        cost_estimate: itemsWithImpact.reduce((sum, item) => sum + item.remediation.estimated_cost, 0),
+        priority: overallAssessment.debt_category === 'critical' ? 'immediate' :
+                 overallAssessment.debt_category === 'high' ? 'high' :
+                 overallAssessment.debt_category === 'moderate' ? 'medium' : 'low'
+      };
+
+      // Add overall_debt_score as alias for test compatibility
+      result.overall_debt_score = overallAssessment.total_debt_score;
+      result.debt_category = overallAssessment.debt_category;
 
       logger.info('Technical debt analysis completed', {
         total_debt_score: result.overall_assessment.total_debt_score,
@@ -696,7 +718,10 @@ Focus on actionable insights that can help reduce technical debt and improve cod
 
       const aiInsights = await this.aiService.generateInsights(prompts);
 
-      return aiInsights.suggestions.map((suggestion, index) => ({
+      // Deduplicate suggestions to avoid duplicate debt items
+      const deduplicatedSuggestions = deduplicateSuggestions(aiInsights.suggestions || []);
+
+      return deduplicatedSuggestions.map((suggestion, index) => ({
         id: `ai-debt-${index}`,
         title: suggestion.title || 'AI-Identified Technical Debt',
         description: suggestion.description || 'Technical debt identified by AI analysis',

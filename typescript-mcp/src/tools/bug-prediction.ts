@@ -7,6 +7,7 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
+import { deduplicateSuggestions, fixLineNumbers } from '../utils/ai-helpers.js';
 
 interface BugPredictionRequest {
   file_path?: string;
@@ -398,7 +399,14 @@ Focus on actionable insights that can prevent bugs before they occur.
 
       const aiInsights = await this.aiService.generateInsights(prompts);
 
-      return aiInsights.suggestions.map((suggestion, index) => ({
+      // Deduplicate and fix line numbers in suggestions
+      const deduplicatedSuggestions = deduplicateSuggestions(aiInsights.suggestions || []);
+      const fixedSuggestions = fixLineNumbers(
+        deduplicatedSuggestions,
+        args.code_snippet
+      );
+
+      return fixedSuggestions.map((suggestion, index) => ({
         id: `ai-prediction-${index}`,
         title: suggestion.title || 'AI-Predicted Bug Risk',
         description: suggestion.description || 'Potential bug detected by AI analysis',
