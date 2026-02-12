@@ -6,8 +6,8 @@
   "main": "dist/minimal-index.js",
   "types": "dist/minimal-index.d.ts",
   "bin": {
-    "codesight": "dist/minimal-index.js",
-    "codesight-mcp": "dist/minimal-index.js"
+    "codesight": "dist/cli/index.js",
+    "codesight-mcp": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -51,11 +51,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/codesight-mcp.git"
+    "url": "https://github.com/msenol/CodeSight.git"
   },
-  "homepage": "https://codesight-mcp.com",
+  "homepage": "https://github.com/msenol/CodeSight#readme",
   "bugs": {
-    "url": "https://github.com/your-org/codesight-mcp/issues"
+    "url": "https://github.com/msenol/CodeSight/issues"
   },
   "engines": {
     "node": ">=20.0.0",

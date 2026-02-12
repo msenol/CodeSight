@@ -258,6 +258,42 @@ kubectl logs -f deployment/codesight-server
 
 ## 🚀 Quick Start
 
+### ⚡ One-Line Install (Recommended)
+
+```bash
+# Index any project instantly - no installation needed!
+npx codesight-mcp index /path/to/your/project
+
+# Search your code
+npx codesight-mcp search "authentication"
+
+# View statistics
+npx codesight-mcp stats
+```
+
+### 🔧 Alternative: Local Installation
+
+```bash
+# Clone and setup
+git clone https://github.com/msenol/CodeSight.git
+cd CodeSight/typescript-mcp && npm install && npm run build
+
+# Use locally
+node dist/cli/index.js index /path/to/project
+```
+
+### 📋 Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `codesight index <path>` | Index a codebase |
+| `codesight search <query>` | Search code |
+| `codesight stats` | Show statistics |
+| `codesight server` | Start MCP server |
+| `codesight setup` | Interactive configuration |
+
+---
+
 ### 1. Interactive Setup (New in Phase 3.5)
 
 ```bash
