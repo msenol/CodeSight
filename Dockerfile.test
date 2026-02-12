@@ -22,7 +22,7 @@ COPY rust-core/crates ./crates
 RUN cargo build --release
 
 # Stage 2: Node.js build environment (test-optimized)
-FROM node:20-slim as node-builder
+FROM node:25-slim as node-builder
 
 # Install system dependencies for native modules and testing
 RUN apt-get update && apt-get install -y \
@@ -63,7 +63,7 @@ RUN npm install -g \
     pm2
 
 # Stage 3: Runtime environment (test-optimized)
-FROM node:20-slim as runtime
+FROM node:25-slim as runtime
 
 # Install runtime and testing dependencies
 RUN apt-get update && apt-get install -y \
