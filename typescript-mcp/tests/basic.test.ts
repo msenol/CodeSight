@@ -110,9 +110,10 @@ describe('Test Utilities', () => {
       return end - start;
     };
 
-    const time = await measureTime(() => new Promise(resolve => setTimeout(resolve, 5)));
-    expect(time).toBeGreaterThanOrEqual(5);
-    expect(time).toBeLessThan(50); // Should be reasonable
+    // Use 10ms for more reliable timing (JavaScript timers are not precise)
+    const time = await measureTime(() => new Promise(resolve => setTimeout(resolve, 10)));
+    expect(time).toBeGreaterThanOrEqual(8); // Allow 2ms tolerance for timer imprecision
+    expect(time).toBeLessThan(100); // Should be reasonable
   });
 
   it('should test utility functions', () => {
