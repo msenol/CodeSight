@@ -224,3 +224,8 @@ typescript-mcp/config/
 .sequential-thoughts/
 *.sequential-thoughts
 external-test-projects/*/
+
+# Temporary test scripts
+typescript-mcp/test-*.mjs
+typescript-mcp/test-*.cjs
+typescript-mcp/check-db.*
