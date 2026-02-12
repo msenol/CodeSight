@@ -44,9 +44,10 @@ class ProgressIndicator {
     }
     this.lastUpdate = now;
 
-    const percentage = this.total > 0 ? (current / this.total) : 0;
-    const filled = Math.floor(percentage * this.width);
-    const empty = this.width - filled;
+    // Ensure percentage is between 0 and 1 (Rule 15: proper boundary handling)
+    const percentage = this.total > 0 ? Math.min(1, Math.max(0, current / this.total)) : 0;
+    const filled = Math.min(this.width, Math.max(0, Math.floor(percentage * this.width)));
+    const empty = Math.max(0, this.width - filled);
 
     const bar = '█'.repeat(filled) + '░'.repeat(empty);
     const percentText = `${(percentage * 100).toFixed(1)}%`;

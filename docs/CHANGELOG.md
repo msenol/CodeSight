@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **find_duplicates tool**: Fixed `fast-levenshtein` ESM import error - changed from `import { distance }` to `import levenshtein from 'fast-levenshtein'` and updated `distance()` call to `levenshtein.get()` for v3 compatibility
+- **CLI progress bar**: Fixed potential negative value error in `ProgressIndicator.update()` by adding proper boundary checks with `Math.min()` and `Math.max()`
+- **Flaky test**: Fixed timing precision issue in `basic.test.ts` performance measurement test
 - Package.json version mismatch
 - Documentation structure organization
 

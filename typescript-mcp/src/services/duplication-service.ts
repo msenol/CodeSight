@@ -7,7 +7,7 @@ import { parse } from '@typescript-eslint/typescript-estree';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
-import { distance } from 'fast-levenshtein';
+import levenshtein from 'fast-levenshtein';
  
 // import * as acorn from 'acorn'; // Unused import
  
@@ -452,7 +452,7 @@ export class DuplicationServiceImpl implements DuplicationService {
     const maxLength = Math.max(text1.length, text2.length);
     if (maxLength === 0) {return 1;}
 
-    const editDistance = distance(text1, text2);
+    const editDistance = levenshtein.get(text1, text2);
     return 1 - editDistance / maxLength;
   }
 
