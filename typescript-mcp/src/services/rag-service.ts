@@ -73,7 +73,9 @@ export class RAGService {
   }
 
   async addDocument(doc: VectorDocument): Promise<void> {
-    if (!this.isInitialized || !this.db) throw new Error('RAG not initialized');
+    if (!this.isInitialized || !this.db) {
+      throw new Error('RAG not initialized');
+    }
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO embeddings (id, content, embedding, source, language, type)
@@ -99,7 +101,9 @@ export class RAGService {
   }
 
   async retrieve(queryEmbedding: number[]): Promise<RetrievalResult[]> {
-    if (!this.isInitialized || !this.db) return [];
+    if (!this.isInitialized || !this.db) {
+      return [];
+    }
 
     const startTime = Date.now();
     const stmt = this.db.prepare('SELECT * FROM embeddings ORDER BY rowid LIMIT ?');
@@ -124,18 +128,24 @@ export class RAGService {
   }
 
   async deleteBySource(source: string): Promise<number> {
-    if (!this.db) return 0;
+    if (!this.db) {
+      return 0;
+    }
     const stmt = this.db.prepare('DELETE FROM embeddings WHERE source = ?');
     return stmt.run(source).changes;
   }
 
   async clear(): Promise<void> {
-    if (!this.db) return;
+    if (!this.db) {
+      return;
+    }
     this.db.exec('DELETE FROM embeddings');
   }
 
   getStats(): { count: number; bySource: Record<string, number> } {
-    if (!this.db) return { count: 0, bySource: {} };
+    if (!this.db) {
+      return { count: 0, bySource: {} };
+    }
     
     const countResult = this.db.prepare('SELECT COUNT(*) as count FROM embeddings').get() as any;
     const sourceRows = this.db.prepare('SELECT source, COUNT(*) as count FROM embeddings GROUP BY source').all() as any[];
@@ -147,21 +157,32 @@ export class RAGService {
   }
 
   private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) return 0;
-    let dotProduct = 0, normA = 0, normB = 0;
+    if (a.length !== b.length) {
+      return 0;
+    }
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
     for (let i = 0; i < a.length; i++) {
       dotProduct += a[i] * b[i];
       normA += a[i] * a[i];
       normB += b[i] * b[i];
     }
-    if (normA === 0 || normB === 0) return 0;
+    if (normA === 0 || normB === 0) {
+      return 0;
+    }
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
-  isReady(): boolean { return this.isInitialized; }
+  isReady(): boolean {
+    return this.isInitialized;
+  }
 
   async shutdown(): Promise<void> {
-    if (this.db) { this.db.close(); this.db = null; }
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
     this.isInitialized = false;
   }
 }
