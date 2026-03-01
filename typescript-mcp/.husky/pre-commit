@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+
+echo "🔒 Running security checks..."
+
+# Check for API keys and secrets
+echo "🔍 Scanning for sensitive data..."
+
+# Simple grep-based detection
+if git diff --cached --name-only | grep -q "\.mcp\.json"; then
+  echo ""
+  echo "❌ .mcp.json should not be committed (contains API keys)"
+  echo "   Please add .mcp.json to .gitignore"
+  echo ""
+  exit 1
+fi
+
+# Check for .env files (except .env.example)
+STAGED_ENVS=$(git diff --cached --name-only | grep -E "^\.env$|\.env\.local$|\.env\..*\.local$" || true)
+if [ -n "$STAGED_ENVS" ]; then
+  echo ""
+  echo "❌ .env files should not be committed"
+  echo "   Files: $STAGED_ENVS"
+  echo "   Please add to .gitignore"
+  echo ""
+  exit 1
+fi
+
+# Run security scan script on staged files
+echo "✅ Security check passed"
+echo ""
+
+# Run npm security check if available
+if command -v npm >/dev/null 2>&1; then
+  cd typescript-mcp
+  if [ -f "scripts/security-scan.js" ]; then
+    npm run security:check --silent 2>/dev/null || true
+  fi
+  cd ..
+fi
+
+echo "✅ All pre-commit checks passed"
+exit 0

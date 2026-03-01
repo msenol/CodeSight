@@ -232,3 +232,16 @@ typescript-mcp/check-db.*
 
 # MCP configuration (contains API keys)
 .mcp.json
+
+# Security and Secrets
+.mcp.json
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+service-account.json
+**/.env
+**/.env.local
+**/.env.*.local
