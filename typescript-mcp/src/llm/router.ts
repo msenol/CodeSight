@@ -8,6 +8,8 @@ import { Logger } from '../services/logger.js';
 import { LlamaCppService, LlamaModelConfig } from './llama.js';
 import { OllamaService, OllamaConfig } from './ollama.js';
 import { HuggingFaceService, HuggingFaceConfig } from './huggingface.js';
+import { GroqService, GroqConfig } from './groq.js';
+import { LMStudioService, LMStudioConfig } from './lmstudio.js';
 
 const logger = new Logger('LLMRouter');
 
@@ -41,10 +43,10 @@ export interface RouterConfig {
 
 export interface ProviderConfig {
   name: string;
-  type: 'llamacpp' | 'ollama' | 'huggingface';
+  type: 'llamacpp' | 'ollama' | 'huggingface' | 'groq' | 'lmstudio';
   enabled: boolean;
   priority: number;
-  config: LlamaModelConfig | OllamaConfig | HuggingFaceConfig;
+  config: LlamaModelConfig | OllamaConfig | HuggingFaceConfig | GroqConfig | LMStudioConfig;
 }
 
 export interface CompletionOptions {
@@ -123,7 +125,6 @@ export class LLMRouter extends EventEmitter {
       });
 
       this.emit('initialized');
-
     } catch (error) {
       logger.error('Failed to initialize LLM router', error);
       throw new Error(`LLM router initialization failed: ${error.message}`);
@@ -226,6 +227,70 @@ export class LLMRouter extends EventEmitter {
           };
         }
 
+        case 'groq': {
+          const groqService = new GroqService(config.config as GroqConfig);
+          await groqService.checkAvailability();
+          return {
+            name: config.name,
+            available: groqService.available(),
+            priority: config.priority,
+            capabilities: {
+              textGeneration: true,
+              streaming: true,
+              embeddings: false,
+              maxTokens: 32768,
+              supportsSystemPrompt: true,
+              codeOptimized: true,
+            },
+            health: async () => groqService.available(),
+            complete: async (prompt: string, options?: any) => {
+              const messages = options?.messages || [{ role: 'user', content: prompt }];
+              const result = await groqService.complete({ messages, ...options });
+              return result.text;
+            },
+            completeStream: async function* (prompt: string, options?: any) {
+              const messages = options?.messages || [{ role: 'user', content: prompt }];
+              for await (const chunk of groqService.completeStream({ messages, ...options })) {
+                yield chunk;
+              }
+            },
+          };
+        }
+
+        case 'lmstudio': {
+          const lmStudioService = new LMStudioService(config.config as LMStudioConfig);
+          await lmStudioService.checkAvailability();
+          return {
+            name: config.name,
+            available: lmStudioService.available(),
+            priority: config.priority,
+            capabilities: {
+              textGeneration: true,
+              streaming: true,
+              embeddings: true,
+              maxTokens: 4096,
+              supportsSystemPrompt: true,
+              codeOptimized: false,
+            },
+            health: async () => lmStudioService.available(),
+            complete: async (prompt: string, options?: any) => {
+              const messages = options?.messages || [{ role: 'user', content: prompt }];
+              const result = await lmStudioService.complete({ messages, ...options });
+              return result.text;
+            },
+            completeStream: async function* (prompt: string, options?: any) {
+              const messages = options?.messages || [{ role: 'user', content: prompt }];
+              for await (const chunk of lmStudioService.completeStream({ messages, ...options })) {
+                yield chunk;
+              }
+            },
+            generateEmbedding: async (text: string) => {
+              const result = await lmStudioService.generateEmbedding(text);
+              return result.embeddings;
+            },
+          };
+        }
+
         default: {
           logger.warn('Unknown provider type', { type: config.type });
           return null;
@@ -281,7 +346,6 @@ export class LLMRouter extends EventEmitter {
             finishReason: 'stop',
             metadata: { duration, attempt: attempt + 1 },
           };
-
         } catch (error) {
           lastError = error as Error;
           logger.warn('Completion attempt failed', {
@@ -309,7 +373,10 @@ export class LLMRouter extends EventEmitter {
   /**
    * Generate streaming completion with automatic fallback
    */
-  async *completeStream(prompt: string, options: CompletionOptions = {}): AsyncGenerator<string, void, unknown> {
+  async *completeStream(
+    prompt: string,
+    options: CompletionOptions = {},
+  ): AsyncGenerator<string, void, unknown> {
     const providers = this.getAvailableProviders();
 
     if (providers.length === 0) {
@@ -332,7 +399,6 @@ export class LLMRouter extends EventEmitter {
 
         yield* provider.completeStream(prompt, options);
         return;
-
       } catch (error) {
         logger.warn('Streaming attempt failed', {
           provider: provider.name,
@@ -380,7 +446,6 @@ export class LLMRouter extends EventEmitter {
           model: model || 'default',
           dimension: embeddings.length,
         };
-
       } catch (error) {
         logger.warn('Embedding generation failed', {
           provider: provider.name,
@@ -465,7 +530,12 @@ export class LLMRouter extends EventEmitter {
   /**
    * Get provider status
    */
-  getProviderStatus(): Array<{ name: string; available: boolean; priority: number; capabilities: LLMCapabilities }> {
+  getProviderStatus(): Array<{
+    name: string;
+    available: boolean;
+    priority: number;
+    capabilities: LLMCapabilities;
+  }> {
     return Array.from(this.providers.values()).map(provider => ({
       name: provider.name,
       available: provider.available,
@@ -510,7 +580,7 @@ export class LLMRouter extends EventEmitter {
       } catch (error) {
         logger.warn('Failed to shutdown provider', {
           provider: provider.name,
-          error: error.message
+          error: error.message,
         });
       }
     }
