@@ -229,3 +229,6 @@ external-test-projects/*/
 typescript-mcp/test-*.mjs
 typescript-mcp/test-*.cjs
 typescript-mcp/check-db.*
+
+# MCP configuration (contains API keys)
+.mcp.json
