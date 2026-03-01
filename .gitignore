@@ -245,3 +245,10 @@ service-account.json
 **/.env
 **/.env.local
 **/.env.*.local
+
+# Test files
+test-index.js
+test-rag-full.js
+test-projects/
+LOCAL_TEST_REPORT.md
+data/*.rag.db
