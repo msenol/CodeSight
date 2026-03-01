@@ -1,0 +1,121 @@
+# Production Dockerfile - CodeSight MCP Server
+# Optimized for security, size, and performance
+
+# ============================================
+# Stage 1: Rust Build Environment
+# ============================================
+FROM rust:1.75-alpine AS rust-builder
+
+LABEL stage=rust-builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    musl-dev \
+    openssl-dev \
+    clang-dev \
+    llvm-dev \
+    pkgconfig \
+    make \
+    cmake
+
+WORKDIR /app/rust-core
+
+# Copy Rust source
+COPY rust-core/Cargo.toml rust-core/Cargo.lock ./
+COPY rust-core/crates ./crates
+COPY rust-core/src ./src
+COPY rust-core/build.rs ./
+
+# Build Rust FFI library (release mode)
+RUN cargo build --release \
+    && strip target/release/libcode_intelligence_core.so
+
+# ============================================
+# Stage 2: Node.js Build Environment
+# ============================================
+FROM node:20-alpine AS node-builder
+
+LABEL stage=node-builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    openssl-dev \
+    cairo-dev \
+    pango-dev
+
+WORKDIR /app
+
+# Copy package files
+COPY typescript-mcp/package*.json ./
+
+# Install dependencies (production only)
+RUN npm ci --only=production --ignore-scripts \
+    && npm cache clean --force
+
+# Copy source code
+COPY typescript-mcp/src ./src
+COPY typescript-mcp/tsconfig.json ./
+COPY typescript-mcp/scripts ./scripts
+
+# Build TypeScript
+RUN npm run build \
+    && npm run type-check
+
+# ============================================
+# Stage 3: Production Runtime (Minimal)
+# ============================================
+FROM gcr.io/distroless/nodejs20-debian12 AS production
+
+LABEL maintainer="CodeSight Team <security@codesight.dev>"
+LABEL version="0.1.0"
+LABEL description="CodeSight MCP Server - Production Image"
+
+# Security labels
+LABEL org.opencontainers.image.source="https://github.com/msenol/CodeSight"
+LABEL org.opencontainers.image.vendor="CodeSight"
+LABEL org.opencontainers.image.title="CodeSight MCP Server"
+LABEL org.opencontainers.image.description="Enterprise-grade code intelligence platform"
+
+# Copy Rust FFI library
+COPY --from=rust-builder /app/rust-core/target/release/libcode_intelligence_core.so /app/lib/
+
+# Copy built application
+COPY --from=node-builder /app/dist /app/dist
+COPY --from=node-builder /app/node_modules /app/node_modules
+COPY --from=node-builder /app/package.json /app/
+
+# Copy configuration
+COPY docker/config.json /app/config/
+COPY docker/entrypoint.sh /app/
+
+# Create directories (as root in distless)
+WORKDIR /app
+
+# Non-root user (distless has nobody:nogroup)
+USER nobody
+
+# Expose ports
+EXPOSE 4000 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node dist/health-check.js || exit 1
+
+# Environment variables
+ENV NODE_ENV=production
+ENV LOG_LEVEL=info
+ENV DATA_DIR=/app/data
+ENV CACHE_DIR=/app/cache
+ENV RUST_FFI_PATH=/app/lib
+ENV ENABLE_RUST_FFI=true
+ENV FFI_GRACEFUL_FALLBACK=true
+
+# Resource limits
+ENV NODE_OPTIONS="--max-old-space-size=2048 --max-semi-space-size=128"
+
+# Entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["hybrid"]

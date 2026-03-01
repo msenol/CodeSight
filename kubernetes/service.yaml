@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: codesight-mcp
+  namespace: codesight
+  labels:
+    app: codesight-mcp
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '4000'
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+      protocol: TCP
+    - name: mcp
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: codesight-mcp
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codesight-mcp-external
+  namespace: codesight
+  labels:
+    app: codesight-mcp
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4000
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 4000
+      protocol: TCP
+  selector:
+    app: codesight-mcp

@@ -1,0 +1,40 @@
+# CodeSight MCP Server - Production Dockerfile
+# Based on Distroless for maximum security
+
+FROM gcr.io/distroless/nodejs20-debian12
+
+LABEL maintainer="CodeSight Team"
+LABEL version="0.1.0"
+LABEL description="CodeSight MCP Server - Production"
+
+# Security labels
+LABEL org.opencontainers.image.source="https://github.com/msenol/CodeSight"
+LABEL org.opencontainers.image.vendor="CodeSight"
+
+WORKDIR /app
+
+# Copy application
+COPY typescript-mcp/dist ./dist
+COPY typescript-mcp/node_modules ./node_modules
+COPY typescript-mcp/package.json ./
+
+# Copy Rust FFI (if built)
+COPY --chown=nobody:nogroup rust-core/target/release/libcode_intelligence_core.so ./lib/ 2>/dev/null || true
+
+# Copy entrypoint
+COPY docker/entrypoint-prod.sh ./entrypoint.sh
+
+# Non-root user
+USER nobody
+
+EXPOSE 4000 8080
+
+ENV NODE_ENV=production
+ENV LOG_LEVEL=info
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node dist/health-check.js || exit 1
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["hybrid"]

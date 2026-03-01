@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codesight-mcp
+  namespace: codesight
+  labels:
+    app: codesight-mcp
+    version: '0.1.0'
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: codesight-mcp
+  template:
+    metadata:
+      labels:
+        app: codesight-mcp
+        version: '0.1.0'
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '4000'
+        prometheus.io/path: '/metrics'
+    spec:
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+
+      serviceAccountName: codesight-sa
+
+      # Affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - codesight-mcp
+                topologyKey: kubernetes.io/hostname
+
+      containers:
+        - name: codesight-mcp
+          image: codesight/mcp-server:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 4000
+              protocol: TCP
+            - name: mcp
+              containerPort: 8080
+              protocol: TCP
+
+          # Environment from ConfigMap and Secret
+          envFrom:
+            - configMapRef:
+                name: codesight-config
+            - secretRef:
+                name: codesight-secrets
+
+          # Additional environment variables
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+
+          # Resource limits
+          resources:
+            requests:
+              cpu: '250m'
+              memory: '512Mi'
+            limits:
+              cpu: '1000m'
+              memory: '2Gi'
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          # Volume mounts
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+
+      # Volumes
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: codesight-data-pvc
+        - name: logs
+          emptyDir: {}
+
+      # Node selection (optional)
+      # nodeSelector:
+      #   node-type: application
+
+      # Tolerations (optional)
+      # tolerations:
+      # - key: "dedicated"
+      #   operator: "Equal"
+      #   value: "codesight"
+      #   effect: "NoSchedule"
