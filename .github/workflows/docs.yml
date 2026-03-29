@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: typescript-mcp/package-lock.json
 
       - name: Install dependencies
         working-directory: typescript-mcp
