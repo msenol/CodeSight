@@ -856,27 +856,27 @@ AI_TIMEOUT_MS=30000
 
 ### Core Tools Performance
 
-| Tool | Response Time | Memory Usage | Accuracy | Scalability |
-|------|---------------|--------------|----------|-------------|
-| search_code | 20-50ms | ~25MB | 95%+ | Excellent |
-| explain_function | 10-30ms | ~25MB | 90%+ | Excellent |
-| find_references | 15-40ms | ~25MB | 95%+ | Excellent |
-| trace_data_flow | 30-80ms | ~30MB | 85%+ | Good |
-| analyze_security | 50-150ms | ~35MB | 90%+ | Good |
-| get_api_endpoints | 25-60ms | ~25MB | 95%+ | Excellent |
-| check_complexity | 20-50ms | ~25MB | 95%+ | Excellent |
-| find_duplicates | 100-300ms | ~40MB | 90%+ | Good |
-| suggest_refactoring | 40-120ms | ~30MB | 85%+ | Good |
+| Tool                | Response Time | Memory Usage | Accuracy | Scalability |
+| ------------------- | ------------- | ------------ | -------- | ----------- |
+| search_code         | 20-50ms       | ~25MB        | 95%+     | Excellent   |
+| explain_function    | 10-30ms       | ~25MB        | 90%+     | Excellent   |
+| find_references     | 15-40ms       | ~25MB        | 95%+     | Excellent   |
+| trace_data_flow     | 30-80ms       | ~30MB        | 85%+     | Good        |
+| analyze_security    | 50-150ms      | ~35MB        | 90%+     | Good        |
+| get_api_endpoints   | 25-60ms       | ~25MB        | 95%+     | Excellent   |
+| check_complexity    | 20-50ms       | ~25MB        | 95%+     | Excellent   |
+| find_duplicates     | 100-300ms     | ~40MB        | 90%+     | Good        |
+| suggest_refactoring | 40-120ms      | ~30MB        | 85%+     | Good        |
 
 ### AI Tools Performance
 
-| Tool | Response Time | Memory Overhead | Quality Score | Cost Efficiency |
-|------|---------------|-----------------|---------------|----------------|
-| ai_code_review | 200-800ms | +15-25MB | 8.5-9.5/10 | Medium |
-| intelligent_refactoring | 250-900ms | +20-30MB | 8.0-9.0/10 | Medium |
-| bug_prediction | 300-1200ms | +25-35MB | 8.0-9.2/10 | High |
-| context_aware_code_generation | 400-1500ms | +25-30MB | 8.5-9.5/10 | Low |
-| technical_debt_analysis | 500-2000ms | +30-40MB | 9.0-9.8/10 | Medium |
+| Tool                          | Response Time | Memory Overhead | Quality Score | Cost Efficiency |
+| ----------------------------- | ------------- | --------------- | ------------- | ---------------- |
+| ai_code_review                | 200-800ms     | +15-25MB        | 8.5-9.5/10    | Medium           |
+| intelligent_refactoring       | 250-900ms     | +20-30MB        | 8.0-9.0/10    | Medium           |
+| bug_prediction                | 300-1200ms    | +25-35MB        | 8.0-9.2/10    | High             |
+| context_aware_code_generation | 400-1500ms    | +25-30MB        | 8.5-9.5/10    | Low              |
+| technical_debt_analysis       | 500-2000ms    | +30-40MB        | 9.0-9.8/10    | Medium           |
 
 **Performance Notes:**
 - Response times vary by AI provider (Claude fastest, rule-based fastest but lower quality)
