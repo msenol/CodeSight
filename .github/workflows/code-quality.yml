@@ -89,18 +89,8 @@ jobs:
       working-directory: rust-core
       run: cargo install cargo-audit && cargo audit
 
-    - name: Code coverage
-      working-directory: rust-core
-      run: |
-        cargo install cargo-tarpaulin
-        cargo tarpaulin --out Xml --output-dir ./coverage
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: rust-core/coverage/cobertura.xml
-        flags: rust
-        name: rust-coverage
+    # Note: Code coverage with cargo-tarpaulin is incompatible with NAPI-RS
+    # Consider using alternative coverage tools or instrumenting the wrapper instead
 
   # Documentation Quality
   documentation-quality:
