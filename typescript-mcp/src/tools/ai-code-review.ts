@@ -3,7 +3,8 @@
  * Implements intelligent code review with context-aware suggestions
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+// Tool type imported for future use in MCP schema definition
+// import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { SecurityAnalyzer } from '../services/security-analyzer.js';

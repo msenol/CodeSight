@@ -3,7 +3,8 @@
  * AI-powered proactive bug identification and risk assessment
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+// Tool type imported for future use in MCP schema definition
+// import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
@@ -225,7 +226,7 @@ export class BugPredictionTool {
     }
   }
 
-  private async detectBugPatterns(args: BugPredictionRequest, codeAnalysis: any): Promise<BugRisk[]> {
+  private async detectBugPatterns(args: BugPredictionRequest, _codeAnalysis: any): Promise<BugRisk[]> {
     const risks: BugRisk[] = [];
     const code = args.code_snippet || '';
 
@@ -520,7 +521,7 @@ Focus on actionable insights that can prevent bugs before they occur.
     return risks;
   }
 
-  private async analyzeIntegrationRisks(args: BugPredictionRequest, codeAnalysis: any): Promise<BugRisk[]> {
+  private async analyzeIntegrationRisks(_args: BugPredictionRequest, _codeAnalysis: any): Promise<BugRisk[]> {
     const risks: BugRisk[] = [];
 
     // Placeholder for integration risk analysis
@@ -550,7 +551,7 @@ Focus on actionable insights that can prevent bugs before they occur.
     });
   }
 
-  private calculateOverallRisk(risks: BugRisk[], codeAnalysis: any) {
+  private calculateOverallRisk(risks: BugRisk[], _codeAnalysis: any) {
     const severityWeights = { critical: 40, high: 30, medium: 20, low: 10 };
     let totalRiskScore = 0;
     let maxRiskScore = 0;
@@ -629,7 +630,7 @@ Focus on actionable insights that can prevent bugs before they occur.
     };
   }
 
-  private createMonitoringPlan(risks: BugRisk[]) {
+  private createMonitoringPlan(_risks: BugRisk[]) {
     return {
       metrics_to_track: [
         'Bug density per module',

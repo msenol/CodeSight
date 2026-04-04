@@ -236,7 +236,7 @@ Focus on:
     // Process AI insights into detailed suggestions with deduplication
     const deduplicatedSuggestions = deduplicateSuggestions(aiInsights.suggestions || []);
 
-    deduplicatedSuggestions.forEach((insight: any, index: number) => {
+    deduplicatedSuggestions.forEach((insight: any, _index: number) => {
       const suggestion = this.createRefactoringSuggestion(insight, args, codeAnalysis);
       if (suggestion) {
         suggestions.push(suggestion);
@@ -256,7 +256,7 @@ Focus on:
     });
   }
 
-  private createRefactoringSuggestion(insight: any, args: RefactoringRequest, codeAnalysis: any): RefactoringSuggestion | null {
+  private createRefactoringSuggestion(insight: any, args: RefactoringRequest, _codeAnalysis: any): RefactoringSuggestion | null {
     const id = `refactor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     return {

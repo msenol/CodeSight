@@ -2,7 +2,8 @@
 import path from 'path';
 import type { DatabaseRow, SignatureAnalysis } from '../types/index.js';
 import { codebaseService } from '../services/codebase-service.js';
-import { analysisService } from '../services/analysis-service.js';
+// analysisService placeholder for future use
+const _analysisService = null;
 import { llmService } from '../services/llm-service.js';
 import { getIndexingService } from '../services/indexing-service.js';
 import { astParserService, type ASTParseResult } from '../services/ast-parser-service.js';

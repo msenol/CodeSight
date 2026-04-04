@@ -271,13 +271,13 @@ Provide specific, actionable security findings with severity levels.
     }
   }
 
-  private async performDataFlowAnalysis(request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
+  private async performDataFlowAnalysis(_request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
     // Placeholder for data flow analysis
     // In a real implementation, this would track sensitive data flows
     return [];
   }
 
-  private async analyzeDependencies(request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
+  private async analyzeDependencies(_request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
     // Placeholder for dependency vulnerability analysis
     // In a real implementation, this would check package.json, Cargo.toml, etc.
     return [];
@@ -295,7 +295,7 @@ Provide specific, actionable security findings with severity levels.
     });
   }
 
-  private async generateSecurityReport(vulnerabilities: SecurityVulnerability[], request: SecurityAnalysisRequest): Promise<SecurityAnalysisResult> {
+  private async generateSecurityReport(vulnerabilities: SecurityVulnerability[], _request: SecurityAnalysisRequest): Promise<SecurityAnalysisResult> {
     // Calculate risk assessment
     const riskAssessment = {
       critical_issues: vulnerabilities.filter(v => v.severity === 'critical').length,
@@ -430,7 +430,7 @@ Provide specific, actionable security findings with severity levels.
     }
   }
 
-  private async getFileContent(filePath: string): Promise<string> {
+  private async getFileContent(_filePath: string): Promise<string> {
     // In a real implementation, this would read the file content
     // For now, return a placeholder
     return '// File content would be read here';

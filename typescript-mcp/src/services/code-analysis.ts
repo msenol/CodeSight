@@ -81,7 +81,7 @@ export interface CodeAnalysisResult {
  * Provides static and dynamic code analysis capabilities
  */
 export class CodeAnalysisService {
-  async analyzeSnippet(snippet: string, codebaseId: string): Promise<CodeAnalysisResult> {
+  async analyzeSnippet(_snippet: string, _codebaseId: string): Promise<CodeAnalysisResult> {
     // Placeholder implementation
     return {
       complexity: {
@@ -91,7 +91,7 @@ export class CodeAnalysisService {
     };
   }
 
-  async analyzeFile(filePath: string, codebaseId: string): Promise<CodeAnalysisResult> {
+  async analyzeFile(_filePath: string, _codebaseId: string): Promise<CodeAnalysisResult> {
     // Placeholder implementation
     return {
       complexity: {
@@ -105,7 +105,7 @@ export class CodeAnalysisService {
     };
   }
 
-  async analyzeCodebase(codebaseId: string): Promise<CodeAnalysisResult> {
+  async analyzeCodebase(_codebaseId: string): Promise<CodeAnalysisResult> {
     // Placeholder implementation
     return {
       complexity: {

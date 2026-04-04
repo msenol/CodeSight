@@ -781,7 +781,7 @@ Focus on actionable insights that can help reduce technical debt and improve cod
     return deduplicated;
   }
 
-  private async calculateBusinessImpact(items: TechnicalDebtItem[], codeAnalysis: any): Promise<TechnicalDebtItem[]> {
+  private async calculateBusinessImpact(items: TechnicalDebtItem[], _codeAnalysis: any): Promise<TechnicalDebtItem[]> {
     return items.map(item => ({
       ...item,
       business_impact: {
@@ -836,7 +836,7 @@ Focus on actionable insights that can help reduce technical debt and improve cod
       }));
   }
 
-  private calculateOverallAssessment(items: TechnicalDebtItem[], historicalData?: any) {
+  private calculateOverallAssessment(items: TechnicalDebtItem[], _historicalData?: any) {
     const totalImpact = items.reduce((sum, item) => sum + item.impact_score, 0);
     const maxPossibleImpact = items.length * 100;
     const totalDebtScore = maxPossibleImpact > 0 ? (totalImpact / maxPossibleImpact) * 100 : 0;
@@ -907,7 +907,7 @@ Focus on actionable insights that can help reduce technical debt and improve cod
     };
   }
 
-  private createMonitoringStrategy(items: TechnicalDebtItem[]) {
+  private createMonitoringStrategy(_items: TechnicalDebtItem[]) {
     return {
       metrics_to_track: [
         'Code coverage percentage',

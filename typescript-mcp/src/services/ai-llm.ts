@@ -561,7 +561,7 @@ class RuleBasedProvider implements LLMProvider {
   private generateRuleBasedSuggestions(prompts: string[]) {
     const suggestions = [];
 
-    prompts.forEach((prompt, index) => {
+    prompts.forEach((_prompt, _index) => {
       if (prompt.includes('password') || prompt.includes('secret')) {
         suggestions.push({
           title: 'Potential Secret Exposure',

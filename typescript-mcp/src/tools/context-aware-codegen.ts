@@ -3,7 +3,8 @@
  * AI-powered intelligent code generation with full project context
  */
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+// Tool type imported for future use in MCP schema definition
+// import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { CodeAnalysisService } from '../services/code-analysis.js';
 import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
@@ -294,8 +295,8 @@ export class ContextAwareCodegenTool {
 
     // Analyze actual naming patterns in the code
     const variableMatches = code.match(/\b[a-z][a-zA-Z0-9]*\b/g) || [];
-    const classMatches = code.match(/\b[A-Z][a-zA-Z0-9]*\b/g) || [];
-    const constantMatches = code.match(/\b[A-Z][A-Z0-9_]*\b/g) || [];
+    const _classMatches = code.match(/\b[A-Z][a-zA-Z0-9]*\b/g) || [];
+    const _constantMatches = code.match(/\b[A-Z][A-Z0-9_]*\b/g) || [];
 
     // Detect actual patterns used
     if (variableMatches.length > 0) {
@@ -439,7 +440,7 @@ function generatedFunction() {
     }
   }
 
-  private generateFunction(prompt: string, args: CodeGenerationRequest): string {
+  private generateFunction(prompt: string, _args: CodeGenerationRequest): string {
     const functionName = this.extractFunctionName(prompt) || 'newFunction';
     const hasAsync = prompt.toLowerCase().includes('async') || prompt.toLowerCase().includes('await');
     const hasError = prompt.toLowerCase().includes('error') || prompt.toLowerCase().includes('exception');
@@ -471,7 +472,7 @@ export function ${functionName}() {\n`;
     return code;
   }
 
-  private generateClass(prompt: string, args: CodeGenerationRequest): string {
+  private generateClass(prompt: string, _args: CodeGenerationRequest): string {
     const className = this.extractClassName(prompt) || 'NewClass';
 
     return `/**
@@ -507,7 +508,7 @@ export class ${className} {
 }`;
   }
 
-  private generateTest(prompt: string, args: CodeGenerationRequest): string {
+  private generateTest(prompt: string, _args: CodeGenerationRequest): string {
     const testName = this.extractTestName(prompt) || 'Functionality';
 
     return `describe('${testName}', () => {
@@ -541,7 +542,7 @@ function functionToTest(input: any): any {
 }`;
   }
 
-  private generateDocumentation(prompt: string, args: CodeGenerationRequest): string {
+  private generateDocumentation(prompt: string, _args: CodeGenerationRequest): string {
     return `/**
  * ${this.generateDocumentationTitle(prompt)}
  *
@@ -591,7 +592,7 @@ function functionToTest(input: any): any {
     return `Documentation for: ${prompt}`;
   }
 
-  private async validateGeneratedCode(code: string, args: CodeGenerationRequest) {
+  private async validateGeneratedCode(code: string, _args: CodeGenerationRequest) {
     const validation = {
       syntax_valid: true,
       potential_issues: [] as Array<{
@@ -646,7 +647,7 @@ function functionToTest(input: any): any {
     return validation;
   }
 
-  private async analyzeContextCompliance(code: string, patterns: any, args: CodeGenerationRequest) {
+  private async analyzeContextCompliance(code: string, patterns: any, _args: CodeGenerationRequest) {
     const compliance = {
       matched_patterns: [],
       style_compliance: 0,
@@ -674,7 +675,7 @@ function functionToTest(input: any): any {
     return compliance;
   }
 
-  private async generateAlternatives(args: CodeGenerationRequest, generatedCode: string, projectContext: any) {
+  private async generateAlternatives(args: CodeGenerationRequest, generatedCode: string, _projectContext: any) {
     const alternatives = [];
 
     // Alternative implementation 1: More concise
@@ -700,7 +701,7 @@ function functionToTest(input: any): any {
     return alternatives;
   }
 
-  private async generateSuggestions(code: string, validation: any, args: CodeGenerationRequest) {
+  private async generateSuggestions(_code: string, _validation: any, _args: CodeGenerationRequest) {
     return {
       alternative_implementations: [
         'Consider using functional programming patterns',
@@ -751,7 +752,7 @@ function functionToTest(input: any): any {
     return plan;
   }
 
-  private calculateConfidenceScore(code: string, contextAnalysis: any, validation: any, args: CodeGenerationRequest): number {
+  private calculateConfidenceScore(code: string, contextAnalysis: any, validation: any, _args: CodeGenerationRequest): number {
     let score = 50; // Base score
 
     // Add points for context compliance

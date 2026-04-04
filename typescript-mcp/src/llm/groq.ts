@@ -228,7 +228,7 @@ export class GroqService {
     }
   }
 
-  async generateEmbedding(text: string, model?: string): Promise<GroqEmbeddingResult> {
+  async generateEmbedding(_text: string, _model?: string): Promise<GroqEmbeddingResult> {
     throw new Error('Groq does not currently support embeddings');
   }
 
