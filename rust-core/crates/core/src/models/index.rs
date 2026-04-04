@@ -25,10 +25,11 @@ pub enum IndexType {
 }
 
 /// Status of an index
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum IndexStatus {
     /// Index is currently being built
+    #[default]
     Building,
     /// Index is ready for use
     Ready,
@@ -36,12 +37,6 @@ pub enum IndexStatus {
     Corrupted,
     /// Index is being rebuilt
     Rebuilding,
-}
-
-impl Default for IndexStatus {
-    fn default() -> Self {
-        Self::Building
-    }
 }
 
 /// Searchable index structure for a codebase

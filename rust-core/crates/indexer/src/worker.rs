@@ -123,9 +123,9 @@ mod tests {
         assert_eq!(pool.len(), 4);
 
         let worker1_id = pool.next_worker().id();
-        let worker2_id = pool.next_worker().id();
-        let worker3_id = pool.next_worker().id();
-        let worker4_id = pool.next_worker().id();
+        let _worker2_id = pool.next_worker().id();
+        let _worker3_id = pool.next_worker().id();
+        let _worker4_id = pool.next_worker().id();
         let worker5_id = pool.next_worker().id(); // Should wrap around
 
         assert_eq!(worker1_id, worker5_id); // Round-robin should work

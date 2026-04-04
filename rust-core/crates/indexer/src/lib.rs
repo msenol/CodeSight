@@ -362,9 +362,11 @@ mod tests {
             .unwrap();
         }
 
-        let mut config = IndexingConfig::default();
-        config.enable_parallel = true;
-        config.max_workers = 4;
+        let config = IndexingConfig {
+            enable_parallel: true,
+            max_workers: 4,
+            ..Default::default()
+        };
 
         let engine = IndexingEngine::with_config(config);
         let progress = engine.index_codebase(temp_dir.path()).await.unwrap();

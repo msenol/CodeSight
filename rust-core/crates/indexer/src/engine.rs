@@ -251,7 +251,7 @@ const testVariable = "test";
 
         // Should be stored in indexed entities
         let indexed_entities = engine.indexed_entities.read().await;
-        assert!(indexed_entities.len() > 0);
+        assert!(!indexed_entities.is_empty());
     }
 
     #[tokio::test]
@@ -291,6 +291,6 @@ function testFunction() {
 
         let stats = engine.get_statistics().await;
         assert!(stats.total_entities > 0);
-        assert!(stats.by_type.len() > 0);
+        assert!(!stats.by_type.is_empty());
     }
 }

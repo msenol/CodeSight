@@ -11,10 +11,11 @@ use super::{ModelResult, Timestamped, Validate};
 use crate::errors::CoreError;
 
 /// Status of a codebase in the indexing system
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum CodebaseStatus {
     /// Codebase has not been indexed yet
+    #[default]
     Unindexed,
     /// Codebase is currently being indexed
     Indexing,
@@ -22,12 +23,6 @@ pub enum CodebaseStatus {
     Indexed,
     /// An error occurred during indexing
     Error,
-}
-
-impl Default for CodebaseStatus {
-    fn default() -> Self {
-        Self::Unindexed
-    }
 }
 
 /// Root entity representing a project or repository being indexed

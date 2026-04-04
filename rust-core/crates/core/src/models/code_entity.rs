@@ -34,10 +34,11 @@ pub enum EntityType {
 }
 
 /// Visibility level of a code entity
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Visibility {
     /// Publicly accessible
+    #[default]
     Public,
     /// Private to the containing scope
     Private,
@@ -45,12 +46,6 @@ pub enum Visibility {
     Protected,
     /// Internal to the module/package
     Internal,
-}
-
-impl Default for Visibility {
-    fn default() -> Self {
-        Self::Public
-    }
 }
 
 /// A discrete element in code with its location and metadata
