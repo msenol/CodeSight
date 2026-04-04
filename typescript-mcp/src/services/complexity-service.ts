@@ -1,8 +1,9 @@
- 
- 
- 
- 
-import type { ComplexityMetrics, ComplexityAnalysis, ASTNode, DatabaseRow } from '../types/index.js';
+import type {
+  ComplexityMetrics,
+  ComplexityAnalysis,
+  ASTNode,
+  DatabaseRow,
+} from '../types/index.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -10,29 +11,27 @@ import * as acorn from 'acorn';
 import * as walk from 'acorn-walk';
 
 export interface ComplexityService {
-   
   calculateFileComplexity(_filePath: string): Promise<ComplexityMetrics>;
   calculateFunctionComplexity(
-     
     _filePath: string,
-     
+
     _functionName: string,
   ): Promise<ComplexityMetrics | null>;
-   
+
   calculateCodeComplexity(_code: string, _language?: string): Promise<ComplexityMetrics>;
-   
+
   getComplexityReport(_filePath: string): Promise<ComplexityReport>;
-   
+
   analyzeCyclomaticComplexity(_code: string): Promise<number>;
-   
+
   analyzeCognitiveComplexity(_code: string): Promise<number>;
-   
+
   calculateMaintainabilityIndex(_metrics: ComplexityMetrics): number;
-   
+
   calculateComplexity(_codeSnippet: string, _language: string): Promise<ComplexityMetrics>;
-   
+
   analyzeFunction(_functionCode: string, _language: string): Promise<ComplexityAnalysis>;
-   
+
   calculateMetrics(_entity: DatabaseRow, _metricTypes: string[]): Promise<ComplexityAnalysis>;
 }
 
@@ -88,7 +87,10 @@ export class DefaultComplexityService implements ComplexityService {
     return null;
   }
 
-  async calculateCodeComplexity(code: string, _language = 'typescript'): Promise<ComplexityMetrics> {
+  async calculateCodeComplexity(
+    code: string,
+    _language = 'typescript',
+  ): Promise<ComplexityMetrics> {
     const cyclomaticComplexity = await this.analyzeCyclomaticComplexity(code);
     const cognitiveComplexity = await this.analyzeCognitiveComplexity(code);
     const linesOfCode = this.countLinesOfCode(code);
@@ -238,7 +240,9 @@ export class DefaultComplexityService implements ComplexityService {
 
     const { cyclomaticComplexity, linesOfCode } = metrics;
 
-    if (linesOfCode === 0) {return 100;}
+    if (linesOfCode === 0) {
+      return 100;
+    }
 
     // Simplified formula focusing on complexity and LOC
     const baseIndex = 171;
@@ -312,12 +316,12 @@ export class DefaultComplexityService implements ComplexityService {
 
       return {
         complexity: metrics.cyclomatic_complexity as unknown as ComplexityMetrics,
-        functionCount: metrics.function_count as number || 0,
-        classCount: metrics.class_count as number || 0,
-        averageFunctionSize: metrics.average_function_size as number || 0,
-        maxFunctionSize: metrics.max_function_size as number || 0,
-        duplicateCodePercentage: metrics.duplicate_code_percentage as number || 0,
-        technicalDebt: metrics.technical_debt as number || 0,
+        functionCount: (metrics.function_count as number) || 0,
+        classCount: (metrics.class_count as number) || 0,
+        averageFunctionSize: (metrics.average_function_size as number) || 0,
+        maxFunctionSize: (metrics.max_function_size as number) || 0,
+        duplicateCodePercentage: (metrics.duplicate_code_percentage as number) || 0,
+        technicalDebt: (metrics.technical_debt as number) || 0,
       };
     } catch (error) {
       console.error('Failed to calculate metrics:', error);
@@ -416,9 +420,15 @@ export class DefaultComplexityService implements ComplexityService {
   }
 
   private findFunctionInAST(node: ASTNode, functionName: string): ASTNode | null {
-    if (!node || typeof node !== 'object') {return null;}
+    if (!node || typeof node !== 'object') {
+      return null;
+    }
 
-    if ((node as any).type === 'FunctionDeclaration' && (node as any).id && (node as any).id.name === functionName) {
+    if (
+      (node as any).type === 'FunctionDeclaration' &&
+      (node as any).id &&
+      (node as any).id.name === functionName
+    ) {
       return node as any;
     }
 
@@ -428,11 +438,15 @@ export class DefaultComplexityService implements ComplexityService {
         if (Array.isArray(node[key])) {
           for (const child of node[key]) {
             const result = this.findFunctionInAST(child, functionName);
-            if (result) {return result;}
+            if (result) {
+              return result;
+            }
           }
         } else if (typeof node[key] === 'object') {
           const result = this.findFunctionInAST(node[key] as any, functionName);
-          if (result) {return result;}
+          if (result) {
+            return result;
+          }
         }
       }
     }
@@ -440,7 +454,10 @@ export class DefaultComplexityService implements ComplexityService {
     return null;
   }
 
-  private findFunctionInAcornAST(ast: acorn.Node, functionName: string): acorn.FunctionDeclaration | null {
+  private findFunctionInAcornAST(
+    ast: acorn.Node,
+    functionName: string,
+  ): acorn.FunctionDeclaration | null {
     let foundFunction: acorn.FunctionDeclaration | null = null;
 
     walk.simple(ast, {
@@ -513,7 +530,9 @@ export class DefaultComplexityService implements ComplexityService {
     content: string,
     functions: FunctionComplexityInfo[],
   ): Promise<void> {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     if (node.type === 'FunctionDeclaration' && node.id) {
       const functionCode = this.extractFunctionCode(content, node);
@@ -601,7 +620,9 @@ export class DefaultComplexityService implements ComplexityService {
     content: string,
     classes: ClassComplexityInfo[],
   ): Promise<void> {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     if (node.type === 'ClassDeclaration' && node.id) {
       const methods = this.extractClassMethods(node);
@@ -822,7 +843,9 @@ export class DefaultComplexityService implements ComplexityService {
 
   private countParameters(code: string): number {
     const paramMatch = code.match(/\(([^)]*)\)/);
-    if (!paramMatch?.[1].trim()) {return 0;}
+    if (!paramMatch?.[1].trim()) {
+      return 0;
+    }
 
     return paramMatch[1].split(',').filter(p => p.trim().length > 0).length;
   }

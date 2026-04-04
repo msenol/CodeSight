@@ -1,8 +1,13 @@
- 
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { StringValue } from 'ms';
 import type { Response, NextFunction } from 'express';
-import { type ExtendedRequest, type AuthConfig, HTTP_STATUS, AuthenticationError, AuthorizationError } from './types.js';
+import {
+  type ExtendedRequest,
+  type AuthConfig,
+  HTTP_STATUS,
+  AuthenticationError,
+  AuthorizationError,
+} from './types.js';
 
 // Rule 15: Global declarations for Node.js environment
 declare const process: {

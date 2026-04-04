@@ -1,9 +1,3 @@
- 
- 
- 
- 
- 
- 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 import { z } from 'zod';
 import { codebaseService } from '../services/codebase-service.js';
@@ -180,10 +174,10 @@ export class SuggestRefactoringTool {
       const effortEstimate = this.calculateEffortEstimate(suggestions);
 
       return {
-        entity_id: (entity).id,
+        entity_id: entity.id,
         entity_name: entity.name,
-        entity_type: (entity).entity_type,
-        file_path: (entity).file_path,
+        entity_type: entity.entity_type,
+        file_path: entity.file_path,
         current_metrics: currentMetrics,
         suggestions: suggestions.slice(0, input.max_suggestions),
         priority_ranking: priorityRanking,
@@ -514,7 +508,9 @@ export class SuggestRefactoringTool {
     return suggestions.sort((a, b) => {
       // First sort by priority
       const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
-      if (priorityDiff !== 0) {return priorityDiff;}
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
 
       // Then by focus-specific criteria
       if (focus === 'maintainability') {
@@ -555,7 +551,10 @@ export class SuggestRefactoringTool {
       large: 24,
     };
 
-    const totalHours = suggestions.reduce((sum, s) => sum + (effortHours[s.estimated_effort] ?? 0), 0);
+    const totalHours = suggestions.reduce(
+      (sum, s) => sum + (effortHours[s.estimated_effort] ?? 0),
+      0,
+    );
 
     const hasLargeEffort = suggestions.some(s => s.estimated_effort === 'large');
     const complexityLevel = hasLargeEffort ? 'complex' : totalHours > 16 ? 'moderate' : 'simple';

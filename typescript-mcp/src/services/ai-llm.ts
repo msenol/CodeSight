@@ -75,7 +75,7 @@ export class AILLMService {
     this.providers.set('rule-based', new RuleBasedProvider());
 
     logger.info('AI LLM Providers initialized', {
-      providers: Array.from(this.providers.keys())
+      providers: Array.from(this.providers.keys()),
     });
   }
 
@@ -94,7 +94,7 @@ export class AILLMService {
     try {
       logger.debug('Generating AI insights', {
         provider: provider.name,
-        prompts_count: prompts.length
+        prompts_count: prompts.length,
       });
 
       const insights = await provider.generateInsights(prompts);
@@ -102,11 +102,10 @@ export class AILLMService {
       logger.debug('AI insights generated', {
         suggestions_count: insights.suggestions.length,
         patterns_count: insights.patterns.length,
-        overall_quality: insights.summary.overall_quality
+        overall_quality: insights.summary.overall_quality,
       });
 
       return insights;
-
     } catch (error) {
       logger.error(`AI provider ${provider.name} failed:`, error);
 
@@ -117,7 +116,9 @@ export class AILLMService {
         return fallbackProvider.generateInsights(prompts);
       }
 
-      throw new Error(`All AI providers failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `All AI providers failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -154,11 +155,15 @@ export class AILLMService {
     logger.info(`Switched to AI provider: ${providerName}`);
   }
 
-  getAvailableProviders(): Array<{ name: string; available: boolean; capabilities: LLMCapabilities }> {
+  getAvailableProviders(): Array<{
+    name: string;
+    available: boolean;
+    capabilities: LLMCapabilities;
+  }> {
     return Array.from(this.providers.entries()).map(([name, provider]) => ({
       name,
       available: provider.isAvailable(),
-      capabilities: provider.getCapabilities()
+      capabilities: provider.getCapabilities(),
     }));
   }
 }
@@ -178,7 +183,7 @@ class ClaudeProvider implements LLMProvider {
     return {
       suggestions: this.generateClaudeSuggestions(codeContext),
       patterns: this.identifyPatterns(codeContext),
-      summary: this.generateClaudeSummary(codeContext)
+      summary: this.generateClaudeSummary(codeContext),
     };
   }
 
@@ -193,7 +198,7 @@ class ClaudeProvider implements LLMProvider {
       supportsCodeAnalysis: true,
       supportsMultiModal: false,
       latency: 'medium',
-      costPerToken: 0.015
+      costPerToken: 0.015,
     };
   }
 
@@ -202,7 +207,7 @@ class ClaudeProvider implements LLMProvider {
     return {
       hasCode: prompts.some(p => p.includes('function') || p.includes('class')),
       complexity: this.estimateComplexity(prompts),
-      patterns: this.identifyBasicPatterns(prompts)
+      patterns: this.identifyBasicPatterns(prompts),
     };
   }
 
@@ -216,7 +221,7 @@ class ClaudeProvider implements LLMProvider {
         category: 'maintainability' as const,
         impact: 'medium' as const,
         confidence: 85,
-        suggestion: 'Consider breaking down complex functions into smaller, more focused units'
+        suggestion: 'Consider breaking down complex functions into smaller, more focused units',
       });
     }
 
@@ -227,7 +232,7 @@ class ClaudeProvider implements LLMProvider {
         category: 'readability' as const,
         impact: 'high' as const,
         confidence: 90,
-        suggestion: 'Consider using async/await, Promise chains, or reactive patterns'
+        suggestion: 'Consider using async/await, Promise chains, or reactive patterns',
       });
     }
 
@@ -243,7 +248,7 @@ class ClaudeProvider implements LLMProvider {
         description: 'Proper error handling with try-catch blocks',
         type: 'best-practice' as const,
         frequency: 1,
-        locations: []
+        locations: [],
       });
     }
 
@@ -255,7 +260,7 @@ class ClaudeProvider implements LLMProvider {
       overall_quality: Math.max(0, 100 - context.complexity / 2),
       main_concerns: context.complexity > 50 ? ['Code complexity could be reduced'] : [],
       positive_aspects: context.hasCode ? ['Structured code approach'] : [],
-      next_steps: ['Consider code review and refactoring']
+      next_steps: ['Consider code review and refactoring'],
     };
   }
 
@@ -318,7 +323,7 @@ class OpenAIProvider implements LLMProvider {
       supportsCodeAnalysis: true,
       supportsMultiModal: true,
       latency: 'medium',
-      costPerToken: 0.03
+      costPerToken: 0.03,
     };
   }
 }
@@ -346,7 +351,7 @@ class OllamaProvider implements LLMProvider {
       supportsCodeAnalysis: true,
       supportsMultiModal: false,
       latency: 'fast',
-      costPerToken: 0
+      costPerToken: 0,
     };
   }
 }
@@ -374,7 +379,9 @@ class OpenRouterProvider implements LLMProvider {
 
   async generateInsights(prompts: string[]): Promise<AIInsights> {
     if (!this.client) {
-      throw new Error('OpenRouter client not initialized. Set OPENROUTER_API_KEY environment variable.');
+      throw new Error(
+        'OpenRouter client not initialized. Set OPENROUTER_API_KEY environment variable.',
+      );
     }
 
     const systemPrompt = this.buildSystemPrompt();
@@ -385,7 +392,7 @@ class OpenRouterProvider implements LLMProvider {
         model: this.modelName,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+          { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
         max_tokens: 4000, // Increased for longer responses
@@ -393,10 +400,11 @@ class OpenRouterProvider implements LLMProvider {
 
       const content = response.choices[0]?.message?.content || '';
       return this.parseAIResponse(content);
-
     } catch (error) {
       logger.error('OpenRouter API error:', error);
-      throw new Error(`OpenRouter request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `OpenRouter request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -410,7 +418,7 @@ class OpenRouterProvider implements LLMProvider {
       supportsCodeAnalysis: true,
       supportsMultiModal: true, // Depends on model
       latency: 'medium',
-      costPerToken: 0.001 // Varies by model on OpenRouter
+      costPerToken: 0.001, // Varies by model on OpenRouter
     };
   }
 
@@ -476,7 +484,7 @@ IMPORTANT: Return ONLY the JSON. No markdown, no code blocks, no explanations.`;
         // Fix trailing commas
         cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
         return JSON.parse(cleaned);
-      }
+      },
     ];
 
     let lastError: Error | null = null;
@@ -491,7 +499,7 @@ IMPORTANT: Return ONLY the JSON. No markdown, no code blocks, no explanations.`;
             overall_quality: parsed.overall_quality || 50,
             main_concerns: parsed.main_concerns || [],
             positive_aspects: parsed.positive_aspects || [],
-            next_steps: parsed.next_steps || []
+            next_steps: parsed.next_steps || [],
           };
         }
         if (!parsed.suggestions) {
@@ -519,8 +527,8 @@ IMPORTANT: Return ONLY the JSON. No markdown, no code blocks, no explanations.`;
         overall_quality: 50,
         main_concerns: ['Failed to parse AI response'],
         positive_aspects: [],
-        next_steps: ['Check AI provider configuration or try a different model']
-      }
+        next_steps: ['Check AI provider configuration or try a different model'],
+      },
     };
   }
 }
@@ -539,8 +547,8 @@ class RuleBasedProvider implements LLMProvider {
         overall_quality: 75,
         main_concerns: ['Limited analysis without AI'],
         positive_aspects: ['Basic rule-based analysis applied'],
-        next_steps: ['Consider enabling AI providers for better insights']
-      }
+        next_steps: ['Consider enabling AI providers for better insights'],
+      },
     };
   }
 
@@ -554,7 +562,7 @@ class RuleBasedProvider implements LLMProvider {
       supportsCodeAnalysis: true,
       supportsMultiModal: false,
       latency: 'fast',
-      costPerToken: 0
+      costPerToken: 0,
     };
   }
 
@@ -569,7 +577,7 @@ class RuleBasedProvider implements LLMProvider {
           category: 'security' as const,
           impact: 'critical' as const,
           confidence: 70,
-          suggestion: 'Move secrets to environment variables or secure configuration'
+          suggestion: 'Move secrets to environment variables or secure configuration',
         });
       }
 
@@ -580,7 +588,7 @@ class RuleBasedProvider implements LLMProvider {
           category: 'security' as const,
           impact: 'high' as const,
           confidence: 80,
-          suggestion: 'Avoid eval() and new Function() when possible'
+          suggestion: 'Avoid eval() and new Function() when possible',
         });
       }
     });

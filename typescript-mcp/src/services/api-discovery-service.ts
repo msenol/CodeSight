@@ -117,15 +117,24 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     const afterMatch = content.substring(index);
 
     // Check if we're in a GraphQL context (resolver, schema, etc.)
-    const graphqlKeywords = ['resolver', 'schema', 'Query', 'Mutation', 'Subscription', 'type', 'input'];
+    const graphqlKeywords = [
+      'resolver',
+      'schema',
+      'Query',
+      'Mutation',
+      'Subscription',
+      'type',
+      'input',
+    ];
     const hasGraphQLBefore = graphqlKeywords.some(keyword =>
       beforeMatch.toLowerCase().includes(keyword.toLowerCase()),
     );
 
     // Check if we're inside a function definition that looks like a resolver
     const functionPattern = /\w+\s*:\s*\(.*\)\s*=>|function\s+\w+\s*\(/;
-    const nearbyFunction = beforeMatch.slice(-100).search(functionPattern) >= 0 ||
-                           afterMatch.slice(0, 100).search(functionPattern) >= 0;
+    const nearbyFunction =
+      beforeMatch.slice(-100).search(functionPattern) >= 0 ||
+      afterMatch.slice(0, 100).search(functionPattern) >= 0;
 
     return hasGraphQLBefore || nearbyFunction;
   }
@@ -164,10 +173,18 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     const { method, path } = endpoint;
 
     // Basic RESTful convention checks
-    if (method === 'GET' && path.includes('/create')) {return false;}
-    if (method === 'POST' && !path.endsWith('s') && !path.includes('/')) {return false;}
-    if (method === 'PUT' && !path.includes('/')) {return false;}
-    if (method === 'DELETE' && path.endsWith('s') && !path.includes('/')) {return false;}
+    if (method === 'GET' && path.includes('/create')) {
+      return false;
+    }
+    if (method === 'POST' && !path.endsWith('s') && !path.includes('/')) {
+      return false;
+    }
+    if (method === 'PUT' && !path.includes('/')) {
+      return false;
+    }
+    if (method === 'DELETE' && path.endsWith('s') && !path.includes('/')) {
+      return false;
+    }
 
     return true;
   }

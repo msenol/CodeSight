@@ -86,8 +86,8 @@ export class CodeAnalysisService {
     return {
       complexity: {
         overall_score: 50,
-        functions: []
-      }
+        functions: [],
+      },
     };
   }
 
@@ -96,12 +96,12 @@ export class CodeAnalysisService {
     return {
       complexity: {
         overall_score: 50,
-        functions: []
+        functions: [],
       },
       testing: {
         coverage_percentage: 75,
-        test_count: 10
-      }
+        test_count: 10,
+      },
     };
   }
 
@@ -110,12 +110,12 @@ export class CodeAnalysisService {
     return {
       complexity: {
         overall_score: 60,
-        functions: []
+        functions: [],
       },
       testing: {
         coverage_percentage: 70,
-        test_count: 50
-      }
+        test_count: 50,
+      },
     };
   }
 }

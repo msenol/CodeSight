@@ -30,8 +30,6 @@ declare const process: {
   arch: string;
 };
 
-
-
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;

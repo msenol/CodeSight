@@ -134,7 +134,10 @@ export class HuggingFaceService {
   /**
    * Generate completion using text generation API
    */
-  private async completeTextGeneration(model: string, options: HuggingFaceCompletionOptions): Promise<HuggingFaceCompletionResult> {
+  private async completeTextGeneration(
+    model: string,
+    options: HuggingFaceCompletionOptions,
+  ): Promise<HuggingFaceCompletionResult> {
     const requestBody = {
       inputs: options.prompt,
       parameters: {
@@ -169,7 +172,10 @@ export class HuggingFaceService {
   /**
    * Generate completion using default API
    */
-  private async completeDefault(model: string, options: HuggingFaceCompletionOptions): Promise<HuggingFaceCompletionResult> {
+  private async completeDefault(
+    model: string,
+    options: HuggingFaceCompletionOptions,
+  ): Promise<HuggingFaceCompletionResult> {
     const requestBody = {
       inputs: options.prompt,
       options: {
@@ -243,7 +249,9 @@ export class HuggingFaceService {
   /**
    * Generate streaming completion
    */
-  async *completeStream(options: HuggingFaceCompletionOptions): AsyncGenerator<string, void, unknown> {
+  async *completeStream(
+    options: HuggingFaceCompletionOptions,
+  ): AsyncGenerator<string, void, unknown> {
     if (!this.isAvailable) {
       throw new Error('HuggingFace service is not available');
     }
@@ -269,7 +277,7 @@ export class HuggingFaceService {
       const response = await fetch(`${this.config.baseUrl}/models/${model}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
@@ -289,7 +297,9 @@ export class HuggingFaceService {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {break;}
+        if (done) {
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -371,7 +381,7 @@ export class HuggingFaceService {
         ...options,
         signal: controller.signal,
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json',
           ...options.headers,
         },

@@ -121,7 +121,10 @@ class RedisStore {
       // await this.redis.del(redisKey);
       logger.debug('Rate limit deleted from Redis', { key: redisKey });
     } catch (error) {
-      logger.error('Failed to delete rate limit from Redis', { key: redisKey, error: error.message });
+      logger.error('Failed to delete rate limit from Redis', {
+        key: redisKey,
+        error: error.message,
+      });
     }
   }
 }
@@ -153,7 +156,10 @@ export class RateLimitService {
   /**
    * Check if request should be rate limited
    */
-  async checkRateLimit(request: FastifyRequest, reply: FastifyReply): Promise<{
+  async checkRateLimit(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<{
     allowed: boolean;
     limit: number;
     remaining: number;
@@ -233,10 +239,11 @@ export class RateLimitService {
    */
   private defaultKeyGenerator(request: FastifyRequest): string {
     // Use IP address as default key
-    const ip = request.ip ||
-                request.headers['x-forwarded-for'] as string ||
-                request.headers['x-real-ip'] as string ||
-                'unknown';
+    const ip =
+      request.ip ||
+      (request.headers['x-forwarded-for'] as string) ||
+      (request.headers['x-real-ip'] as string) ||
+      'unknown';
 
     // Include user ID if authenticated
     const userId = (request as any).user?.id || 'anonymous';
@@ -269,12 +276,15 @@ export class RateLimitService {
   /**
    * Set rate limit headers
    */
-  private setRateLimitHeaders(reply: FastifyReply, result: {
-    allowed: boolean;
-    limit: number;
-    remaining: number;
-    resetTime: number;
-  }): void {
+  private setRateLimitHeaders(
+    reply: FastifyReply,
+    result: {
+      allowed: boolean;
+      limit: number;
+      remaining: number;
+      resetTime: number;
+    },
+  ): void {
     reply.header('X-RateLimit-Limit', result.limit);
     reply.header('X-RateLimit-Remaining', result.remaining);
     reply.header('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000));
@@ -419,7 +429,7 @@ export const lenientRateLimit = createRateLimitMiddleware({
 export const apiRateLimit = createRateLimitMiddleware({
   windowMs: 60 * 1000, // 1 minute
   maxRequests: 60,
-  keyGenerator: (request) => {
+  keyGenerator: request => {
     // Use user ID if authenticated, otherwise IP
     const userId = (request as any).user?.id;
     if (userId) {
@@ -434,7 +444,7 @@ export const apiRateLimit = createRateLimitMiddleware({
 export const searchRateLimit = createRateLimitMiddleware({
   windowMs: 60 * 1000, // 1 minute
   maxRequests: 30,
-  keyGenerator: (request) => {
+  keyGenerator: request => {
     const userId = (request as any).user?.id;
     return `search:${userId || request.ip || 'unknown'}`;
   },
@@ -446,7 +456,7 @@ export const searchRateLimit = createRateLimitMiddleware({
 export const indexingRateLimit = createRateLimitMiddleware({
   windowMs: 60 * 60 * 1000, // 1 hour
   maxRequests: 5,
-  keyGenerator: (request) => {
+  keyGenerator: request => {
     const userId = (request as any).user?.id;
     return `indexing:${userId || request.ip || 'unknown'}`;
   },
@@ -492,7 +502,7 @@ export function formatRateLimitResponse(
   limit: number,
   remaining: number,
   resetTime: number,
-  message?: string
+  message?: string,
 ) {
   return {
     limit,

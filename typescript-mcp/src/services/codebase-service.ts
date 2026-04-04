@@ -6,31 +6,26 @@ import { DatabaseSearchService } from './database-search-service.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as acorn from 'acorn';
 
- 
- 
- 
- 
 export interface CodebaseService {
-   
   addCodebase(_name: string, _path: string, _languages: string[]): Promise<string>;
-   
+
   removeCodebase(_id: string): Promise<void>;
-   
+
   getCodebase(_id: string): Promise<CodebaseInfo | null>;
   listCodebases(): Promise<CodebaseInfo[]>;
-   
+
   indexCodebase(_id: string): Promise<void>;
-   
+
   searchCode(_query: string, _codebaseId: string): Promise<SearchResult[]>;
-   
+
   getFileInfo(_filePath: string, _codebaseId: string): Promise<FileInfo | null>;
-   
+
   getCodeEntity(_entityId: string): Promise<unknown>;
-   
+
   getCodeLines(_filePath: string, _startLine: number, _endLine: number): Promise<string[]>;
-   
+
   getFiles(_codebaseId: string): Promise<string[]>;
-   
+
   getCodeSnippet(_filePath: string, _startLine: number, _endLine: number): Promise<string>;
 }
 
@@ -435,7 +430,9 @@ export class DefaultCodebaseService implements CodebaseService {
 
   private findEntityInAST(node: unknown, entityIdentifier: string): unknown | null {
     const nodeObj = node as Record<string, unknown>;
-    if (!node || typeof node !== 'object') { return null; }
+    if (!node || typeof node !== 'object') {
+      return null;
+    }
 
     // Check if this node matches our entity
     if (
@@ -449,8 +446,10 @@ export class DefaultCodebaseService implements CodebaseService {
       return {
         name: (nodeObj.id as Record<string, unknown>).name,
         type: (nodeObj.type as string).replace('Declaration', '').toLowerCase(),
-        start_line: ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
-        end_line: ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
+        start_line:
+          ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
+        end_line:
+          ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
         parameters: this.extractParameters(node),
         return_type: this.extractReturnType(node),
       };
@@ -462,11 +461,15 @@ export class DefaultCodebaseService implements CodebaseService {
         if (Array.isArray(nodeObj[key])) {
           for (const child of nodeObj[key]) {
             const result = this.findEntityInAST(child, entityIdentifier);
-            if (result) {return result;}
+            if (result) {
+              return result;
+            }
           }
         } else if (typeof nodeObj[key] === 'object') {
           const result = this.findEntityInAST(nodeObj[key], entityIdentifier);
-          if (result) {return result;}
+          if (result) {
+            return result;
+          }
         }
       }
     }
@@ -484,8 +487,11 @@ export class DefaultCodebaseService implements CodebaseService {
           foundEntity = {
             name: (nodeObj.id as Record<string, unknown>).name,
             type: 'function',
-            start_line: ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
-            end_line: ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
+            start_line:
+              ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line ||
+              1,
+            end_line:
+              ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
           };
         }
       },
@@ -495,8 +501,11 @@ export class DefaultCodebaseService implements CodebaseService {
           foundEntity = {
             name: (nodeObj.id as Record<string, unknown>).name,
             type: 'class',
-            start_line: ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line || 1,
-            end_line: ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
+            start_line:
+              ((nodeObj.loc as Record<string, unknown>).start as Record<string, unknown>)?.line ||
+              1,
+            end_line:
+              ((nodeObj.loc as Record<string, unknown>).end as Record<string, unknown>)?.line || 1,
           };
         }
       },
@@ -509,7 +518,9 @@ export class DefaultCodebaseService implements CodebaseService {
 
   private simpleASTWalk(node: unknown, visitor: Record<string, unknown>): void {
     const nodeObj = node as Record<string, unknown>;
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     const nodeType = nodeObj.type as string;
     if (visitor[nodeType]) {
@@ -531,13 +542,18 @@ export class DefaultCodebaseService implements CodebaseService {
   }
 
   private extractParameters(node: unknown): string[] {
-    if (!(node as Record<string, unknown>).params) {return [];}
+    if (!(node as Record<string, unknown>).params) {
+      return [];
+    }
 
-    return ((node as Record<string, unknown>).params as unknown[] || []).map((param: unknown) => {
+    return (((node as Record<string, unknown>).params as unknown[]) || []).map((param: unknown) => {
       const paramObj = param as Record<string, unknown>;
       if (paramObj.type === 'Identifier') {
         return paramObj.name as string;
-      } else if (paramObj.type === 'AssignmentPattern' && (paramObj.left as Record<string, unknown>).type === 'Identifier') {
+      } else if (
+        paramObj.type === 'AssignmentPattern' &&
+        (paramObj.left as Record<string, unknown>).type === 'Identifier'
+      ) {
         return (paramObj.left as Record<string, unknown>).name as string;
       }
       return 'unknown';

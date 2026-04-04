@@ -163,9 +163,12 @@ export class SecurityService {
     this.config = this.mergeConfig(defaultSecurityConfig, config);
 
     // Setup cleanup interval for request store
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupRequestStore();
-    }, 60 * 60 * 1000); // Clean up every hour
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanupRequestStore();
+      },
+      60 * 60 * 1000,
+    ); // Clean up every hour
   }
 
   /**
@@ -233,7 +236,6 @@ export class SecurityService {
       if (this.config.features?.enableSecurityLogging) {
         this.logSecurityEvent('request_received', requestInfo);
       }
-
     } catch (error) {
       logger.error('Security middleware error', {
         requestId,
@@ -253,7 +255,9 @@ export class SecurityService {
    */
   private handleCORS(request: FastifyRequest, reply: FastifyReply): void {
     const corsConfig = this.config.cors;
-    if (!corsConfig) {return;}
+    if (!corsConfig) {
+      return;
+    }
 
     const origin = request.headers.origin;
     const allowedOrigins = Array.isArray(corsConfig.origin)
@@ -311,7 +315,9 @@ export class SecurityService {
    */
   private setSecurityHeaders(reply: FastifyReply): void {
     const headers = this.config.securityHeaders;
-    if (!headers) {return;}
+    if (!headers) {
+      return;
+    }
 
     // Content Security Policy
     if (headers.contentSecurityPolicy) {
@@ -389,7 +395,9 @@ export class SecurityService {
    * Build CSP header value
    */
   private buildCSPHeader(csp: SecurityConfig['securityHeaders']['contentSecurityPolicy']): string {
-    if (!csp?.directives) {return '';}
+    if (!csp?.directives) {
+      return '';
+    }
 
     const directives: string[] = [];
 
@@ -407,9 +415,11 @@ export class SecurityService {
    */
   private isHTTPSConnection(reply: FastifyReply): boolean {
     // Check various ways to detect HTTPS
-    return reply.request.headers['x-forwarded-proto'] === 'https' ||
-           reply.request.protocol === 'https' ||
-           reply.request.hostname === 'localhost'; // Allow localhost for development
+    return (
+      reply.request.headers['x-forwarded-proto'] === 'https' ||
+      reply.request.protocol === 'https' ||
+      reply.request.hostname === 'localhost'
+    ); // Allow localhost for development
   }
 
   /**
@@ -417,7 +427,9 @@ export class SecurityService {
    */
   private checkIPFilter(ip: string): boolean {
     const ipFilter = this.config.ipFilter;
-    if (!ipFilter) {return true;}
+    if (!ipFilter) {
+      return true;
+    }
 
     // Check blocklist first
     if (ipFilter.blocklist && ipFilter.blocklist.length > 0) {
@@ -452,7 +464,9 @@ export class SecurityService {
    */
   private validateRequestSize(request: FastifyRequest): boolean {
     const limits = this.config.requestLimits;
-    if (!limits) {return true;}
+    if (!limits) {
+      return true;
+    }
 
     // Check content length
     const contentLength = request.headers['content-length'];
@@ -486,11 +500,12 @@ export class SecurityService {
    * Get client IP address
    */
   private getClientIP(request: FastifyRequest): string {
-    const ip = request.ip ||
-              request.headers['x-forwarded-for'] as string ||
-              request.headers['x-real-ip'] as string ||
-              request.headers['x-client-ip'] as string ||
-              'unknown';
+    const ip =
+      request.ip ||
+      (request.headers['x-forwarded-for'] as string) ||
+      (request.headers['x-real-ip'] as string) ||
+      (request.headers['x-client-ip'] as string) ||
+      'unknown';
 
     // Handle multiple IPs in x-forwarded-for
     if (ip.includes(',')) {
@@ -547,20 +562,18 @@ export class SecurityService {
     requestRate: number;
   } {
     const now = Date.now();
-    const oneHourAgo = now - (60 * 60 * 1000);
+    const oneHourAgo = now - 60 * 60 * 1000;
 
-    const recentRequests = Array.from(this.requestStore.values())
-      .filter(info => info.timestamp > oneHourAgo);
+    const recentRequests = Array.from(this.requestStore.values()).filter(
+      info => info.timestamp > oneHourAgo,
+    );
 
     const ipCounts = new Map<string, number>();
     const userAgentCounts = new Map<string, number>();
 
     for (const request of recentRequests) {
       ipCounts.set(request.ip, (ipCounts.get(request.ip) || 0) + 1);
-      userAgentCounts.set(
-        request.userAgent,
-        (userAgentCounts.get(request.userAgent) || 0) + 1
-      );
+      userAgentCounts.set(request.userAgent, (userAgentCounts.get(request.userAgent) || 0) + 1);
     }
 
     const topUserAgents = Array.from(userAgentCounts.entries())
@@ -585,19 +598,17 @@ export class SecurityService {
     potentialAttacks: Array<{ type: string; ip: string; count: number }>;
   } {
     const now = Date.now();
-    const oneHourAgo = now - (60 * 60 * 1000);
-    const recentRequests = Array.from(this.requestStore.values())
-      .filter(info => info.timestamp > oneHourAgo);
+    const oneHourAgo = now - 60 * 60 * 1000;
+    const recentRequests = Array.from(this.requestStore.values()).filter(
+      info => info.timestamp > oneHourAgo,
+    );
 
     const ipCounts = new Map<string, number>();
     const userAgentCounts = new Map<string, number>();
 
     for (const request of recentRequests) {
       ipCounts.set(request.ip, (ipCounts.get(request.ip) || 0) + 1);
-      userAgentCounts.set(
-        request.userAgent,
-        (userAgentCounts.get(request.userAgent) || 0) + 1
-      );
+      userAgentCounts.set(request.userAgent, (userAgentCounts.get(request.userAgent) || 0) + 1);
     }
 
     // Detect suspicious IPs (high request rate)
@@ -609,11 +620,12 @@ export class SecurityService {
 
     // Detect suspicious user agents
     const suspiciousUserAgents = Array.from(userAgentCounts.entries())
-      .filter(([agent]) =>
-        agent.includes('bot') ||
-        agent.includes('crawler') ||
-        agent.includes('scanner') ||
-        agent.length < 10 // Very short user agents
+      .filter(
+        ([agent]) =>
+          agent.includes('bot') ||
+          agent.includes('crawler') ||
+          agent.includes('scanner') ||
+          agent.length < 10, // Very short user agents
       )
       .map(([agent]) => agent);
 

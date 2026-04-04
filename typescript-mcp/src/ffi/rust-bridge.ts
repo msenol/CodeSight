@@ -1,5 +1,3 @@
- 
- 
 /**
  * Rust FFI Bridge
  */
@@ -47,7 +45,8 @@ const nativeModule: NativeModule | null = null;
  * Get codebase statistics using Rust core
  */
 export async function getCodebaseStats(codebasePath?: string): Promise<CodebaseStats> {
-  if (!nativeModule) { // Rule 15: Native module check - always false in current implementation
+  if (!nativeModule) {
+    // Rule 15: Native module check - always false in current implementation
     return {
       total_files: 0,
       total_entities: 0,
@@ -58,7 +57,7 @@ export async function getCodebaseStats(codebasePath?: string): Promise<CodebaseS
   }
 
   try {
-    const stats = await (nativeModule).getCodebaseStats(codebasePath);
+    const stats = await nativeModule.getCodebaseStats(codebasePath);
     return stats as unknown as CodebaseStats;
   } catch (error) {
     logger.error('Native stats failed:', error);
@@ -75,7 +74,10 @@ export async function getCodebaseStats(codebasePath?: string): Promise<CodebaseS
 /**
  * Analyze function using Rust core
  */
-export async function analyzeFunction(functionName: string, codebaseId: string): Promise<FunctionAnalysis> {
+export async function analyzeFunction(
+  functionName: string,
+  codebaseId: string,
+): Promise<FunctionAnalysis> {
   logger.info(`Analyzing function: ${functionName} in codebase: ${codebaseId}`);
 
   // Mock implementation - could be enhanced to use native module

@@ -1,7 +1,3 @@
- 
- 
- 
- 
 import type { SecurityIssue, SecurityPattern, SecurityScanOptions } from '../types/index.js';
 // import { z } from 'zod'; // Unused import
 import { promises as fs } from 'fs';
@@ -13,7 +9,7 @@ export interface SecurityService {
   scanFile(filePath: string, codebaseId: string): Promise<SecurityIssue[]>;
   getSecurityPatterns(): SecurityPattern[];
   validateInput(input: string): boolean;
-  analyzeVulnerabilities(input: { code: string; language: string; }): Promise<SecurityIssue[]>;
+  analyzeVulnerabilities(input: { code: string; language: string }): Promise<SecurityIssue[]>;
   scanForVulnerabilities(
     codebaseId: string,
     options?: SecurityScanOptions,
@@ -101,7 +97,10 @@ export class DefaultSecurityService implements SecurityService {
     return !dangerousPatterns.some(pattern => pattern.test(input));
   }
 
-  async analyzeVulnerabilities(_input: { code: string; language: string; }): Promise<SecurityIssue[]> {
+  async analyzeVulnerabilities(_input: {
+    code: string;
+    language: string;
+  }): Promise<SecurityIssue[]> {
     // Mock implementation
     return [
       {
@@ -395,7 +394,9 @@ export class DefaultSecurityService implements SecurityService {
     let secretMatches = 0;
     secretPatterns.forEach(pattern => {
       const matches = content.match(pattern);
-      if (matches) {secretMatches += matches.length;}
+      if (matches) {
+        secretMatches += matches.length;
+      }
     });
 
     if (secretMatches > 0) {
@@ -416,7 +417,9 @@ export class DefaultSecurityService implements SecurityService {
     let sqlMatches = 0;
     sqlPatterns.forEach(pattern => {
       const matches = content.match(pattern);
-      if (matches) {sqlMatches += matches.length;}
+      if (matches) {
+        sqlMatches += matches.length;
+      }
     });
 
     if (sqlMatches > 0) {
@@ -437,7 +440,9 @@ export class DefaultSecurityService implements SecurityService {
     let xssMatches = 0;
     xssPatterns.forEach(pattern => {
       const matches = content.match(pattern);
-      if (matches) {xssMatches += matches.length;}
+      if (matches) {
+        xssMatches += matches.length;
+      }
     });
 
     if (xssMatches > 0) {
@@ -453,7 +458,11 @@ export class DefaultSecurityService implements SecurityService {
     }
   }
 
-  private updatePatternResult(patternResults: Map<string, { count: number; matches: SecurityPattern[] }>, pattern: string, data: SecurityPattern): void {
+  private updatePatternResult(
+    patternResults: Map<string, { count: number; matches: SecurityPattern[] }>,
+    pattern: string,
+    data: SecurityPattern,
+  ): void {
     if (patternResults.has(pattern)) {
       const existing = patternResults.get(pattern)!;
       existing.count += 1;
@@ -461,7 +470,7 @@ export class DefaultSecurityService implements SecurityService {
     } else {
       patternResults.set(pattern, {
         count: 1,
-        matches: [data]
+        matches: [data],
       });
     }
   }

@@ -1,5 +1,3 @@
- 
- 
 /**
  * Analysis Controller - Mock Implementation
  */

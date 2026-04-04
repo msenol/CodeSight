@@ -119,7 +119,10 @@ export class OllamaService {
   /**
    * Pull a model from Ollama registry
    */
-  async pullModel(modelName: string, onProgress?: (progress: { status: string; completed: number; total: number }) => void): Promise<void> {
+  async pullModel(
+    modelName: string,
+    onProgress?: (progress: { status: string; completed: number; total: number }) => void,
+  ): Promise<void> {
     logger.info('Pulling Ollama model', { modelName });
 
     const response = await fetch(`${this.config.baseUrl}/api/pull`, {
@@ -147,7 +150,9 @@ export class OllamaService {
 
     for (;;) {
       const { done, value } = await reader.read();
-      if (done) {break;}
+      if (done) {
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -209,7 +214,10 @@ export class OllamaService {
   /**
    * Generate streaming completion
    */
-  async *generateStream(prompt: string, options: Partial<OllamaGenerateOptions> = {}): AsyncGenerator<string, void, unknown> {
+  async *generateStream(
+    prompt: string,
+    options: Partial<OllamaGenerateOptions> = {},
+  ): AsyncGenerator<string, void, unknown> {
     const generateOptions: OllamaGenerateOptions = {
       model: this.config.modelName,
       prompt,
@@ -249,7 +257,9 @@ export class OllamaService {
 
       for (;;) {
         const { done, value } = await reader.read();
-        if (done) {break;}
+        if (done) {
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -310,7 +320,9 @@ export class OllamaService {
   async isModelAvailable(modelName: string): Promise<boolean> {
     try {
       const models = await this.listModels();
-      return models.some(model => model.name === modelName || model.name.startsWith(modelName + ':'));
+      return models.some(
+        model => model.name === modelName || model.name.startsWith(modelName + ':'),
+      );
     } catch (error) {
       return false;
     }

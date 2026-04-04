@@ -66,7 +66,7 @@ export class JobsController {
       if (!codebase_id) {
         return reply.status(400).send({
           success: false,
-          error: 'codebase_id is required'
+          error: 'codebase_id is required',
         } as JobResponse);
       }
 
@@ -87,7 +87,7 @@ export class JobsController {
         files_total: 0,
         progress_percentage: 0,
         configuration: configuration || {},
-        result: null
+        result: null,
       };
 
       jobStore.set(jobId, job);
@@ -99,7 +99,7 @@ export class JobsController {
 
       const response: JobResponse = {
         success: true,
-        job
+        job,
       };
 
       return reply.status(201).send(response);
@@ -107,7 +107,7 @@ export class JobsController {
       logger.error('Failed to create job', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to create job'
+        error: 'Failed to create job',
       } as JobResponse);
     }
   }
@@ -119,7 +119,7 @@ export class JobsController {
         type,
         limit = 20,
         offset = 0,
-        codebase_id
+        codebase_id,
       } = request.query as {
         status?: string;
         type?: string;
@@ -166,14 +166,14 @@ export class JobsController {
           completed_at: job.completed_at,
           progress_percentage: job.progress_percentage,
           files_processed: job.files_processed,
-          files_total: job.files_total
+          files_total: job.files_total,
         })),
         pagination: {
           limit: limitNum,
           offset: offsetNum,
           total,
-          has_more: offsetNum + limitNum < total
-        }
+          has_more: offsetNum + limitNum < total,
+        },
       };
 
       return reply.send(response);
@@ -181,7 +181,7 @@ export class JobsController {
       logger.error('Failed to get jobs', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retrieve jobs'
+        error: 'Failed to retrieve jobs',
       } as JobListResponse);
     }
   }
@@ -193,7 +193,7 @@ export class JobsController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Job ID is required'
+          error: 'Job ID is required',
         } as JobResponse);
       }
 
@@ -202,13 +202,13 @@ export class JobsController {
       if (!job) {
         return reply.status(404).send({
           success: false,
-          error: 'Job not found'
+          error: 'Job not found',
         } as JobResponse);
       }
 
       const response: JobResponse = {
         success: true,
-        job
+        job,
       };
 
       return reply.send(response);
@@ -216,7 +216,7 @@ export class JobsController {
       logger.error('Failed to get job', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retrieve job'
+        error: 'Failed to retrieve job',
       } as JobResponse);
     }
   }
@@ -228,7 +228,7 @@ export class JobsController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Job ID is required'
+          error: 'Job ID is required',
         } as JobResponse);
       }
 
@@ -237,14 +237,14 @@ export class JobsController {
       if (!job) {
         return reply.status(404).send({
           success: false,
-          error: 'Job not found'
+          error: 'Job not found',
         } as JobResponse);
       }
 
       if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
         return reply.status(400).send({
           success: false,
-          error: `Cannot cancel job in status: ${job.status}`
+          error: `Cannot cancel job in status: ${job.status}`,
         } as JobResponse);
       }
 
@@ -255,7 +255,7 @@ export class JobsController {
 
       const response: JobResponse = {
         success: true,
-        job
+        job,
       };
 
       return reply.send(response);
@@ -263,7 +263,7 @@ export class JobsController {
       logger.error('Failed to cancel job', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to cancel job'
+        error: 'Failed to cancel job',
       } as JobResponse);
     }
   }
@@ -275,7 +275,7 @@ export class JobsController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Job ID is required'
+          error: 'Job ID is required',
         } as JobResponse);
       }
 
@@ -284,14 +284,14 @@ export class JobsController {
       if (!job) {
         return reply.status(404).send({
           success: false,
-          error: 'Job not found'
+          error: 'Job not found',
         } as JobResponse);
       }
 
       if (job.status !== 'failed' && job.status !== 'cancelled') {
         return reply.status(400).send({
           success: false,
-          error: `Cannot retry job in status: ${job.status}`
+          error: `Cannot retry job in status: ${job.status}`,
         } as JobResponse);
       }
 
@@ -311,7 +311,7 @@ export class JobsController {
 
       const response: JobResponse = {
         success: true,
-        job
+        job,
       };
 
       return reply.send(response);
@@ -319,7 +319,7 @@ export class JobsController {
       logger.error('Failed to retry job', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retry job'
+        error: 'Failed to retry job',
       } as JobResponse);
     }
   }
@@ -349,17 +349,20 @@ export class JobsController {
         }
 
         const increment = Math.floor(Math.random() * 10) + 5;
-        currentJob.files_processed = Math.min(currentJob.files_processed + increment, currentJob.files_total);
-        currentJob.progress_percentage = currentJob.files_total > 0
-          ? Math.floor((currentJob.files_processed / currentJob.files_total) * 100)
-          : 0;
+        currentJob.files_processed = Math.min(
+          currentJob.files_processed + increment,
+          currentJob.files_total,
+        );
+        currentJob.progress_percentage =
+          currentJob.files_total > 0
+            ? Math.floor((currentJob.files_processed / currentJob.files_total) * 100)
+            : 0;
 
         if (currentJob.files_processed >= currentJob.files_total) {
           clearInterval(progressInterval);
           this.completeJob(jobId);
         }
       }, 500);
-
     } catch (error) {
       logger.error('Job processing failed', { jobId, error: error.message });
       job.status = 'failed';
@@ -381,23 +384,23 @@ export class JobsController {
     job.result = {
       files_indexed: job.files_total,
       entities_found: Math.floor(job.files_total * 8), // Simulated entity count
-      processing_time: job.completed_at
+      processing_time: job.completed_at,
     };
 
     logger.info('Job completed', {
       jobId,
       filesProcessed: job.files_processed,
-      processingTime: new Date(job.completed_at).getTime() - new Date(job.started_at).getTime()
+      processingTime: new Date(job.completed_at).getTime() - new Date(job.started_at).getTime(),
     });
   }
 
   private getEstimatedFilesForJob(jobType: string): number {
     // Simulated file counts based on job type
     const estimates = {
-      'full_index': 150,
-      'incremental_update': 25,
-      'reindex': 150,
-      'analyze': 75
+      full_index: 150,
+      incremental_update: 25,
+      reindex: 150,
+      analyze: 75,
     };
     return estimates[jobType] || 50;
   }

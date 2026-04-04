@@ -93,7 +93,6 @@ export class SearchCodeTool {
     required: ['query', 'codebase_id'],
   };
 
-
   async call(args: unknown): Promise<SearchCodeResult> {
     const startTime = Date.now();
 
@@ -118,10 +117,12 @@ export class SearchCodeTool {
       }
 
       // Perform search with codebase ID filtering (Rule 15: Validate before use)
-      logger.debug(`[DEBUG] Starting search with query: "${input.query}" in codebase: ${codebase.id}`);
+      logger.debug(
+        `[DEBUG] Starting search with query: "${input.query}" in codebase: ${codebase.id}`,
+      );
       const searchResults = this.searchService.search(input.query, {
         limit: input.max_results,
-        codebaseId: codebase.id,  // Pass codebase ID for filtering
+        codebaseId: codebase.id, // Pass codebase ID for filtering
       });
       logger.debug(
         '[DEBUG] Raw search results:',
@@ -297,7 +298,7 @@ export class SearchCodeTool {
     const formatted: SearchResult[] = [];
 
     // Process all results to maintain order and prevent overwhelming the system
-    const formatPromises = results.map(async (result) => {
+    const formatPromises = results.map(async result => {
       try {
         const resultTyped = result as SearchResult;
         // Get code snippet with context
@@ -308,11 +309,7 @@ export class SearchCodeTool {
         );
 
         // Get surrounding context lines
-        this.searchService.getContextLines(
-          resultTyped.file,
-          resultTyped.line,
-          input.context_lines,
-        );
+        this.searchService.getContextLines(resultTyped.file, resultTyped.line, input.context_lines);
 
         return {
           file: resultTyped.file,

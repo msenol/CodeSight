@@ -11,7 +11,13 @@ import { deduplicateSuggestions } from '../utils/ai-helpers.js';
 interface RefactoringRequest {
   file_path?: string;
   code_snippet?: string;
-  refactoring_type: 'extract-method' | 'rename-variable' | 'reduce-complexity' | 'optimize-performance' | 'improve-readability' | 'apply-pattern';
+  refactoring_type:
+    | 'extract-method'
+    | 'rename-variable'
+    | 'reduce-complexity'
+    | 'optimize-performance'
+    | 'improve-readability'
+    | 'apply-pattern';
   target_scope?: 'function' | 'class' | 'module' | 'entire-file';
   codebase_id: string;
   preferences?: {
@@ -25,7 +31,13 @@ interface RefactoringSuggestion {
   id: string;
   title: string;
   description: string;
-  category: 'extraction' | 'renaming' | 'simplification' | 'pattern-application' | 'optimization' | 'cleanup';
+  category:
+    | 'extraction'
+    | 'renaming'
+    | 'simplification'
+    | 'pattern-application'
+    | 'optimization'
+    | 'cleanup';
   priority: 'high' | 'medium' | 'low';
   impact: 'significant' | 'moderate' | 'minor';
   effort: 'quick' | 'moderate' | 'complex';
@@ -91,7 +103,8 @@ interface RefactoringResult {
  */
 export class IntelligentRefactoringTool {
   readonly name = 'intelligent_refactoring';
-  readonly description = 'AI-powered intelligent refactoring recommendations with code transformation suggestions';
+  readonly description =
+    'AI-powered intelligent refactoring recommendations with code transformation suggestions';
 
   private codeAnalyzer: CodeAnalysisService;
   private aiService: AILLMService;
@@ -105,7 +118,7 @@ export class IntelligentRefactoringTool {
     logger.info('Intelligent refactoring analysis started', {
       file_path: args.file_path,
       refactoring_type: args.refactoring_type,
-      target_scope: args.target_scope
+      target_scope: args.target_scope,
     });
 
     try {
@@ -119,7 +132,11 @@ export class IntelligentRefactoringTool {
       const aiSuggestions = await this.generateAISuggestions(args, opportunities);
 
       // 4. Create detailed refactoring plans
-      const detailedSuggestions = await this.createDetailedSuggestions(args, aiSuggestions, codeAnalysis);
+      const detailedSuggestions = await this.createDetailedSuggestions(
+        args,
+        aiSuggestions,
+        codeAnalysis,
+      );
 
       // 5. Calculate quality metrics and impact
       const qualityMetrics = await this.calculateQualityImpact(args, detailedSuggestions);
@@ -128,18 +145,23 @@ export class IntelligentRefactoringTool {
       const executionPlan = this.createExecutionPlan(detailedSuggestions);
 
       // 7. Compile final result
-      const result = await this.compileRefactoringResult(detailedSuggestions, qualityMetrics, executionPlan);
+      const result = await this.compileRefactoringResult(
+        detailedSuggestions,
+        qualityMetrics,
+        executionPlan,
+      );
 
       logger.info('Intelligent refactoring analysis completed', {
         suggestions_count: result.suggestions.length,
-        refactoring_potential: result.overall_assessment.refactoring_potential
+        refactoring_potential: result.overall_assessment.refactoring_potential,
       });
 
       return result;
-
     } catch (error) {
       logger.error('Intelligent refactoring failed:', error);
-      throw new Error(`Intelligent refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Intelligent refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -165,7 +187,7 @@ export class IntelligentRefactoringTool {
             target: func.name,
             location: { file: args.file_path, line: func.line_number },
             severity: func.cyclomatic_complexity > 15 ? 'high' : 'medium',
-            description: `Function ${func.name} has high complexity (${func.cyclomatic_complexity})`
+            description: `Function ${func.name} has high complexity (${func.cyclomatic_complexity})`,
           });
         }
       });
@@ -179,7 +201,7 @@ export class IntelligentRefactoringTool {
           target: duplicate.description,
           location: duplicate.locations[0],
           severity: 'medium',
-          description: `Duplicate code block: ${duplicate.description}`
+          description: `Duplicate code block: ${duplicate.description}`,
         });
       });
     }
@@ -192,7 +214,7 @@ export class IntelligentRefactoringTool {
           target: smell.name,
           location: smell.location,
           severity: 'medium',
-          description: `Code smell: ${smell.name} - ${smell.description}`
+          description: `Code smell: ${smell.name} - ${smell.description}`,
         });
       });
     }
@@ -223,14 +245,18 @@ Focus on:
 - Following SOLID principles
 - Design patterns application
 - Performance improvements
-`
+`,
     ];
 
     const aiInsights = await this.aiService.generateInsights(prompts);
     return aiInsights;
   }
 
-  private async createDetailedSuggestions(args: RefactoringRequest, aiInsights: any, codeAnalysis: any): Promise<RefactoringSuggestion[]> {
+  private async createDetailedSuggestions(
+    args: RefactoringRequest,
+    aiInsights: any,
+    codeAnalysis: any,
+  ): Promise<RefactoringSuggestion[]> {
     const suggestions: RefactoringSuggestion[] = [];
 
     // Process AI insights into detailed suggestions with deduplication
@@ -251,12 +277,18 @@ Focus on:
       // Sort by priority and confidence
       const priorityWeight = { high: 3, medium: 2, low: 1 };
       const priorityDiff = priorityWeight[b.priority] - priorityWeight[a.priority];
-      if (priorityDiff !== 0) {return priorityDiff;}
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
       return b.confidence - a.confidence;
     });
   }
 
-  private createRefactoringSuggestion(insight: any, args: RefactoringRequest, _codeAnalysis: any): RefactoringSuggestion | null {
+  private createRefactoringSuggestion(
+    insight: any,
+    args: RefactoringRequest,
+    _codeAnalysis: any,
+  ): RefactoringSuggestion | null {
     const id = `refactor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     return {
@@ -284,11 +316,14 @@ Focus on:
 
       transformation_type: insight.transformation_type || 'general',
       applicability_conditions: insight.applicability_conditions || [],
-      rollback_plan: insight.rollback_plan || 'Revert the suggested code changes'
+      rollback_plan: insight.rollback_plan || 'Revert the suggested code changes',
     };
   }
 
-  private generateRuleBasedSuggestions(args: RefactoringRequest, codeAnalysis: any): RefactoringSuggestion[] {
+  private generateRuleBasedSuggestions(
+    args: RefactoringRequest,
+    codeAnalysis: any,
+  ): RefactoringSuggestion[] {
     const suggestions: RefactoringSuggestion[] = [];
 
     // Extract Method refactoring for long functions
@@ -336,8 +371,11 @@ private handleOutput() {
             side_effects: ['May require updates to calling code'],
 
             transformation_type: 'extract-method',
-            applicability_conditions: ['Function has distinct logical sections', 'No circular dependencies'],
-            rollback_plan: 'Merge extracted methods back into original function'
+            applicability_conditions: [
+              'Function has distinct logical sections',
+              'No circular dependencies',
+            ],
+            rollback_plan: 'Merge extracted methods back into original function',
           });
         }
       });
@@ -364,13 +402,16 @@ private handleOutput() {
           refactored_code: variable.suggested_code,
 
           benefits: ['Improved code readability', 'Better self-documentation'],
-            risks: ['Need to update all references'],
-            side_effects: ['Must update variable references throughout scope'],
-            transformation_type: 'rename-variable',
-            applicability_conditions: ['No name conflicts in scope', 'IDE refactoring support recommended'],
-            rollback_plan: 'Revert variable name changes'
-          });
+          risks: ['Need to update all references'],
+          side_effects: ['Must update variable references throughout scope'],
+          transformation_type: 'rename-variable',
+          applicability_conditions: [
+            'No name conflicts in scope',
+            'IDE refactoring support recommended',
+          ],
+          rollback_plan: 'Revert variable name changes',
         });
+      });
     }
 
     return suggestions;
@@ -378,32 +419,38 @@ private handleOutput() {
 
   private mapToRefactoringCategory(category?: string): RefactoringSuggestion['category'] {
     const categoryMap = {
-      'extraction': 'extraction',
-      'naming': 'renaming',
-      'simplification': 'simplification',
-      'optimization': 'optimization',
-      'pattern': 'pattern-application',
-      'cleanup': 'cleanup'
+      extraction: 'extraction',
+      naming: 'renaming',
+      simplification: 'simplification',
+      optimization: 'optimization',
+      pattern: 'pattern-application',
+      cleanup: 'cleanup',
     };
 
-    return (categoryMap[category as keyof typeof categoryMap] || 'simplification') as RefactoringSuggestion['category'];
+    return (categoryMap[category as keyof typeof categoryMap] ||
+      'simplification') as RefactoringSuggestion['category'];
   }
 
   private mapToPriority(impact?: string): RefactoringSuggestion['priority'] {
     const priorityMap = {
-      'critical': 'high',
-      'high': 'high',
-      'medium': 'medium',
-      'low': 'low'
+      critical: 'high',
+      high: 'high',
+      medium: 'medium',
+      low: 'low',
     };
 
-    return (priorityMap[impact as keyof typeof priorityMap] || 'medium') as RefactoringSuggestion['priority'];
+    return (priorityMap[impact as keyof typeof priorityMap] ||
+      'medium') as RefactoringSuggestion['priority'];
   }
 
   private estimateEffort(insight: any): RefactoringSuggestion['effort'] {
     // Simple heuristic for effort estimation
-    if (insight.confidence < 50) {return 'complex';}
-    if (insight.impact === 'critical' || insight.impact === 'high') {return 'moderate';}
+    if (insight.confidence < 50) {
+      return 'complex';
+    }
+    if (insight.impact === 'critical' || insight.impact === 'high') {
+      return 'moderate';
+    }
     return 'quick';
   }
 
@@ -416,13 +463,16 @@ private handleOutput() {
 +${refactored}`;
   }
 
-  private async calculateQualityImpact(args: RefactoringRequest, suggestions: RefactoringSuggestion[]) {
+  private async calculateQualityImpact(
+    args: RefactoringRequest,
+    suggestions: RefactoringSuggestion[],
+  ) {
     // Calculate current metrics (would be more sophisticated in real implementation)
     const currentMetrics = {
       complexity_score: 65,
       maintainability_index: 72,
       duplication_ratio: 0.15,
-      code_smells: 8
+      code_smells: 8,
     };
 
     // Estimate improvement from suggestions
@@ -454,34 +504,44 @@ private handleOutput() {
 
     const projectedMetrics = {
       complexity_score: Math.max(0, currentMetrics.complexity_score - complexityImprovement),
-      maintainability_index: Math.min(100, currentMetrics.maintainability_index + maintainabilityImprovement),
+      maintainability_index: Math.min(
+        100,
+        currentMetrics.maintainability_index + maintainabilityImprovement,
+      ),
       duplication_ratio: Math.max(0, currentMetrics.duplication_ratio - duplicationReduction),
-      code_smells: Math.max(0, currentMetrics.code_smells - codeSmellReduction)
+      code_smells: Math.max(0, currentMetrics.code_smells - codeSmellReduction),
     };
 
     return {
       before: currentMetrics,
-      after: projectedMetrics
+      after: projectedMetrics,
     };
   }
 
   private createExecutionPlan(suggestions: RefactoringSuggestion[]) {
     const quickWins = suggestions.filter(s => s.effort === 'quick' && s.confidence >= 80);
-    const moderateChanges = suggestions.filter(s => s.effort === 'moderate' || (s.effort === 'quick' && s.confidence < 80));
+    const moderateChanges = suggestions.filter(
+      s => s.effort === 'moderate' || (s.effort === 'quick' && s.confidence < 80),
+    );
     const complexRefactoring = suggestions.filter(s => s.effort === 'complex');
 
     return {
       phase_1_quick_wins: quickWins,
       phase_2_moderate_changes: moderateChanges,
-      phase_3_complex_refactoring: complexRefactoring
+      phase_3_complex_refactoring: complexRefactoring,
     };
   }
 
-  private async compileRefactoringResult(suggestions: RefactoringSuggestion[], qualityMetrics: any, executionPlan: any): Promise<RefactoringResult> {
+  private async compileRefactoringResult(
+    suggestions: RefactoringSuggestion[],
+    qualityMetrics: any,
+    executionPlan: any,
+  ): Promise<RefactoringResult> {
     // Calculate overall assessment
     const refactoringPotential = Math.min(100, suggestions.length * 10);
     const codeQualityScore = qualityMetrics.after.maintainability_index;
-    const maintainabilityImprovement = qualityMetrics.after.maintainability_index - qualityMetrics.before.maintainability_index;
+    const maintainabilityImprovement =
+      qualityMetrics.after.maintainability_index - qualityMetrics.before.maintainability_index;
     const effortRequired = suggestions.reduce((total, s) => {
       const effortWeight = { quick: 1, moderate: 3, complex: 7 };
       return total + effortWeight[s.effort];
@@ -491,7 +551,7 @@ private handleOutput() {
     const suggestionsWithType = suggestions.map(s => ({
       ...s,
       type: s.category, // Add 'type' as alias for 'category' for test compatibility
-      transformed_code: s.refactored_code // Add 'transformed_code' as alias for 'refactored_code'
+      transformed_code: s.refactored_code, // Add 'transformed_code' as alias for 'refactored_code'
     }));
 
     const result: any = {
@@ -499,11 +559,11 @@ private handleOutput() {
         refactoring_potential: refactoringPotential,
         code_quality_score: codeQualityScore,
         maintainability_improvement: maintainabilityImprovement,
-        effort_required: Math.min(100, effortRequired * 2)
+        effort_required: Math.min(100, effortRequired * 2),
       },
       suggestions: suggestionsWithType,
       execution_plan: executionPlan,
-      quality_metrics: qualityMetrics
+      quality_metrics: qualityMetrics,
     };
 
     // Add refactoring_suggestions as alias for test compatibility
@@ -517,7 +577,7 @@ private handleOutput() {
       category: s.category,
       priority: s.priority,
       location: `${s.file_path}:${s.line_start}-${s.line_end}`,
-      benefits: s.benefits
+      benefits: s.benefits,
     }));
 
     // Add effort_estimation for test compatibility
@@ -525,7 +585,7 @@ private handleOutput() {
       complexity_score: Math.round(refactoringPotential / 10),
       maintainability_improvement: Math.round(maintainabilityImprovement),
       effort_required: Math.round(effortRequired),
-      time_estimate: effortRequired < 5 ? 'hours' : effortRequired < 15 ? 'days' : 'weeks'
+      time_estimate: effortRequired < 5 ? 'hours' : effortRequired < 15 ? 'days' : 'weeks',
     };
 
     return result as RefactoringResult;

@@ -17,7 +17,7 @@ export const httpRequestsTotal = new Counter({
   name: 'codesight_http_requests_total',
   help: 'Total number of HTTP requests',
   labelNames: ['method', 'route', 'status_code'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const httpRequestDurationMs = new Histogram({
@@ -25,7 +25,7 @@ export const httpRequestDurationMs = new Histogram({
   help: 'Duration of HTTP requests in milliseconds',
   labelNames: ['method', 'route', 'status_code'],
   buckets: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const httpRequestSizeBytes = new Histogram({
@@ -33,7 +33,7 @@ export const httpRequestSizeBytes = new Histogram({
   help: 'Size of HTTP requests in bytes',
   labelNames: ['method', 'route'],
   buckets: [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const httpResponseSizeBytes = new Histogram({
@@ -41,7 +41,7 @@ export const httpResponseSizeBytes = new Histogram({
   help: 'Size of HTTP responses in bytes',
   labelNames: ['method', 'route', 'status_code'],
   buckets: [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // Search and indexing metrics
@@ -49,7 +49,7 @@ export const searchOperationsTotal = new Counter({
   name: 'codesight_search_operations_total',
   help: 'Total number of search operations',
   labelNames: ['codebase_id', 'query_type', 'status'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const searchDurationMs = new Histogram({
@@ -57,7 +57,7 @@ export const searchDurationMs = new Histogram({
   help: 'Duration of search operations in milliseconds',
   labelNames: ['codebase_id', 'query_type', 'result_count'],
   buckets: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const searchResultCount = new Histogram({
@@ -65,14 +65,14 @@ export const searchResultCount = new Histogram({
   help: 'Number of results returned by search operations',
   labelNames: ['codebase_id', 'query_type'],
   buckets: [0, 1, 5, 10, 25, 50, 100, 250, 500, 1000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const indexingOperationsTotal = new Counter({
   name: 'codesight_indexing_operations_total',
   help: 'Total number of indexing operations',
   labelNames: ['codebase_id', 'status'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const indexingDurationMs = new Histogram({
@@ -80,7 +80,7 @@ export const indexingDurationMs = new Histogram({
   help: 'Duration of indexing operations in milliseconds',
   labelNames: ['codebase_id', 'file_count'],
   buckets: [1000, 5000, 10000, 30000, 60000, 120000, 300000, 600000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const indexingFilesTotal = new Histogram({
@@ -88,21 +88,21 @@ export const indexingFilesTotal = new Histogram({
   help: 'Number of files indexed in indexing operations',
   labelNames: ['codebase_id', 'language'],
   buckets: [1, 10, 50, 100, 500, 1000, 5000, 10000, 50000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // Database metrics
 export const databaseConnectionsActive = new Gauge({
   name: 'codesight_database_connections_active',
   help: 'Number of active database connections',
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const databaseQueriesTotal = new Counter({
   name: 'codesight_database_queries_total',
   help: 'Total number of database queries',
   labelNames: ['operation', 'table', 'status'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const databaseQueryDurationMs = new Histogram({
@@ -110,7 +110,7 @@ export const databaseQueryDurationMs = new Histogram({
   help: 'Duration of database queries in milliseconds',
   labelNames: ['operation', 'table'],
   buckets: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // MCP Tools metrics
@@ -118,7 +118,7 @@ export const mcpToolCallsTotal = new Counter({
   name: 'codesight_mcp_tool_calls_total',
   help: 'Total number of MCP tool calls',
   labelNames: ['tool_name', 'status'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const mcpToolDurationMs = new Histogram({
@@ -126,7 +126,7 @@ export const mcpToolDurationMs = new Histogram({
   help: 'Duration of MCP tool calls in milliseconds',
   labelNames: ['tool_name'],
   buckets: [100, 500, 1000, 2500, 5000, 10000, 30000, 60000],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // Rust FFI metrics
@@ -134,7 +134,7 @@ export const rustFFICallsTotal = new Counter({
   name: 'codesight_rust_ffi_calls_total',
   help: 'Total number of Rust FFI calls',
   labelNames: ['function', 'status'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const rustFFIDurationMs = new Histogram({
@@ -142,14 +142,14 @@ export const rustFFIDurationMs = new Histogram({
   help: 'Duration of Rust FFI calls in milliseconds',
   labelNames: ['function'],
   buckets: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const rustFFIFallbacksTotal = new Counter({
   name: 'codesight_rust_ffi_fallbacks_total',
   help: 'Total number of Rust FFI fallbacks to TypeScript',
   labelNames: ['function', 'reason'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // System metrics
@@ -157,27 +157,27 @@ export const systemMemoryUsageBytes = new Gauge({
   name: 'codesight_system_memory_usage_bytes',
   help: 'Memory usage in bytes',
   labelNames: ['type'], // heap, external, rss
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const systemCpuUsagePercent = new Gauge({
   name: 'codesight_system_cpu_usage_percent',
   help: 'CPU usage percentage',
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const codebaseEntityCount = new Gauge({
   name: 'codesight_codebase_entity_count',
   help: 'Number of entities in codebases',
   labelNames: ['codebase_id', 'entity_type'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const codebaseSizeBytes = new Gauge({
   name: 'codesight_codebase_size_bytes',
   help: 'Size of codebases in bytes',
   labelNames: ['codebase_id'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // Cache metrics
@@ -185,21 +185,21 @@ export const cacheHitsTotal = new Counter({
   name: 'codesight_cache_hits_total',
   help: 'Total number of cache hits',
   labelNames: ['cache_type'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const cacheMissesTotal = new Counter({
   name: 'codesight_cache_misses_total',
   help: 'Total number of cache misses',
   labelNames: ['cache_type'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 export const cacheSizeBytes = new Gauge({
   name: 'codesight_cache_size_bytes',
   help: 'Size of cache in bytes',
   labelNames: ['cache_type'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 // Error metrics
@@ -207,7 +207,7 @@ export const errorsTotal = new Counter({
   name: 'codesight_errors_total',
   help: 'Total number of errors',
   labelNames: ['error_type', 'component'],
-  registers: [metricsRegistry]
+  registers: [metricsRegistry],
 });
 
 /**
@@ -220,7 +220,7 @@ export function metricsMiddleware(req: Request, res: Response, next: () => void)
   const originalSend = res.send;
   let responseSize = 0;
 
-  res.send = function(data: any) {
+  res.send = function (data: any) {
     if (data) {
       responseSize = Buffer.byteLength(typeof data === 'string' ? data : JSON.stringify(data));
     }
@@ -231,13 +231,9 @@ export function metricsMiddleware(req: Request, res: Response, next: () => void)
     const duration = Math.round(performance.now() - start);
     const route = req.route ? req.route.path : req.path;
 
-    httpRequestsTotal
-      .labels(req.method, route, res.statusCode.toString())
-      .inc();
+    httpRequestsTotal.labels(req.method, route, res.statusCode.toString()).inc();
 
-    httpRequestDurationMs
-      .labels(req.method, route, res.statusCode.toString())
-      .observe(duration);
+    httpRequestDurationMs.labels(req.method, route, res.statusCode.toString()).observe(duration);
 
     httpResponseSizeBytes
       .labels(req.method, route, res.statusCode.toString())
@@ -257,17 +253,11 @@ export class SearchMetricsCollector {
     return (resultCount: number = 0, status: string = 'success') => {
       const duration = Math.round(performance.now() - start);
 
-      searchOperationsTotal
-        .labels(codebaseId, queryType, status)
-        .inc();
+      searchOperationsTotal.labels(codebaseId, queryType, status).inc();
 
-      searchDurationMs
-        .labels(codebaseId, queryType, resultCount.toString())
-        .observe(duration);
+      searchDurationMs.labels(codebaseId, queryType, resultCount.toString()).observe(duration);
 
-      searchResultCount
-        .labels(codebaseId, queryType)
-        .observe(resultCount);
+      searchResultCount.labels(codebaseId, queryType).observe(resultCount);
     };
   }
 }
@@ -276,23 +266,19 @@ export class SearchMetricsCollector {
  * Metrics collector for indexing operations
  */
 export class IndexingMetricsCollector {
-  static startIndexing(codebaseId: string): (fileCount: number, language?: string, status?: string) => void {
+  static startIndexing(
+    codebaseId: string,
+  ): (fileCount: number, language?: string, status?: string) => void {
     const start = performance.now();
 
     return (fileCount: number, language: string = 'unknown', status: string = 'success') => {
       const duration = Math.round(performance.now() - start);
 
-      indexingOperationsTotal
-        .labels(codebaseId, status)
-        .inc();
+      indexingOperationsTotal.labels(codebaseId, status).inc();
 
-      indexingDurationMs
-        .labels(codebaseId, fileCount.toString())
-        .observe(duration);
+      indexingDurationMs.labels(codebaseId, fileCount.toString()).observe(duration);
 
-      indexingFilesTotal
-        .labels(codebaseId, language)
-        .observe(fileCount);
+      indexingFilesTotal.labels(codebaseId, language).observe(fileCount);
     };
   }
 }
@@ -307,13 +293,9 @@ export class MCPToolMetricsCollector {
     return (status: string = 'success') => {
       const duration = Math.round(performance.now() - start);
 
-      mcpToolCallsTotal
-        .labels(toolName, status)
-        .inc();
+      mcpToolCallsTotal.labels(toolName, status).inc();
 
-      mcpToolDurationMs
-        .labels(toolName)
-        .observe(duration);
+      mcpToolDurationMs.labels(toolName).observe(duration);
     };
   }
 }
@@ -328,18 +310,12 @@ export class RustFFIMetricsCollector {
     return (status: string = 'success', fallbackReason?: string) => {
       const duration = Math.round(performance.now() - start);
 
-      rustFFICallsTotal
-        .labels(functionName, status)
-        .inc();
+      rustFFICallsTotal.labels(functionName, status).inc();
 
-      rustFFIDurationMs
-        .labels(functionName)
-        .observe(duration);
+      rustFFIDurationMs.labels(functionName).observe(duration);
 
       if (status === 'fallback' && fallbackReason) {
-        rustFFIFallbacksTotal
-          .labels(functionName, fallbackReason)
-          .inc();
+        rustFFIFallbacksTotal.labels(functionName, fallbackReason).inc();
       }
     };
   }
@@ -375,22 +351,15 @@ export class SystemMetricsCollector {
     try {
       const memUsage = process.memoryUsage();
 
-      systemMemoryUsageBytes
-        .labels('heap')
-        .set(memUsage.heapUsed);
+      systemMemoryUsageBytes.labels('heap').set(memUsage.heapUsed);
 
-      systemMemoryUsageBytes
-        .labels('external')
-        .set(memUsage.external);
+      systemMemoryUsageBytes.labels('external').set(memUsage.external);
 
-      systemMemoryUsageBytes
-        .labels('rss')
-        .set(memUsage.rss);
+      systemMemoryUsageBytes.labels('rss').set(memUsage.rss);
 
       const cpuUsage = process.cpuUsage();
       const cpuPercent = (cpuUsage.user + cpuUsage.system) / 1000000; // Convert to seconds
       systemCpuUsagePercent.set(cpuPercent);
-
     } catch (error) {
       console.error('Failed to collect system metrics:', error);
     }
@@ -402,9 +371,7 @@ export class SystemMetricsCollector {
  */
 export class ErrorMetricsCollector {
   static recordError(errorType: string, component: string, _error: Error): void {
-    errorsTotal
-      .labels(errorType, component)
-      .inc();
+    errorsTotal.labels(errorType, component).inc();
   }
 }
 
@@ -418,13 +385,9 @@ export class DatabaseMetricsCollector {
     return (status: string = 'success') => {
       const duration = Math.round(performance.now() - start);
 
-      databaseQueriesTotal
-        .labels(operation, table, status)
-        .inc();
+      databaseQueriesTotal.labels(operation, table, status).inc();
 
-      databaseQueryDurationMs
-        .labels(operation, table)
-        .observe(duration);
+      databaseQueryDurationMs.labels(operation, table).observe(duration);
     };
   }
 
@@ -455,15 +418,11 @@ export class CacheMetricsCollector {
  */
 export class CodebaseMetricsCollector {
   static updateEntityCount(codebaseId: string, entityType: string, count: number): void {
-    codebaseEntityCount
-      .labels(codebaseId, entityType)
-      .set(count);
+    codebaseEntityCount.labels(codebaseId, entityType).set(count);
   }
 
   static updateSize(codebaseId: string, sizeBytes: number): void {
-    codebaseSizeBytes
-      .labels(codebaseId)
-      .set(sizeBytes);
+    codebaseSizeBytes.labels(codebaseId).set(sizeBytes);
   }
 }
 
@@ -492,7 +451,7 @@ export async function getMetricsAsJSON(): Promise<Record<string, any>> {
     'codesight_mcp_tool_calls_total',
     'codesight_rust_ffi_calls_total',
     'codesight_system_memory_usage_bytes',
-    'codesight_errors_total'
+    'codesight_errors_total',
   ];
 
   const metrics = await metricsRegistry.getMetricsAsJSON();

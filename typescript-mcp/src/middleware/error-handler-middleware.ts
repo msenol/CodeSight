@@ -1,15 +1,14 @@
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
 import type { Response, NextFunction } from 'express';
-import { type ExtendedRequest, type ErrorResponse, type ValidationErrorDetail, HTTP_STATUS, ValidationError, AuthenticationError, AuthorizationError, RateLimitError } from './types.js';
+import {
+  type ExtendedRequest,
+  type ErrorResponse,
+  type ValidationErrorDetail,
+  HTTP_STATUS,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  RateLimitError,
+} from './types.js';
 import { ZodError } from 'zod';
 
 // Rule 15: Global declarations for Node.js environment
@@ -82,7 +81,9 @@ export class ErrorHandlerMiddleware {
   /**
    * Async error wrapper for route handlers
    */
-  static asyncHandler = (fn: (req: ExtendedRequest, res: Response, next: NextFunction) => Promise<void> | void) => {
+  static asyncHandler = (
+    fn: (req: ExtendedRequest, res: Response, next: NextFunction) => Promise<void> | void,
+  ) => {
     return (req: ExtendedRequest, res: Response, next: NextFunction) => {
       Promise.resolve(fn(req, res, next)).catch(next);
     };
@@ -91,7 +92,7 @@ export class ErrorHandlerMiddleware {
   /**
    * Not found handler
    */
-    notFound = (req: ExtendedRequest, res: Response): void => {
+  notFound = (req: ExtendedRequest, res: Response): void => {
     const error = new Error(`Route not found: ${req.method} ${req.path}`);
     error.name = 'NotFoundError';
 
@@ -124,11 +125,7 @@ export class ErrorHandlerMiddleware {
   /**
    * Validation error handler
    */
-  validationError = (
-    error: ZodError,
-    req: ExtendedRequest,
-    res: Response,
-  ): void => {
+  validationError = (error: ZodError, req: ExtendedRequest, res: Response): void => {
     const validationErrors = error.errors.map(err => ({
       field: err.path.join('.'),
       message: err.message,
@@ -186,7 +183,12 @@ export class ErrorHandlerMiddleware {
       ({ message } = error);
       const validationDetails = error.details;
       // Convert ValidationErrorDetail[] to match expected type
-      details = (validationDetails || []).map(detail => ({ field: detail.field, message: detail.message, value: detail.value, code: detail.code }));
+      details = (validationDetails || []).map(detail => ({
+        field: detail.field,
+        message: detail.message,
+        value: detail.value,
+        code: detail.code,
+      }));
     } else if (error instanceof ZodError) {
       status = HTTP_STATUS.BAD_REQUEST;
       errorType = 'Validation error';
@@ -323,7 +325,9 @@ export class ErrorHandlerMiddleware {
   /**
    * Sanitize headers to remove sensitive information
    */
-  private sanitizeHeaders(headers: Record<string, string | string[]>): Record<string, string | string[]> {
+  private sanitizeHeaders(
+    headers: Record<string, string | string[]>,
+  ): Record<string, string | string[]> {
     const sanitized = { ...headers };
     const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token'];
 

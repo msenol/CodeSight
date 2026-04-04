@@ -175,7 +175,7 @@ export class ExplainFunctionTool {
       const astResult = await this.parseFunctionWithAST(
         firstResult.name,
         firstResult.file,
-        firstResult.line
+        firstResult.line,
       );
 
       // Generate explanation based on the indexed data
@@ -197,7 +197,10 @@ export class ExplainFunctionTool {
         description: explanation.short,
         purpose: explanation.purpose,
         parameters: this.getParametersFromAST(astResult, codeSnippet), // DRY: Use AST result or fallback
-        return_info: { type: astResult?.returnType || 'unknown', description: `Returns ${astResult?.returnType || 'a value'}` },
+        return_info: {
+          type: astResult?.returnType || 'unknown',
+          description: `Returns ${astResult?.returnType || 'a value'}`,
+        },
         complexity_metrics: undefined,
         callers: [],
         callees: [],
@@ -220,7 +223,6 @@ export class ExplainFunctionTool {
         code_snippet: codeSnippet,
         ai_explanation: explanation.purpose,
       } as FunctionExplanation;
-
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(`Invalid input: ${error.errors.map(e => e.message).join(', ')}`);
@@ -289,16 +291,27 @@ export class ExplainFunctionTool {
     // Add additional analysis based on depth
     if (depth === 'detailed' || depth === 'comprehensive') {
       detailed += '## Characteristics:\n';
-      if (hasAsync) {detailed += '- Async function (returns Promise)\n';}
-      if (hasTryCatch) {detailed += '- Has error handling (try-catch)\n';}
-      if (hasReturn) {detailed += '- Returns a value\n';}
-      if (isArrowFunction) {detailed += '- Arrow function syntax\n';}
-      if (isExported) {detailed += '- Exported from module\n';}
+      if (hasAsync) {
+        detailed += '- Async function (returns Promise)\n';
+      }
+      if (hasTryCatch) {
+        detailed += '- Has error handling (try-catch)\n';
+      }
+      if (hasReturn) {
+        detailed += '- Returns a value\n';
+      }
+      if (isArrowFunction) {
+        detailed += '- Arrow function syntax\n';
+      }
+      if (isExported) {
+        detailed += '- Exported from module\n';
+      }
       detailed += '\n';
 
       detailed += '## Notes:\n';
       detailed += `- This function is part of the \`${path.basename(result.file)}\` file\n`;
-      detailed += '- For more detailed analysis, consider using the `ai_code_review` tool with the full code snippet\n';
+      detailed +=
+        '- For more detailed analysis, consider using the `ai_code_review` tool with the full code snippet\n';
     }
 
     return { short, detailed, purpose };
@@ -436,7 +449,10 @@ export class ExplainFunctionTool {
   /**
    * Generate basic usage example
    */
-  private generateBasicUsageExample(entity: DatabaseRow, signatureAnalysis: SignatureAnalysis): string {
+  private generateBasicUsageExample(
+    entity: DatabaseRow,
+    signatureAnalysis: SignatureAnalysis,
+  ): string {
     const params = signatureAnalysis.parameters
       .map((p: Parameter) => (p.optional ? `${p.name}?` : p.name))
       .join(', ');
@@ -570,23 +586,37 @@ export class ExplainFunctionTool {
     if (aiExplanation) {
       const sentences = aiExplanation.split('.');
       if (sentences.length > 0) {
-        return `${sentences[0].trim()  }.`;
+        return `${sentences[0].trim()}.`;
       }
     }
 
     // Fallback to name-based inference
     const lowerName = name.toLowerCase();
 
-    if (lowerName.includes('auth')) {return 'Handles authentication or authorization';}
-    if (lowerName.includes('valid')) {return 'Validates input data or conditions';}
-    if (lowerName.includes('parse')) {return 'Parses or processes data format';}
-    if (lowerName.includes('format')) {return 'Formats data for display or output';}
-    if (lowerName.includes('convert')) {return 'Converts data between formats';}
-    if (lowerName.includes('calculate')) {return 'Performs calculations or computations';}
+    if (lowerName.includes('auth')) {
+      return 'Handles authentication or authorization';
+    }
+    if (lowerName.includes('valid')) {
+      return 'Validates input data or conditions';
+    }
+    if (lowerName.includes('parse')) {
+      return 'Parses or processes data format';
+    }
+    if (lowerName.includes('format')) {
+      return 'Formats data for display or output';
+    }
+    if (lowerName.includes('convert')) {
+      return 'Converts data between formats';
+    }
+    if (lowerName.includes('calculate')) {
+      return 'Performs calculations or computations';
+    }
     if (lowerName.includes('fetch') || lowerName.includes('load')) {
       return 'Retrieves data from external source';
     }
-    if (lowerName.includes('save') || lowerName.includes('store')) {return 'Saves or stores data';}
+    if (lowerName.includes('save') || lowerName.includes('store')) {
+      return 'Saves or stores data';
+    }
 
     return 'Performs specific functionality as part of the application logic';
   }
@@ -598,7 +628,7 @@ export class ExplainFunctionTool {
   private async parseFunctionWithAST(
     functionName: string,
     filePath: string,
-    lineNumber: number
+    lineNumber: number,
   ): Promise<ASTParseResult | null> {
     try {
       return await astParserService.parseFunction(filePath, functionName, lineNumber);

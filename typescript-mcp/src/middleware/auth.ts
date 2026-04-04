@@ -178,7 +178,10 @@ export class JWTAuthService {
   /**
    * Refresh access token using refresh token
    */
-  refreshToken(refreshToken: string, options: { issuer?: string; audience?: string } = {}): TokenPair {
+  refreshToken(
+    refreshToken: string,
+    options: { issuer?: string; audience?: string } = {},
+  ): TokenPair {
     try {
       // Verify refresh token
       const decoded = this.verifyToken(refreshToken, options);
@@ -224,7 +227,7 @@ export class JWTAuthService {
    */
   async authenticateRequest(
     request: FastifyRequest,
-    options: AuthOptions = {}
+    options: AuthOptions = {},
   ): Promise<AuthResult> {
     const mergedOptions = { ...this.defaultOptions, ...options };
 
@@ -260,7 +263,7 @@ export class JWTAuthService {
         if (!mergedOptions.roles.includes(payload.role)) {
           return {
             authenticated: false,
-            error: `Insufficient role. Required: ${mergedOptions.roles.join(', ')}, Current: ${payload.role}`
+            error: `Insufficient role. Required: ${mergedOptions.roles.join(', ')}, Current: ${payload.role}`,
           };
         }
       }
@@ -268,13 +271,13 @@ export class JWTAuthService {
       // Check permission requirements
       if (mergedOptions.permissions && mergedOptions.permissions.length > 0) {
         const hasPermission = mergedOptions.permissions.some(requiredPermission =>
-          payload.permissions.includes(requiredPermission)
+          payload.permissions.includes(requiredPermission),
         );
 
         if (!hasPermission) {
           return {
             authenticated: false,
-            error: `Insufficient permissions. Required: ${mergedOptions.permissions.join(', ')}`
+            error: `Insufficient permissions. Required: ${mergedOptions.permissions.join(', ')}`,
           };
         }
       }

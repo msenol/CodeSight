@@ -10,8 +10,8 @@ import { AILLMService } from '../services/ai-llm.js';
 import { logger } from '../services/logger.js';
 
 interface CodeGenerationRequest {
-  prompt?: string;  // Made optional for test compatibility
-  requirement?: string;  // Alternative parameter name used by tests
+  prompt?: string; // Made optional for test compatibility
+  requirement?: string; // Alternative parameter name used by tests
   context: {
     file_path?: string;
     surrounding_code?: string;
@@ -23,11 +23,11 @@ interface CodeGenerationRequest {
       style_guide: string;
       naming_conventions: string[];
     };
-    language?: string;  // Test compatibility
-    style?: string;     // Test compatibility
-    libraries?: string[];  // Test compatibility
-    framework?: string;    // Test compatibility
-    patterns?: string[];   // Test compatibility
+    language?: string; // Test compatibility
+    style?: string; // Test compatibility
+    libraries?: string[]; // Test compatibility
+    framework?: string; // Test compatibility
+    patterns?: string[]; // Test compatibility
     conventions?: string[]; // Test compatibility
   };
   generation_type?: 'function' | 'class' | 'module' | 'test' | 'documentation' | 'configuration';
@@ -131,8 +131,8 @@ export class ContextAwareCodegenTool {
       coding_standards: args.context?.coding_standards || {
         language: args.context?.language || 'typescript',
         style_guide: args.context?.style || 'standard',
-        naming_conventions: args.context?.conventions || ['camelCase']
-      }
+        naming_conventions: args.context?.conventions || ['camelCase'],
+      },
     };
 
     // Normalize args for internal use
@@ -140,13 +140,13 @@ export class ContextAwareCodegenTool {
       ...args,
       prompt: effectivePrompt,
       generation_type: effectiveGenerationType,
-      context: normalizedContext
+      context: normalizedContext,
     };
 
     logger.info('Context-aware code generation started', {
       prompt: effectivePrompt.substring(0, Math.min(100, effectivePrompt.length)),
       generation_type: effectiveGenerationType,
-      file_path: normalizedContext.file_path
+      file_path: normalizedContext.file_path,
     });
 
     try {
@@ -157,17 +157,33 @@ export class ContextAwareCodegenTool {
       const codePatterns = await this.extractCodePatterns(normalizedArgs);
 
       // 3. Generate context-aware code
-      const generatedCode = await this.generateCodeWithContext(normalizedArgs, projectContext, codePatterns);
+      const generatedCode = await this.generateCodeWithContext(
+        normalizedArgs,
+        projectContext,
+        codePatterns,
+      );
 
       // 4. Validate generated code
       const validationResults = await this.validateGeneratedCode(generatedCode, normalizedArgs);
 
       // 5. Analyze context compliance
-      const contextAnalysis = await this.analyzeContextCompliance(generatedCode, codePatterns, normalizedArgs);
+      const contextAnalysis = await this.analyzeContextCompliance(
+        generatedCode,
+        codePatterns,
+        normalizedArgs,
+      );
 
       // 6. Generate alternatives and suggestions
-      const alternatives = await this.generateAlternatives(normalizedArgs, generatedCode, projectContext);
-      const suggestions = await this.generateSuggestions(generatedCode, validationResults, normalizedArgs);
+      const alternatives = await this.generateAlternatives(
+        normalizedArgs,
+        generatedCode,
+        projectContext,
+      );
+      const suggestions = await this.generateSuggestions(
+        generatedCode,
+        validationResults,
+        normalizedArgs,
+      );
 
       // 7. Create integration plan
       const integrationPlan = await this.createIntegrationPlan(normalizedArgs, generatedCode);
@@ -177,7 +193,7 @@ export class ContextAwareCodegenTool {
         generatedCode,
         contextAnalysis,
         validationResults,
-        normalizedArgs
+        normalizedArgs,
       );
 
       const result: CodeGenerationResult = {
@@ -188,20 +204,21 @@ export class ContextAwareCodegenTool {
         suggestions,
         integration_plan: integrationPlan,
         confidence_score: confidenceScore,
-        alternatives
+        alternatives,
       };
 
       logger.info('Context-aware code generation completed', {
         lines_generated: result.code_metadata.estimated_lines,
         confidence_score: result.confidence_score,
-        validation_issues: result.validation_results.potential_issues.length
+        validation_issues: result.validation_results.potential_issues.length,
       });
 
       return result;
-
     } catch (error) {
       logger.error('Context-aware code generation failed:', error);
-      throw new Error(`Code generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Code generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -210,13 +227,16 @@ export class ContextAwareCodegenTool {
       project_style: {},
       patterns: [],
       dependencies: new Set<string>(),
-      architecture_patterns: []
+      architecture_patterns: [],
     };
 
     // Analyze existing code in the file
     if (args.context.file_path) {
       try {
-        const fileAnalysis = await this.codeAnalyzer.analyzeFile(args.context.file_path, args.codebase_id);
+        const fileAnalysis = await this.codeAnalyzer.analyzeFile(
+          args.context.file_path,
+          args.codebase_id,
+        );
 
         // Extract patterns from surrounding code
         if (args.context.surrounding_code) {
@@ -227,7 +247,6 @@ export class ContextAwareCodegenTool {
         if (fileAnalysis.imports) {
           fileAnalysis.imports.forEach((imp: any) => context.dependencies.add(imp.module));
         }
-
       } catch (error) {
         logger.warn('Failed to analyze file context:', error);
       }
@@ -277,8 +296,10 @@ export class ContextAwareCodegenTool {
     const patterns = {
       naming_conventions: this.analyzeNamingConventions(args.context.surrounding_code || ''),
       code_style: this.analyzeCodeStyle(args.context.surrounding_code || ''),
-      architectural_patterns: this.analyzeArchitecturalPatterns(args.context.surrounding_code || ''),
-      error_handling: this.analyzeErrorHandling(args.context.surrounding_code || '')
+      architectural_patterns: this.analyzeArchitecturalPatterns(
+        args.context.surrounding_code || '',
+      ),
+      error_handling: this.analyzeErrorHandling(args.context.surrounding_code || ''),
     };
 
     return patterns;
@@ -290,7 +311,7 @@ export class ContextAwareCodegenTool {
       function_style: 'camelCase',
       class_style: 'PascalCase',
       constant_style: 'UPPER_SNAKE_CASE',
-      interface_style: 'PascalCase'
+      interface_style: 'PascalCase',
     };
 
     // Analyze actual naming patterns in the code
@@ -315,7 +336,7 @@ export class ContextAwareCodegenTool {
       quote_style: code.includes("'") ? 'single' : code.includes('"') ? 'double' : 'mixed',
       indentation: code.includes('  ') ? 'spaces' : 'tabs',
       brace_style: code.includes('{\n') ? 'allman' : 'k&r',
-      trailing_commas: code.includes(',\n}') || code.includes(',\r\n}')
+      trailing_commas: code.includes(',\n}') || code.includes(',\r\n}'),
     };
   }
 
@@ -359,14 +380,18 @@ export class ContextAwareCodegenTool {
     return patterns;
   }
 
-  private async generateCodeWithContext(args: CodeGenerationRequest, projectContext: any, codePatterns: any) {
+  private async generateCodeWithContext(
+    args: CodeGenerationRequest,
+    projectContext: any,
+    codePatterns: any,
+  ) {
     const contextInfo = {
       project_patterns: projectContext.patterns,
       dependencies: Array.from(projectContext.dependencies),
       naming_conventions: codePatterns.naming_conventions,
       code_style: codePatterns.code_style,
       architectural_patterns: codePatterns.architectural_patterns,
-      error_handling: codePatterns.error_handling
+      error_handling: codePatterns.error_handling,
     };
 
     const prompts = [
@@ -400,7 +425,7 @@ Requirements:
 9. Make code testable and maintainable
 
 Generate clean, production-ready code that integrates seamlessly with the existing codebase.
-`
+`,
     ];
 
     try {
@@ -412,7 +437,6 @@ Generate clean, production-ready code that integrates seamlessly with the existi
       }
 
       return this.generateFallbackCode(args);
-
     } catch (error) {
       logger.warn('AI code generation failed, using fallback:', error);
       return this.generateFallbackCode(args);
@@ -442,8 +466,10 @@ function generatedFunction() {
 
   private generateFunction(prompt: string, _args: CodeGenerationRequest): string {
     const functionName = this.extractFunctionName(prompt) || 'newFunction';
-    const hasAsync = prompt.toLowerCase().includes('async') || prompt.toLowerCase().includes('await');
-    const hasError = prompt.toLowerCase().includes('error') || prompt.toLowerCase().includes('exception');
+    const hasAsync =
+      prompt.toLowerCase().includes('async') || prompt.toLowerCase().includes('await');
+    const hasError =
+      prompt.toLowerCase().includes('error') || prompt.toLowerCase().includes('exception');
 
     let code = '';
 
@@ -464,10 +490,12 @@ export function ${functionName}() {\n`;
     if (hasError) {
       code += `  try {\n    // TODO: Implement main logic\n    const result = await processData();\n    return result;\n  } catch (error) {\n    console.error('Error in ${functionName}:', error);\n    throw error;\n  }\n`;
     } else {
-      code += '  // TODO: Implement main logic\n  const result = processData();\n  return result;\n';
+      code +=
+        '  // TODO: Implement main logic\n  const result = processData();\n  return result;\n';
     }
 
-    code += '}\n\n// Helper function (to be implemented)\nfunction processData() {\n  // Implementation needed\n  return null;\n}';
+    code +=
+      '}\n\n// Helper function (to be implemented)\nfunction processData() {\n  // Implementation needed\n  return null;\n}';
 
     return code;
   }
@@ -600,7 +628,7 @@ function functionToTest(input: any): any {
         message: string;
         line_number?: number;
       }>,
-      security_considerations: [] as string[]
+      security_considerations: [] as string[],
     };
 
     // Basic syntax validation
@@ -611,7 +639,7 @@ function functionToTest(input: any): any {
       if (openBraces !== closeBraces) {
         validation.potential_issues.push({
           type: 'error',
-          message: 'Unbalanced braces detected'
+          message: 'Unbalanced braces detected',
         });
         validation.syntax_valid = false;
       }
@@ -622,48 +650,60 @@ function functionToTest(input: any): any {
       if (openParens !== closeParens) {
         validation.potential_issues.push({
           type: 'error',
-          message: 'Unbalanced parentheses detected'
+          message: 'Unbalanced parentheses detected',
         });
         validation.syntax_valid = false;
       }
 
       // Security considerations
       if (code.includes('eval(') || code.includes('new Function(')) {
-        validation.security_considerations.push('Dynamic code execution detected - review for security implications');
+        validation.security_considerations.push(
+          'Dynamic code execution detected - review for security implications',
+        );
       }
 
       if (code.includes('password') || code.includes('secret') || code.includes('token')) {
-        validation.security_considerations.push('Code references sensitive information - ensure proper handling');
+        validation.security_considerations.push(
+          'Code references sensitive information - ensure proper handling',
+        );
       }
-
     } catch (error) {
       validation.syntax_valid = false;
       validation.potential_issues.push({
         type: 'error',
-        message: 'Syntax validation failed'
+        message: 'Syntax validation failed',
       });
     }
 
     return validation;
   }
 
-  private async analyzeContextCompliance(code: string, patterns: any, _args: CodeGenerationRequest) {
+  private async analyzeContextCompliance(
+    code: string,
+    patterns: any,
+    _args: CodeGenerationRequest,
+  ) {
     const compliance = {
       matched_patterns: [],
       style_compliance: 0,
       naming_convention_compliance: 0,
-      architectural_alignment: 0
+      architectural_alignment: 0,
     };
 
     // Check naming convention compliance
     const variables = code.match(/\b[a-z][a-zA-Z0-9]*\b/g) || [];
     const camelCaseCount = variables.filter(v => /^[a-z][a-zA-Z0-9]*$/.test(v)).length;
-    compliance.naming_convention_compliance = variables.length > 0 ? (camelCaseCount / variables.length) * 100 : 100;
+    compliance.naming_convention_compliance =
+      variables.length > 0 ? (camelCaseCount / variables.length) * 100 : 100;
 
     // Check style compliance
     let styleScore = 0;
-    if (patterns.code_style.semicolons && code.includes(';')) {styleScore += 25;}
-    if (patterns.code_style.semicolons === false && !code.includes(';')) {styleScore += 25;}
+    if (patterns.code_style.semicolons && code.includes(';')) {
+      styleScore += 25;
+    }
+    if (patterns.code_style.semicolons === false && !code.includes(';')) {
+      styleScore += 25;
+    }
     compliance.style_compliance = styleScore;
 
     // Check architectural alignment
@@ -675,7 +715,11 @@ function functionToTest(input: any): any {
     return compliance;
   }
 
-  private async generateAlternatives(args: CodeGenerationRequest, generatedCode: string, _projectContext: any) {
+  private async generateAlternatives(
+    args: CodeGenerationRequest,
+    generatedCode: string,
+    _projectContext: any,
+  ) {
     const alternatives = [];
 
     // Alternative implementation 1: More concise
@@ -685,7 +729,7 @@ function functionToTest(input: any): any {
         description: 'More concise implementation',
         pros: ['Shorter code', 'Easier to read'],
         cons: ['May sacrifice some flexibility'],
-        use_case: 'When simplicity is preferred'
+        use_case: 'When simplicity is preferred',
       });
     }
 
@@ -695,7 +739,7 @@ function functionToTest(input: any): any {
       description: 'More robust implementation with extensive error handling',
       pros: ['Better error handling', 'More reliable'],
       cons: ['More complex', 'Longer code'],
-      use_case: 'Production environments requiring high reliability'
+      use_case: 'Production environments requiring high reliability',
     });
 
     return alternatives;
@@ -705,20 +749,20 @@ function functionToTest(input: any): any {
     return {
       alternative_implementations: [
         'Consider using functional programming patterns',
-        'Evaluate if a different design pattern would be more suitable'
+        'Evaluate if a different design pattern would be more suitable',
       ],
       optimization_opportunities: [
         'Review for potential performance optimizations',
-        'Consider caching expensive operations'
+        'Consider caching expensive operations',
       ],
       test_recommendations: [
         'Add unit tests for all public methods',
-        'Include integration tests for external dependencies'
+        'Include integration tests for external dependencies',
       ],
       documentation_notes: [
         'Add inline comments for complex logic',
-        'Document edge cases and assumptions'
-      ]
+        'Document edge cases and assumptions',
+      ],
     };
   }
 
@@ -730,7 +774,7 @@ function functionToTest(input: any): any {
         description: string;
       }>,
       backward_compatibility: true,
-      migration_steps: [] as string[]
+      migration_steps: [] as string[],
     };
 
     // Extract imports from generated code
@@ -740,7 +784,7 @@ function functionToTest(input: any): any {
         plan.required_changes.push({
           file: args.context.file_path || 'target-file',
           change_type: 'import',
-          description: `Add import: ${imp}`
+          description: `Add import: ${imp}`,
         });
       });
     }
@@ -752,7 +796,12 @@ function functionToTest(input: any): any {
     return plan;
   }
 
-  private calculateConfidenceScore(code: string, contextAnalysis: any, validation: any, _args: CodeGenerationRequest): number {
+  private calculateConfidenceScore(
+    code: string,
+    contextAnalysis: any,
+    validation: any,
+    _args: CodeGenerationRequest,
+  ): number {
     let score = 50; // Base score
 
     // Add points for context compliance
@@ -762,9 +811,13 @@ function functionToTest(input: any): any {
 
     // Subtract points for validation issues
     validation.potential_issues.forEach((issue: any) => {
-      if (issue.type === 'error') {score -= 20;}
-      else if (issue.type === 'warning') {score -= 10;}
-      else {score -= 5;}
+      if (issue.type === 'error') {
+        score -= 20;
+      } else if (issue.type === 'warning') {
+        score -= 10;
+      } else {
+        score -= 5;
+      }
     });
 
     return Math.max(0, Math.min(100, Math.round(score)));
@@ -779,7 +832,9 @@ function functionToTest(input: any): any {
     if (importMatches) {
       importMatches.forEach(imp => {
         const match = imp.match(/from\s+['"]([^'"]+)['"]/);
-        if (match) {dependencies.push(match[1]);}
+        if (match) {
+          dependencies.push(match[1]);
+        }
       });
     }
 
@@ -788,7 +843,7 @@ function functionToTest(input: any): any {
       type: args.generation_type,
       estimated_lines: lines,
       complexity_score: Math.min(100, lines * 2), // Simple heuristic
-      dependencies: [...new Set(dependencies)]
+      dependencies: [...new Set(dependencies)],
     };
   }
 }

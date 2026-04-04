@@ -167,7 +167,7 @@ export class IndexingService {
     name: string,
     entityType: string,
     content: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): void {
     const entity: any = {
       id: `${filePath}:${lineNum}:${name}`,
@@ -217,7 +217,12 @@ export class IndexingService {
     }
   }
 
-  private extractArrowFunction(entities: any[], line: string, filePath: string, lineNum: number): void {
+  private extractArrowFunction(
+    entities: any[],
+    line: string,
+    filePath: string,
+    lineNum: number,
+  ): void {
     const arrowMatch = line.match(
       /(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=]+)\s*=>/,
     );
@@ -264,7 +269,7 @@ export class IndexingService {
     filePath: string,
     lineNum: number,
     lines: string[],
-    lineIndex: number
+    lineIndex: number,
   ): void {
     const methodMatch = line.match(/^\s*(?:async\s+)?(\w+)\s*\(([^)]*)\)\s*(?::[^{]*)?\{/);
     if (methodMatch && !line.includes('function')) {
@@ -363,7 +368,14 @@ export class IndexingService {
           start_line
         LIMIT ?
       `);
-      results = stmt.all(searchPattern, searchPattern, codebaseId, query, `${query}%`, limit) as DatabaseRow[];
+      results = stmt.all(
+        searchPattern,
+        searchPattern,
+        codebaseId,
+        query,
+        `${query}%`,
+        limit,
+      ) as DatabaseRow[];
     } else {
       // Without codebase filter - existing query
       stmt = this.db.prepare(`
@@ -392,7 +404,7 @@ export class IndexingService {
         String(row.name),
         String(row.content),
         String(row.entity_type),
-        String(row.file_path)
+        String(row.file_path),
       ),
     }));
   }
@@ -406,7 +418,7 @@ export class IndexingService {
     name: string,
     content: string,
     entityType: string = 'function',
-    filePath: string = ''
+    filePath: string = '',
   ): number {
     const queryLower = query.toLowerCase();
     const nameLower = name.toLowerCase();
@@ -458,7 +470,11 @@ export class IndexingService {
     score += typeWeights[entityType] || 0;
 
     // 7. File location weighting (src > test > mock)
-    if (filePath.includes('/test/') || filePath.includes('.test.') || filePath.includes('__mocks__/')) {
+    if (
+      filePath.includes('/test/') ||
+      filePath.includes('.test.') ||
+      filePath.includes('__mocks__/')
+    ) {
       score *= 0.7; // Penalize test files
     } else if (filePath.includes('/src/')) {
       score *= 1.1; // Boost source files
@@ -507,7 +523,10 @@ export class IndexingService {
     const { limit = 20, codebaseId } = options || {};
 
     // Tokenize query for better multi-word support
-    const words = query.trim().split(/\s+/).filter(w => w.length > 0);
+    const words = query
+      .trim()
+      .split(/\s+/)
+      .filter(w => w.length > 0);
 
     if (words.length === 1) {
       // Single word - direct search (existing optimized path)
@@ -540,7 +559,7 @@ export class IndexingService {
   async indexCodebaseWithProgress(
     codebasePath: string,
     onProgress?: (current: number, total: number, message?: string) => void,
-    codebaseId?: string
+    codebaseId?: string,
   ): Promise<number> {
     const actualCodebaseId = codebaseId || path.basename(codebasePath);
     logger.info(`Starting progressive indexing of: ${codebasePath} as ${actualCodebaseId}`);
@@ -589,11 +608,21 @@ export class IndexingService {
   }
 
   // Additional methods to fix missing signatures
-  keywordSearch(_query: string, _limit?: number): SearchResult[] { return []; }
-  structuredSearch(_query: string, _options?: any): SearchResult[] { return []; }
-  semanticSearch(_query: string, _options?: any): SearchResult[] { return []; }
-  getCodeSnippet(_filePath: string, _line: number, _count?: number): string { return ''; }
-  getContextLines(_filePath: string, _line: number, _count?: number): string[] { return []; }
+  keywordSearch(_query: string, _limit?: number): SearchResult[] {
+    return [];
+  }
+  structuredSearch(_query: string, _options?: any): SearchResult[] {
+    return [];
+  }
+  semanticSearch(_query: string, _options?: any): SearchResult[] {
+    return [];
+  }
+  getCodeSnippet(_filePath: string, _line: number, _count?: number): string {
+    return '';
+  }
+  getContextLines(_filePath: string, _line: number, _count?: number): string[] {
+    return [];
+  }
 
   close(): void {
     this.db.close();

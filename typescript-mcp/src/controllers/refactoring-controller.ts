@@ -1,5 +1,3 @@
- 
- 
 import type { Request, Response } from 'express';
 import { SuggestRefactoringTool } from '../tools/suggest-refactoring.js';
 import { z } from 'zod';
@@ -239,7 +237,9 @@ export class RefactoringController {
    */
   async applyRefactoring(req: Request, res: Response): Promise<void> {
     try {
-      const validatedData = ApplyRefactoringRequestSchema.parse(req.body) as RefactoringExecutionRequest;
+      const validatedData = ApplyRefactoringRequestSchema.parse(
+        req.body,
+      ) as RefactoringExecutionRequest;
 
       const result = await this.executeRefactoring(validatedData);
 
@@ -397,7 +397,9 @@ export class RefactoringController {
     }
   }
 
-  private async performBatchRefactoringSuggestions(request: RefactoringRequest): Promise<Record<string, unknown>> {
+  private async performBatchRefactoringSuggestions(
+    request: RefactoringRequest,
+  ): Promise<Record<string, unknown>> {
     const {
       entity_ids,
       refactoring_types,
@@ -418,7 +420,7 @@ export class RefactoringController {
       },
     };
 
-    const promises = entity_ids.map(async (entityId) => {
+    const promises = entity_ids.map(async entityId => {
       try {
         const suggestions = await this._suggestRefactoringTool.call({
           entity_id: entityId,
@@ -458,8 +460,7 @@ export class RefactoringController {
           entity_id: value.entity_id,
           ...(value.status === 'success'
             ? { suggestions: value.suggestions, status: 'success' }
-            : { error: value.error, status: 'failed' }
-          ),
+            : { error: value.error, status: 'failed' }),
         });
 
         results.summary.successful += value.successCount;
@@ -475,7 +476,9 @@ export class RefactoringController {
     return results;
   }
 
-  private async createRefactoringPlan(request: RefactoringPlanRequest): Promise<Record<string, unknown>> {
+  private async createRefactoringPlan(
+    request: RefactoringPlanRequest,
+  ): Promise<Record<string, unknown>> {
     const {
       codebase_id,
       target_metrics = {},
@@ -569,7 +572,9 @@ export class RefactoringController {
     };
   }
 
-  private async executeRefactoring(request: RefactoringExecutionRequest): Promise<Record<string, unknown>> {
+  private async executeRefactoring(
+    request: RefactoringExecutionRequest,
+  ): Promise<Record<string, unknown>> {
     const { entity_id, refactoring_id, auto_apply, create_backup, run_tests } = request;
 
     // This would typically execute the actual refactoring
@@ -608,7 +613,10 @@ export class RefactoringController {
     };
   }
 
-  private async getRefactoringHistoryData(codebaseId: string, options: RefactoringHistoryOptions): Promise<Record<string, unknown>> {
+  private async getRefactoringHistoryData(
+    codebaseId: string,
+    options: RefactoringHistoryOptions,
+  ): Promise<Record<string, unknown>> {
     // This would typically fetch from a database
     // For now, return mock history data
     const history: Record<string, unknown> = {
@@ -684,7 +692,10 @@ export class RefactoringController {
     };
   }
 
-  private async generateRecommendations(codebaseId: string, options: RecommendationOptions): Promise<Record<string, unknown>> {
+  private async generateRecommendations(
+    codebaseId: string,
+    options: RecommendationOptions,
+  ): Promise<Record<string, unknown>> {
     // This would typically analyze the codebase and generate recommendations
     // For now, return mock recommendations
     return {

@@ -1,7 +1,5 @@
- 
- 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
- 
+
 import { codebaseService } from '../services/codebase-service.js';
 // import { securityService } from '../services/security-service.js'; // Unused import
 import { z } from 'zod';
@@ -129,7 +127,7 @@ export class AnalyzeSecurityTool {
           column: 15,
           code: 'const API_KEY = "sk-1234567890abcdef"',
           suggestion: 'Move API keys to environment variables',
-        }
+        },
       ];
       const vulnerabilities = this.convertToVulnerabilities(securityIssues);
       const summary = this.calculateSummary(vulnerabilities);
@@ -165,7 +163,9 @@ export class AnalyzeSecurityTool {
   }
 
   private calculateSecurityScore(summary: Record<string, number>, total: number): number {
-    if (total === 0) {return 100;}
+    if (total === 0) {
+      return 100;
+    }
 
     const weightedScore =
       summary.critical * 10 + summary.high * 5 + summary.medium * 2 + summary.low * 1;

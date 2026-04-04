@@ -4,10 +4,6 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
 
- 
- 
- 
- 
 // Rule 15: Global declarations for Node.js environment
 declare const process: {
   env: Record<string, string | undefined>;
@@ -27,9 +23,9 @@ export interface SearchService {
   keywordSearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
   semanticSearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
   structuredSearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
-   
+
   regexSearch(_pattern: string, _options: SearchOptions): Promise<SearchResult[]>;
-   
+
   fuzzySearch(_query: string, _options: SearchOptions): Promise<SearchResult[]>;
   getCodeSnippet(filePath: string, line: number, contextLines: number): Promise<string>;
   getContextLines(filePath: string, line: number, contextLines: number): Promise<string[]>;
@@ -59,7 +55,6 @@ export class DatabaseSearchService implements SearchService {
 
       console.log('[DEBUG] Database tables found:', test);
     } catch (error) {
-
       console.error('[DEBUG] Database connection error:', error);
     }
   }
@@ -67,7 +62,6 @@ export class DatabaseSearchService implements SearchService {
   async keywordSearch(query: string, options: SearchOptions): Promise<SearchResult[]> {
     const maxResults = options.max_results || 10;
     const searchQuery = query.toLowerCase();
-
 
     console.log(
       `[DEBUG] keywordSearch called with query: "${searchQuery}", codebase_id: "${options.codebase_id}"`,
@@ -81,7 +75,6 @@ export class DatabaseSearchService implements SearchService {
 
       console.log(`[DEBUG] Database has ${count.count} entities`);
     } catch (error) {
-
       console.error('[DEBUG] Error checking entity count:', error);
     }
 
@@ -115,7 +108,6 @@ export class DatabaseSearchService implements SearchService {
       containsQuery,
       maxResults,
     );
-
 
     console.log(`[DEBUG] Found ${rows.length} raw results for query "${searchQuery}"`);
 
@@ -165,7 +157,6 @@ export class DatabaseSearchService implements SearchService {
         score: 0.8, // Default score for regex matches
       }));
     } catch (error) {
-
       console.error('Invalid regex pattern:', error);
       return [];
     }
@@ -219,7 +210,6 @@ export class DatabaseSearchService implements SearchService {
 
       return lines.slice(start, end).join('\n');
     } catch (error) {
-
       console.error(`Error reading file ${filePath}:`, error);
       return '';
     }
@@ -234,7 +224,6 @@ export class DatabaseSearchService implements SearchService {
 
       return lines.slice(start, end);
     } catch (error) {
-
       console.error(`Error reading file ${filePath}:`, error);
       return [];
     }

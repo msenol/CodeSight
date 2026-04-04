@@ -88,7 +88,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
         tools: [
           {
             name: 'search_code',
-            description: 'Search for code patterns in the codebase using natural language. Auto-indexes if codebase not indexed.',
+            description:
+              'Search for code patterns in the codebase using natural language. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -124,7 +125,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'find_references',
-            description: 'Find all references to a symbol in the codebase. Auto-indexes if codebase not indexed.',
+            description:
+              'Find all references to a symbol in the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -142,7 +144,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'trace_data_flow',
-            description: 'Trace data flow through the codebase. Auto-indexes if codebase not indexed.',
+            description:
+              'Trace data flow through the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -164,7 +167,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'analyze_security',
-            description: 'Analyze code for potential security vulnerabilities. Auto-indexes if codebase not indexed.',
+            description:
+              'Analyze code for potential security vulnerabilities. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -183,7 +187,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'get_api_endpoints',
-            description: 'List all API endpoints in the codebase. Auto-indexes if codebase not indexed.',
+            description:
+              'List all API endpoints in the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -219,7 +224,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'find_duplicates',
-            description: 'Find duplicate code patterns in the codebase. Auto-indexes if codebase not indexed.',
+            description:
+              'Find duplicate code patterns in the codebase. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -237,7 +243,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'suggest_refactoring',
-            description: 'Suggest refactoring opportunities for code. Auto-indexes if codebase not indexed.',
+            description:
+              'Suggest refactoring opportunities for code. Auto-indexes if codebase not indexed.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -256,13 +263,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
           // Phase 4.1 AI-Powered Tools (these analyze provided code snippets, no auto-indexing needed)
           {
             name: 'ai_code_review',
-            description: 'AI-powered comprehensive code review with intelligent suggestions and analysis',
+            description:
+              'AI-powered comprehensive code review with intelligent suggestions and analysis',
             inputSchema: {
               type: 'object',
               properties: {
                 file_path: {
                   type: 'string',
-                  description: 'File path to review (optional, analyzes code snippet if not provided)',
+                  description:
+                    'File path to review (optional, analyzes code snippet if not provided)',
                 },
                 code_snippet: {
                   type: 'string',
@@ -282,7 +291,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                   properties: {
                     pr_description: { type: 'string' },
                     changed_files: { type: 'array', items: { type: 'string' } },
-                    target_branch: { type: 'string' }
+                    target_branch: { type: 'string' },
                   },
                   description: 'Additional context for the review',
                 },
@@ -292,21 +301,31 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'intelligent_refactoring',
-            description: 'AI-powered intelligent refactoring recommendations with code transformation suggestions',
+            description:
+              'AI-powered intelligent refactoring recommendations with code transformation suggestions',
             inputSchema: {
               type: 'object',
               properties: {
                 file_path: {
                   type: 'string',
-                  description: 'File path to refactor (optional, uses code_snippet if not provided)',
+                  description:
+                    'File path to refactor (optional, uses code_snippet if not provided)',
                 },
                 code_snippet: {
                   type: 'string',
-                  description: 'Code snippet to refactor (optional, uses file_path if not provided)',
+                  description:
+                    'Code snippet to refactor (optional, uses file_path if not provided)',
                 },
                 refactoring_type: {
                   type: 'string',
-                  enum: ['extract-method', 'rename-variable', 'reduce-complexity', 'optimize-performance', 'improve-readability', 'apply-pattern'],
+                  enum: [
+                    'extract-method',
+                    'rename-variable',
+                    'reduce-complexity',
+                    'optimize-performance',
+                    'improve-readability',
+                    'apply-pattern',
+                  ],
                   description: 'Type of refactoring to focus on',
                 },
                 target_scope: {
@@ -323,7 +342,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                   properties: {
                     preserve_behavior: { type: 'boolean' },
                     backward_compatible: { type: 'boolean' },
-                    test_driven: { type: 'boolean' }
+                    test_driven: { type: 'boolean' },
                   },
                   description: 'Refactoring preferences and constraints',
                 },
@@ -390,9 +409,9 @@ export async function registerMCPTools(server: Server): Promise<void> {
                       properties: {
                         language: { type: 'string' },
                         style_guide: { type: 'string' },
-                        naming_conventions: { type: 'array', items: { type: 'string' } }
-                      }
-                    }
+                        naming_conventions: { type: 'array', items: { type: 'string' } },
+                      },
+                    },
                   },
                   description: 'Project and code context for generation',
                 },
@@ -408,7 +427,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                     complexity_limit: { type: 'number' },
                     test_required: { type: 'boolean' },
                     documentation_required: { type: 'boolean' },
-                    performance_optimized: { type: 'boolean' }
+                    performance_optimized: { type: 'boolean' },
                   },
                   description: 'Generation constraints and requirements',
                 },
@@ -422,13 +441,15 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'technical_debt_analysis',
-            description: 'Comprehensive technical debt assessment with business impact analysis and prioritization',
+            description:
+              'Comprehensive technical debt assessment with business impact analysis and prioritization',
             inputSchema: {
               type: 'object',
               properties: {
                 file_path: {
                   type: 'string',
-                  description: 'File path to analyze (optional, analyzes entire codebase if not provided)',
+                  description:
+                    'File path to analyze (optional, analyzes entire codebase if not provided)',
                 },
                 scope: {
                   type: 'string',
@@ -458,23 +479,26 @@ export async function registerMCPTools(server: Server): Promise<void> {
           },
           {
             name: 'index_codebase',
-            description: 'Index a codebase for code intelligence. Parse all TypeScript/JavaScript files and store code entities in the database for search and analysis.',
+            description:
+              'Index a codebase for code intelligence. Parse all TypeScript/JavaScript files and store code entities in the database for search and analysis.',
             inputSchema: {
               type: 'object',
               properties: {
                 codebase_path: {
                   type: 'string',
-                  description: 'Absolute path to the codebase to index. Defaults to current working directory.',
+                  description:
+                    'Absolute path to the codebase to index. Defaults to current working directory.',
                 },
                 codebase_id: {
                   type: 'string',
-                  description: 'Optional codebase identifier. If not provided, defaults to the directory name.',
+                  description:
+                    'Optional codebase identifier. If not provided, defaults to the directory name.',
                 },
               },
               required: [],
             },
-          }
-        ]
+          },
+        ],
       };
     });
 
@@ -603,7 +627,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'trace_data_flow': {
             // codebase_id reserved for future use
-            const { variable_name, file_path, codebase_id: _codebase_id } = args as {
+            const {
+              variable_name,
+              file_path,
+              codebase_id: _codebase_id,
+            } = args as {
               variable_name: string;
               file_path: string;
               codebase_id: string;
@@ -699,7 +727,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'find_duplicates': {
             // codebase_id reserved for future use
-            const { file_path: _file_path, min_lines, codebase_id } = args as {
+            const {
+              file_path: _file_path,
+              min_lines,
+              codebase_id,
+            } = args as {
               file_path?: string;
               min_lines?: number;
               codebase_id: string;
@@ -740,11 +772,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
                     '   - Function processData() has 8 conditional branches\n' +
                     '   - Consider using strategy pattern or lookup table\n\n' +
                     '3. Remove Dead Code:\n' +
-                    '   - Unused variable \'tempData\' at line 92\n' +
+                    "   - Unused variable 'tempData' at line 92\n" +
                     '   - Commented code block at lines 156-168\n\n' +
                     '4. Improve Naming:\n' +
-                    '   - Rename \'x\' to \'userData\' (line 34)\n' +
-                    '   - Rename \'proc\' to \'processedResult\' (line 67)',
+                    "   - Rename 'x' to 'userData' (line 34)\n" +
+                    "   - Rename 'proc' to 'processedResult' (line 67)",
                 },
               ],
             };
@@ -766,43 +798,63 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 code_snippet,
                 review_type: review_type as any,
                 codebase_id,
-                context
+                context,
               });
 
-              const resultText = `🤖 AI Code Review (${review_type})\n\n` +
+              const resultText =
+                `🤖 AI Code Review (${review_type})\n\n` +
                 `Overall Score: ${reviewResult.overall_score}/100\n\n` +
                 '📊 Metrics:\n' +
                 `- Complexity Score: ${reviewResult.metrics.complexity_score}\n` +
                 `- Maintainability Index: ${reviewResult.metrics.maintainability_index}\n` +
                 `- Security Score: ${reviewResult.metrics.security_score}\n\n` +
                 `🔍 Issues Found: ${reviewResult.issues.length}\n\n` +
-                reviewResult.issues.slice(0, 10).map((issue, index) =>
-                  `${index + 1}. ${issue.severity.toUpperCase()}: ${issue.title}\n` +
-                  `   ${issue.description}\n` +
-                  `   Category: ${issue.category} | Confidence: ${issue.confidence}%\n` +
-                  `   Suggestion: ${issue.suggestion}\n`
-                ).join('\n') +
-                (reviewResult.issues.length > 10 ? `\n... and ${reviewResult.issues.length - 10} more issues\n` : '') +
+                reviewResult.issues
+                  .slice(0, 10)
+                  .map(
+                    (issue, index) =>
+                      `${index + 1}. ${issue.severity.toUpperCase()}: ${issue.title}\n` +
+                      `   ${issue.description}\n` +
+                      `   Category: ${issue.category} | Confidence: ${issue.confidence}%\n` +
+                      `   Suggestion: ${issue.suggestion}\n`,
+                  )
+                  .join('\n') +
+                (reviewResult.issues.length > 10
+                  ? `\n... and ${reviewResult.issues.length - 10} more issues\n`
+                  : '') +
                 '\n💡 Key Recommendations:\n' +
-                reviewResult.recommendations.slice(0, 3).map((rec, index) =>
-                  `${index + 1}. ${rec.action} (${rec.priority})\n   Rationale: ${rec.rationale}\n`
-                ).join('');
+                reviewResult.recommendations
+                  .slice(0, 3)
+                  .map(
+                    (rec, index) =>
+                      `${index + 1}. ${rec.action} (${rec.priority})\n   Rationale: ${rec.rationale}\n`,
+                  )
+                  .join('');
 
               return {
                 content: [{ type: 'text', text: resultText }],
               };
             } catch (error) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `AI Code Review failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `AI Code Review failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }
 
           case 'intelligent_refactoring': {
-            const { file_path, code_snippet, refactoring_type, target_scope, codebase_id, preferences } = args as {
+            const {
+              file_path,
+              code_snippet,
+              refactoring_type,
+              target_scope,
+              codebase_id,
+              preferences,
+            } = args as {
               file_path?: string;
               code_snippet?: string;
               refactoring_type: string;
@@ -818,40 +870,54 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 refactoring_type: refactoring_type as any,
                 target_scope: target_scope as any,
                 codebase_id,
-                preferences
+                preferences,
               });
 
-              const resultText = '♻️ Intelligent Refactoring Analysis\n\n' +
+              const resultText =
+                '♻️ Intelligent Refactoring Analysis\n\n' +
                 'Overall Assessment:\n' +
                 `- Refactoring Potential: ${refactoringResult.overall_assessment.refactoring_potential}%\n` +
                 `- Code Quality Score: ${refactoringResult.overall_assessment.code_quality_score}/100\n` +
                 `- Maintainability Improvement: +${refactoringResult.overall_assessment.maintainability_improvement}\n` +
                 `- Effort Required: ${refactoringResult.overall_assessment.effort_required}%\n\n` +
                 `📋 Found ${refactoringResult.suggestions.length} Refactoring Opportunities:\n\n` +
-                refactoringResult.suggestions.slice(0, 5).map((suggestion, index) =>
-                  `${index + 1}. ${suggestion.title}\n` +
-                  `   Category: ${suggestion.category} | Impact: ${suggestion.impact}\n` +
-                  `   Effort: ${suggestion.effort} | Confidence: ${suggestion.confidence}%\n` +
-                  `   Benefits: ${suggestion.benefits.slice(0, 2).join(', ')}\n\n` +
-                  `   Original Code:\n${suggestion.original_code.substring(0, 200)}${suggestion.original_code.length > 200 ? '...' : ''}\n\n` +
-                  `   Suggested Code:\n${suggestion.refactored_code.substring(0, 200)}${suggestion.refactored_code.length > 200 ? '...' : ''}\n`
-                ).join('');
+                refactoringResult.suggestions
+                  .slice(0, 5)
+                  .map(
+                    (suggestion, index) =>
+                      `${index + 1}. ${suggestion.title}\n` +
+                      `   Category: ${suggestion.category} | Impact: ${suggestion.impact}\n` +
+                      `   Effort: ${suggestion.effort} | Confidence: ${suggestion.confidence}%\n` +
+                      `   Benefits: ${suggestion.benefits.slice(0, 2).join(', ')}\n\n` +
+                      `   Original Code:\n${suggestion.original_code.substring(0, 200)}${suggestion.original_code.length > 200 ? '...' : ''}\n\n` +
+                      `   Suggested Code:\n${suggestion.refactored_code.substring(0, 200)}${suggestion.refactored_code.length > 200 ? '...' : ''}\n`,
+                  )
+                  .join('');
 
               return {
                 content: [{ type: 'text', text: resultText }],
               };
             } catch (error) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `Intelligent Refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `Intelligent Refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }
 
           case 'bug_prediction': {
-            const { file_path, code_snippet, prediction_type, scope, codebase_id, historical_data } = args as {
+            const {
+              file_path,
+              code_snippet,
+              prediction_type,
+              scope,
+              codebase_id,
+              historical_data,
+            } = args as {
               file_path?: string;
               code_snippet?: string;
               prediction_type: string;
@@ -867,37 +933,47 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 prediction_type: prediction_type as any,
                 scope: scope as any,
                 codebase_id,
-                historical_data
+                historical_data,
               });
 
-              const resultText = `🔮 Bug Prediction Analysis (${prediction_type})\n\n` +
+              const resultText =
+                `🔮 Bug Prediction Analysis (${prediction_type})\n\n` +
                 `Risk Assessment: ${predictionResult.overall_risk_assessment.risk_category.toUpperCase()}\n` +
                 `Bug Risk Score: ${predictionResult.overall_risk_assessment.bug_risk_score}/100\n` +
                 `Predicted Bugs: ${predictionResult.overall_risk_assessment.predicted_bugs}\n\n` +
                 `🚨 Identified Risks: ${predictionResult.identified_risks.length}\n\n` +
-                predictionResult.identified_risks.slice(0, 5).map((risk, index) =>
-                  `${index + 1}. ${risk.title}\n` +
-                  `   Category: ${risk.category} | Severity: ${risk.severity}\n` +
-                  `   Likelihood: ${risk.likelihood}% | Impact: ${risk.impact}\n` +
-                  `   Location: ${risk.location.file_path}:${risk.location.line_start}\n` +
-                  `   Description: ${risk.description}\n` +
-                  `   Mitigation: ${risk.mitigation_strategies.slice(0, 2).join(', ')}\n`
-                ).join('') +
+                predictionResult.identified_risks
+                  .slice(0, 5)
+                  .map(
+                    (risk, index) =>
+                      `${index + 1}. ${risk.title}\n` +
+                      `   Category: ${risk.category} | Severity: ${risk.severity}\n` +
+                      `   Likelihood: ${risk.likelihood}% | Impact: ${risk.impact}\n` +
+                      `   Location: ${risk.location.file_path}:${risk.location.line_start}\n` +
+                      `   Description: ${risk.description}\n` +
+                      `   Mitigation: ${risk.mitigation_strategies.slice(0, 2).join(', ')}\n`,
+                  )
+                  .join('') +
                 `\n🎯 Hotspots: ${predictionResult.hotspots.length}\n` +
-                predictionResult.hotspots.map((hotspot, index) =>
-                  `${index + 1}. ${hotspot.location} (Risk: ${hotspot.risk_concentration})\n` +
-                  `   Issues: ${hotspot.bug_types.join(', ')}\n`
-                ).join('\n');
+                predictionResult.hotspots
+                  .map(
+                    (hotspot, index) =>
+                      `${index + 1}. ${hotspot.location} (Risk: ${hotspot.risk_concentration})\n` +
+                      `   Issues: ${hotspot.bug_types.join(', ')}\n`,
+                  )
+                  .join('\n');
 
               return {
                 content: [{ type: 'text', text: resultText }],
               };
             } catch (error) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `Bug Prediction failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `Bug Prediction failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }
@@ -917,10 +993,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 context: context || {},
                 generation_type: generation_type as any,
                 constraints,
-                codebase_id
+                codebase_id,
               });
 
-              const resultText = '⚡ Context-Aware Code Generation\n\n' +
+              const resultText =
+                '⚡ Context-Aware Code Generation\n\n' +
                 `Generated: ${generationResult.code_metadata.type} (${generationResult.code_metadata.estimated_lines} lines)\n` +
                 `Language: ${generationResult.code_metadata.language}\n` +
                 `Confidence Score: ${generationResult.confidence_score}/100\n\n` +
@@ -932,23 +1009,35 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 `- Naming Convention: ${generationResult.context_analysis.naming_convention_compliance}%\n` +
                 `- Architectural Alignment: ${generationResult.context_analysis.architectural_alignment}%\n\n` +
                 '💡 Suggestions:\n' +
-                generationResult.suggestions.optimization_opportunities.slice(0, 3).map(s => `- ${s}`).join('\n');
+                generationResult.suggestions.optimization_opportunities
+                  .slice(0, 3)
+                  .map(s => `- ${s}`)
+                  .join('\n');
 
               return {
                 content: [{ type: 'text', text: resultText }],
               };
             } catch (error) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `Context-Aware Code Generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `Context-Aware Code Generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }
 
           case 'technical_debt_analysis': {
-            const { file_path, scope, analysis_depth, include_recommendations, codebase_id, historical_data } = args as {
+            const {
+              file_path,
+              scope,
+              analysis_depth,
+              include_recommendations,
+              codebase_id,
+              historical_data,
+            } = args as {
               file_path?: string;
               scope: string;
               analysis_depth: string;
@@ -964,10 +1053,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 analysis_depth: analysis_depth as any,
                 include_recommendations,
                 codebase_id,
-                historical_data
+                historical_data,
               });
 
-              const resultText = `📊 Technical Debt Analysis (${analysis_depth})\n\n` +
+              const resultText =
+                `📊 Technical Debt Analysis (${analysis_depth})\n\n` +
                 `Overall Assessment: ${debtResult.overall_assessment.debt_category.toUpperCase()}\n` +
                 `Debt Score: ${debtResult.overall_assessment.total_debt_score}/100\n` +
                 `Interest Rate: ${debtResult.overall_assessment.interest_rate}%\n` +
@@ -979,33 +1069,45 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 `- 12-Month Projection: $${debtResult.financial_impact.projected_cost_12_months}\n` +
                 `- ROI Potential: ${debtResult.financial_impact.roi_potential}%\n\n` +
                 `🚨 Debt Hotspots: ${debtResult.hotspots.length}\n\n` +
-                debtResult.hotspots.slice(0, 3).map((hotspot, index) =>
-                  `${index + 1}. ${hotspot.location}\n` +
-                  `   Concentration: ${hotspot.debt_concentration}\n` +
-                  `   Issues: ${hotspot.primary_issues.join(', ')}\n` +
-                  `   Actions: ${hotspot.recommended_actions.slice(0, 2).join(', ')}\n`
-                ).join('') +
+                debtResult.hotspots
+                  .slice(0, 3)
+                  .map(
+                    (hotspot, index) =>
+                      `${index + 1}. ${hotspot.location}\n` +
+                      `   Concentration: ${hotspot.debt_concentration}\n` +
+                      `   Issues: ${hotspot.primary_issues.join(', ')}\n` +
+                      `   Actions: ${hotspot.recommended_actions.slice(0, 2).join(', ')}\n`,
+                  )
+                  .join('') +
                 `\n🎯 Quick Wins: ${debtResult.priority_matrix.quick_wins.length}\n` +
-                debtResult.priority_matrix.quick_wins.slice(0, 3).map((item, index) =>
-                  `${index + 1}. ${item.title} (Impact: ${item.impact_score}, Effort: ${item.effort_score})\n`
-                ).join('');
+                debtResult.priority_matrix.quick_wins
+                  .slice(0, 3)
+                  .map(
+                    (item, index) =>
+                      `${index + 1}. ${item.title} (Impact: ${item.impact_score}, Effort: ${item.effort_score})\n`,
+                  )
+                  .join('');
 
               return {
                 content: [{ type: 'text', text: resultText }],
               };
             } catch (error) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `Technical Debt Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `Technical Debt Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }
 
           case 'index_codebase': {
-            const codebasePath = (args as { codebase_path?: string }).codebase_path || process.cwd();
-            const codebaseId = (args as { codebase_id?: string }).codebase_id || path.basename(codebasePath);
+            const codebasePath =
+              (args as { codebase_path?: string }).codebase_path || process.cwd();
+            const codebaseId =
+              (args as { codebase_id?: string }).codebase_id || path.basename(codebasePath);
 
             logger.info(`Indexing codebase: ${codebasePath} as ${codebaseId}`);
 
@@ -1018,13 +1120,17 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const entityCount = await indexingService.indexCodebaseWithProgress(
                 codebasePath,
                 undefined,
-                codebaseId
+                codebaseId,
               );
 
               // Register the codebase
-              await codebaseService.addCodebase(codebaseId, codebasePath, ['typescript', 'javascript']);
+              await codebaseService.addCodebase(codebaseId, codebasePath, [
+                'typescript',
+                'javascript',
+              ]);
 
-              const resultText = '✅ Codebase indexed successfully!\n\n' +
+              const resultText =
+                '✅ Codebase indexed successfully!\n\n' +
                 `📁 Codebase: ${codebaseId}\n` +
                 `📍 Path: ${codebasePath}\n` +
                 `🔍 Entities indexed: ${entityCount}\n\n` +
@@ -1036,10 +1142,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
             } catch (error) {
               logger.error('Indexing error:', error);
               return {
-                content: [{
-                  type: 'text',
-                  text: `Failed to index codebase: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `Failed to index codebase: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
               };
             }
           }

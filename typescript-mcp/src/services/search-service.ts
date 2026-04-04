@@ -327,7 +327,9 @@ export class DefaultSearchService implements SearchService {
   }
 
   private traverseAST(node: any, query: string, filePath: string, results: SearchResult[]): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     // Check for named declarations
     if (

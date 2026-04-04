@@ -86,7 +86,6 @@ export class LlamaCppService extends EventEmitter {
       this.isReady = true;
       this.emit('ready');
       logger.info('llama.cpp service initialized successfully');
-
     } catch (error) {
       logger.error('Failed to initialize llama.cpp', error);
       throw new Error(`llama.cpp initialization failed: ${error.message}`);
@@ -98,15 +97,24 @@ export class LlamaCppService extends EventEmitter {
    */
   private async startServer(): Promise<void> {
     const args = [
-      '--model', this.config.modelPath,
-      '--ctx-size', this.config.contextSize.toString(),
-      '--threads', this.config.threads.toString(),
-      '--batch-size', this.config.batchSize.toString(),
-      '--temp', this.config.temperature.toString(),
-      '--top-p', this.config.topP.toString(),
-      '--repeat-penalty', this.config.repeatPenalty.toString(),
-      '--host', '127.0.0.1',
-      '--port', '8081',
+      '--model',
+      this.config.modelPath,
+      '--ctx-size',
+      this.config.contextSize.toString(),
+      '--threads',
+      this.config.threads.toString(),
+      '--batch-size',
+      this.config.batchSize.toString(),
+      '--temp',
+      this.config.temperature.toString(),
+      '--top-p',
+      this.config.topP.toString(),
+      '--repeat-penalty',
+      this.config.repeatPenalty.toString(),
+      '--host',
+      '127.0.0.1',
+      '--port',
+      '8081',
       '--log-disable',
     ];
 
@@ -125,7 +133,7 @@ export class LlamaCppService extends EventEmitter {
       },
     });
 
-    this.process.on('error', (error) => {
+    this.process.on('error', error => {
       logger.error('llama.cpp process error', error);
       this.emit('error', error);
     });
@@ -138,7 +146,7 @@ export class LlamaCppService extends EventEmitter {
 
     // Log output for debugging
     if (this.process.stderr) {
-      this.process.stderr.on('data', (data) => {
+      this.process.stderr.on('data', data => {
         const output = data.toString().trim();
         if (output) {
           logger.debug('llama.cpp stderr:', output);
@@ -168,7 +176,9 @@ export class LlamaCppService extends EventEmitter {
       }
     }
 
-    throw new Error('llama.cpp executable not found. Please install llama.cpp and ensure it\'s in PATH or specified path.');
+    throw new Error(
+      "llama.cpp executable not found. Please install llama.cpp and ensure it's in PATH or specified path.",
+    );
   }
 
   /**
@@ -245,7 +255,6 @@ export class LlamaCppService extends EventEmitter {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Completion failed', { requestId, error: error.message });
       throw new Error(`llama.cpp completion failed: ${error.message}`);
@@ -295,7 +304,9 @@ export class LlamaCppService extends EventEmitter {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {break;}
+        if (done) {
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -317,7 +328,6 @@ export class LlamaCppService extends EventEmitter {
           }
         }
       }
-
     } catch (error) {
       logger.error('Streaming completion failed', { requestId, error: error.message });
       throw new Error(`llama.cpp streaming completion failed: ${error.message}`);

@@ -1,4 +1,3 @@
- 
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 
@@ -369,7 +368,11 @@ export class CodebaseController {
   async getCodebaseStats(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { include_trends = false, period = '30d', granularity: _granularity = 'daily' } = req.query;
+      const {
+        include_trends = false,
+        period = '30d',
+        granularity: _granularity = 'daily',
+      } = req.query;
 
       if (!id || !this.isValidUUID(id)) {
         res.status(400).json({
@@ -600,7 +603,9 @@ export class CodebaseController {
     return mockCodebase;
   }
 
-  private async createNewCodebase(data: z.infer<typeof CreateCodebaseRequestSchema>): Promise<CodebaseData> {
+  private async createNewCodebase(
+    data: z.infer<typeof CreateCodebaseRequestSchema>,
+  ): Promise<CodebaseData> {
     // This would typically create in a database
     // For now, return mock created codebase
     const newCodebase: CodebaseData = {
@@ -621,7 +626,10 @@ export class CodebaseController {
     return newCodebase;
   }
 
-  private async updateExistingCodebase(id: string, data: z.infer<typeof UpdateCodebaseRequestSchema>): Promise<CodebaseData> {
+  private async updateExistingCodebase(
+    id: string,
+    data: z.infer<typeof UpdateCodebaseRequestSchema>,
+  ): Promise<CodebaseData> {
     // This would typically update in a database
     // For now, return mock updated codebase
     const existingCodebase = await this.fetchCodebaseById(id, {});
@@ -633,7 +641,10 @@ export class CodebaseController {
     };
   }
 
-  private async removeCodebase(id: string, force: boolean): Promise<{ success: boolean; message: string; error?: string }> {
+  private async removeCodebase(
+    id: string,
+    force: boolean,
+  ): Promise<{ success: boolean; message: string; error?: string }> {
     // This would typically delete from a database
     // For now, return mock result
     const codebase = await this.fetchCodebaseById(id, {});
@@ -645,7 +656,10 @@ export class CodebaseController {
     return { success: true, message: 'Codebase removed successfully' };
   }
 
-  private async performCodebaseIndexing(id: string, _options: IndexingOptions): Promise<{ success: boolean; job_id: string; message: string }> {
+  private async performCodebaseIndexing(
+    id: string,
+    _options: IndexingOptions,
+  ): Promise<{ success: boolean; job_id: string; message: string }> {
     // This would typically trigger the actual indexing process
     // For now, return mock indexing result
     const jobId = `idx_${Date.now()}`;
@@ -656,7 +670,9 @@ export class CodebaseController {
     };
   }
 
-  private async getCodebaseIndexingStatus(_id: string): Promise<{ status: string; progress?: number; message?: string }> {
+  private async getCodebaseIndexingStatus(
+    _id: string,
+  ): Promise<{ status: string; progress?: number; message?: string }> {
     // This would typically fetch current indexing status
     // For now, return mock status
     return {
@@ -666,7 +682,10 @@ export class CodebaseController {
     };
   }
 
-  private async performCodebaseSync(id: string, _options: SyncOptions): Promise<{ success: boolean; changes_detected?: number; message: string }> {
+  private async performCodebaseSync(
+    id: string,
+    _options: SyncOptions,
+  ): Promise<{ success: boolean; changes_detected?: number; message: string }> {
     // This would typically perform the actual sync
     // For now, return mock sync result
     return {
@@ -676,7 +695,10 @@ export class CodebaseController {
     };
   }
 
-  private async getCodebaseStatistics(id: string, options: CodebaseOptions): Promise<Record<string, unknown>> {
+  private async getCodebaseStatistics(
+    id: string,
+    options: CodebaseOptions,
+  ): Promise<Record<string, unknown>> {
     // This would typically calculate actual statistics
     // For now, return mock statistics
     const stats: Record<string, unknown> = {
@@ -739,7 +761,10 @@ export class CodebaseController {
     return stats;
   }
 
-  private async fetchCodebaseEntities(id: string, options: CodebaseOptions): Promise<Record<string, unknown>[]> {
+  private async fetchCodebaseEntities(
+    id: string,
+    options: CodebaseOptions,
+  ): Promise<Record<string, unknown>[]> {
     // This would typically fetch from a database
     // For now, return mock entities
     const mockEntities = [
@@ -786,7 +811,10 @@ export class CodebaseController {
     return paginatedResults;
   }
 
-  private async exportCodebaseData(id: string, options: ExportOptions): Promise<Record<string, unknown>> {
+  private async exportCodebaseData(
+    id: string,
+    options: ExportOptions,
+  ): Promise<Record<string, unknown>> {
     // This would typically generate export data
     // For now, return mock export data
     const exportData: Record<string, unknown> = {

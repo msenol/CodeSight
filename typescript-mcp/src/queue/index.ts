@@ -263,7 +263,7 @@ export class MessageQueueService {
 export const messageQueueService = new MessageQueueService();
 
 // Error handling
-connection.on('error', (error) => {
+connection.on('error', error => {
   logger.error('Redis connection error', error);
 });
 

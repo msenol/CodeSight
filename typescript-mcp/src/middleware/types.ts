@@ -1,4 +1,3 @@
- 
 import type { Request } from 'express';
 
 // Validation error detail interface
@@ -71,11 +70,7 @@ export interface AuthConfig {
 
 // CORS configuration
 export interface CorsConfig {
-  origin?:
-    | string
-    | string[]
-    | boolean
-    | (() => void);
+  origin?: string | string[] | boolean | (() => void);
   methods?: string[];
   allowedHeaders?: string[];
   exposedHeaders?: string[];

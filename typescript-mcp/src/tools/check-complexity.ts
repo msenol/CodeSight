@@ -1,10 +1,8 @@
- 
- 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 // import type { AnalysisService } from '../services/analysis-service.js'; // Rule 15: Import reserved for future implementation
- 
+
 import { complexityService } from '../services/complexity-service.js';
- 
+
 import { codebaseService } from '../services/codebase-service.js';
 import { z } from 'zod';
 
@@ -94,7 +92,10 @@ export class CheckComplexityTool {
         throw new Error(`Code entity with ID ${input.entity_id} not found`);
       }
 
-      const metrics = await complexityService.calculateMetrics(entity, input.metric_types) as unknown as Record<string, number>;
+      const metrics = (await complexityService.calculateMetrics(
+        entity,
+        input.metric_types,
+      )) as unknown as Record<string, number>;
       const rating = this.calculateComplexityRating(metrics);
       const suggestions = input.include_suggestions
         ? this.generateSuggestions(metrics, rating)
@@ -108,10 +109,13 @@ export class CheckComplexityTool {
         entity_name: entity.name,
         entity_type: entity.entity_type,
         file_path: entity.file_path,
-        cyclomatic_complexity: (metrics as any).cyclomaticComplexity || (metrics as any).cyclomatic_complexity,
-        cognitive_complexity: (metrics as any).cognitiveComplexity || (metrics as any).cognitive_complexity,
+        cyclomatic_complexity:
+          (metrics as any).cyclomaticComplexity || (metrics as any).cyclomatic_complexity,
+        cognitive_complexity:
+          (metrics as any).cognitiveComplexity || (metrics as any).cognitive_complexity,
         lines_of_code: (metrics as any).linesOfCode || (metrics as any).lines_of_code,
-        maintainability_index: (metrics as any).maintainabilityIndex || (metrics as any).maintainability_index,
+        maintainability_index:
+          (metrics as any).maintainabilityIndex || (metrics as any).maintainability_index,
         complexity_rating: rating,
         metrics_details: this.buildMetricsDetails(metrics),
         suggestions,
@@ -127,20 +131,50 @@ export class CheckComplexityTool {
     }
   }
 
-  private calculateComplexityRating(metrics: Record<string, number>): 'low' | 'medium' | 'high' | 'very_high' {
+  private calculateComplexityRating(
+    metrics: Record<string, number>,
+  ): 'low' | 'medium' | 'high' | 'very_high' {
     let score = 0;
 
-    if (metrics.cyclomatic_complexity > 20) {score += 3;} else if (metrics.cyclomatic_complexity > 10) {score += 2;} else if (metrics.cyclomatic_complexity > 5) {score += 1;}
+    if (metrics.cyclomatic_complexity > 20) {
+      score += 3;
+    } else if (metrics.cyclomatic_complexity > 10) {
+      score += 2;
+    } else if (metrics.cyclomatic_complexity > 5) {
+      score += 1;
+    }
 
-    if (metrics.cognitive_complexity > 25) {score += 3;} else if (metrics.cognitive_complexity > 15) {score += 2;} else if (metrics.cognitive_complexity > 7) {score += 1;}
+    if (metrics.cognitive_complexity > 25) {
+      score += 3;
+    } else if (metrics.cognitive_complexity > 15) {
+      score += 2;
+    } else if (metrics.cognitive_complexity > 7) {
+      score += 1;
+    }
 
-    if (metrics.lines_of_code > 100) {score += 2;} else if (metrics.lines_of_code > 50) {score += 1;}
+    if (metrics.lines_of_code > 100) {
+      score += 2;
+    } else if (metrics.lines_of_code > 50) {
+      score += 1;
+    }
 
-    if (metrics.maintainability_index < 20) {score += 3;} else if (metrics.maintainability_index < 40) {score += 2;} else if (metrics.maintainability_index < 60) {score += 1;}
+    if (metrics.maintainability_index < 20) {
+      score += 3;
+    } else if (metrics.maintainability_index < 40) {
+      score += 2;
+    } else if (metrics.maintainability_index < 60) {
+      score += 1;
+    }
 
-    if (score >= 8) {return 'very_high';}
-    if (score >= 5) {return 'high';}
-    if (score >= 2) {return 'medium';}
+    if (score >= 8) {
+      return 'very_high';
+    }
+    if (score >= 5) {
+      return 'high';
+    }
+    if (score >= 2) {
+      return 'medium';
+    }
     return 'low';
   }
 
@@ -240,7 +274,10 @@ export class CheckComplexityTool {
     return suggestions;
   }
 
-  private async getBenchmarkComparison(_entity: unknown, _metrics: unknown): Promise<BenchmarkComparison> {
+  private async getBenchmarkComparison(
+    _entity: unknown,
+    _metrics: unknown,
+  ): Promise<BenchmarkComparison> {
     // This would compare against similar functions in the codebase
     // For now, return mock data
     return {

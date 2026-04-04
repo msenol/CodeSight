@@ -1,36 +1,34 @@
- 
- 
- 
- 
 import type { DuplicateCode, ASTNode } from '../types/index.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
 import levenshtein from 'fast-levenshtein';
- 
+
 // import * as acorn from 'acorn'; // Unused import
- 
+
 // import * as walk from 'acorn-walk'; // Unused import
 
 export interface DuplicationService {
-   
   detectDuplicates(_projectPath: string): Promise<DuplicateCode[]>;
-   
+
   analyzeFile(_filePath: string): Promise<DuplicateCode[]>;
-   
+
   compareFiles(_file1: string, _file2: string): Promise<DuplicateCode[]>;
-   
+
   findSimilarFunctions(_projectPath: string, _threshold?: number): Promise<FunctionDuplicate[]>;
-   
+
   findSimilarClasses(_projectPath: string, _threshold?: number): Promise<ClassDuplicate[]>;
-   
+
   generateDuplicationReport(_duplicates: DuplicateCode[]): Promise<DuplicationReport>;
-   
+
   suggestRefactoring(_duplicate: DuplicateCode): Promise<RefactoringAdvice>;
-   
-  findDuplicateCode(_codebaseId: string, _options: Record<string, unknown>): Promise<DuplicateCode[]>;
-   
+
+  findDuplicateCode(
+    _codebaseId: string,
+    _options: Record<string, unknown>,
+  ): Promise<DuplicateCode[]>;
+
   findDuplicates(_files: string[], _options: Record<string, unknown>): Promise<DuplicateCode[]>;
 }
 
@@ -352,7 +350,10 @@ export class DuplicationServiceImpl implements DuplicationService {
     return { type, description, impact, estimatedEffort };
   }
 
-  async findDuplicateCode(codebaseId: string, _options: Record<string, unknown>): Promise<DuplicateCode[]> {
+  async findDuplicateCode(
+    codebaseId: string,
+    _options: Record<string, unknown>,
+  ): Promise<DuplicateCode[]> {
     // Implementation for MCP tool compatibility
     const duplicates = await this.detectDuplicates(codebaseId);
     return duplicates.map(dup => ({
@@ -361,7 +362,10 @@ export class DuplicationServiceImpl implements DuplicationService {
     }));
   }
 
-  async findDuplicates(files: string[], _options: Record<string, unknown>): Promise<DuplicateCode[]> {
+  async findDuplicates(
+    files: string[],
+    _options: Record<string, unknown>,
+  ): Promise<DuplicateCode[]> {
     const allDuplicates: DuplicateCode[] = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -450,7 +454,9 @@ export class DuplicationServiceImpl implements DuplicationService {
 
   private calculateSimilarity(text1: string, text2: string): number {
     const maxLength = Math.max(text1.length, text2.length);
-    if (maxLength === 0) {return 1;}
+    if (maxLength === 0) {
+      return 1;
+    }
 
     const editDistance = levenshtein.get(text1, text2);
     return 1 - editDistance / maxLength;
@@ -487,8 +493,12 @@ export class DuplicationServiceImpl implements DuplicationService {
   }
 
   private categorizeDuplicate(duplicate: DuplicateCode): string {
-    if (duplicate.linesAffected < 10) {return 'small';}
-    if (duplicate.linesAffected < 50) {return 'medium';}
+    if (duplicate.linesAffected < 10) {
+      return 'small';
+    }
+    if (duplicate.linesAffected < 50) {
+      return 'medium';
+    }
     return 'large';
   }
 }

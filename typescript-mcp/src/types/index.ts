@@ -1,5 +1,3 @@
- 
- 
 // Core types for Code Intelligence MCP Server
 
 export interface CodebaseInfo {

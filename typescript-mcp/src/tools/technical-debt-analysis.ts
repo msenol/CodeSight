@@ -34,7 +34,14 @@ interface TechnicalDebtItem {
   id: string;
   title: string;
   description: string;
-  category: 'code-quality' | 'architecture' | 'testing' | 'documentation' | 'performance' | 'security' | 'maintainability';
+  category:
+    | 'code-quality'
+    | 'architecture'
+    | 'testing'
+    | 'documentation'
+    | 'performance'
+    | 'security'
+    | 'maintainability';
   severity: 'critical' | 'high' | 'medium' | 'low';
   impact_score: number; // 0-100
   effort_score: number; // 0-100
@@ -153,7 +160,8 @@ interface TechnicalDebtResult {
  */
 export class TechnicalDebtAnalysisTool {
   readonly name = 'technical_debt_analysis';
-  readonly description = 'Comprehensive technical debt assessment and prioritization with business impact analysis';
+  readonly description =
+    'Comprehensive technical debt assessment and prioritization with business impact analysis';
 
   private codeAnalyzer: CodeAnalysisService;
   private aiService: AILLMService;
@@ -167,7 +175,7 @@ export class TechnicalDebtAnalysisTool {
     logger.info('Technical debt analysis started', {
       file_path: args.file_path,
       scope: args.scope,
-      analysis_depth: args.analysis_depth
+      analysis_depth: args.analysis_depth,
     });
 
     try {
@@ -178,7 +186,11 @@ export class TechnicalDebtAnalysisTool {
       const debtItems = await this.detectTechnicalDebt(args, codeAnalysis);
 
       // 3. AI-powered debt analysis
-      const aiDebtAnalysis = await this.generateAIDebtAnalysis(args, codeAnalysis, args.historical_data);
+      const aiDebtAnalysis = await this.generateAIDebtAnalysis(
+        args,
+        codeAnalysis,
+        args.historical_data,
+      );
 
       // 4. Combine and deduplicate debt items
       const allDebtItems = this.consolidateDebtItems([debtItems, aiDebtAnalysis]);
@@ -193,7 +205,10 @@ export class TechnicalDebtAnalysisTool {
       const hotspots = this.identifyDebtHotspots(itemsWithImpact);
 
       // 8. Calculate overall assessment
-      const overallAssessment = this.calculateOverallAssessment(itemsWithImpact, args.historical_data);
+      const overallAssessment = this.calculateOverallAssessment(
+        itemsWithImpact,
+        args.historical_data,
+      );
 
       // 9. Generate financial impact analysis
       const financialImpact = this.calculateFinancialImpact(itemsWithImpact, overallAssessment);
@@ -209,13 +224,13 @@ export class TechnicalDebtAnalysisTool {
         debt_breakdown: {
           by_category: this.groupByCategory(itemsWithImpact),
           by_severity: this.groupBySeverity(itemsWithImpact),
-          by_effort: this.groupByEffort(itemsWithImpact)
+          by_effort: this.groupByEffort(itemsWithImpact),
         },
         hotspots,
         priority_matrix: priorityMatrix,
         financial_impact: financialImpact,
         actionable_plan: actionablePlan,
-        monitoring
+        monitoring,
       };
 
       // Add debt_summary for test compatibility
@@ -226,7 +241,7 @@ export class TechnicalDebtAnalysisTool {
         critical_count: itemsWithImpact.filter(i => i.severity === 'critical').length,
         high_count: itemsWithImpact.filter(i => i.severity === 'high').length,
         medium_count: itemsWithImpact.filter(i => i.severity === 'medium').length,
-        low_count: itemsWithImpact.filter(i => i.severity === 'low').length
+        low_count: itemsWithImpact.filter(i => i.severity === 'low').length,
       };
 
       // Add debt_items as alias for itemsWithImpact
@@ -237,17 +252,25 @@ export class TechnicalDebtAnalysisTool {
         time: actionablePlan.immediate_actions[0]?.estimated_timeframe || '1-2 weeks',
         effort_hours: itemsWithImpact.reduce((sum, item) => {
           const effortHours = {
-            'hours': 4,
-            'days': 24,
-            'weeks': 120,
-            'months': 480
+            hours: 4,
+            days: 24,
+            weeks: 120,
+            months: 480,
           };
           return sum + (effortHours[item.remediation.estimated_effort] || 24);
         }, 0),
-        cost_estimate: itemsWithImpact.reduce((sum, item) => sum + item.remediation.estimated_cost, 0),
-        priority: overallAssessment.debt_category === 'critical' ? 'immediate' :
-                 overallAssessment.debt_category === 'high' ? 'high' :
-                 overallAssessment.debt_category === 'moderate' ? 'medium' : 'low'
+        cost_estimate: itemsWithImpact.reduce(
+          (sum, item) => sum + item.remediation.estimated_cost,
+          0,
+        ),
+        priority:
+          overallAssessment.debt_category === 'critical'
+            ? 'immediate'
+            : overallAssessment.debt_category === 'high'
+              ? 'high'
+              : overallAssessment.debt_category === 'moderate'
+                ? 'medium'
+                : 'low',
       };
 
       // Add overall_debt_score as alias for test compatibility
@@ -257,15 +280,16 @@ export class TechnicalDebtAnalysisTool {
       logger.info('Technical debt analysis completed', {
         total_debt_score: result.overall_assessment.total_debt_score,
         debt_items_count: itemsWithImpact.length,
-        hotspots_count: result.hotspots.length
+        hotspots_count: result.hotspots.length,
       });
 
       // Also add as TechnicalDebtResult type
       return result as TechnicalDebtResult;
-
     } catch (error) {
       logger.error('Technical debt analysis failed:', error);
-      throw new Error(`Technical debt analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Technical debt analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -278,22 +302,25 @@ export class TechnicalDebtAnalysisTool {
       return {
         complexity: {
           overall_score: 60,
-          functions: []
+          functions: [],
         },
         testing: {
           coverage_percentage: 70,
-          test_count: 50
+          test_count: 50,
         },
         classes: [],
         nesting: [],
         duplicates: [],
         performance_issues: [],
-        functions: []
+        functions: [],
       };
     }
   }
 
-  private async detectTechnicalDebt(args: TechnicalDebtRequest, codeAnalysis: any): Promise<TechnicalDebtItem[]> {
+  private async detectTechnicalDebt(
+    args: TechnicalDebtRequest,
+    codeAnalysis: any,
+  ): Promise<TechnicalDebtItem[]> {
     const debtItems: TechnicalDebtItem[] = [];
 
     // Code Quality Debt
@@ -319,7 +346,10 @@ export class TechnicalDebtAnalysisTool {
     return debtItems;
   }
 
-  private detectCodeQualityDebt(args: TechnicalDebtRequest, codeAnalysis: any): TechnicalDebtItem[] {
+  private detectCodeQualityDebt(
+    args: TechnicalDebtRequest,
+    codeAnalysis: any,
+  ): TechnicalDebtItem[] {
     const debtItems: TechnicalDebtItem[] = [];
 
     // High complexity debt
@@ -331,42 +361,68 @@ export class TechnicalDebtAnalysisTool {
             title: `High Complexity in ${func.name}`,
             description: `Function ${func.name} has cyclomatic complexity of ${func.cyclomatic_complexity}, indicating high technical debt`,
             category: 'code-quality',
-            severity: func.cyclomatic_complexity > 20 ? 'critical' : func.cyclomatic_complexity > 15 ? 'high' : 'medium',
+            severity:
+              func.cyclomatic_complexity > 20
+                ? 'critical'
+                : func.cyclomatic_complexity > 15
+                  ? 'high'
+                  : 'medium',
             impact_score: Math.min(100, func.cyclomatic_complexity * 3),
             effort_score: Math.min(100, func.cyclomatic_complexity * 4),
             location: {
               file_path: args.file_path || 'unknown',
               line_start: func.line_number || 0,
               line_end: func.line_number || 0,
-              function_name: func.name
+              function_name: func.name,
             },
             debt_metrics: {
               complexity_contribution: func.cyclomatic_complexity * 5,
               maintainability_impact: func.cyclomatic_complexity * 3,
               coupling_increase: func.cyclomatic_complexity,
-              test_coverage_gap: func.test_coverage ? (100 - func.test_coverage) : 50,
-              documentation_deficit: func.has_documentation ? 10 : 60
+              test_coverage_gap: func.test_coverage ? 100 - func.test_coverage : 50,
+              documentation_deficit: func.has_documentation ? 10 : 60,
             },
             business_impact: {
               development_speed_impact: Math.min(80, func.cyclomatic_complexity * 4),
               bug_likelihood_increase: Math.min(90, func.cyclomatic_complexity * 5),
               onboarding_difficulty: Math.min(70, func.cyclomatic_complexity * 3),
-              feature_addition_complexity: Math.min(85, func.cyclomatic_complexity * 4)
+              feature_addition_complexity: Math.min(85, func.cyclomatic_complexity * 4),
             },
             remediation: {
               strategy: 'refactor',
-              estimated_effort: func.cyclomatic_complexity > 20 ? 'weeks' : func.cyclomatic_complexity > 15 ? 'days' : 'hours',
+              estimated_effort:
+                func.cyclomatic_complexity > 20
+                  ? 'weeks'
+                  : func.cyclomatic_complexity > 15
+                    ? 'days'
+                    : 'hours',
               estimated_cost: func.cyclomatic_complexity * 2,
               risk_level: 'medium',
               dependencies: [],
-              rollback_complexity: func.cyclomatic_complexity > 15 ? 'complex' : 'moderate'
+              rollback_complexity: func.cyclomatic_complexity > 15 ? 'complex' : 'moderate',
             },
             urgency_factors: [
-              { factor: 'Complexity', weight: 0.4, explanation: 'High complexity increases bug risk and maintenance cost' },
-              { factor: 'Change frequency', weight: 0.3, explanation: 'Complex code is harder to modify safely' },
-              { factor: 'Team experience', weight: 0.2, explanation: 'Complex code requires senior developers' },
-              { factor: 'Business criticality', weight: 0.1, explanation: 'Critical business logic should be maintainable' }
-            ]
+              {
+                factor: 'Complexity',
+                weight: 0.4,
+                explanation: 'High complexity increases bug risk and maintenance cost',
+              },
+              {
+                factor: 'Change frequency',
+                weight: 0.3,
+                explanation: 'Complex code is harder to modify safely',
+              },
+              {
+                factor: 'Team experience',
+                weight: 0.2,
+                explanation: 'Complex code requires senior developers',
+              },
+              {
+                factor: 'Business criticality',
+                weight: 0.1,
+                explanation: 'Critical business logic should be maintainable',
+              },
+            ],
           });
         }
       });
@@ -386,20 +442,20 @@ export class TechnicalDebtAnalysisTool {
           location: {
             file_path: duplicate.locations[0]?.file || 'unknown',
             line_start: duplicate.locations[0]?.line || 0,
-            line_end: duplicate.locations[0]?.line || 0
+            line_end: duplicate.locations[0]?.line || 0,
           },
           debt_metrics: {
             complexity_contribution: duplicate.duplicate_lines,
             maintainability_impact: duplicate.duplicate_lines * 3,
             coupling_increase: duplicate.duplicate_lines * 2,
             test_coverage_gap: 20,
-            documentation_deficit: 30
+            documentation_deficit: 30,
           },
           business_impact: {
             development_speed_impact: duplicate.duplicate_lines * 2,
             bug_likelihood_increase: duplicate.duplicate_lines * 3,
             onboarding_difficulty: duplicate.duplicate_lines,
-            feature_addition_complexity: duplicate.duplicate_lines * 4
+            feature_addition_complexity: duplicate.duplicate_lines * 4,
           },
           remediation: {
             strategy: 'refactor',
@@ -407,13 +463,25 @@ export class TechnicalDebtAnalysisTool {
             estimated_cost: duplicate.duplicate_lines * 1.5,
             risk_level: 'low',
             dependencies: duplicate.locations.map((loc: any) => loc.file),
-            rollback_complexity: 'simple'
+            rollback_complexity: 'simple',
           },
           urgency_factors: [
-            { factor: 'DRY principle violation', weight: 0.5, explanation: 'Code duplication increases maintenance burden' },
-            { factor: 'Bug propagation risk', weight: 0.3, explanation: 'Bugs in duplicated code appear in multiple places' },
-            { factor: 'Inconsistency risk', weight: 0.2, explanation: 'Duplicated code may diverge over time' }
-          ]
+            {
+              factor: 'DRY principle violation',
+              weight: 0.5,
+              explanation: 'Code duplication increases maintenance burden',
+            },
+            {
+              factor: 'Bug propagation risk',
+              weight: 0.3,
+              explanation: 'Bugs in duplicated code appear in multiple places',
+            },
+            {
+              factor: 'Inconsistency risk',
+              weight: 0.2,
+              explanation: 'Duplicated code may diverge over time',
+            },
+          ],
         });
       });
     }
@@ -421,7 +489,10 @@ export class TechnicalDebtAnalysisTool {
     return debtItems;
   }
 
-  private detectArchitectureDebt(args: TechnicalDebtRequest, codeAnalysis: any): TechnicalDebtItem[] {
+  private detectArchitectureDebt(
+    args: TechnicalDebtRequest,
+    codeAnalysis: any,
+  ): TechnicalDebtItem[] {
     const debtItems: TechnicalDebtItem[] = [];
 
     // Large class debt
@@ -433,27 +504,28 @@ export class TechnicalDebtAnalysisTool {
             title: `Large Class: ${cls.name}`,
             description: `Class ${cls.name} is too large (${cls.lines_of_code} lines) with ${cls.method_count} methods`,
             category: 'architecture',
-            severity: cls.lines_of_code > 500 ? 'critical' : cls.lines_of_code > 400 ? 'high' : 'medium',
+            severity:
+              cls.lines_of_code > 500 ? 'critical' : cls.lines_of_code > 400 ? 'high' : 'medium',
             impact_score: Math.min(100, cls.lines_of_code / 5),
             effort_score: Math.min(100, cls.lines_of_code / 3),
             location: {
               file_path: cls.file_path || args.file_path || 'unknown',
               line_start: cls.line_number || 0,
               line_end: cls.line_number || 0,
-              class_name: cls.name
+              class_name: cls.name,
             },
             debt_metrics: {
               complexity_contribution: cls.method_count * 2,
               maintainability_impact: cls.lines_of_code / 4,
               coupling_increase: cls.dependency_count * 5,
               test_coverage_gap: 30,
-              documentation_deficit: 40
+              documentation_deficit: 40,
             },
             business_impact: {
               development_speed_impact: Math.min(80, cls.lines_of_code / 6),
               bug_likelihood_increase: Math.min(70, cls.method_count * 3),
               onboarding_difficulty: Math.min(90, cls.lines_of_code / 5),
-              feature_addition_complexity: Math.min(85, cls.lines_of_code / 4)
+              feature_addition_complexity: Math.min(85, cls.lines_of_code / 4),
             },
             remediation: {
               strategy: 'architectural-change',
@@ -461,13 +533,25 @@ export class TechnicalDebtAnalysisTool {
               estimated_cost: cls.lines_of_code / 2,
               risk_level: 'high',
               dependencies: [],
-              rollback_complexity: 'complex'
+              rollback_complexity: 'complex',
             },
             urgency_factors: [
-              { factor: 'Single Responsibility Principle', weight: 0.5, explanation: 'Large classes violate SRP' },
-              { factor: 'Testability', weight: 0.3, explanation: 'Large classes are hard to test comprehensively' },
-              { factor: 'Coupling', weight: 0.2, explanation: 'Large classes often have high coupling' }
-            ]
+              {
+                factor: 'Single Responsibility Principle',
+                weight: 0.5,
+                explanation: 'Large classes violate SRP',
+              },
+              {
+                factor: 'Testability',
+                weight: 0.3,
+                explanation: 'Large classes are hard to test comprehensively',
+              },
+              {
+                factor: 'Coupling',
+                weight: 0.2,
+                explanation: 'Large classes often have high coupling',
+              },
+            ],
           });
         }
       });
@@ -488,20 +572,20 @@ export class TechnicalDebtAnalysisTool {
             location: {
               file_path: args.file_path || 'unknown',
               line_start: nest.line,
-              line_end: nest.line
+              line_end: nest.line,
             },
             debt_metrics: {
               complexity_contribution: nest.depth * 5,
               maintainability_impact: nest.depth * 8,
               coupling_increase: nest.depth * 2,
               test_coverage_gap: 20,
-              documentation_deficit: 25
+              documentation_deficit: 25,
             },
             business_impact: {
               development_speed_impact: nest.depth * 8,
               bug_likelihood_increase: nest.depth * 6,
               onboarding_difficulty: nest.depth * 7,
-              feature_addition_complexity: nest.depth * 9
+              feature_addition_complexity: nest.depth * 9,
             },
             remediation: {
               strategy: 'refactor',
@@ -509,14 +593,30 @@ export class TechnicalDebtAnalysisTool {
               estimated_cost: nest.depth * 2,
               risk_level: 'low',
               dependencies: [],
-              rollback_complexity: 'simple'
+              rollback_complexity: 'simple',
             },
             urgency_factors: [
-              { factor: 'Readability', weight: 0.4, explanation: 'Deep nesting reduces code readability' },
-              { factor: 'Cognitive load', weight: 0.3, explanation: 'Increases mental effort for developers' },
-              { factor: 'Test complexity', weight: 0.2, explanation: 'Nested code is harder to test' },
-              { factor: 'Debugging difficulty', weight: 0.1, explanation: 'Makes debugging more challenging' }
-            ]
+              {
+                factor: 'Readability',
+                weight: 0.4,
+                explanation: 'Deep nesting reduces code readability',
+              },
+              {
+                factor: 'Cognitive load',
+                weight: 0.3,
+                explanation: 'Increases mental effort for developers',
+              },
+              {
+                factor: 'Test complexity',
+                weight: 0.2,
+                explanation: 'Nested code is harder to test',
+              },
+              {
+                factor: 'Debugging difficulty',
+                weight: 0.1,
+                explanation: 'Makes debugging more challenging',
+              },
+            ],
           });
         }
       });
@@ -543,20 +643,20 @@ export class TechnicalDebtAnalysisTool {
           location: {
             file_path: args.file_path || 'unknown',
             line_start: 0,
-            line_end: 0
+            line_end: 0,
           },
           debt_metrics: {
             complexity_contribution: (80 - coverage) * 2,
             maintainability_impact: (80 - coverage) * 3,
-            coupling_increase: (80 - coverage),
-            test_coverage_gap: (80 - coverage),
-            documentation_deficit: 20
+            coupling_increase: 80 - coverage,
+            test_coverage_gap: 80 - coverage,
+            documentation_deficit: 20,
           },
           business_impact: {
             development_speed_impact: (80 - coverage) * 3,
             bug_likelihood_increase: (80 - coverage) * 4,
             onboarding_difficulty: (80 - coverage) * 2,
-            feature_addition_complexity: (80 - coverage) * 3
+            feature_addition_complexity: (80 - coverage) * 3,
           },
           remediation: {
             strategy: 'test',
@@ -564,13 +664,25 @@ export class TechnicalDebtAnalysisTool {
             estimated_cost: (80 - coverage) * 5,
             risk_level: 'low',
             dependencies: [],
-            rollback_complexity: 'simple'
+            rollback_complexity: 'simple',
           },
           urgency_factors: [
-            { factor: 'Quality assurance', weight: 0.5, explanation: 'Insufficient testing reduces confidence in changes' },
-            { factor: 'Bug detection', weight: 0.3, explanation: 'Low coverage means bugs go undetected' },
-            { factor: 'Refactoring safety', weight: 0.2, explanation: 'Tests provide safety net for refactoring' }
-          ]
+            {
+              factor: 'Quality assurance',
+              weight: 0.5,
+              explanation: 'Insufficient testing reduces confidence in changes',
+            },
+            {
+              factor: 'Bug detection',
+              weight: 0.3,
+              explanation: 'Low coverage means bugs go undetected',
+            },
+            {
+              factor: 'Refactoring safety',
+              weight: 0.2,
+              explanation: 'Tests provide safety net for refactoring',
+            },
+          ],
         });
       }
     }
@@ -578,7 +690,10 @@ export class TechnicalDebtAnalysisTool {
     return debtItems;
   }
 
-  private detectDocumentationDebt(args: TechnicalDebtRequest, codeAnalysis: any): TechnicalDebtItem[] {
+  private detectDocumentationDebt(
+    args: TechnicalDebtRequest,
+    codeAnalysis: any,
+  ): TechnicalDebtItem[] {
     const debtItems: TechnicalDebtItem[] = [];
 
     // Missing documentation
@@ -597,20 +712,20 @@ export class TechnicalDebtAnalysisTool {
               file_path: args.file_path || 'unknown',
               line_start: func.line_number || 0,
               line_end: func.line_number || 0,
-              function_name: func.name
+              function_name: func.name,
             },
             debt_metrics: {
               complexity_contribution: 5,
               maintainability_impact: 20,
               coupling_increase: 2,
               test_coverage_gap: 0,
-              documentation_deficit: 50
+              documentation_deficit: 50,
             },
             business_impact: {
               development_speed_impact: 30,
               bug_likelihood_increase: 15,
               onboarding_difficulty: 40,
-              feature_addition_complexity: 25
+              feature_addition_complexity: 25,
             },
             remediation: {
               strategy: 'document',
@@ -618,14 +733,26 @@ export class TechnicalDebtAnalysisTool {
               estimated_cost: 10,
               risk_level: 'low',
               dependencies: [],
-              rollback_complexity: 'simple'
+              rollback_complexity: 'simple',
             },
             urgency_factors: [
-              { factor: 'API usability', weight: 0.4, explanation: 'Documentation improves API usability' },
-              { factor: 'Onboarding', weight: 0.3, explanation: 'New developers need documentation' },
-              { factor: 'Knowledge transfer', weight: 0.2, explanation: 'Documentation preserves knowledge' },
-              { factor: 'Maintenance', weight: 0.1, explanation: 'Documentation aids maintenance' }
-            ]
+              {
+                factor: 'API usability',
+                weight: 0.4,
+                explanation: 'Documentation improves API usability',
+              },
+              {
+                factor: 'Onboarding',
+                weight: 0.3,
+                explanation: 'New developers need documentation',
+              },
+              {
+                factor: 'Knowledge transfer',
+                weight: 0.2,
+                explanation: 'Documentation preserves knowledge',
+              },
+              { factor: 'Maintenance', weight: 0.1, explanation: 'Documentation aids maintenance' },
+            ],
           });
         }
       });
@@ -634,7 +761,10 @@ export class TechnicalDebtAnalysisTool {
     return debtItems;
   }
 
-  private detectPerformanceDebt(args: TechnicalDebtRequest, codeAnalysis: any): TechnicalDebtItem[] {
+  private detectPerformanceDebt(
+    args: TechnicalDebtRequest,
+    codeAnalysis: any,
+  ): TechnicalDebtItem[] {
     const debtItems: TechnicalDebtItem[] = [];
 
     // Performance anti-patterns
@@ -651,20 +781,20 @@ export class TechnicalDebtAnalysisTool {
           location: {
             file_path: issue.file_path || args.file_path || 'unknown',
             line_start: issue.line_number || 0,
-            line_end: issue.line_number || 0
+            line_end: issue.line_number || 0,
           },
           debt_metrics: {
             complexity_contribution: 10,
             maintainability_impact: 15,
             coupling_increase: 5,
             test_coverage_gap: 10,
-            documentation_deficit: 20
+            documentation_deficit: 20,
           },
           business_impact: {
             development_speed_impact: 20,
             bug_likelihood_increase: 15,
             onboarding_difficulty: 10,
-            feature_addition_complexity: 25
+            feature_addition_complexity: 25,
           },
           remediation: {
             strategy: 'optimize',
@@ -672,13 +802,25 @@ export class TechnicalDebtAnalysisTool {
             estimated_cost: issue.optimization_cost || 50,
             risk_level: 'medium',
             dependencies: [],
-            rollback_complexity: 'moderate'
+            rollback_complexity: 'moderate',
           },
           urgency_factors: [
-            { factor: 'User experience', weight: 0.5, explanation: 'Performance affects user satisfaction' },
-            { factor: 'Resource costs', weight: 0.3, explanation: 'Poor performance increases infrastructure costs' },
-            { factor: 'Scalability', weight: 0.2, explanation: 'Performance issues limit scalability' }
-          ]
+            {
+              factor: 'User experience',
+              weight: 0.5,
+              explanation: 'Performance affects user satisfaction',
+            },
+            {
+              factor: 'Resource costs',
+              weight: 0.3,
+              explanation: 'Poor performance increases infrastructure costs',
+            },
+            {
+              factor: 'Scalability',
+              weight: 0.2,
+              explanation: 'Performance issues limit scalability',
+            },
+          ],
         });
       });
     }
@@ -686,7 +828,11 @@ export class TechnicalDebtAnalysisTool {
     return debtItems;
   }
 
-  private async generateAIDebtAnalysis(args: TechnicalDebtRequest, codeAnalysis: any, historicalData?: any): Promise<TechnicalDebtItem[]> {
+  private async generateAIDebtAnalysis(
+    args: TechnicalDebtRequest,
+    codeAnalysis: any,
+    historicalData?: any,
+  ): Promise<TechnicalDebtItem[]> {
     try {
       const prompts = [
         `
@@ -713,7 +859,7 @@ For each issue found, provide:
 6. Priority factors
 
 Focus on actionable insights that can help reduce technical debt and improve code quality.
-`
+`,
       ];
 
       const aiInsights = await this.aiService.generateInsights(prompts);
@@ -732,20 +878,20 @@ Focus on actionable insights that can help reduce technical debt and improve cod
         location: {
           file_path: args.file_path || 'unknown',
           line_start: suggestion.line_number || 0,
-          line_end: suggestion.line_number || 0
+          line_end: suggestion.line_number || 0,
         },
         debt_metrics: {
           complexity_contribution: 20,
           maintainability_impact: 25,
           coupling_increase: 15,
           test_coverage_gap: 20,
-          documentation_deficit: 20
+          documentation_deficit: 20,
         },
         business_impact: {
           development_speed_impact: 30,
           bug_likelihood_increase: 25,
           onboarding_difficulty: 20,
-          feature_addition_complexity: 35
+          feature_addition_complexity: 35,
         },
         remediation: {
           strategy: 'refactor',
@@ -753,13 +899,16 @@ Focus on actionable insights that can help reduce technical debt and improve cod
           estimated_cost: 50,
           risk_level: 'medium',
           dependencies: [],
-          rollback_complexity: 'moderate'
+          rollback_complexity: 'moderate',
         },
         urgency_factors: [
-          { factor: 'AI analysis', weight: 0.8, explanation: 'Identified through AI pattern analysis' }
-        ]
+          {
+            factor: 'AI analysis',
+            weight: 0.8,
+            explanation: 'Identified through AI pattern analysis',
+          },
+        ],
       }));
-
     } catch (error) {
       logger.warn('AI technical debt analysis failed:', error);
       return [];
@@ -770,32 +919,40 @@ Focus on actionable insights that can help reduce technical debt and improve cod
     const allDebtItems = debtArrays.flat();
 
     // Remove duplicates based on title and location
-    const deduplicated = allDebtItems.filter((item, index, self) =>
-      index === self.findIndex(i =>
-        i.title === item.title &&
-        i.location.file_path === item.location.file_path &&
-        i.location.line_start === item.location.line_start
-      )
+    const deduplicated = allDebtItems.filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex(
+          i =>
+            i.title === item.title &&
+            i.location.file_path === item.location.file_path &&
+            i.location.line_start === item.location.line_start,
+        ),
     );
 
     return deduplicated;
   }
 
-  private async calculateBusinessImpact(items: TechnicalDebtItem[], _codeAnalysis: any): Promise<TechnicalDebtItem[]> {
+  private async calculateBusinessImpact(
+    items: TechnicalDebtItem[],
+    _codeAnalysis: any,
+  ): Promise<TechnicalDebtItem[]> {
     return items.map(item => ({
       ...item,
       business_impact: {
         development_speed_impact: Math.min(100, item.impact_score * 0.8),
         bug_likelihood_increase: Math.min(100, item.impact_score * 0.9),
         onboarding_difficulty: Math.min(100, item.impact_score * 0.6),
-        feature_addition_complexity: Math.min(100, item.impact_score * 0.7)
-      }
+        feature_addition_complexity: Math.min(100, item.impact_score * 0.7),
+      },
     }));
   }
 
   private createPriorityMatrix(items: TechnicalDebtItem[]) {
     const quick_wins = items.filter(item => item.impact_score > 60 && item.effort_score < 40);
-    const strategic_investments = items.filter(item => item.impact_score > 60 && item.effort_score >= 60);
+    const strategic_investments = items.filter(
+      item => item.impact_score > 60 && item.effort_score >= 60,
+    );
     const housekeeping = items.filter(item => item.impact_score <= 60 && item.effort_score < 40);
     const reconsider = items.filter(item => item.impact_score <= 60 && item.effort_score >= 60);
 
@@ -803,7 +960,7 @@ Focus on actionable insights that can help reduce technical debt and improve cod
       quick_wins,
       strategic_investments,
       housekeeping,
-      reconsider
+      reconsider,
     };
   }
 
@@ -818,7 +975,7 @@ Focus on actionable insights that can help reduce technical debt and improve cod
           location,
           debt_concentration: 0,
           primary_issues: [],
-          recommended_actions: []
+          recommended_actions: [],
         };
       }
 
@@ -832,7 +989,7 @@ Focus on actionable insights that can help reduce technical debt and improve cod
       .map(hotspot => ({
         ...hotspot,
         primary_issues: [...new Set(hotspot.primary_issues)],
-        recommended_actions: [...new Set(hotspot.recommended_actions)]
+        recommended_actions: [...new Set(hotspot.recommended_actions)],
       }));
   }
 
@@ -842,10 +999,15 @@ Focus on actionable insights that can help reduce technical debt and improve cod
     const totalDebtScore = maxPossibleImpact > 0 ? (totalImpact / maxPossibleImpact) * 100 : 0;
 
     let debtCategory: 'low' | 'moderate' | 'high' | 'critical';
-    if (totalDebtScore >= 75) {debtCategory = 'critical';}
-    else if (totalDebtScore >= 50) {debtCategory = 'high';}
-    else if (totalDebtScore >= 25) {debtCategory = 'moderate';}
-    else {debtCategory = 'low';}
+    if (totalDebtScore >= 75) {
+      debtCategory = 'critical';
+    } else if (totalDebtScore >= 50) {
+      debtCategory = 'high';
+    } else if (totalDebtScore >= 25) {
+      debtCategory = 'moderate';
+    } else {
+      debtCategory = 'low';
+    }
 
     const interestRate = Math.min(20, totalDebtScore * 0.2); // Technical debt grows over time
     const principal = totalDebtScore;
@@ -856,19 +1018,19 @@ Focus on actionable insights that can help reduce technical debt and improve cod
       debt_category: debtCategory,
       interest_rate: Math.round(interestRate),
       principal: Math.round(principal),
-      estimated_interest: Math.round(estimatedInterest)
+      estimated_interest: Math.round(estimatedInterest),
     };
   }
 
   private calculateFinancialImpact(items: TechnicalDebtItem[], assessment: any) {
-    const currentCostPerMonth = items.reduce((sum, item) => sum + (item.impact_score * 2), 0);
+    const currentCostPerMonth = items.reduce((sum, item) => sum + item.impact_score * 2, 0);
     const growthRate = assessment.interest_rate / 100;
 
     return {
       current_cost_per_month: currentCostPerMonth,
       projected_cost_6_months: Math.round(currentCostPerMonth * Math.pow(1 + growthRate, 6)),
       projected_cost_12_months: Math.round(currentCostPerMonth * Math.pow(1 + growthRate, 12)),
-      roi_potential: Math.round(assessment.estimated_interest * 5) // 5x ROI on debt reduction
+      roi_potential: Math.round(assessment.estimated_interest * 5), // 5x ROI on debt reduction
     };
   }
 
@@ -878,8 +1040,8 @@ Focus on actionable insights that can help reduce technical debt and improve cod
         action: 'Address Quick Wins',
         items: priorityMatrix.quick_wins,
         estimated_timeframe: '1-2 weeks',
-        success_metrics: ['Reduced bug count', 'Improved developer satisfaction']
-      }
+        success_metrics: ['Reduced bug count', 'Improved developer satisfaction'],
+      },
     ];
 
     const shortTermGoals = [
@@ -887,8 +1049,8 @@ Focus on actionable insights that can help reduce technical debt and improve cod
         goal: 'Tackle Strategic Investments',
         items: priorityMatrix.strategic_investments,
         timeframe: '1-3 months',
-        resources_needed: ['Senior developers', 'Code review time']
-      }
+        resources_needed: ['Senior developers', 'Code review time'],
+      },
     ];
 
     const longTermStrategy = [
@@ -896,14 +1058,14 @@ Focus on actionable insights that can help reduce technical debt and improve cod
         strategy: 'Continuous Debt Management',
         description: 'Implement processes to prevent new technical debt',
         benefits: ['Sustainable code quality', 'Predictable delivery timelines'],
-        implementation_steps: ['Automated quality gates', 'Regular debt reviews', 'Team training']
-      }
+        implementation_steps: ['Automated quality gates', 'Regular debt reviews', 'Team training'],
+      },
     ];
 
     return {
       immediate_actions: immediateActions,
       short_term_goals: shortTermGoals,
-      long_term_strategy: longTermStrategy
+      long_term_strategy: longTermStrategy,
     };
   }
 
@@ -914,27 +1076,29 @@ Focus on actionable insights that can help reduce technical debt and improve cod
         'Cyclomatic complexity',
         'Code duplication ratio',
         'Test failure rate',
-        'Code review findings'
+        'Code review findings',
       ],
       alert_thresholds: [
         { metric: 'Code coverage', threshold: 70, action: 'Schedule focused testing effort' },
         { metric: 'Complexity score', threshold: 15, action: 'Plan refactoring sprint' },
-        { metric: 'Debt score', threshold: 60, action: 'Increase debt reduction effort' }
+        { metric: 'Debt score', threshold: 60, action: 'Increase debt reduction effort' },
       ],
       review_schedule: 'Monthly for critical modules, quarterly for stable modules',
       quality_gates: [
         'Minimum 80% test coverage for new code',
         'Maximum cyclomatic complexity of 10',
         'Zero critical security vulnerabilities',
-        'Code review approval required for all changes'
-      ]
+        'Code review approval required for all changes',
+      ],
     };
   }
 
   private groupByCategory(items: TechnicalDebtItem[]): { [category: string]: TechnicalDebtItem[] } {
     const grouped: { [category: string]: TechnicalDebtItem[] } = {};
     items.forEach(item => {
-      if (!grouped[item.category]) {grouped[item.category] = [];}
+      if (!grouped[item.category]) {
+        grouped[item.category] = [];
+      }
       grouped[item.category].push(item);
     });
     return grouped;
@@ -943,7 +1107,9 @@ Focus on actionable insights that can help reduce technical debt and improve cod
   private groupBySeverity(items: TechnicalDebtItem[]): { [severity: string]: TechnicalDebtItem[] } {
     const grouped: { [severity: string]: TechnicalDebtItem[] } = {};
     items.forEach(item => {
-      if (!grouped[item.severity]) {grouped[item.severity] = [];}
+      if (!grouped[item.severity]) {
+        grouped[item.severity] = [];
+      }
       grouped[item.severity].push(item);
     });
     return grouped;
@@ -953,7 +1119,9 @@ Focus on actionable insights that can help reduce technical debt and improve cod
     const grouped: { [effort: string]: TechnicalDebtItem[] } = {};
     items.forEach(item => {
       const effort = item.remediation.estimated_effort;
-      if (!grouped[effort]) {grouped[effort] = [];}
+      if (!grouped[effort]) {
+        grouped[effort] = [];
+      }
       grouped[effort].push(item);
     });
     return grouped;
@@ -962,24 +1130,26 @@ Focus on actionable insights that can help reduce technical debt and improve cod
   private mapToDebtCategory(category?: string): TechnicalDebtItem['category'] {
     const categoryMap = {
       'code-quality': 'code-quality',
-      'architecture': 'architecture',
-      'testing': 'testing',
-      'performance': 'performance',
-      'security': 'code-quality',
-      'maintainability': 'maintainability'
+      architecture: 'architecture',
+      testing: 'testing',
+      performance: 'performance',
+      security: 'code-quality',
+      maintainability: 'maintainability',
     };
 
-    return (categoryMap[category as keyof typeof categoryMap] || 'code-quality') as TechnicalDebtItem['category'];
+    return (categoryMap[category as keyof typeof categoryMap] ||
+      'code-quality') as TechnicalDebtItem['category'];
   }
 
   private mapToSeverity(impact?: string): TechnicalDebtItem['severity'] {
     const severityMap = {
-      'critical': 'critical',
-      'high': 'high',
-      'medium': 'medium',
-      'low': 'low'
+      critical: 'critical',
+      high: 'high',
+      medium: 'medium',
+      low: 'low',
     };
 
-    return (severityMap[impact as keyof typeof severityMap] || 'medium') as TechnicalDebtItem['severity'];
+    return (severityMap[impact as keyof typeof severityMap] ||
+      'medium') as TechnicalDebtItem['severity'];
   }
 }

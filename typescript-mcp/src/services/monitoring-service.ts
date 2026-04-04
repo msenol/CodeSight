@@ -30,7 +30,6 @@ export interface AlertAction {
   config: MonitoringConfig;
 }
 
-
 const defaultConfig: MonitoringConfig = {
   enabled: true,
   metricsRetentionMs: 24 * 60 * 60 * 1000, // 24 hours
@@ -89,7 +88,9 @@ export class MonitoringService extends EventEmitter {
     type: MetricData['type'] = 'gauge',
     tags?: Record<string, string>,
   ): void {
-    if (!this.config.enabled) {return;}
+    if (!this.config.enabled) {
+      return;
+    }
 
     const metric: MetricData = {
       name,
@@ -142,7 +143,9 @@ export class MonitoringService extends EventEmitter {
    * Record request metrics
    */
   recordRequest(req: ExtendedRequest, res: Response, responseTime: number): void {
-    if (!this.config.enableRequestMetrics) {return;}
+    if (!this.config.enableRequestMetrics) {
+      return;
+    }
 
     const route = req.route?.path || req.path;
     const { method } = req;
@@ -185,7 +188,9 @@ export class MonitoringService extends EventEmitter {
    * Record error
    */
   recordError(error: Error, context?: Record<string, unknown>): void {
-    if (!this.config.enableErrorTracking) {return;}
+    if (!this.config.enableErrorTracking) {
+      return;
+    }
 
     this.incrementCounter('errors_total', 1, {
       error_type: error.name,
@@ -220,7 +225,9 @@ export class MonitoringService extends EventEmitter {
    */
   getLatestMetricValue(name: string): number | null {
     const metrics = this.metrics.get(name);
-    if (!metrics || metrics.length === 0) {return null;}
+    if (!metrics || metrics.length === 0) {
+      return null;
+    }
 
     return metrics[metrics.length - 1].value;
   }
@@ -241,7 +248,9 @@ export class MonitoringService extends EventEmitter {
   } | null {
     const metrics = this.getMetrics(name, since);
 
-    if (metrics.length === 0) {return null;}
+    if (metrics.length === 0) {
+      return null;
+    }
 
     const values = metrics.map(m => m.value);
     const sum = values.reduce((a, b) => a + b, 0);
@@ -387,7 +396,9 @@ export class MonitoringService extends EventEmitter {
     const lines: string[] = [];
 
     for (const [name, metrics] of this.metrics) {
-      if (metrics.length === 0) {continue;}
+      if (metrics.length === 0) {
+        continue;
+      }
 
       const latest = metrics[metrics.length - 1];
       const sanitizedName = name.replace(/[^a-zA-Z0-9_]/g, '_');
@@ -452,10 +463,14 @@ export class MonitoringService extends EventEmitter {
    */
   private checkAlerts(): void {
     for (const rule of this.alertRules.values()) {
-      if (!rule.enabled) {continue;}
+      if (!rule.enabled) {
+        continue;
+      }
 
       const latestValue = this.getLatestMetricValue(rule.metric);
-      if (latestValue === null) {continue;}
+      if (latestValue === null) {
+        continue;
+      }
 
       const shouldAlert = this.evaluateCondition(latestValue, rule.condition, rule.threshold);
       const existingAlert = Array.from(this.alerts.values()).find(
@@ -575,7 +590,7 @@ export class MonitoringService extends EventEmitter {
         this.cleanupOldMetrics();
         this.cleanupOldAlerts();
       },
-      (60 * 60 * 1000),
+      60 * 60 * 1000,
     ); // Every hour
   }
 

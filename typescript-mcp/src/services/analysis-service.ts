@@ -1,9 +1,3 @@
- 
- 
- 
- 
- 
- 
 import type {
   FunctionInfo,
   ComplexityMetrics,
@@ -20,56 +14,57 @@ import * as walk from 'acorn-walk';
 import { glob } from 'glob';
 
 declare const console: {
-   
   log: (..._args: unknown[]) => void;
-   
+
   warn: (..._args: unknown[]) => void;
-   
+
   error: (..._args: unknown[]) => void;
 };
 
 export interface AnalysisService {
-   
   analyzeFile(_filePath: string): Promise<FileAnalysis>;
-   
+
   analyzeFunction(_filePath: string, _functionName: string): Promise<FunctionInfo | null>;
-   
-  getFunctionComplexity(_filePath: string, _functionName: string): Promise<ComplexityMetrics | null>;
-   
+
+  getFunctionComplexity(
+    _filePath: string,
+    _functionName: string,
+  ): Promise<ComplexityMetrics | null>;
+
   explainCode(_code: string, _language?: string): Promise<CodeExplanation>;
-   
+
   getCodeMetrics(_filePath: string): Promise<CodeMetrics>;
-   
+
   detectCodeSmells(_filePath: string): Promise<CodeSmell[]>;
-   
+
   searchEntities(_codebaseId: string, _options: unknown): Promise<unknown[]>;
-   
+
   findCallees(_functionId: string): Promise<unknown[]>;
-   
+
   findApiEndpoints(_codebaseId: string, _options: unknown): Promise<unknown[]>;
-   
+
   findContainingEntity(_filePath: string, _line: number, _column: number): Promise<unknown>;
-   
+
   findDirectReferences(_entityId: string): Promise<unknown[]>;
-   
+
   searchInComments(_codebaseId: string, _query: string): Promise<unknown[]>;
-   
+
   searchInStrings(_codebaseId: string, _query: string): Promise<unknown[]>;
-   
+
   findReferencesInFile(_filePath: string, _entityName: string): Promise<unknown[]>;
-   
+
   searchText(_codebaseId: string, _query: string, _options: unknown): Promise<unknown[]>;
-   
+
   findDirectUsers(_entityId: string): Promise<unknown[]>;
-   
+
   findDependencies(_entityId: string): Promise<unknown[]>;
-   
+
   analyzeFunctionBehavior(_entityId: string, _options: unknown): Promise<unknown>;
-   
+
   analyzeFunctionSignature(_entityId: string): Promise<unknown>;
-   
+
   calculateComplexityMetrics(_entityId: string): Promise<unknown>;
-   
+
   findCallers(_entityId: string): Promise<unknown[]>;
 }
 
@@ -211,7 +206,11 @@ export class DefaultAnalysisService implements AnalysisService {
     const hasAsyncCode = /\b(async|await|Promise)\b/.test(code);
 
     let complexityLevel: 'low' | 'medium' | 'high' = 'low';
-    if (complexity.cyclomaticComplexity > 10) {complexityLevel = 'high';} else if (complexity.cyclomaticComplexity > 5) {complexityLevel = 'medium';}
+    if (complexity.cyclomaticComplexity > 10) {
+      complexityLevel = 'high';
+    } else if (complexity.cyclomaticComplexity > 5) {
+      complexityLevel = 'medium';
+    }
 
     const suggestions: string[] = [];
     if (complexity.cyclomaticComplexity > 10) {
@@ -233,10 +232,18 @@ export class DefaultAnalysisService implements AnalysisService {
     }
 
     const relatedConcepts: string[] = [];
-    if (hasLoops) {relatedConcepts.push('Iteration', 'Control Flow');}
-    if (hasConditionals) {relatedConcepts.push('Conditional Logic', 'Branching');}
-    if (hasFunctions) {relatedConcepts.push('Functions', 'Modularity');}
-    if (hasAsyncCode) {relatedConcepts.push('Promises', 'Async/Await', 'Concurrency');}
+    if (hasLoops) {
+      relatedConcepts.push('Iteration', 'Control Flow');
+    }
+    if (hasConditionals) {
+      relatedConcepts.push('Conditional Logic', 'Branching');
+    }
+    if (hasFunctions) {
+      relatedConcepts.push('Functions', 'Modularity');
+    }
+    if (hasAsyncCode) {
+      relatedConcepts.push('Promises', 'Async/Await', 'Concurrency');
+    }
 
     return {
       summary: this.generateCodeSummary(code, language),
@@ -431,7 +438,9 @@ export class DefaultAnalysisService implements AnalysisService {
   }
 
   private traverseASTForAnalysis(node: ASTNode, analysis: FileAnalysis): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     switch (node.type) {
       case 'FunctionDeclaration':
@@ -504,7 +513,18 @@ export class DefaultAnalysisService implements AnalysisService {
     return {
       name: (node.id as any).name,
       file: '', // Will be set by caller
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
       column: (node.loc?.start.column || 0) + 1,
       parameters: (node.params || []).map((param: any) => this.getParameterName(param)),
       returnType: this.getReturnType(node),
@@ -518,7 +538,18 @@ export class DefaultAnalysisService implements AnalysisService {
     return {
       name: node.id.name,
       file: '',
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
       column: (node.loc?.start.column || 0) + 1,
       parameters: node.params.map((param: acorn.Identifier) => param.name || 'unknown') || [],
       returnType: 'unknown',
@@ -529,97 +560,228 @@ export class DefaultAnalysisService implements AnalysisService {
   private createClassInfo(node: ClassNode): ClassInfo {
     return {
       name: (node.id as any).name,
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
       column: (node.loc?.start.column || 0) + 1,
       methods: [],
       properties: [],
       extends: (node as any).superClass?.name,
       implements: (node as any).implements?.map((impl: any) => {
-          if ('expression' in impl && impl.expression && typeof impl.expression === 'object' && 'name' in impl.expression) {
-            return String(impl.expression.name);
-          }
-          if ('name' in impl && impl.name) {
-            return String(impl.name);
-          }
-          return 'unknown';
-        }),
+        if (
+          'expression' in impl &&
+          impl.expression &&
+          typeof impl.expression === 'object' &&
+          'name' in impl.expression
+        ) {
+          return String(impl.expression.name);
+        }
+        if ('name' in impl && impl.name) {
+          return String(impl.name);
+        }
+        return 'unknown';
+      }),
     };
   }
 
   private createClassInfoFromAcorn(node: any): ClassInfo {
     return {
-      name: (node.id)?.name || 'unknown',
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-      column: ((node.loc)?.start?.column || 0) + 1,
+      name: node.id?.name || 'unknown',
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
+      column: (node.loc?.start?.column || 0) + 1,
       methods: [],
       properties: [],
-      extends: (node).superClass?.name,
+      extends: node.superClass?.name,
     };
   }
 
   private createInterfaceInfo(node: any): InterfaceInfo {
     return {
-      name: (node.id)?.name || 'unknown',
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-      column: ((node.loc)?.start?.column || 0) + 1,
+      name: node.id?.name || 'unknown',
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
+      column: (node.loc?.start?.column || 0) + 1,
       properties: [],
       methods: [],
-      extends: (node).extends?.map((ext: any) => {
-          if (ext && typeof ext === 'object') {
-            if ('expression' in ext && ext.expression && typeof ext.expression === 'object' && 'name' in ext.expression) {
-              return String(ext.expression.name);
-            }
-            if ('name' in ext && ext.name) {
-              return String(ext.name);
-            }
+      extends: node.extends?.map((ext: any) => {
+        if (ext && typeof ext === 'object') {
+          if (
+            'expression' in ext &&
+            ext.expression &&
+            typeof ext.expression === 'object' &&
+            'name' in ext.expression
+          ) {
+            return String(ext.expression.name);
           }
-          return 'unknown';
-        }),
+          if ('name' in ext && ext.name) {
+            return String(ext.name);
+          }
+        }
+        return 'unknown';
+      }),
     };
   }
 
   private createImportInfo(node: any): ImportInfo {
     return {
-      source: (node.source && typeof node.source === 'object' && 'value' in node.source) ? String(node.source.value) : 'unknown',
+      source:
+        node.source && typeof node.source === 'object' && 'value' in node.source
+          ? String(node.source.value)
+          : 'unknown',
       imports: (node.specifiers || []).map((spec: any) => {
-          if (spec && typeof spec === 'object' && 'local' in spec && spec.local && typeof spec.local === 'object' && 'name' in spec.local) {
-            return String(spec.local.name);
-          }
-          return 'unknown';
-        }),
-      isDefault: node.specifiers.some((spec: unknown) => spec && typeof spec === 'object' && 'type' in spec && String(spec.type) === 'ImportDefaultSpecifier'),
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+        if (
+          spec &&
+          typeof spec === 'object' &&
+          'local' in spec &&
+          spec.local &&
+          typeof spec.local === 'object' &&
+          'name' in spec.local
+        ) {
+          return String(spec.local.name);
+        }
+        return 'unknown';
+      }),
+      isDefault: node.specifiers.some(
+        (spec: unknown) =>
+          spec &&
+          typeof spec === 'object' &&
+          'type' in spec &&
+          String(spec.type) === 'ImportDefaultSpecifier',
+      ),
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
     };
   }
 
   private createImportInfoFromAcorn(node: any): ImportInfo {
     return {
-      source: (node.source && typeof node.source === 'object' && 'value' in node.source) ? String(node.source.value) : 'unknown',
+      source:
+        node.source && typeof node.source === 'object' && 'value' in node.source
+          ? String(node.source.value)
+          : 'unknown',
       imports: (node.specifiers || []).map((spec: any) => {
-          if (spec && typeof spec === 'object' && 'local' in spec && spec.local && typeof spec.local === 'object' && 'name' in spec.local) {
-            return String(spec.local.name);
-          }
-          return 'unknown';
-        }),
-      isDefault: (node.specifiers || []).some((spec: any) => spec && typeof spec === 'object' && 'type' in spec && String(spec.type) === 'ImportDefaultSpecifier'),
-      line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+        if (
+          spec &&
+          typeof spec === 'object' &&
+          'local' in spec &&
+          spec.local &&
+          typeof spec.local === 'object' &&
+          'name' in spec.local
+        ) {
+          return String(spec.local.name);
+        }
+        return 'unknown';
+      }),
+      isDefault: (node.specifiers || []).some(
+        (spec: any) =>
+          spec &&
+          typeof spec === 'object' &&
+          'type' in spec &&
+          String(spec.type) === 'ImportDefaultSpecifier',
+      ),
+      line:
+        node &&
+        typeof node === 'object' &&
+        'loc' in node &&
+        node.loc &&
+        typeof node.loc === 'object' &&
+        'start' in node.loc &&
+        node.loc.start &&
+        typeof node.loc.start === 'object' &&
+        'line' in node.loc.start
+          ? Number(node.loc.start.line)
+          : 1,
     };
   }
 
   private createExportInfo(node: unknown): ExportInfo | null {
-    if (node && typeof node === 'object' && 'type' in node && String(node.type) === 'ExportDefaultDeclaration') {
+    if (
+      node &&
+      typeof node === 'object' &&
+      'type' in node &&
+      String(node.type) === 'ExportDefaultDeclaration'
+    ) {
       return {
         name: 'default',
         type: this.getExportType('declaration' in node ? node.declaration : {}),
         isDefault: true,
-        line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+        line:
+          node &&
+          typeof node === 'object' &&
+          'loc' in node &&
+          node.loc &&
+          typeof node.loc === 'object' &&
+          'start' in node.loc &&
+          node.loc.start &&
+          typeof node.loc.start === 'object' &&
+          'line' in node.loc.start
+            ? Number(node.loc.start.line)
+            : 1,
       };
-    } else if (node && typeof node === 'object' && 'type' in node && String(node.type) === 'ExportNamedDeclaration' && 'declaration' in node && node.declaration) {
+    } else if (
+      node &&
+      typeof node === 'object' &&
+      'type' in node &&
+      String(node.type) === 'ExportNamedDeclaration' &&
+      'declaration' in node &&
+      node.declaration
+    ) {
       return {
         name: this.getDeclarationName(node.declaration),
         type: this.getExportType('declaration' in node ? node.declaration : {}),
         isDefault: false,
-        line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
+        line:
+          node &&
+          typeof node === 'object' &&
+          'loc' in node &&
+          node.loc &&
+          typeof node.loc === 'object' &&
+          'start' in node.loc &&
+          node.loc.start &&
+          typeof node.loc.start === 'object' &&
+          'line' in node.loc.start
+            ? Number(node.loc.start.line)
+            : 1,
       };
     }
     return null;
@@ -644,7 +806,9 @@ export class DefaultAnalysisService implements AnalysisService {
   }
 
   private getTypeAnnotation(typeNode: any): string {
-    if (!typeNode) {return 'unknown';}
+    if (!typeNode) {
+      return 'unknown';
+    }
 
     switch (typeNode.type) {
       case 'TSStringKeyword':
@@ -658,7 +822,7 @@ export class DefaultAnalysisService implements AnalysisService {
       case 'TSAnyKeyword':
         return 'any';
       case 'TSTypeReference':
-        return (typeNode.typeName)?.name || 'unknown';
+        return typeNode.typeName?.name || 'unknown';
       default:
         return 'unknown';
     }
@@ -689,9 +853,9 @@ export class DefaultAnalysisService implements AnalysisService {
 
   private getDeclarationName(declaration: any): string {
     if (declaration?.id) {
-      return (declaration.id).name;
+      return declaration.id.name;
     } else if (declaration?.declarations?.[0]) {
-      return (declaration.declarations[0].id).name;
+      return declaration.declarations[0].id.name;
     }
     return 'unknown';
   }
@@ -791,9 +955,15 @@ export class DefaultAnalysisService implements AnalysisService {
     functionName: string,
     filePath: string,
   ): FunctionInfo | null {
-    if (!node || typeof node !== 'object') {return null;}
+    if (!node || typeof node !== 'object') {
+      return null;
+    }
 
-    if ((node as any).type === 'FunctionDeclaration' && (node as any).id && (node as any).id.name === functionName) {
+    if (
+      (node as any).type === 'FunctionDeclaration' &&
+      (node as any).id &&
+      (node as any).id.name === functionName
+    ) {
       const functionInfo = this.createFunctionInfo(node as any);
       functionInfo.file = filePath;
       return functionInfo;
@@ -805,11 +975,15 @@ export class DefaultAnalysisService implements AnalysisService {
         if (Array.isArray(node[key])) {
           for (const child of node[key]) {
             const result = this.findFunctionInAST(child, functionName, filePath);
-            if (result) {return result;}
+            if (result) {
+              return result;
+            }
           }
         } else if (typeof node[key] === 'object') {
           const result = this.findFunctionInAST(node[key], functionName, filePath);
-          if (result) {return result;}
+          if (result) {
+            return result;
+          }
         }
       }
     }
@@ -827,10 +1001,18 @@ export class DefaultAnalysisService implements AnalysisService {
     let summary = `${language} code snippet with ${lines} lines`;
 
     const features = [];
-    if (hasClasses) {features.push('classes');}
-    if (hasFunctions) {features.push('functions');}
-    if (hasLoops) {features.push('loops');}
-    if (hasConditionals) {features.push('conditionals');}
+    if (hasClasses) {
+      features.push('classes');
+    }
+    if (hasFunctions) {
+      features.push('functions');
+    }
+    if (hasLoops) {
+      features.push('loops');
+    }
+    if (hasConditionals) {
+      features.push('conditionals');
+    }
 
     if (features.length > 0) {
       summary += ` containing ${features.join(', ')}`;
@@ -888,7 +1070,9 @@ export class DefaultAnalysisService implements AnalysisService {
     node: unknown,
     counts: { functions: number; classes: number; interfaces: number },
   ): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     switch ((node as any).type) {
       case 'FunctionDeclaration':
@@ -949,7 +1133,9 @@ export class DefaultAnalysisService implements AnalysisService {
               }
             }
           }
-          if (foundOpenBrace && braceCount === 0) {break;}
+          if (foundOpenBrace && braceCount === 0) {
+            break;
+          }
         }
 
         functions.push({
@@ -965,8 +1151,8 @@ export class DefaultAnalysisService implements AnalysisService {
 
   async searchEntities(codebaseId: string, options: any): Promise<unknown[]> {
     const entities: unknown[] = [];
-    const searchPattern = (options?.pattern) || '**/*.{ts,tsx,js,jsx}';
-    const entityType = (options?.type) || 'all';
+    const searchPattern = options?.pattern || '**/*.{ts,tsx,js,jsx}';
+    const entityType = options?.type || 'all';
 
     try {
       const files = await glob(searchPattern, {
@@ -986,7 +1172,9 @@ export class DefaultAnalysisService implements AnalysisService {
       }
 
       return entities.filter(
-        entity => !options.name || (entity as any).name?.toLowerCase().includes((options.name as string).toLowerCase()),
+        entity =>
+          !options.name ||
+          (entity as any).name?.toLowerCase().includes((options.name as string).toLowerCase()),
       );
     } catch (error) {
       console.error('Failed to search entities:', error);
@@ -1025,7 +1213,7 @@ export class DefaultAnalysisService implements AnalysisService {
 
   async findApiEndpoints(codebaseId: string, options: any): Promise<unknown[]> {
     const endpoints: unknown[] = [];
-    const searchPattern = (options?.pattern) || '**/*.{ts,tsx,js,jsx}';
+    const searchPattern = options?.pattern || '**/*.{ts,tsx,js,jsx}';
 
     try {
       const files = await glob(searchPattern, {
@@ -1045,7 +1233,8 @@ export class DefaultAnalysisService implements AnalysisService {
       }
 
       return endpoints.filter(
-        endpoint => !options.method || (endpoint as any).method === (options.method as string).toUpperCase(),
+        endpoint =>
+          !options.method || (endpoint as any).method === (options.method as string).toUpperCase(),
       );
     } catch (error) {
       console.error('Failed to find API endpoints:', error);
@@ -1261,8 +1450,8 @@ export class DefaultAnalysisService implements AnalysisService {
 
   async searchText(codebaseId: string, query: string, options: any): Promise<unknown[]> {
     const results: unknown[] = [];
-    const maxResults = (options?.max_results) || 50;
-    const caseSensitive = (options?.case_sensitive) || false;
+    const maxResults = options?.max_results || 50;
+    const caseSensitive = options?.case_sensitive || false;
 
     try {
       const files = await glob('**/*.{ts,tsx,js,jsx}', {
@@ -1342,7 +1531,9 @@ export class DefaultAnalysisService implements AnalysisService {
       });
 
       for (const file of files) {
-        if (file === filePath) {continue;} // Skip the file where entity is defined
+        if (file === filePath) {
+          continue;
+        } // Skip the file where entity is defined
 
         try {
           fs.readFile(file, 'utf-8'); // Context reading
@@ -1565,11 +1756,14 @@ export class DefaultAnalysisService implements AnalysisService {
     entities: unknown[],
     entityType: string,
   ): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     if (
       (entityType === 'all' || entityType === 'function') &&
-      ((node as any).type === 'FunctionDeclaration' || (node as any).type === 'ArrowFunctionExpression')
+      ((node as any).type === 'FunctionDeclaration' ||
+        (node as any).type === 'ArrowFunctionExpression')
     ) {
       if ((node as any).id?.name) {
         entities.push({
@@ -1577,21 +1771,46 @@ export class DefaultAnalysisService implements AnalysisService {
           name: (node as any).id.name,
           type: 'function',
           file_path: filePath,
-          start_line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-          end_line: ((node as any).loc)?.end?.line || 1,
+          start_line:
+            node &&
+            typeof node === 'object' &&
+            'loc' in node &&
+            node.loc &&
+            typeof node.loc === 'object' &&
+            'start' in node.loc &&
+            node.loc.start &&
+            typeof node.loc.start === 'object' &&
+            'line' in node.loc.start
+              ? Number(node.loc.start.line)
+              : 1,
+          end_line: (node as any).loc?.end?.line || 1,
         });
       }
     }
 
-    if ((entityType === 'all' || entityType === 'class') && (node as any).type === 'ClassDeclaration') {
+    if (
+      (entityType === 'all' || entityType === 'class') &&
+      (node as any).type === 'ClassDeclaration'
+    ) {
       if ((node as any).id?.name) {
         entities.push({
           id: `${filePath}#${(node as any).id.name}`,
           name: (node as any).id.name,
           type: 'class',
           file_path: filePath,
-          start_line: (node && typeof node === 'object' && 'loc' in node && node.loc && typeof node.loc === 'object' && 'start' in node.loc && node.loc.start && typeof node.loc.start === 'object' && 'line' in node.loc.start) ? Number(node.loc.start.line) : 1,
-          end_line: ((node as any).loc)?.end?.line || 1,
+          start_line:
+            node &&
+            typeof node === 'object' &&
+            'loc' in node &&
+            node.loc &&
+            typeof node.loc === 'object' &&
+            'start' in node.loc &&
+            node.loc.start &&
+            typeof node.loc.start === 'object' &&
+            'line' in node.loc.start
+              ? Number(node.loc.start.line)
+              : 1,
+          end_line: (node as any).loc?.end?.line || 1,
         });
       }
     }
@@ -1610,7 +1829,11 @@ export class DefaultAnalysisService implements AnalysisService {
     }
   }
 
-  private extractEntitiesWithRegex(content: string, filePath: string, entityType: string): unknown[] {
+  private extractEntitiesWithRegex(
+    content: string,
+    filePath: string,
+    entityType: string,
+  ): unknown[] {
     const entities: unknown[] = [];
     const lines = content.split('\n');
 
@@ -1657,16 +1880,21 @@ export class DefaultAnalysisService implements AnalysisService {
     filePath: string,
     callees: unknown[],
   ): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     // Find function calls within the target function
     if ((node as any).type === 'CallExpression' && (node as any).callee) {
       let calleeName = '';
 
       if ((node as any).callee.type === 'Identifier') {
-        calleeName = ((node as any).callee).name;
-      } else if ((node as any).callee.type === 'MemberExpression' && (node as any).callee.property) {
-        calleeName = ((node as any).callee.property).name;
+        calleeName = (node as any).callee.name;
+      } else if (
+        (node as any).callee.type === 'MemberExpression' &&
+        (node as any).callee.property
+      ) {
+        calleeName = (node as any).callee.property.name;
       }
 
       if (calleeName) {
@@ -1674,7 +1902,7 @@ export class DefaultAnalysisService implements AnalysisService {
           id: `${filePath}#${calleeName}`,
           name: calleeName,
           file_path: filePath,
-          line_number: ((node as any).loc)?.start?.line || 1,
+          line_number: (node as any).loc?.start?.line || 1,
           call_type: 'direct',
         });
       }
@@ -1732,21 +1960,24 @@ export class DefaultAnalysisService implements AnalysisService {
     _filePath: string,
     _callback: (_entity: unknown) => void,
   ): void {
-    if (!_node || typeof _node !== 'object') {return;}
+    if (!_node || typeof _node !== 'object') {
+      return;
+    }
 
     if (
-      (( _node as any).type === 'FunctionDeclaration' || ( _node as any).type === 'ClassDeclaration') &&
-      ( _node as any).loc &&
-      ( _node as any).id?.name
+      ((_node as any).type === 'FunctionDeclaration' ||
+        (_node as any).type === 'ClassDeclaration') &&
+      (_node as any).loc &&
+      (_node as any).id?.name
     ) {
-      if (_line >= (( _node as any).loc).start.line && _line <= (( _node as any).loc).end.line) {
+      if (_line >= (_node as any).loc.start.line && _line <= (_node as any).loc.end.line) {
         _callback({
-          id: `${_filePath}#${( _node as any).id.name}`,
-          name: ( _node as any).id.name,
-          type: ( _node as any).type === 'FunctionDeclaration' ? 'function' : 'class',
+          id: `${_filePath}#${(_node as any).id.name}`,
+          name: (_node as any).id.name,
+          type: (_node as any).type === 'FunctionDeclaration' ? 'function' : 'class',
           file_path: _filePath,
-          start_line: (( _node as any).loc).start.line,
-          end_line: (( _node as any).loc).end.line,
+          start_line: (_node as any).loc.start.line,
+          end_line: (_node as any).loc.end.line,
         });
       }
     }
@@ -1771,7 +2002,9 @@ export class DefaultAnalysisService implements AnalysisService {
     filePath: string,
     dependencies: unknown[],
   ): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     // Find import statements
     if ((node as any).type === 'ImportDeclaration' && (node as any).source?.value) {
@@ -1780,7 +2013,7 @@ export class DefaultAnalysisService implements AnalysisService {
         name: (node as any).source.value,
         type: 'import',
         file_path: filePath,
-        line_number: ((node as any).loc)?.start?.line || 1,
+        line_number: (node as any).loc?.start?.line || 1,
         dependency_type: (node as any).source.value.startsWith('.') ? 'internal' : 'external',
       });
     }
@@ -1799,8 +2032,14 @@ export class DefaultAnalysisService implements AnalysisService {
     }
   }
 
-  private traverseASTForBehaviorAnalysis(node: unknown, functionName: string, analysis: unknown): void {
-    if (!node || typeof node !== 'object') {return;}
+  private traverseASTForBehaviorAnalysis(
+    node: unknown,
+    functionName: string,
+    analysis: unknown,
+  ): void {
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     // Detect async operations
     if ((node as any).type === 'AwaitExpression' || (node as any).type === 'YieldExpression') {
@@ -1814,7 +2053,7 @@ export class DefaultAnalysisService implements AnalysisService {
 
     // Detect I/O operations
     if ((node as any).type === 'CallExpression' && (node as any).callee) {
-      const callName = ((node as any).callee).name || ((node as any).callee.property?.name);
+      const callName = (node as any).callee.name || (node as any).callee.property?.name;
       if (
         callName &&
         (callName.includes('read') || callName.includes('write') || callName.includes('fetch'))
@@ -1843,10 +2082,13 @@ export class DefaultAnalysisService implements AnalysisService {
     _functionName: string,
     _callback: (_signature: unknown) => void,
   ): void {
-    if (!_node || typeof _node !== 'object') {return;}
+    if (!_node || typeof _node !== 'object') {
+      return;
+    }
 
     if (
-      ((_node as any).type === 'FunctionDeclaration' || (_node as any).type === 'ArrowFunctionExpression') &&
+      ((_node as any).type === 'FunctionDeclaration' ||
+        (_node as any).type === 'ArrowFunctionExpression') &&
       (_node as any).id?.name === _functionName
     ) {
       const signature = {
@@ -1856,9 +2098,18 @@ export class DefaultAnalysisService implements AnalysisService {
           (_node as any).params?.map((param: any) => {
             if (param && typeof param === 'object') {
               return {
-                name: ('name' in param) ? String(param.name) : 'unknown',
-                type: ('typeAnnotation' in param && param.typeAnnotation && typeof param.typeAnnotation === 'object' && 'typeAnnotation' in param.typeAnnotation && param.typeAnnotation.typeAnnotation && typeof param.typeAnnotation.typeAnnotation === 'object' && 'type' in param.typeAnnotation.typeAnnotation) ? String(param.typeAnnotation.typeAnnotation.type) : 'unknown',
-                optional: ('optional' in param) ? Boolean(param.optional) : false,
+                name: 'name' in param ? String(param.name) : 'unknown',
+                type:
+                  'typeAnnotation' in param &&
+                  param.typeAnnotation &&
+                  typeof param.typeAnnotation === 'object' &&
+                  'typeAnnotation' in param.typeAnnotation &&
+                  param.typeAnnotation.typeAnnotation &&
+                  typeof param.typeAnnotation.typeAnnotation === 'object' &&
+                  'type' in param.typeAnnotation.typeAnnotation
+                    ? String(param.typeAnnotation.typeAnnotation.type)
+                    : 'unknown',
+                optional: 'optional' in param ? Boolean(param.optional) : false,
               };
             }
             return {
@@ -1867,7 +2118,7 @@ export class DefaultAnalysisService implements AnalysisService {
               optional: false,
             };
           }) || [],
-        return_type: ((_node as any).returnType)?.typeAnnotation?.type || 'unknown',
+        return_type: (_node as any).returnType?.typeAnnotation?.type || 'unknown',
         is_async: (_node as any).async || false,
         visibility: 'public', // Default, would need more analysis for actual visibility
       };
@@ -1916,10 +2167,13 @@ export class DefaultAnalysisService implements AnalysisService {
     _content: string,
     _callback: (_code: string) => void,
   ): void {
-    if (!_node || typeof _node !== 'object') {return;}
+    if (!_node || typeof _node !== 'object') {
+      return;
+    }
 
     if (
-      ((_node as any).type === 'FunctionDeclaration' || (_node as any).type === 'ArrowFunctionExpression') &&
+      ((_node as any).type === 'FunctionDeclaration' ||
+        (_node as any).type === 'ArrowFunctionExpression') &&
       (_node as any).id?.name === _functionName &&
       (_node as any).range
     ) {

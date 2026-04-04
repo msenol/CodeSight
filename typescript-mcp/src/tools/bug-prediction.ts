@@ -36,7 +36,15 @@ interface BugRisk {
   id: string;
   title: string;
   description: string;
-  category: 'logic-error' | 'null-pointer' | 'race-condition' | 'memory-leak' | 'performance' | 'security' | 'integration' | 'edge-case';
+  category:
+    | 'logic-error'
+    | 'null-pointer'
+    | 'race-condition'
+    | 'memory-leak'
+    | 'performance'
+    | 'security'
+    | 'integration'
+    | 'edge-case';
   severity: 'critical' | 'high' | 'medium' | 'low';
   likelihood: number; // 0-100
   impact: 'critical' | 'high' | 'medium' | 'low';
@@ -134,7 +142,7 @@ export class BugPredictionTool {
       prediction_type: args.prediction_type || 'pattern-based',
       scope: args.scope || 'module',
       analysis_depth: args.analysis_depth,
-      codebase_id: args.codebase_id
+      codebase_id: args.codebase_id,
     });
 
     try {
@@ -145,7 +153,11 @@ export class BugPredictionTool {
       const patternRisks = await this.detectBugPatterns(args, codeAnalysis);
 
       // 3. AI-powered prediction
-      const aiPredictions = await this.generateAIPredictions(args, codeAnalysis, args.historical_data);
+      const aiPredictions = await this.generateAIPredictions(
+        args,
+        codeAnalysis,
+        args.historical_data,
+      );
 
       // 4. Complexity and coupling analysis
       const complexityRisks = await this.analyzeComplexityRisks(args, codeAnalysis);
@@ -157,7 +169,13 @@ export class BugPredictionTool {
       const integrationRisks = await this.analyzeIntegrationRisks(args, codeAnalysis);
 
       // 7. Consolidate and prioritize risks
-      const allRisks = this.consolidateRisks([patternRisks, aiPredictions, complexityRisks, testingRisks, integrationRisks]);
+      const allRisks = this.consolidateRisks([
+        patternRisks,
+        aiPredictions,
+        complexityRisks,
+        testingRisks,
+        integrationRisks,
+      ]);
 
       // 8. Calculate overall risk assessment
       const riskAssessment = this.calculateOverallRisk(allRisks, codeAnalysis);
@@ -177,7 +195,7 @@ export class BugPredictionTool {
         hotspots,
         predictive_insights: insights,
         recommendations,
-        monitoring_plan: monitoringPlan
+        monitoring_plan: monitoringPlan,
       } as any; // Cast to add compatibility properties
 
       // Add root-level properties for test compatibility
@@ -189,30 +207,31 @@ export class BugPredictionTool {
       const flatRecommendations = [
         ...recommendations.immediate_actions.map(action => ({
           strategy: action,
-          priority: 'high'
+          priority: 'high',
         })),
         ...recommendations.short_term_improvements.map(action => ({
           strategy: action,
-          priority: 'medium'
+          priority: 'medium',
         })),
         ...recommendations.testing_strategy.map(strategy => ({
           strategy: strategy,
-          priority: 'low'
-        }))
+          priority: 'low',
+        })),
       ];
       (result as any).recommendations = flatRecommendations;
 
       logger.info('Bug prediction analysis completed', {
         bug_risk_score: result.overall_risk_assessment.bug_risk_score,
         risks_identified: result.identified_risks.length,
-        hotspots_count: result.hotspots.length
+        hotspots_count: result.hotspots.length,
       });
 
       return result;
-
     } catch (error) {
       logger.error('Bug prediction failed:', error);
-      throw new Error(`Bug prediction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Bug prediction failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -226,7 +245,10 @@ export class BugPredictionTool {
     }
   }
 
-  private async detectBugPatterns(args: BugPredictionRequest, _codeAnalysis: any): Promise<BugRisk[]> {
+  private async detectBugPatterns(
+    args: BugPredictionRequest,
+    _codeAnalysis: any,
+  ): Promise<BugRisk[]> {
     const risks: BugRisk[] = [];
     const code = args.code_snippet || '';
 
@@ -234,7 +256,7 @@ export class BugPredictionTool {
     const nullPointerPatterns = [
       /(\w+)\.(\w+)(?!\s*\?\?)/g, // Potential null dereference
       /if\s*\(([^)]+)\)(?!\s*\{[\s\S]*?null[\s\S]*?\})/g, // Null check without proper handling
-      /(\w+)\s*\?\s*([^?]*)\s*:\s*([^?]*)/g // Ternary without null checks
+      /(\w+)\s*\?\s*([^?]*)\s*:\s*([^?]*)/g, // Ternary without null checks
     ];
 
     nullPointerPatterns.forEach((pattern, index) => {
@@ -243,7 +265,8 @@ export class BugPredictionTool {
         risks.push({
           id: `null-pointer-${index}`,
           title: 'Potential Null Pointer Exception',
-          description: 'Code may attempt to access null or undefined values without proper checking',
+          description:
+            'Code may attempt to access null or undefined values without proper checking',
           category: 'null-pointer',
           severity: 'high',
           likelihood: 70,
@@ -251,25 +274,33 @@ export class BugPredictionTool {
           location: {
             file_path: args.file_path || 'unknown',
             line_start: 0,
-            line_end: 0
+            line_end: 0,
           },
           patterns_found: ['Potential null dereference'],
           risk_factors: [
-            { factor: 'No null check', weight: 0.8, explanation: 'Variable accessed without null validation' },
-            { factor: 'External data source', weight: 0.3, explanation: 'Data may come from external sources' }
+            {
+              factor: 'No null check',
+              weight: 0.8,
+              explanation: 'Variable accessed without null validation',
+            },
+            {
+              factor: 'External data source',
+              weight: 0.3,
+              explanation: 'Data may come from external sources',
+            },
           ],
           mitigation_strategies: [
             'Add null/undefined checks before accessing properties',
             'Use optional chaining (?.) operator',
-            'Implement defensive programming practices'
+            'Implement defensive programming practices',
           ],
           testing_recommendations: [
             'Test with null and undefined inputs',
             'Add boundary value tests',
-            'Include edge case scenarios'
+            'Include edge case scenarios',
           ],
           confidence: 75,
-          false_positive_risk: 25
+          false_positive_risk: 25,
         });
       }
     });
@@ -279,7 +310,7 @@ export class BugPredictionTool {
       /await\s+Promise\.all\(/g,
       /setTimeout\(/g,
       /setInterval\(/g,
-      /addEventListener\(/g
+      /addEventListener\(/g,
     ];
 
     raceConditionPatterns.forEach((pattern, index) => {
@@ -296,25 +327,33 @@ export class BugPredictionTool {
           location: {
             file_path: args.file_path || 'unknown',
             line_start: 0,
-            line_end: 0
+            line_end: 0,
           },
           patterns_found: ['Multiple async operations'],
           risk_factors: [
-            { factor: 'Shared state access', weight: 0.7, explanation: 'Multiple async operations may access shared state' },
-            { factor: 'No synchronization', weight: 0.5, explanation: 'Lack of proper synchronization mechanisms' }
+            {
+              factor: 'Shared state access',
+              weight: 0.7,
+              explanation: 'Multiple async operations may access shared state',
+            },
+            {
+              factor: 'No synchronization',
+              weight: 0.5,
+              explanation: 'Lack of proper synchronization mechanisms',
+            },
           ],
           mitigation_strategies: [
             'Use proper async/await patterns',
             'Implement locks or mutexes for shared resources',
-            'Consider using Promise.allSettled() instead of Promise.all()'
+            'Consider using Promise.allSettled() instead of Promise.all()',
           ],
           testing_recommendations: [
             'Test concurrent access scenarios',
             'Add load testing with multiple requests',
-            'Test with timing variations'
+            'Test with timing variations',
           ],
           confidence: 65,
-          false_positive_risk: 35
+          false_positive_risk: 35,
         });
       }
     });
@@ -323,7 +362,7 @@ export class BugPredictionTool {
     const logicErrorPatterns = [
       /if\s*\(([^)]+)\)\s*\{\s*\}\s*else\s*\{\s*\}/g, // Empty if-else blocks
       /===\s*(null|undefined)/g, // Direct comparison with null/undefined
-      /return\s*;/g // Early returns without proper cleanup
+      /return\s*;/g, // Early returns without proper cleanup
     ];
 
     logicErrorPatterns.forEach((pattern, index) => {
@@ -340,25 +379,33 @@ export class BugPredictionTool {
           location: {
             file_path: args.file_path || 'unknown',
             line_start: 0,
-            line_end: 0
+            line_end: 0,
           },
           patterns_found: ['Suspicious logic patterns'],
           risk_factors: [
-            { factor: 'Complex conditions', weight: 0.6, explanation: 'Complex logical conditions increase error probability' },
-            { factor: 'Incomplete implementation', weight: 0.4, explanation: 'Code appears incomplete or contains placeholder logic' }
+            {
+              factor: 'Complex conditions',
+              weight: 0.6,
+              explanation: 'Complex logical conditions increase error probability',
+            },
+            {
+              factor: 'Incomplete implementation',
+              weight: 0.4,
+              explanation: 'Code appears incomplete or contains placeholder logic',
+            },
           ],
           mitigation_strategies: [
             'Review logical conditions for completeness',
             'Add comprehensive unit tests',
-            'Consider using guard clauses instead of nested conditions'
+            'Consider using guard clauses instead of nested conditions',
           ],
           testing_recommendations: [
             'Test all logical paths',
             'Include edge cases and boundary conditions',
-            'Verify expected behavior with different input combinations'
+            'Verify expected behavior with different input combinations',
           ],
           confidence: 60,
-          false_positive_risk: 30
+          false_positive_risk: 30,
         });
       }
     });
@@ -366,7 +413,11 @@ export class BugPredictionTool {
     return risks;
   }
 
-  private async generateAIPredictions(args: BugPredictionRequest, codeAnalysis: any, historicalData?: any): Promise<BugRisk[]> {
+  private async generateAIPredictions(
+    args: BugPredictionRequest,
+    codeAnalysis: any,
+    historicalData?: any,
+  ): Promise<BugRisk[]> {
     try {
       const prompts = [
         `
@@ -395,17 +446,14 @@ For each potential bug found, provide:
 7. Confidence in the prediction
 
 Focus on actionable insights that can prevent bugs before they occur.
-`
+`,
       ];
 
       const aiInsights = await this.aiService.generateInsights(prompts);
 
       // Deduplicate and fix line numbers in suggestions
       const deduplicatedSuggestions = deduplicateSuggestions(aiInsights.suggestions || []);
-      const fixedSuggestions = fixLineNumbers(
-        deduplicatedSuggestions,
-        args.code_snippet
-      );
+      const fixedSuggestions = fixLineNumbers(deduplicatedSuggestions, args.code_snippet);
 
       return fixedSuggestions.map((suggestion, index) => ({
         id: `ai-prediction-${index}`,
@@ -418,25 +466,31 @@ Focus on actionable insights that can prevent bugs before they occur.
         location: {
           file_path: args.file_path || 'unknown',
           line_start: suggestion.line_number || 0,
-          line_end: suggestion.line_number || 0
+          line_end: suggestion.line_number || 0,
         },
         patterns_found: [suggestion.title],
         risk_factors: [
-          { factor: 'AI analysis', weight: 0.8, explanation: 'Identified by AI pattern recognition' }
+          {
+            factor: 'AI analysis',
+            weight: 0.8,
+            explanation: 'Identified by AI pattern recognition',
+          },
         ],
         mitigation_strategies: [suggestion.suggestion],
         testing_recommendations: ['Test scenarios based on AI predictions'],
         confidence: suggestion.confidence || 70,
-        false_positive_risk: 30 - (suggestion.confidence || 70) * 0.3
+        false_positive_risk: 30 - (suggestion.confidence || 70) * 0.3,
       }));
-
     } catch (error) {
       logger.warn('AI bug prediction failed, using fallback:', error);
       return [];
     }
   }
 
-  private async analyzeComplexityRisks(args: BugPredictionRequest, codeAnalysis: any): Promise<BugRisk[]> {
+  private async analyzeComplexityRisks(
+    args: BugPredictionRequest,
+    codeAnalysis: any,
+  ): Promise<BugRisk[]> {
     const risks: BugRisk[] = [];
 
     if (codeAnalysis.complexity?.functions) {
@@ -454,25 +508,33 @@ Focus on actionable insights that can prevent bugs before they occur.
               file_path: args.file_path || 'unknown',
               line_start: func.line_number || 0,
               line_end: func.line_number || 0,
-              function_name: func.name
+              function_name: func.name,
             },
             patterns_found: ['High cyclomatic complexity', 'Many conditional branches'],
             risk_factors: [
-              { factor: 'Cyclomatic complexity', weight: 0.9, explanation: `High complexity (${func.cyclomatic_complexity}) increases error probability` },
-              { factor: 'Cognitive load', weight: 0.6, explanation: 'Complex logic is hard to understand and maintain' }
+              {
+                factor: 'Cyclomatic complexity',
+                weight: 0.9,
+                explanation: `High complexity (${func.cyclomatic_complexity}) increases error probability`,
+              },
+              {
+                factor: 'Cognitive load',
+                weight: 0.6,
+                explanation: 'Complex logic is hard to understand and maintain',
+              },
             ],
             mitigation_strategies: [
               'Break down function into smaller, focused functions',
               'Extract complex conditions into well-named helper functions',
-              'Consider using design patterns to simplify logic'
+              'Consider using design patterns to simplify logic',
             ],
             testing_recommendations: [
               'Test all conditional branches',
               'Include edge cases for complex conditions',
-              'Add mutation testing to verify test coverage'
+              'Add mutation testing to verify test coverage',
             ],
             confidence: 85,
-            false_positive_risk: 15
+            false_positive_risk: 15,
           });
         }
       });
@@ -481,7 +543,10 @@ Focus on actionable insights that can prevent bugs before they occur.
     return risks;
   }
 
-  private async analyzeTestingGaps(args: BugPredictionRequest, codeAnalysis: any): Promise<BugRisk[]> {
+  private async analyzeTestingGaps(
+    args: BugPredictionRequest,
+    codeAnalysis: any,
+  ): Promise<BugRisk[]> {
     const risks: BugRisk[] = [];
 
     if (codeAnalysis.testing?.coverage_percentage < 80) {
@@ -496,32 +561,43 @@ Focus on actionable insights that can prevent bugs before they occur.
         location: {
           file_path: args.file_path || 'unknown',
           line_start: 0,
-          line_end: 0
+          line_end: 0,
         },
         patterns_found: ['Low test coverage'],
         risk_factors: [
-          { factor: 'Coverage percentage', weight: 0.8, explanation: `${codeAnalysis.testing?.coverage_percentage || 0}% coverage is below recommended 80%` },
-          { factor: 'Untested paths', weight: 0.6, explanation: 'Multiple code paths are not covered by tests' }
+          {
+            factor: 'Coverage percentage',
+            weight: 0.8,
+            explanation: `${codeAnalysis.testing?.coverage_percentage || 0}% coverage is below recommended 80%`,
+          },
+          {
+            factor: 'Untested paths',
+            weight: 0.6,
+            explanation: 'Multiple code paths are not covered by tests',
+          },
         ],
         mitigation_strategies: [
           'Increase test coverage to at least 80%',
           'Add unit tests for uncovered functions',
-          'Implement integration tests for critical workflows'
+          'Implement integration tests for critical workflows',
         ],
         testing_recommendations: [
           'Focus on high-risk areas first',
           'Add tests for error handling paths',
-          'Include edge cases and boundary conditions'
+          'Include edge cases and boundary conditions',
         ],
         confidence: 90,
-        false_positive_risk: 10
+        false_positive_risk: 10,
       });
     }
 
     return risks;
   }
 
-  private async analyzeIntegrationRisks(_args: BugPredictionRequest, _codeAnalysis: any): Promise<BugRisk[]> {
+  private async analyzeIntegrationRisks(
+    _args: BugPredictionRequest,
+    _codeAnalysis: any,
+  ): Promise<BugRisk[]> {
     const risks: BugRisk[] = [];
 
     // Placeholder for integration risk analysis
@@ -538,8 +614,12 @@ Focus on actionable insights that can prevent bugs before they occur.
     const allRisks = riskArrays.flat();
 
     // Deduplicate similar risks
-    const deduplicatedRisks = allRisks.filter((risk, index, self) =>
-      index === self.findIndex(r => r.title === risk.title && r.location.file_path === risk.location.file_path)
+    const deduplicatedRisks = allRisks.filter(
+      (risk, index, self) =>
+        index ===
+        self.findIndex(
+          r => r.title === risk.title && r.location.file_path === risk.location.file_path,
+        ),
     );
 
     // Sort by severity and likelihood
@@ -565,16 +645,23 @@ Focus on actionable insights that can prevent bugs before they occur.
     const bugRiskScore = maxRiskScore > 0 ? (totalRiskScore / maxRiskScore) * 100 : 0;
 
     let riskCategory: 'low' | 'moderate' | 'high' | 'critical';
-    if (bugRiskScore >= 75) {riskCategory = 'critical';}
-    else if (bugRiskScore >= 50) {riskCategory = 'high';}
-    else if (bugRiskScore >= 25) {riskCategory = 'moderate';}
-    else {riskCategory = 'low';}
+    if (bugRiskScore >= 75) {
+      riskCategory = 'critical';
+    } else if (bugRiskScore >= 50) {
+      riskCategory = 'high';
+    } else if (bugRiskScore >= 25) {
+      riskCategory = 'moderate';
+    } else {
+      riskCategory = 'low';
+    }
 
     return {
       bug_risk_score: Math.round(bugRiskScore),
-      confidence_level: Math.round(risks.reduce((acc, risk) => acc + risk.confidence, 0) / risks.length),
+      confidence_level: Math.round(
+        risks.reduce((acc, risk) => acc + risk.confidence, 0) / risks.length,
+      ),
       predicted_bugs: risks.filter(r => r.likelihood > 70).length,
-      risk_category: riskCategory
+      risk_category: riskCategory,
     };
   }
 
@@ -584,7 +671,7 @@ Focus on actionable insights that can prevent bugs before they occur.
       complexity_risk: Math.min(100, (codeAnalysis.complexity?.overall_score || 0) * 2),
       test_coverage_risk: Math.max(0, 100 - (codeAnalysis.testing?.coverage_percentage || 0)),
       integration_risk: Math.min(100, risks.filter(r => r.category === 'integration').length * 25),
-      maintenance_risk: Math.min(100, risks.filter(r => r.impact === 'critical').length * 30)
+      maintenance_risk: Math.min(100, risks.filter(r => r.impact === 'critical').length * 30),
     };
   }
 
@@ -606,7 +693,9 @@ Focus on actionable insights that can prevent bugs before they occur.
     // Short-term improvements for high risks
     const highRisks = risks.filter(r => r.severity === 'high');
     if (highRisks.length > 0) {
-      shortTermImprovements.push(`Resolve ${highRisks.length} high-priority bug risks in next sprint`);
+      shortTermImprovements.push(
+        `Resolve ${highRisks.length} high-priority bug risks in next sprint`,
+      );
     }
 
     // Long-term strategies
@@ -626,7 +715,7 @@ Focus on actionable insights that can prevent bugs before they occur.
       immediate_actions: immediateActions,
       short_term_improvements: shortTermImprovements,
       long_term_strategies: longTermStrategies,
-      testing_strategy: testingStrategy
+      testing_strategy: testingStrategy,
     };
   }
 
@@ -637,14 +726,14 @@ Focus on actionable insights that can prevent bugs before they occur.
         'Code coverage percentage',
         'Cyclomatic complexity trends',
         'Test failure rate',
-        'Code review findings'
+        'Code review findings',
       ],
       alert_thresholds: [
         { metric: 'Code coverage', threshold: 70, action: 'Investigate missing tests' },
         { metric: 'Bug density', threshold: 5, action: 'Schedule code review' },
-        { metric: 'Complexity score', threshold: 15, action: 'Plan refactoring' }
+        { metric: 'Complexity score', threshold: 15, action: 'Plan refactoring' },
       ],
-      review_frequency: 'Weekly for high-risk modules, monthly for stable modules'
+      review_frequency: 'Weekly for high-risk modules, monthly for stable modules',
     };
   }
 
@@ -659,7 +748,7 @@ Focus on actionable insights that can prevent bugs before they occur.
           location,
           risk_concentration: 0,
           bug_types: [],
-          priority_actions: []
+          priority_actions: [],
         };
       }
 
@@ -675,28 +764,29 @@ Focus on actionable insights that can prevent bugs before they occur.
         priority_actions: [
           'Schedule immediate code review',
           'Add comprehensive tests',
-          'Consider refactoring'
-        ]
+          'Consider refactoring',
+        ],
       }));
   }
 
   private mapToBugCategory(category?: string): BugRisk['category'] {
     const categoryMap = {
-      'security': 'security',
-      'performance': 'performance',
-      'maintainability': 'logic-error',
-      'readability': 'logic-error'
+      security: 'security',
+      performance: 'performance',
+      maintainability: 'logic-error',
+      readability: 'logic-error',
     };
 
-    return (categoryMap[category as keyof typeof categoryMap] || 'logic-error') as BugRisk['category'];
+    return (categoryMap[category as keyof typeof categoryMap] ||
+      'logic-error') as BugRisk['category'];
   }
 
   private mapToSeverity(impact?: string): BugRisk['severity'] {
     const severityMap = {
-      'critical': 'critical',
-      'high': 'high',
-      'medium': 'medium',
-      'low': 'low'
+      critical: 'critical',
+      high: 'high',
+      medium: 'medium',
+      low: 'low',
     };
 
     return (severityMap[impact as keyof typeof severityMap] || 'medium') as BugRisk['severity'];

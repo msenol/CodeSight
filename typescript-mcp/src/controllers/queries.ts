@@ -7,7 +7,14 @@ const logger = new Logger('QueriesController');
 export interface QueryRequest {
   query: string;
   query_type?: 'natural_language' | 'structured' | 'regex';
-  intent?: 'find_function' | 'explain_code' | 'trace_flow' | 'find_usage' | 'security_audit' | 'find_api' | 'check_complexity';
+  intent?:
+    | 'find_function'
+    | 'explain_code'
+    | 'trace_flow'
+    | 'find_usage'
+    | 'security_audit'
+    | 'find_api'
+    | 'check_complexity';
   codebase_id?: string;
   limit?: number;
   offset?: number;
@@ -61,7 +68,14 @@ export class QueriesController {
     let queryValue: string;
 
     try {
-      const { query, query_type = 'natural_language', limit = 10, offset = 0, codebase_id, file_types } = request.body;
+      const {
+        query,
+        query_type = 'natural_language',
+        limit = 10,
+        offset = 0,
+        codebase_id,
+        file_types,
+      } = request.body;
 
       // Store query for use in catch block
       queryValue = query;
@@ -69,11 +83,17 @@ export class QueriesController {
       if (!query || query.trim().length === 0) {
         return reply.status(400).send({
           success: false,
-          error: 'Query cannot be empty'
+          error: 'Query cannot be empty',
         } as QueryResponse);
       }
 
-      logger.info('Processing search query', { query: queryValue, query_type, limit, offset, codebase_id });
+      logger.info('Processing search query', {
+        query: queryValue,
+        query_type,
+        limit,
+        offset,
+        codebase_id,
+      });
 
       // Perform search using the existing search service
       let searchResults;
@@ -81,7 +101,7 @@ export class QueriesController {
         codebase_id: codebase_id || 'default',
         max_results: limit || 10,
         file_types: file_types || ['ts', 'js', 'jsx', 'tsx'],
-        exclude_patterns: ['**/node_modules/**', '**/dist/**', '**/.git/**']
+        exclude_patterns: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
       };
 
       switch (query_type) {
@@ -109,7 +129,7 @@ export class QueriesController {
         content: result.content,
         score: result.score,
         match_type: 'exact' as const, // Database search returns exact matches
-        context: result.context
+        context: result.context,
       }));
 
       const response: QueryResponse = {
@@ -119,7 +139,7 @@ export class QueriesController {
           limit,
           offset,
           total: results.length,
-          has_more: false // Database search doesn't support pagination metadata
+          has_more: false, // Database search doesn't support pagination metadata
         },
         query_intent: 'general_search',
         execution_time_ms: executionTime,
@@ -127,25 +147,29 @@ export class QueriesController {
           results_count: results.length,
           search_time_ms: executionTime,
           files_searched: 0, // Database search doesn't provide this metadata
-          codebase_name: codebase_id || 'default'
-        }
+          codebase_name: codebase_id || 'default',
+        },
       };
 
       logger.info('Search query completed', {
         resultsCount: results.length,
         executionTime,
-        query: queryValue
+        query: queryValue,
       });
 
       return reply.send(response);
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      logger.error('Search query failed', { error: error.message, query: queryValue, executionTime });
+      logger.error('Search query failed', {
+        error: error.message,
+        query: queryValue,
+        executionTime,
+      });
 
       return reply.status(500).send({
         success: false,
         error: 'Internal server error',
-        execution_time_ms: executionTime
+        execution_time_ms: executionTime,
       } as QueryResponse);
     }
   }
@@ -161,13 +185,13 @@ export class QueriesController {
           limit: 20,
           offset: 0,
           total: 0,
-          has_more: false
+          has_more: false,
         },
         metadata: {
           results_count: 0,
           search_time_ms: 0,
-          files_searched: 0
-        }
+          files_searched: 0,
+        },
       };
 
       return reply.send(response);
@@ -175,7 +199,7 @@ export class QueriesController {
       logger.error('Failed to get query history', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retrieve query history'
+        error: 'Failed to retrieve query history',
       });
     }
   }
@@ -195,7 +219,7 @@ export class QueriesController {
         'test coverage',
         'security measures',
         'performance optimization',
-        'code structure analysis'
+        'code structure analysis',
       ];
 
       const response = {
@@ -203,8 +227,8 @@ export class QueriesController {
         suggestions,
         metadata: {
           codebase_id,
-          suggestions_count: suggestions.length
-        }
+          suggestions_count: suggestions.length,
+        },
       };
 
       return reply.send(response);
@@ -212,7 +236,7 @@ export class QueriesController {
       logger.error('Failed to get suggested queries', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retrieve suggested queries'
+        error: 'Failed to retrieve suggested queries',
       });
     }
   }
@@ -224,14 +248,14 @@ export class QueriesController {
       if (!query || query.trim().length === 0) {
         return reply.send({
           valid: false,
-          error: 'Query cannot be empty'
+          error: 'Query cannot be empty',
         });
       }
 
       if (query.length > 1000) {
         return reply.send({
           valid: false,
-          error: 'Query too long (maximum 1000 characters)'
+          error: 'Query too long (maximum 1000 characters)',
         });
       }
 
@@ -239,14 +263,14 @@ export class QueriesController {
       const dangerousPatterns = [
         /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
         /javascript:/gi,
-        /data:text\/html/gi
+        /data:text\/html/gi,
       ];
 
       for (const pattern of dangerousPatterns) {
         if (pattern.test(query)) {
           return reply.send({
             valid: false,
-            error: 'Query contains potentially dangerous content'
+            error: 'Query contains potentially dangerous content',
           });
         }
       }
@@ -255,14 +279,14 @@ export class QueriesController {
         valid: true,
         metadata: {
           query_length: query.length,
-          word_count: query.split(/\s+/).length
-        }
+          word_count: query.split(/\s+/).length,
+        },
       });
     } catch (error) {
       logger.error('Query validation failed', { error: error.message });
       return reply.status(500).send({
         valid: false,
-        error: 'Validation failed'
+        error: 'Validation failed',
       });
     }
   }

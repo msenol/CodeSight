@@ -1,7 +1,10 @@
- 
- 
 import type { Response, NextFunction } from 'express';
-import { type ExtendedRequest, type RateLimitConfig, HTTP_STATUS, RateLimitError } from './types.js';
+import {
+  type ExtendedRequest,
+  type RateLimitConfig,
+  HTTP_STATUS,
+  RateLimitError,
+} from './types.js';
 
 // Rule 15: Global declarations for Node.js environment
 declare const console: Console;
@@ -11,11 +14,13 @@ declare const clearInterval: (id: unknown) => void;
 
 // In-memory store for rate limiting (in production, use Redis)
 interface RateLimitStore {
-  [key: string]: {
-    count: number;
-    resetTime: number;
-    firstRequest: number;
-  } | undefined;
+  [key: string]:
+    | {
+        count: number;
+        resetTime: number;
+        firstRequest: number;
+      }
+    | undefined;
 }
 
 const defaultConfig: RateLimitConfig = {
@@ -49,7 +54,9 @@ export class RateLimitMiddleware {
    */
   limit = async (req: ExtendedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const key = this.config.keyGenerator ? this.config.keyGenerator(req) : this.getDefaultKey(req);
+      const key = this.config.keyGenerator
+        ? this.config.keyGenerator(req)
+        : this.getDefaultKey(req);
       const now = Date.now();
 
       // Get or create rate limit entry
@@ -231,7 +238,11 @@ export class RateLimitMiddleware {
         // Check burst limit first
         await new Promise<void>((resolve, reject) => {
           burstLimiter.limit(req, res, (error?: any) => {
-            if (error) {reject(error);} else {resolve();}
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
           });
         });
 

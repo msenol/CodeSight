@@ -1,5 +1,3 @@
- 
- 
 import type { Request, Response } from 'express';
 import { SearchCodeTool } from '../tools/search-code.js';
 import { FindReferencesTool } from '../tools/find-references.js';
@@ -212,7 +210,7 @@ export class SearchController {
         results: [],
       };
 
-      const queryPromises = queries.map(async (query) => {
+      const queryPromises = queries.map(async query => {
         const queryResults: { query: string; results: Record<string, unknown> } = {
           query: query.text || query,
           results: {},

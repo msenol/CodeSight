@@ -1,8 +1,3 @@
- 
- 
- 
- 
- 
 import { z } from 'zod';
 import { codebaseService } from '../services/codebase-service.js';
 
@@ -395,7 +390,10 @@ export class TraceDataFlowTool {
   /**
    * Parse service point
    */
-  private async parseServicePoint(point: string, _codebaseId: string): Promise<DataFlowNode | null> {
+  private async parseServicePoint(
+    point: string,
+    _codebaseId: string,
+  ): Promise<DataFlowNode | null> {
     const serviceMatch = point.match(/service\s+(\w+)|(\w+)\s+service/);
     const serviceName = serviceMatch ? serviceMatch[1] || serviceMatch[2] : point;
 

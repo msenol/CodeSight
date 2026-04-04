@@ -50,7 +50,7 @@ export class RAGService {
     try {
       this.db = new Database(this.config.dbPath);
       this.db.pragma('journal_mode = WAL');
-      
+
       this.db.exec(`
         CREATE TABLE IF NOT EXISTS embeddings (
           id TEXT PRIMARY KEY,
@@ -63,7 +63,7 @@ export class RAGService {
         );
         CREATE INDEX IF NOT EXISTS idx_embeddings_source ON embeddings(source);
       `);
-      
+
       this.isInitialized = true;
       logger.info('RAG service initialized');
     } catch (error: any) {
@@ -88,7 +88,7 @@ export class RAGService {
       JSON.stringify(doc.embedding),
       doc.metadata.source,
       doc.metadata.language,
-      doc.metadata.type
+      doc.metadata.type,
     );
   }
 
@@ -108,7 +108,7 @@ export class RAGService {
     const startTime = Date.now();
     const stmt = this.db.prepare('SELECT * FROM embeddings ORDER BY rowid LIMIT ?');
     const rows = stmt.all(this.config.topK) as any[];
-    
+
     const results = rows
       .map(row => {
         const embedding = JSON.parse(row.embedding as string);
@@ -146,9 +146,11 @@ export class RAGService {
     if (!this.db) {
       return { count: 0, bySource: {} };
     }
-    
+
     const countResult = this.db.prepare('SELECT COUNT(*) as count FROM embeddings').get() as any;
-    const sourceRows = this.db.prepare('SELECT source, COUNT(*) as count FROM embeddings GROUP BY source').all() as any[];
+    const sourceRows = this.db
+      .prepare('SELECT source, COUNT(*) as count FROM embeddings GROUP BY source')
+      .all() as any[];
 
     return {
       count: countResult?.count || 0,

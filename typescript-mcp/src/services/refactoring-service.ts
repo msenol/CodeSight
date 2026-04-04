@@ -1,8 +1,3 @@
- 
- 
- 
- 
- 
 import type { RefactoringSuggestion, RefactoringOptions, CodeSmell } from '../types/index.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as fs from 'fs/promises';
@@ -268,7 +263,7 @@ export class DefaultRefactoringService implements RefactoringService {
   private ${methodName}(${parameterList}): ${returnType} {
 ${selectedCode
   .split('\n')
-  .map(line => `    ${  line}`)
+  .map(line => `    ${line}`)
   .join('\n')}
 ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnValues.join(', ')}}` : returnValues[0]};` : ''}
   }`;
@@ -311,7 +306,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
         line,
         description: `Extract complex expression into variable '${variableName}'`,
         before: expression,
-        after: `${extractedVariable  }\n    ${variableName}`,
+        after: `${extractedVariable}\n    ${variableName}`,
         impact: 'Improves code readability',
         confidence: 0.7,
       },
@@ -621,7 +616,7 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
             line: i + 1,
             column: 0,
             length: line.length,
-            originalCode: `${line  }\n${  nextLine}`,
+            originalCode: `${line}\n${nextLine}`,
             suggestedCode: nextLine.replace(varName, varMatch[3]),
             reason: `Variable '${varName}' is used only once and can be inlined`,
           });
@@ -647,10 +642,14 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
         const number = match[1];
 
         // Skip if it's in a comment or string
-        if (this.isInCommentOrString(line, match.index)) {continue;}
+        if (this.isInCommentOrString(line, match.index)) {
+          continue;
+        }
 
         // Skip common non-magic numbers
-        if (['100', '200', '404', '500'].includes(number)) {continue;}
+        if (['100', '200', '404', '500'].includes(number)) {
+          continue;
+        }
 
         const constantName = this.suggestConstantName(number, line);
         matches.push({
@@ -857,7 +856,9 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
 
   // Helper methods
   private traverseAST(node: any, callback: (node: any) => void): void {
-    if (!node || typeof node !== 'object') {return;}
+    if (!node || typeof node !== 'object') {
+      return;
+    }
 
     callback(node);
 
@@ -901,7 +902,9 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
       }
     }
 
-    if (definitionLine === -1) {return true;} // Assume it's a parameter
+    if (definitionLine === -1) {
+      return true;
+    } // Assume it's a parameter
 
     for (let i = 0; i < definitionLine; i++) {
       if (lines[i].includes(variable)) {
@@ -926,40 +929,76 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
 
   private suggestMethodName(code: string): string {
     // Simple heuristic to suggest method names based on code content
-    if (code.includes('validate')) {return 'validateData';}
-    if (code.includes('calculate')) {return 'calculateResult';}
-    if (code.includes('process')) {return 'processData';}
-    if (code.includes('format')) {return 'formatOutput';}
-    if (code.includes('parse')) {return 'parseInput';}
+    if (code.includes('validate')) {
+      return 'validateData';
+    }
+    if (code.includes('calculate')) {
+      return 'calculateResult';
+    }
+    if (code.includes('process')) {
+      return 'processData';
+    }
+    if (code.includes('format')) {
+      return 'formatOutput';
+    }
+    if (code.includes('parse')) {
+      return 'parseInput';
+    }
 
     return 'extractedMethod';
   }
 
   private suggestVariableName(expression: string): string {
     // Simple heuristic to suggest variable names
-    if (expression.includes('length')) {return 'length';}
-    if (expression.includes('count')) {return 'count';}
-    if (expression.includes('index')) {return 'index';}
-    if (expression.includes('result')) {return 'result';}
-    if (expression.includes('value')) {return 'value';}
+    if (expression.includes('length')) {
+      return 'length';
+    }
+    if (expression.includes('count')) {
+      return 'count';
+    }
+    if (expression.includes('index')) {
+      return 'index';
+    }
+    if (expression.includes('result')) {
+      return 'result';
+    }
+    if (expression.includes('value')) {
+      return 'value';
+    }
 
     return 'extractedValue';
   }
 
   private suggestConstantName(number: string, context: string): string {
-    if (context.includes('timeout')) {return `TIMEOUT_${number}_MS`;}
-    if (context.includes('limit')) {return `LIMIT_${number}`;}
-    if (context.includes('max')) {return `MAX_${number}`;}
-    if (context.includes('min')) {return `MIN_${number}`;}
+    if (context.includes('timeout')) {
+      return `TIMEOUT_${number}_MS`;
+    }
+    if (context.includes('limit')) {
+      return `LIMIT_${number}`;
+    }
+    if (context.includes('max')) {
+      return `MAX_${number}`;
+    }
+    if (context.includes('min')) {
+      return `MIN_${number}`;
+    }
 
     return `CONSTANT_${number}`;
   }
 
   private suggestPredicateMethodName(condition: string): string {
-    if (condition.includes('null')) {return 'isValid';}
-    if (condition.includes('empty')) {return 'isEmpty';}
-    if (condition.includes('length')) {return 'hasValidLength';}
-    if (condition.includes('type')) {return 'isCorrectType';}
+    if (condition.includes('null')) {
+      return 'isValid';
+    }
+    if (condition.includes('empty')) {
+      return 'isEmpty';
+    }
+    if (condition.includes('length')) {
+      return 'hasValidLength';
+    }
+    if (condition.includes('type')) {
+      return 'isCorrectType';
+    }
 
     return 'checkCondition';
   }
@@ -995,7 +1034,9 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     const beforePosition = line.substring(0, position);
 
     // Check for line comments
-    if (beforePosition.includes('//')) {return true;}
+    if (beforePosition.includes('//')) {
+      return true;
+    }
 
     // Check for strings (simplified)
     const singleQuotes = (beforePosition.match(/'/g) || []).length;
@@ -1391,7 +1432,9 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     let complexity = 1;
 
     const countOperators = (n: any): void => {
-      if (!n) {return;}
+      if (!n) {
+        return;
+      }
 
       if (n.type === 'LogicalExpression' && (n.operator === '&&' || n.operator === '||')) {
         complexity++;
@@ -1410,7 +1453,9 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     let maxDepth = 0;
 
     const traverse = (n: any, depth: number): void => {
-      if (!n || typeof n !== 'object') {return;}
+      if (!n || typeof n !== 'object') {
+        return;
+      }
 
       if (
         n.type === 'IfStatement' ||
@@ -1522,7 +1567,9 @@ ${returnValues.length > 0 ? `    return ${returnValues.length > 1 ? `{${returnVa
     const priorityWeight = { high: 3, medium: 2, low: 1 };
     return suggestions.sort((a, b) => {
       const weightDiff = priorityWeight[b.priority] - priorityWeight[a.priority];
-      if (weightDiff !== 0) {return weightDiff;}
+      if (weightDiff !== 0) {
+        return weightDiff;
+      }
       return b.confidence - a.confidence;
     });
   }

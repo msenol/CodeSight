@@ -1,9 +1,3 @@
- 
- 
- 
- 
- 
- 
 // import OpenAI from 'openai'; // Commented out - using mock mode
 import { z } from 'zod';
 import type { OpenAIMessage, UsageStats } from '../types/index.js';
@@ -89,7 +83,8 @@ export interface ILLMService {
 }
 
 export class LLMService implements ILLMService {
-  private openaiClient: { createChatCompletion: (options: unknown) => Promise<unknown> } | null = null;
+  private openaiClient: { createChatCompletion: (options: unknown) => Promise<unknown> } | null =
+    null;
   private config: LLMConfig;
   private isInitialized = false;
 
@@ -533,7 +528,9 @@ This analysis provides a starting point for code improvement. For more specific 
       line.toLowerCase().includes(sectionName.toLowerCase()),
     );
 
-    if (sectionIndex === -1) {return undefined;}
+    if (sectionIndex === -1) {
+      return undefined;
+    }
 
     // Find the next section or end of content
     let endIndex = lines.length;
@@ -552,7 +549,9 @@ This analysis provides a starting point for code improvement. For more specific 
 
   private extractList(lines: string[], sectionName: string): string[] | undefined {
     const section = this.extractSection(lines, sectionName);
-    if (!section) {return undefined;}
+    if (!section) {
+      return undefined;
+    }
 
     return section
       .split('\n')
@@ -568,8 +567,12 @@ This analysis provides a starting point for code improvement. For more specific 
 
     const complexityScore = lines * 0.1 + conditionals * 2 + functions * 1;
 
-    if (complexityScore > 20) {return 'high';}
-    if (complexityScore > 10) {return 'medium';}
+    if (complexityScore > 20) {
+      return 'high';
+    }
+    if (complexityScore > 10) {
+      return 'medium';
+    }
     return 'low';
   }
 

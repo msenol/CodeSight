@@ -45,20 +45,8 @@ const defaultLoggingConfig: LoggingConfig = {
     'x-auth-token',
     'x-session-token',
   ],
-  sensitiveFields: [
-    'password',
-    'token',
-    'secret',
-    'key',
-    'credential',
-    'auth',
-  ],
-  excludePaths: [
-    '/health',
-    '/ping',
-    '/metrics',
-    '/favicon.ico',
-  ],
+  sensitiveFields: ['password', 'token', 'secret', 'key', 'credential', 'auth'],
+  excludePaths: ['/health', '/ping', '/metrics', '/favicon.ico'],
   includeQueryParams: true,
   includeUser: true,
   includeDuration: true,
@@ -160,7 +148,7 @@ export class LoggingService {
           requestId,
           startTime,
           responseTime,
-          payload
+          payload,
         );
 
         this.logResponse(responseLog);
@@ -187,7 +175,7 @@ export class LoggingService {
   private createRequestLog(
     request: FastifyRequest,
     requestId: string,
-    startTime: number
+    startTime: number,
   ): RequestLogEntry {
     const log: RequestLogEntry = {
       timestamp: new Date().toISOString(),
@@ -252,7 +240,7 @@ export class LoggingService {
     startTime: number,
     responseTime: number,
     payload: any,
-    error?: Error
+    error?: Error,
   ): ResponseLogEntry {
     const log: ResponseLogEntry = {
       ...this.createRequestLog(request, requestId, startTime),
@@ -375,7 +363,8 @@ export class LoggingService {
     }
 
     // Update average response time
-    const totalTime = this.stats.averageResponseTime * (this.stats.totalRequests - 1) + log.responseTime;
+    const totalTime =
+      this.stats.averageResponseTime * (this.stats.totalRequests - 1) + log.responseTime;
     this.stats.averageResponseTime = totalTime / this.stats.totalRequests;
 
     // Track slow requests
@@ -480,10 +469,12 @@ export class LoggingService {
    * Get client IP address
    */
   private getClientIP(request: FastifyRequest): string {
-    return request.ip ||
-           request.headers['x-forwarded-for'] as string ||
-           request.headers['x-real-ip'] as string ||
-           'unknown';
+    return (
+      request.ip ||
+      (request.headers['x-forwarded-for'] as string) ||
+      (request.headers['x-real-ip'] as string) ||
+      'unknown'
+    );
   }
 
   /**
@@ -512,19 +503,23 @@ export class LoggingService {
   /**
    * Create custom field extractor
    */
-  static createCustomField(extractor: (request: FastifyRequest, reply: FastifyReply) => Record<string, any>) {
+  static createCustomField(
+    extractor: (request: FastifyRequest, reply: FastifyReply) => Record<string, any>,
+  ) {
     return extractor;
   }
 
   /**
    * Create custom fields for common scenarios
    */
-  static createCommonCustomFields(): Array<(request: FastifyRequest, reply: FastifyReply) => Record<string, any>> {
+  static createCommonCustomFields(): Array<
+    (request: FastifyRequest, reply: FastifyReply) => Record<string, any>
+  > {
     return [
       // Request size
       (request, reply) => ({
         requestSize: JSON.stringify(request.body || '').length,
-        responseSize: parseInt(reply.getHeader('content-length') as string || '0', 10),
+        responseSize: parseInt((reply.getHeader('content-length') as string) || '0', 10),
       }),
 
       // Geographic info (if available)
@@ -630,21 +625,18 @@ function _detectSuspiciousActivity(request: FastifyRequest): boolean {
   const suspiciousPatterns = [
     /bot|crawler|scanner|sqlmap/i,
     /<script|javascript:|data:\/\//i,
-    /\.\./,  // Path traversal
+    /\.\./, // Path traversal
   ];
 
-  return suspiciousPatterns.some(pattern => pattern.test(userAgent)) ||
-         (request.url && request.url.includes('../')) ||
-         (request.url && request.url.length > 2048);
+  return (
+    suspiciousPatterns.some(pattern => pattern.test(userAgent)) ||
+    (request.url && request.url.includes('../')) ||
+    (request.url && request.url.length > 2048)
+  );
 }
 
 function _requiresAuthentication(url: string): boolean {
-  const protectedPaths = [
-    '/api/admin',
-    '/api/user',
-    '/api/codebases',
-    '/api/queries',
-  ];
+  const protectedPaths = ['/api/admin', '/api/user', '/api/codebases', '/api/queries'];
 
   return protectedPaths.some(path => url.startsWith(path));
 }

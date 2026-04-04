@@ -61,7 +61,8 @@ interface CodeReviewResult {
  */
 export class AICodeReviewTool {
   readonly name = 'ai_code_review';
-  readonly description = 'AI-powered comprehensive code review with intelligent suggestions and analysis';
+  readonly description =
+    'AI-powered comprehensive code review with intelligent suggestions and analysis';
 
   private codeAnalyzer: CodeAnalysisService;
   private llmService: AILLMService;
@@ -77,7 +78,7 @@ export class AICodeReviewTool {
     logger.info('AI Code Review started', {
       file_path: args.file_path,
       review_type: args.review_type,
-      codebase_id: args.codebase_id
+      codebase_id: args.codebase_id,
     });
 
     try {
@@ -95,14 +96,15 @@ export class AICodeReviewTool {
 
       logger.info('AI Code Review completed', {
         overall_score: reviewResult.overall_score,
-        issues_count: reviewResult.issues.length
+        issues_count: reviewResult.issues.length,
       });
 
       return reviewResult;
-
     } catch (error) {
       logger.error('AI Code Review failed:', error);
-      throw new Error(`AI Code Review failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `AI Code Review failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -121,18 +123,22 @@ export class AICodeReviewTool {
       file_path: args.file_path,
       code_snippet: args.code_snippet,
       codebase_id: args.codebase_id,
-      depth: args.review_type === 'security-focused' ? 'deep' : 'standard'
+      depth: args.review_type === 'security-focused' ? 'deep' : 'standard',
     });
 
     return securityResults;
   }
 
-  private async generateAIInsights(args: CodeReviewRequest, codeAnalysis: any, securityAnalysis: any) {
+  private async generateAIInsights(
+    args: CodeReviewRequest,
+    codeAnalysis: any,
+    securityAnalysis: any,
+  ) {
     const context = {
       code_analysis: codeAnalysis,
       security_analysis: securityAnalysis,
       review_type: args.review_type,
-      additional_context: args.context
+      additional_context: args.context,
     };
 
     const prompts = this.buildAIPrompts(args, context);
@@ -214,7 +220,11 @@ Consider the changes in the context of this pull request and provide feedback sp
     return specializedPrompts.length > 0 ? specializedPrompts : [basePrompt];
   }
 
-  private async compileReview(codeAnalysis: any, securityAnalysis: any, aiInsights: any): Promise<CodeReviewResult> {
+  private async compileReview(
+    codeAnalysis: any,
+    securityAnalysis: any,
+    aiInsights: any,
+  ): Promise<CodeReviewResult> {
     // Aggregate all findings
     const issues = this.aggregateIssues(codeAnalysis, securityAnalysis, aiInsights);
 
@@ -235,7 +245,7 @@ Consider the changes in the context of this pull request and provide feedback sp
       issues,
       metrics,
       summary,
-      recommendations
+      recommendations,
     };
   }
 
@@ -248,13 +258,13 @@ Consider the changes in the context of this pull request and provide feedback sp
         if (func.cyclomatic_complexity > 10) {
           issues.push({
             type: 'warning' as const,
-            severity: func.cyclomatic_complexity > 15 ? 'high' as const : 'medium' as const,
+            severity: func.cyclomatic_complexity > 15 ? ('high' as const) : ('medium' as const),
             category: 'maintainability' as const,
             title: 'High Cyclomatic Complexity',
             description: `Function "${func.name}" has cyclomatic complexity of ${func.cyclomatic_complexity}`,
             suggestion: 'Consider breaking this function into smaller, more focused functions',
             line_number: func.line_number,
-            confidence: 95
+            confidence: 95,
           });
         }
       });
@@ -264,14 +274,14 @@ Consider the changes in the context of this pull request and provide feedback sp
     if (securityAnalysis.vulnerabilities) {
       securityAnalysis.vulnerabilities.forEach((vuln: any) => {
         issues.push({
-          type: vuln.severity === 'critical' ? 'error' as const : 'warning' as const,
+          type: vuln.severity === 'critical' ? ('error' as const) : ('warning' as const),
           severity: vuln.severity,
           category: 'security' as const,
           title: vuln.title,
           description: vuln.description,
           suggestion: vuln.remediation,
           line_number: vuln.line_number,
-          confidence: vuln.confidence || 80
+          confidence: vuln.confidence || 80,
         });
       });
     }
@@ -283,15 +293,19 @@ Consider the changes in the context of this pull request and provide feedback sp
 
       deduplicatedSuggestions.forEach((insight: any) => {
         issues.push({
-          type: insight.impact === 'critical' ? 'error' :
-                insight.impact === 'high' ? 'warning' : 'suggestion',
+          type:
+            insight.impact === 'critical'
+              ? 'error'
+              : insight.impact === 'high'
+                ? 'warning'
+                : 'suggestion',
           severity: insight.impact || 'medium',
           category: insight.category || 'best-practices',
           title: insight.title,
           description: insight.description,
           suggestion: insight.suggestion,
           line_number: insight.line_number,
-          confidence: insight.confidence || 75
+          confidence: insight.confidence || 75,
         });
       });
     }
@@ -300,7 +314,9 @@ Consider the changes in the context of this pull request and provide feedback sp
     return issues.sort((a, b) => {
       const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
       const severityDiff = severityWeight[b.severity] - severityWeight[a.severity];
-      if (severityDiff !== 0) {return severityDiff;}
+      if (severityDiff !== 0) {
+        return severityDiff;
+      }
       return b.confidence - a.confidence;
     });
   }
@@ -311,12 +327,14 @@ Consider the changes in the context of this pull request and provide feedback sp
       maintainability_index: codeAnalysis.maintainability?.index || 100,
       test_coverage: codeAnalysis.testing?.coverage_percentage,
       duplication_ratio: codeAnalysis.duplication?.ratio || 0,
-      security_score: this.calculateSecurityScore(securityAnalysis)
+      security_score: this.calculateSecurityScore(securityAnalysis),
     };
   }
 
   private calculateSecurityScore(securityAnalysis: any): number {
-    if (!securityAnalysis.vulnerabilities) {return 100;}
+    if (!securityAnalysis.vulnerabilities) {
+      return 100;
+    }
 
     const vulnWeights = { critical: 40, high: 20, medium: 10, low: 5 };
     let totalDeduction = 0;
@@ -334,10 +352,18 @@ Consider the changes in the context of this pull request and provide feedback sp
     const blocking_issues = [];
 
     // Analyze strengths
-    if (metrics.security_score >= 90) {strengths.push('Excellent security practices');}
-    if (metrics.maintainability_index >= 80) {strengths.push('High maintainability index');}
-    if (metrics.complexity_score <= 30) {strengths.push('Good code complexity');}
-    if (metrics.test_coverage && metrics.test_coverage >= 80) {strengths.push('Good test coverage');}
+    if (metrics.security_score >= 90) {
+      strengths.push('Excellent security practices');
+    }
+    if (metrics.maintainability_index >= 80) {
+      strengths.push('High maintainability index');
+    }
+    if (metrics.complexity_score <= 30) {
+      strengths.push('Good code complexity');
+    }
+    if (metrics.test_coverage && metrics.test_coverage >= 80) {
+      strengths.push('Good test coverage');
+    }
 
     // Analyze improvements needed
     const criticalIssues = issues.filter(i => i.severity === 'critical');
@@ -369,7 +395,7 @@ Consider the changes in the context of this pull request and provide feedback sp
         priority: 'high' as const,
         action: 'Address security vulnerabilities',
         rationale: `Found ${securityIssues.length} security issues that could expose the application to attacks`,
-        effort_estimate: 'moderate' as const
+        effort_estimate: 'moderate' as const,
       });
     }
 
@@ -379,7 +405,7 @@ Consider the changes in the context of this pull request and provide feedback sp
         priority: 'medium' as const,
         action: 'Reduce code complexity',
         rationale: 'High complexity makes the code difficult to maintain and test',
-        effort_estimate: 'significant' as const
+        effort_estimate: 'significant' as const,
       });
     }
 
@@ -389,7 +415,7 @@ Consider the changes in the context of this pull request and provide feedback sp
         priority: 'medium' as const,
         action: 'Improve test coverage',
         rationale: 'Better test coverage improves reliability and makes refactoring safer',
-        effort_estimate: 'moderate' as const
+        effort_estimate: 'moderate' as const,
       });
     }
 
@@ -401,12 +427,13 @@ Consider the changes in the context of this pull request and provide feedback sp
 
     // Deduct points for issues
     issues.forEach(issue => {
-      const deduction = {
-        critical: 20,
-        high: 10,
-        medium: 5,
-        low: 2
-      }[issue.severity] || 2;
+      const deduction =
+        {
+          critical: 20,
+          high: 10,
+          medium: 5,
+          low: 2,
+        }[issue.severity] || 2;
 
       score -= deduction * (issue.confidence / 100);
     });

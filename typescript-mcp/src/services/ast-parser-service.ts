@@ -54,7 +54,7 @@ export class ASTParserService {
   async parseFunction(
     filePath: string,
     functionName: string,
-    lineNumber: number
+    lineNumber: number,
   ): Promise<ASTParseResult | null> {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
@@ -72,7 +72,9 @@ export class ASTParserService {
       // Use a proper visitor pattern
       const visitNode = (node: Node) => {
         // Skip if we already found it
-        if (result) {return;}
+        if (result) {
+          return;
+        }
 
         // Check if this is our target function
         const nodeAtLine = node.loc?.start.line === lineNumber;
@@ -81,7 +83,10 @@ export class ASTParserService {
         // Handle VariableDeclarator with ArrowFunctionExpression (e.g., const foo = () => {})
         if (nodeAtLine && node.type === 'VariableDeclarator') {
           const declarator = node as any;
-          if (declarator.id?.name === functionName && declarator.init?.type === 'ArrowFunctionExpression') {
+          if (
+            declarator.id?.name === functionName &&
+            declarator.init?.type === 'ArrowFunctionExpression'
+          ) {
             result = this.extractFunctionInfo(declarator.init, content);
           }
         }
@@ -195,7 +200,7 @@ export class ASTParserService {
 
   private extractRegularFunctionInfo(
     node: FunctionDeclaration | FunctionExpression | TSDeclareFunction,
-    sourceCode: string
+    sourceCode: string,
   ): ASTParseResult {
     // DRY: Reuse parameter extraction logic
     const params = node.params.map(param => this.extractParameterInfo(param));
@@ -213,7 +218,7 @@ export class ASTParserService {
 
   private extractArrowFunctionInfo(
     node: ArrowFunctionExpression,
-    sourceCode: string
+    sourceCode: string,
   ): ASTParseResult {
     const params = node.params.map(param => this.extractParameterInfo(param));
 
@@ -230,7 +235,9 @@ export class ASTParserService {
 
   private extractMethodInfo(node: any, sourceCode: string): ASTParseResult | null {
     const valueNode = node.value;
-    if (!valueNode) {return null;}
+    if (!valueNode) {
+      return null;
+    }
 
     const params = valueNode.params.map((param: Node) => this.extractParameterInfo(param));
 
@@ -260,7 +267,10 @@ export class ASTParserService {
         }
       }
 
-      return lines.slice(startLine, signatureEnd + 1).join('\n').trim();
+      return lines
+        .slice(startLine, signatureEnd + 1)
+        .join('\n')
+        .trim();
     }
     return lines[node.loc!.start.line - 1].trim();
   }
@@ -354,13 +364,9 @@ export class ASTParserService {
       case 'TSArrayType':
         return this.getTypeString((typeNode as any).elementType) + '[]';
       case 'TSUnionType':
-        return ((typeNode as any).types as Node[])
-          .map(t => this.getTypeString(t))
-          .join(' | ');
+        return ((typeNode as any).types as Node[]).map(t => this.getTypeString(t)).join(' | ');
       case 'TSIntersectionType':
-        return ((typeNode as any).types as Node[])
-          .map(t => this.getTypeString(t))
-          .join(' & ');
+        return ((typeNode as any).types as Node[]).map(t => this.getTypeString(t)).join(' & ');
       case 'TSTypeReference': {
         const typeName = (typeNode as any).typeName;
         return this.isIdentifier(typeName) ? typeName.name : 'unknown';
@@ -395,7 +401,7 @@ export class ASTParserService {
         decorators.push({
           name: decorator.expression?.callee?.name || 'unknown',
           arguments: (decorator.expression?.arguments || []).map((arg: any) =>
-            this.isIdentifier(arg) ? arg.name : JSON.stringify(arg.raw)
+            this.isIdentifier(arg) ? arg.name : JSON.stringify(arg.raw),
           ),
           line: decorator.loc?.start.line || 0,
         });

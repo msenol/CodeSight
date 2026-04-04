@@ -1,10 +1,5 @@
 #!/usr/bin/env node
 
- 
- 
- 
- 
- 
 /**
  * CLI for CodeSight MCP Server
  */
@@ -52,16 +47,21 @@ class ProgressIndicator {
     const bar = '█'.repeat(filled) + '░'.repeat(empty);
     const percentText = `${(percentage * 100).toFixed(1)}%`;
     const elapsed = ((now - this.startTime) / 1000).toFixed(1);
-    const rate = current > 0 ? (current / (now - this.startTime) * 1000).toFixed(0) : '0';
+    const rate = current > 0 ? ((current / (now - this.startTime)) * 1000).toFixed(0) : '0';
 
-    process.stdout.write('\r' + [
-      chalk.blue('[') + chalk.green(bar) + chalk.blue(']'),
-      chalk.cyan(percentText),
-      chalk.gray(`${current}/${this.total}`),
-      chalk.yellow(`${rate}/s`),
-      message ? chalk.white(message) : '',
-      chalk.gray(`(${elapsed}s)`)
-    ].filter(Boolean).join(' '));
+    process.stdout.write(
+      '\r' +
+        [
+          chalk.blue('[') + chalk.green(bar) + chalk.blue(']'),
+          chalk.cyan(percentText),
+          chalk.gray(`${current}/${this.total}`),
+          chalk.yellow(`${rate}/s`),
+          message ? chalk.white(message) : '',
+          chalk.gray(`(${elapsed}s)`),
+        ]
+          .filter(Boolean)
+          .join(' '),
+    );
 
     if (current >= this.total) {
       process.stdout.write('\n');
@@ -128,106 +128,106 @@ class CLIErrorHandler {
 
   private static provideSuggestions(errorStr: string): void {
     const suggestions: { [key: string]: string[] } = {
-      'ENOENT': [
+      ENOENT: [
         '💡 The specified file or directory does not exist.',
-        '   Please check the path and ensure it\'s correct.',
-        '   Use absolute paths or ensure you\'re in the right directory.'
+        "   Please check the path and ensure it's correct.",
+        "   Use absolute paths or ensure you're in the right directory.",
       ],
-      'EACCES': [
-        '💡 Permission denied. You don\'t have the required permissions.',
+      EACCES: [
+        "💡 Permission denied. You don't have the required permissions.",
         '   Try running with elevated permissions: sudo (Unix) or Administrator (Windows)',
-        '   Check file/directory permissions: ls -la (Unix) or Get-Acl (PowerShell)'
+        '   Check file/directory permissions: ls -la (Unix) or Get-Acl (PowerShell)',
       ],
-      'EEXIST': [
+      EEXIST: [
         '💡 File or directory already exists.',
         '   Remove the existing item or choose a different name/path.',
-        '   Use the --force flag if available to overwrite.'
+        '   Use the --force flag if available to overwrite.',
       ],
-      'ENOSPC': [
+      ENOSPC: [
         '💡 No space left on device.',
         '   Free up disk space and try again.',
-        '   Check available space: df -h (Unix) or Get-Volume (PowerShell)'
+        '   Check available space: df -h (Unix) or Get-Volume (PowerShell)',
       ],
-      'EMFILE': [
+      EMFILE: [
         '💡 Too many open files.',
         '   Increase the file descriptor limit: ulimit -n (Unix)',
-        '   Close unused file handles in your application.'
+        '   Close unused file handles in your application.',
       ],
-      'ETIMEDOUT': [
+      ETIMEDOUT: [
         '💡 Operation timed out.',
         '   The operation took too long to complete.',
-        '   Try again with a smaller dataset or check system performance.'
+        '   Try again with a smaller dataset or check system performance.',
       ],
-      'ECONNREFUSED': [
+      ECONNREFUSED: [
         '💡 Connection refused.',
         '   The server is not running or not accepting connections.',
         '   Check if the server is running: codesight server',
-        '   Verify the server URL and port are correct.'
+        '   Verify the server URL and port are correct.',
       ],
-      'ECONNRESET': [
+      ECONNRESET: [
         '💡 Connection reset by peer.',
         '   The server closed the connection unexpectedly.',
-        '   Check server logs for errors and try again.'
+        '   Check server logs for errors and try again.',
       ],
       '401': [
         '💡 Authentication failed.',
         '   Check your API key or JWT token.',
         '   Ensure your credentials are valid and not expired.',
-        '   Run: codesight setup to configure authentication.'
+        '   Run: codesight setup to configure authentication.',
       ],
       '403': [
         '💡 Access forbidden.',
-        '   You don\'t have permission to access this resource.',
+        "   You don't have permission to access this resource.",
         '   Check your user permissions and API key scopes.',
-        '   Contact your administrator if needed.'
+        '   Contact your administrator if needed.',
       ],
       '404': [
         '💡 Resource not found.',
-        '   The requested resource doesn\'t exist.',
+        "   The requested resource doesn't exist.",
         '   Verify the resource ID or path is correct.',
-        '   Check if the codebase has been indexed: codesight index <path>'
+        '   Check if the codebase has been indexed: codesight index <path>',
       ],
       '429': [
         '💡 Too many requests.',
-        '   You\'ve exceeded the rate limit.',
+        "   You've exceeded the rate limit.",
         '   Wait a moment and try again.',
-        '   Consider upgrading your plan for higher limits.'
+        '   Consider upgrading your plan for higher limits.',
       ],
       '500': [
         '💡 Internal server error.',
         '   The server encountered an unexpected error.',
         '   Check server logs for more details.',
-        '   Report this issue if it persists.'
+        '   Report this issue if it persists.',
       ],
-      'database': [
+      database: [
         '💡 Database related error.',
         '   Check database connection settings in your configuration.',
         '   Ensure the database server is running and accessible.',
-        '   Verify database credentials and permissions.'
+        '   Verify database credentials and permissions.',
       ],
-      'rust': [
+      rust: [
         '💡 Rust FFI related error.',
         '   Ensure Rust components are built: cd rust-core && cargo build --release',
         '   Check if Rust FFI is enabled in your configuration.',
-        '   Try with graceful fallback enabled.'
+        '   Try with graceful fallback enabled.',
       ],
-      'typescript': [
+      typescript: [
         '💡 TypeScript compilation error.',
         '   Check TypeScript configuration and types.',
         '   Run: npm run type-check to see detailed errors.',
-        '   Ensure all dependencies are installed: npm install'
+        '   Ensure all dependencies are installed: npm install',
       ],
-      'memory': [
+      memory: [
         '💡 Memory allocation error.',
         '   Your system may be running out of memory.',
         '   Try reducing batch size or concurrent operations.',
-        '   Close other applications to free up memory.'
-      ]
+        '   Close other applications to free up memory.',
+      ],
     };
 
     // Find matching suggestions
     const matchedKeys = Object.keys(suggestions).filter(key =>
-      errorStr.toLowerCase().includes(key.toLowerCase())
+      errorStr.toLowerCase().includes(key.toLowerCase()),
     );
 
     if (matchedKeys.length > 0) {
@@ -285,7 +285,11 @@ class CLIErrorHandler {
     // Return appropriate exit codes based on error type
     if (errorStr.includes('ENOENT') || errorStr.includes('404')) {
       return 2; // File not found
-    } else if (errorStr.includes('EACCES') || errorStr.includes('401') || errorStr.includes('403')) {
+    } else if (
+      errorStr.includes('EACCES') ||
+      errorStr.includes('401') ||
+      errorStr.includes('403')
+    ) {
       return 3; // Permission/authentication error
     } else if (errorStr.includes('ECONNREFUSED') || errorStr.includes('500')) {
       return 4; // Server/connection error
@@ -296,7 +300,6 @@ class CLIErrorHandler {
     }
   }
 }
-
 
 const program = new Command();
 
@@ -354,7 +357,7 @@ program
             if (progress && options.progress !== false) {
               progress.update(current, message);
             }
-          }
+          },
         );
       } else {
         // Fallback to basic indexing
@@ -400,7 +403,6 @@ program
           console.log(`     ${chalk.magenta(language.padEnd(12))}: ${chalk.bold(count)}`);
         });
       }
-
     } catch (error) {
       CLIErrorHandler.handleError(error, 'Indexing');
     }
@@ -411,7 +413,6 @@ program
   .description('Search for code entities')
   .option('-l, --limit <number>', 'Maximum number of results', '10')
   .action((query: string, options: { limit?: string }) => {
-
     console.log(chalk.blue(`Searching for: ${query}`));
 
     try {
@@ -419,19 +420,15 @@ program
       const results = indexingService.searchCode(query, limit);
 
       if (results.length === 0) {
-
         console.log(chalk.yellow('No results found'));
         return;
       }
 
-
       console.log(chalk.green(`\nFound ${results.length} results:\n`));
 
       results.forEach((result, index: number) => {
-
-
         console.log(
-          `${chalk.cyan(`${index + 1}. ${result.name}`)} (score: ${(result.score).toFixed(2)})`,
+          `${chalk.cyan(`${index + 1}. ${result.name}`)} (score: ${result.score.toFixed(2)})`,
         );
 
         console.log(`   📄 ${result.file}:${result.line}`);
@@ -458,7 +455,6 @@ program
 
       console.log('\n   By Type:');
       stats.byType.forEach((item: Record<string, unknown>) => {
-
         console.log(`   - ${item.entity_type}: ${item.count}`);
       });
     } catch (error) {
@@ -470,7 +466,6 @@ program
   .command('server')
   .description('Start MCP server in stdio mode')
   .action(async () => {
-
     console.log(chalk.blue('Starting MCP server...'));
 
     // Import and run main server
@@ -487,7 +482,7 @@ program
 
     const rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
 
     const config: Record<string, any> = {};
@@ -499,7 +494,11 @@ program
 
       config.port = await askQuestion(rl, 'Server port (default: 4000): ', '4000');
       config.host = await askQuestion(rl, 'Server host (default: 0.0.0.0): ', '0.0.0.0');
-      config.nodeEnv = await askQuestion(rl, 'Environment (development/production, default: development): ', 'development');
+      config.nodeEnv = await askQuestion(
+        rl,
+        'Environment (development/production, default: development): ',
+        'development',
+      );
 
       // Database configuration
       console.log(chalk.yellow('\n💾 Database Configuration'));
@@ -510,7 +509,11 @@ program
       if (dbChoice === 'sqlite') {
         config.database = {
           type: 'sqlite',
-          path: await askQuestion(rl, 'SQLite database path (default: ./data/codesight.db): ', './data/codesight.db')
+          path: await askQuestion(
+            rl,
+            'SQLite database path (default: ./data/codesight.db): ',
+            './data/codesight.db',
+          ),
         };
       } else {
         config.database = {
@@ -519,7 +522,7 @@ program
           port: await askQuestion(rl, 'PostgreSQL port (default: 5432): ', '5432'),
           database: await askQuestion(rl, 'Database name (default: codesight): ', 'codesight'),
           username: await askQuestion(rl, 'Username: ', 'postgres'),
-          password: await askQuestion(rl, 'Password: ', '', true)
+          password: await askQuestion(rl, 'Password: ', '', true),
         };
       }
 
@@ -528,23 +531,44 @@ program
       console.log(chalk.gray('Optimize performance for your use case\n'));
 
       config.indexing = {
-        parallelWorkers: parseInt(await askQuestion(rl, 'Indexing parallel workers (default: 4): ', '4'), 10),
-        batchSize: parseInt(await askQuestion(rl, 'Indexing batch size (default: 500): ', '500'), 10)
+        parallelWorkers: parseInt(
+          await askQuestion(rl, 'Indexing parallel workers (default: 4): ', '4'),
+          10,
+        ),
+        batchSize: parseInt(
+          await askQuestion(rl, 'Indexing batch size (default: 500): ', '500'),
+          10,
+        ),
       };
 
       config.cache = {
-        sizeMB: parseInt(await askQuestion(rl, 'Cache size in MB (default: 512): ', '512'), 10)
+        sizeMB: parseInt(await askQuestion(rl, 'Cache size in MB (default: 512): ', '512'), 10),
       };
 
       // Rust FFI configuration
       console.log(chalk.yellow('\n🦀 Rust FFI Configuration'));
       console.log(chalk.gray('Configure high-performance Rust components\n'));
 
-      const enableRust = await askChoice(rl, 'Enable Rust FFI for better performance?', ['yes', 'no'], 'yes');
+      const enableRust = await askChoice(
+        rl,
+        'Enable Rust FFI for better performance?',
+        ['yes', 'no'],
+        'yes',
+      );
       config.rustFFI = {
         enabled: enableRust === 'yes',
-        path: await askQuestion(rl, 'Rust library path (default: ../rust-core/target/release): ', '../rust-core/target/release'),
-        gracefulFallback: await askChoice(rl, 'Enable graceful fallback if Rust FFI fails?', ['yes', 'no'], 'yes') === 'yes'
+        path: await askQuestion(
+          rl,
+          'Rust library path (default: ../rust-core/target/release): ',
+          '../rust-core/target/release',
+        ),
+        gracefulFallback:
+          (await askChoice(
+            rl,
+            'Enable graceful fallback if Rust FFI fails?',
+            ['yes', 'no'],
+            'yes',
+          )) === 'yes',
       };
 
       // Authentication configuration
@@ -557,7 +581,7 @@ program
         config.auth = {
           enabled: true,
           jwtSecret: await askQuestion(rl, 'JWT secret (leave empty to auto-generate): ', '', true),
-          apiKey: await askQuestion(rl, 'API key (leave empty to auto-generate): ', '', true)
+          apiKey: await askQuestion(rl, 'API key (leave empty to auto-generate): ', '', true),
         };
 
         // Auto-generate secrets if not provided
@@ -569,7 +593,7 @@ program
         }
       } else {
         config.auth = {
-          enabled: false
+          enabled: false,
         };
       }
 
@@ -579,7 +603,7 @@ program
 
       config.logging = {
         level: await askChoice(rl, 'Log level:', ['error', 'warn', 'info', 'debug'], 'info'),
-        format: await askChoice(rl, 'Log format:', ['json', 'text'], 'text')
+        format: await askChoice(rl, 'Log format:', ['json', 'text'], 'text'),
       };
 
       // Review configuration
@@ -592,11 +616,17 @@ program
 
       if (confirm === 'edit') {
         console.log(chalk.blue('\n📝 Edit Configuration'));
-        console.log(chalk.gray('Enter the property path to edit (e.g., database.port, auth.enabled)\n'));
+        console.log(
+          chalk.gray('Enter the property path to edit (e.g., database.port, auth.enabled)\n'),
+        );
 
         let editing = true;
         while (editing) {
-          const propertyPath = await askQuestion(rl, 'Property to edit (or press Enter to finish): ', '');
+          const propertyPath = await askQuestion(
+            rl,
+            'Property to edit (or press Enter to finish): ',
+            '',
+          );
 
           if (!propertyPath) {
             editing = false;
@@ -605,7 +635,11 @@ program
 
           try {
             const currentValue = getNestedProperty(config, propertyPath);
-            const newValue = await askQuestion(rl, `Current value: ${currentValue}\nNew value: `, '');
+            const newValue = await askQuestion(
+              rl,
+              `Current value: ${currentValue}\nNew value: `,
+              '',
+            );
 
             if (newValue) {
               setNestedProperty(config, propertyPath, newValue);
@@ -622,7 +656,11 @@ program
 
       if (confirm === 'yes' || confirm === 'edit') {
         // Save configuration
-        const configPath = await askQuestion(rl, 'Configuration file path (default: .env): ', '.env');
+        const configPath = await askQuestion(
+          rl,
+          'Configuration file path (default: .env): ',
+          '.env',
+        );
         await saveConfiguration(config, configPath);
 
         console.log(chalk.green(`\n✅ Configuration saved to ${configPath}`));
@@ -631,7 +669,6 @@ program
       } else {
         console.log(chalk.yellow('\n❌ Setup cancelled. Configuration not saved.'));
       }
-
     } catch (error) {
       CLIErrorHandler.handleError(error, 'Setup');
     } finally {
@@ -640,8 +677,13 @@ program
   });
 
 // Helper functions for the interactive setup
-function askQuestion(rl: readline.Interface, question: string, defaultValue: string = '', hidden: boolean = false): Promise<string> {
-  return new Promise((resolve) => {
+function askQuestion(
+  rl: readline.Interface,
+  question: string,
+  defaultValue: string = '',
+  hidden: boolean = false,
+): Promise<string> {
+  return new Promise(resolve => {
     const prompt = defaultValue ? `${question} [${defaultValue}]: ` : `${question}: `;
 
     if (hidden) {
@@ -652,7 +694,7 @@ function askQuestion(rl: readline.Interface, question: string, defaultValue: str
       let input = '';
       process.stdout.write(prompt);
 
-      stdin.on('data', function(char: string) {
+      stdin.on('data', function (char: string) {
         char = char.toString();
 
         switch (char) {
@@ -680,21 +722,28 @@ function askQuestion(rl: readline.Interface, question: string, defaultValue: str
         }
       });
     } else {
-      rl.question(prompt, (answer) => {
+      rl.question(prompt, answer => {
         resolve(answer || defaultValue);
       });
     }
   });
 }
 
-function askChoice(rl: readline.Interface, question: string, choices: string[], defaultChoice: string = ''): Promise<string> {
-  return new Promise((resolve) => {
-    const choiceList = choices.map((choice, index) => {
-      const marker = choice === defaultChoice ? ' (default)' : '';
-      return `  ${index + 1}. ${choice}${marker}`;
-    }).join('\n');
+function askChoice(
+  rl: readline.Interface,
+  question: string,
+  choices: string[],
+  defaultChoice: string = '',
+): Promise<string> {
+  return new Promise(resolve => {
+    const choiceList = choices
+      .map((choice, index) => {
+        const marker = choice === defaultChoice ? ' (default)' : '';
+        return `  ${index + 1}. ${choice}${marker}`;
+      })
+      .join('\n');
 
-    rl.question(`${question}\n${choiceList}\nChoice (1-${choices.length}): `, (answer) => {
+    rl.question(`${question}\n${choiceList}\nChoice (1-${choices.length}): `, answer => {
       const choiceIndex = parseInt(answer, 10) - 1;
 
       if (choiceIndex >= 0 && choiceIndex < choices.length) {
@@ -837,7 +886,29 @@ async function saveConfiguration(config: Record<string, any>, configPath: string
 }
 
 // Helper function to scan directory for file count
-async function scanDirectory(dirPath: string, extensions: string[] = ['.ts', '.js', '.tsx', '.jsx', '.py', '.rs', '.go', '.java', '.cpp', '.c', '.cs', '.php', '.rb', '.swift', '.kt', '.scala', '.dart', '.lua']): Promise<string[]> {
+async function scanDirectory(
+  dirPath: string,
+  extensions: string[] = [
+    '.ts',
+    '.js',
+    '.tsx',
+    '.jsx',
+    '.py',
+    '.rs',
+    '.go',
+    '.java',
+    '.cpp',
+    '.c',
+    '.cs',
+    '.php',
+    '.rb',
+    '.swift',
+    '.kt',
+    '.scala',
+    '.dart',
+    '.lua',
+  ],
+): Promise<string[]> {
   const files: string[] = [];
 
   async function scan(currentPath: string): Promise<void> {
@@ -849,7 +920,22 @@ async function scanDirectory(dirPath: string, extensions: string[] = ['.ts', '.j
 
         if (entry.isDirectory()) {
           // Skip common ignore directories
-          if (!['node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'target', '.next', '.nuxt', 'coverage', '.pytest_cache', '__pycache__'].includes(entry.name)) {
+          if (
+            ![
+              'node_modules',
+              '.git',
+              '.svn',
+              '.hg',
+              'dist',
+              'build',
+              'target',
+              '.next',
+              '.nuxt',
+              'coverage',
+              '.pytest_cache',
+              '__pycache__',
+            ].includes(entry.name)
+          ) {
             await scan(fullPath);
           }
         } else if (entry.isFile()) {

@@ -66,38 +66,38 @@ const defaultConfig: ConfigurationProfile = {
     batch_size: 500,
     include_patterns: ['**/*.ts', '**/*.js', '**/*.py', '**/*.rs', '**/*.go', '**/*.java'],
     exclude_patterns: ['**/node_modules/**', '**/target/**', '**/dist/**', '**/.git/**'],
-    language_detection: true
+    language_detection: true,
   },
   search_config: {
     max_results: 50,
     similarity_threshold: 0.7,
     include_content: true,
-    enable_semantic_search: true
+    enable_semantic_search: true,
   },
   model_config: {
     embedding_model: 'all-MiniLM-L6-v2',
     llm_provider: 'ollama',
     model_parameters: {
       temperature: 0.7,
-      max_tokens: 1000
-    }
+      max_tokens: 1000,
+    },
   },
   storage_config: {
     database_type: 'sqlite',
-    cache_size_mb: 512
+    cache_size_mb: 512,
   },
   cache_config: {
     enable_redis: false,
-    ttl_seconds: 3600
+    ttl_seconds: 3600,
   },
   privacy_config: {
     disable_telemetry: true,
     local_only: true,
-    anonymize_data: false
+    anonymize_data: false,
   },
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  is_active: true
+  is_active: true,
 };
 
 // Store default configuration
@@ -123,7 +123,7 @@ export class ConfigurationController {
 
       const response: ConfigurationResponse = {
         success: true,
-        configurations
+        configurations,
       };
 
       return reply.send(response);
@@ -131,7 +131,7 @@ export class ConfigurationController {
       logger.error('Failed to get configurations', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retrieve configurations'
+        error: 'Failed to retrieve configurations',
       } as ConfigurationResponse);
     }
   }
@@ -143,7 +143,7 @@ export class ConfigurationController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Configuration ID is required'
+          error: 'Configuration ID is required',
         } as ConfigurationResponse);
       }
 
@@ -152,13 +152,13 @@ export class ConfigurationController {
       if (!configuration) {
         return reply.status(404).send({
           success: false,
-          error: 'Configuration not found'
+          error: 'Configuration not found',
         } as ConfigurationResponse);
       }
 
       const response: ConfigurationResponse = {
         success: true,
-        configuration
+        configuration,
       };
 
       return reply.send(response);
@@ -166,19 +166,22 @@ export class ConfigurationController {
       logger.error('Failed to get configuration', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to retrieve configuration'
+        error: 'Failed to retrieve configuration',
       } as ConfigurationResponse);
     }
   }
 
-  async createConfiguration(request: FastifyRequest<{ Body: Partial<ConfigurationProfile> }>, reply: FastifyReply) {
+  async createConfiguration(
+    request: FastifyRequest<{ Body: Partial<ConfigurationProfile> }>,
+    reply: FastifyReply,
+  ) {
     try {
       const configData = request.body;
 
       if (!configData.name || !configData.profile) {
         return reply.status(400).send({
           success: false,
-          error: 'Name and profile are required'
+          error: 'Name and profile are required',
         } as ConfigurationResponse);
       }
 
@@ -187,7 +190,7 @@ export class ConfigurationController {
       if (!validProfiles.includes(configData.profile)) {
         return reply.status(400).send({
           success: false,
-          error: `Invalid profile. Must be one of: ${validProfiles.join(', ')}`
+          error: `Invalid profile. Must be one of: ${validProfiles.join(', ')}`,
         } as ConfigurationResponse);
       }
 
@@ -206,16 +209,20 @@ export class ConfigurationController {
         privacy_config: configData.privacy_config || defaultConfig.privacy_config,
         created_at: now,
         updated_at: now,
-        is_active: false
+        is_active: false,
       };
 
       configStore.set(configId, configuration);
 
-      logger.info('Configuration created', { configId, name: configData.name, profile: configData.profile });
+      logger.info('Configuration created', {
+        configId,
+        name: configData.name,
+        profile: configData.profile,
+      });
 
       const response: ConfigurationResponse = {
         success: true,
-        configuration
+        configuration,
       };
 
       return reply.status(201).send(response);
@@ -223,12 +230,15 @@ export class ConfigurationController {
       logger.error('Failed to create configuration', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to create configuration'
+        error: 'Failed to create configuration',
       } as ConfigurationResponse);
     }
   }
 
-  async updateConfiguration(request: FastifyRequest<{ Body: Partial<ConfigurationProfile> }>, reply: FastifyReply) {
+  async updateConfiguration(
+    request: FastifyRequest<{ Body: Partial<ConfigurationProfile> }>,
+    reply: FastifyReply,
+  ) {
     try {
       const { id } = request.params as { id: string };
       const updateData = request.body;
@@ -236,7 +246,7 @@ export class ConfigurationController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Configuration ID is required'
+          error: 'Configuration ID is required',
         } as ConfigurationResponse);
       }
 
@@ -245,7 +255,7 @@ export class ConfigurationController {
       if (!existingConfig) {
         return reply.status(404).send({
           success: false,
-          error: 'Configuration not found'
+          error: 'Configuration not found',
         } as ConfigurationResponse);
       }
 
@@ -253,7 +263,7 @@ export class ConfigurationController {
       if (id === 'default-config' && updateData.profile) {
         return reply.status(400).send({
           success: false,
-          error: 'Cannot change profile of default configuration'
+          error: 'Cannot change profile of default configuration',
         } as ConfigurationResponse);
       }
 
@@ -262,16 +272,19 @@ export class ConfigurationController {
         ...existingConfig,
         ...updateData,
         id: existingConfig.id, // Preserve ID
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       configStore.set(id, updatedConfig);
 
-      logger.info('Configuration updated', { configId: id, updatedFields: Object.keys(updateData) });
+      logger.info('Configuration updated', {
+        configId: id,
+        updatedFields: Object.keys(updateData),
+      });
 
       const response: ConfigurationResponse = {
         success: true,
-        configuration: updatedConfig
+        configuration: updatedConfig,
       };
 
       return reply.send(response);
@@ -279,7 +292,7 @@ export class ConfigurationController {
       logger.error('Failed to update configuration', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to update configuration'
+        error: 'Failed to update configuration',
       } as ConfigurationResponse);
     }
   }
@@ -291,7 +304,7 @@ export class ConfigurationController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Configuration ID is required'
+          error: 'Configuration ID is required',
         } as ConfigurationResponse);
       }
 
@@ -300,7 +313,7 @@ export class ConfigurationController {
       if (!configuration) {
         return reply.status(404).send({
           success: false,
-          error: 'Configuration not found'
+          error: 'Configuration not found',
         } as ConfigurationResponse);
       }
 
@@ -308,7 +321,7 @@ export class ConfigurationController {
       if (id === 'default-config') {
         return reply.status(400).send({
           success: false,
-          error: 'Cannot delete default configuration'
+          error: 'Cannot delete default configuration',
         } as ConfigurationResponse);
       }
 
@@ -321,7 +334,7 @@ export class ConfigurationController {
       logger.error('Failed to delete configuration', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to delete configuration'
+        error: 'Failed to delete configuration',
       } as ConfigurationResponse);
     }
   }
@@ -333,7 +346,7 @@ export class ConfigurationController {
       if (!id) {
         return reply.status(400).send({
           success: false,
-          error: 'Configuration ID is required'
+          error: 'Configuration ID is required',
         } as ConfigurationResponse);
       }
 
@@ -342,7 +355,7 @@ export class ConfigurationController {
       if (!configuration) {
         return reply.status(404).send({
           success: false,
-          error: 'Configuration not found'
+          error: 'Configuration not found',
         } as ConfigurationResponse);
       }
 
@@ -360,12 +373,12 @@ export class ConfigurationController {
       logger.info('Configuration activated', {
         configId: id,
         name: configuration.name,
-        profile: configuration.profile
+        profile: configuration.profile,
       });
 
       const response: ConfigurationResponse = {
         success: true,
-        configuration
+        configuration,
       };
 
       return reply.send(response);
@@ -373,12 +386,15 @@ export class ConfigurationController {
       logger.error('Failed to activate configuration', { error: error.message });
       return reply.status(500).send({
         success: false,
-        error: 'Failed to activate configuration'
+        error: 'Failed to activate configuration',
       } as ConfigurationResponse);
     }
   }
 
-  async validateConfiguration(request: FastifyRequest<{ Body: Partial<ConfigurationProfile> }>, reply: FastifyReply) {
+  async validateConfiguration(
+    request: FastifyRequest<{ Body: Partial<ConfigurationProfile> }>,
+    reply: FastifyReply,
+  ) {
     try {
       const configData = request.body;
       const errors: string[] = [];
@@ -399,7 +415,10 @@ export class ConfigurationController {
 
       // Validate indexing config
       if (configData.indexing_config) {
-        if (configData.indexing_config.parallel_workers && configData.indexing_config.parallel_workers < 1) {
+        if (
+          configData.indexing_config.parallel_workers &&
+          configData.indexing_config.parallel_workers < 1
+        ) {
           errors.push('parallel_workers must be at least 1');
         }
         if (configData.indexing_config.batch_size && configData.indexing_config.batch_size < 1) {
@@ -412,8 +431,11 @@ export class ConfigurationController {
         if (configData.search_config.max_results && configData.search_config.max_results < 1) {
           errors.push('max_results must be at least 1');
         }
-        if (configData.search_config.similarity_threshold &&
-            (configData.search_config.similarity_threshold < 0 || configData.search_config.similarity_threshold > 1)) {
+        if (
+          configData.search_config.similarity_threshold &&
+          (configData.search_config.similarity_threshold < 0 ||
+            configData.search_config.similarity_threshold > 1)
+        ) {
           errors.push('similarity_threshold must be between 0 and 1');
         }
       }
@@ -421,10 +443,16 @@ export class ConfigurationController {
       // Validate storage config
       if (configData.storage_config) {
         const validDatabases = ['sqlite', 'postgresql', 'duckdb'];
-        if (configData.storage_config.database_type && !validDatabases.includes(configData.storage_config.database_type)) {
+        if (
+          configData.storage_config.database_type &&
+          !validDatabases.includes(configData.storage_config.database_type)
+        ) {
           errors.push(`Invalid database_type. Must be one of: ${validDatabases.join(', ')}`);
         }
-        if (configData.storage_config.cache_size_mb && configData.storage_config.cache_size_mb < 1) {
+        if (
+          configData.storage_config.cache_size_mb &&
+          configData.storage_config.cache_size_mb < 1
+        ) {
           errors.push('cache_size_mb must be at least 1');
         }
       }
@@ -434,8 +462,8 @@ export class ConfigurationController {
         errors,
         metadata: {
           fields_validated: Object.keys(configData).length,
-          errors_count: errors.length
-        }
+          errors_count: errors.length,
+        },
       };
 
       return reply.send(response);
@@ -443,7 +471,7 @@ export class ConfigurationController {
       logger.error('Configuration validation failed', { error: error.message });
       return reply.status(500).send({
         valid: false,
-        errors: ['Validation failed due to internal error']
+        errors: ['Validation failed due to internal error'],
       });
     }
   }

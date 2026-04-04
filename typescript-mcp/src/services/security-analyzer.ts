@@ -19,7 +19,13 @@ export interface SecurityVulnerability {
   title: string;
   description: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
-  category: 'injection' | 'authentication' | 'authorization' | 'data-exposure' | 'crypto' | 'configuration';
+  category:
+    | 'injection'
+    | 'authentication'
+    | 'authorization'
+    | 'data-exposure'
+    | 'crypto'
+    | 'configuration';
   cwe_id?: string;
   line_number?: number;
   code_snippet?: string;
@@ -69,7 +75,7 @@ export class SecurityAnalyzer {
     logger.info('Security analysis started', {
       file_path: request.file_path,
       depth: request.depth,
-      codebase_id: request.codebase_id
+      codebase_id: request.codebase_id,
     });
 
     try {
@@ -95,20 +101,23 @@ export class SecurityAnalyzer {
       logger.info('Security analysis completed', {
         overall_score: result.overall_score,
         vulnerabilities_count: result.vulnerabilities.length,
-        security_posture: result.security_posture
+        security_posture: result.security_posture,
       });
 
       return result;
-
     } catch (error) {
       logger.error('Security analysis failed:', error);
-      throw new Error(`Security analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Security analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
-  private async performStaticAnalysis(request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
+  private async performStaticAnalysis(
+    request: SecurityAnalysisRequest,
+  ): Promise<SecurityVulnerability[]> {
     const vulnerabilities: SecurityVulnerability[] = [];
-    const code = request.code_snippet || await this.getFileContent(request.file_path!);
+    const code = request.code_snippet || (await this.getFileContent(request.file_path!));
 
     // SQL Injection patterns
     const sqlInjectionPatterns = [
@@ -117,7 +126,7 @@ export class SecurityAnalyzer {
       /UPDATE.*SET.*WHERE.*\+/gi,
       /DELETE.*FROM.*WHERE.*\+/gi,
       /query\(`.*\$\{.*\}`/gi,
-      /execute\(`.*\$\{.*\}`/gi
+      /execute\(`.*\$\{.*\}`/gi,
     ];
 
     sqlInjectionPatterns.forEach((pattern, index) => {
@@ -126,7 +135,8 @@ export class SecurityAnalyzer {
         vulnerabilities.push({
           id: `sql-injection-${index}`,
           title: 'Potential SQL Injection',
-          description: 'Code may be vulnerable to SQL injection attacks through user input concatenation',
+          description:
+            'Code may be vulnerable to SQL injection attacks through user input concatenation',
           severity: 'critical',
           category: 'injection',
           cwe_id: 'CWE-89',
@@ -135,7 +145,7 @@ export class SecurityAnalyzer {
           references: ['https://owasp.org/www-community/attacks/SQL_Injection'],
           confidence: 75,
           exploitability: 'high',
-          impact: 'high'
+          impact: 'high',
         });
       }
     });
@@ -145,7 +155,7 @@ export class SecurityAnalyzer {
       /innerHTML.*=.*\+/gi,
       /document\.write.*\$/gi,
       /eval\(.*\$/gi,
-      /new Function\(.*\$/gi
+      /new Function\(.*\$/gi,
     ];
 
     xssPatterns.forEach((pattern, index) => {
@@ -159,11 +169,12 @@ export class SecurityAnalyzer {
           category: 'injection',
           cwe_id: 'CWE-79',
           code_snippet: matches[0],
-          remediation: 'Sanitize user input and use proper escaping or frameworks that handle XSS protection',
+          remediation:
+            'Sanitize user input and use proper escaping or frameworks that handle XSS protection',
           references: ['https://owasp.org/www-community/attacks/xss/'],
           confidence: 80,
           exploitability: 'high',
-          impact: 'medium'
+          impact: 'medium',
         });
       }
     });
@@ -174,7 +185,7 @@ export class SecurityAnalyzer {
       /secret\s*=\s*['"][^'"]{16,}['"]/gi,
       /api_key\s*=\s*['"][^'"]{20,}['"]/gi,
       /token\s*=\s*['"][^'"]{20,}['"]/gi,
-      /private_key\s*=\s*['"][^'"]{30,}['"]/gi
+      /private_key\s*=\s*['"][^'"]{30,}['"]/gi,
     ];
 
     secretPatterns.forEach((pattern, index) => {
@@ -187,11 +198,14 @@ export class SecurityAnalyzer {
           severity: 'critical',
           category: 'data-exposure',
           code_snippet: matches[0],
-          remediation: 'Move secrets to environment variables, secure configuration, or secret management systems',
-          references: ['https://owasp.org/www-project-cheat-sheets/cheatsheets/Secrets_Management_Cheat_Sheet.html'],
+          remediation:
+            'Move secrets to environment variables, secure configuration, or secret management systems',
+          references: [
+            'https://owasp.org/www-project-cheat-sheets/cheatsheets/Secrets_Management_Cheat_Sheet.html',
+          ],
           confidence: 95,
           exploitability: 'medium',
-          impact: 'high'
+          impact: 'high',
         });
       }
     });
@@ -203,7 +217,7 @@ export class SecurityAnalyzer {
       /crypto\.createHash\(['"]md5/gi,
       /crypto\.createHash\(['"]sha1/gi,
       / DES\b/gi,
-      / RC4\b/gi
+      / RC4\b/gi,
     ];
 
     weakCryptoPatterns.forEach((pattern, index) => {
@@ -216,11 +230,14 @@ export class SecurityAnalyzer {
           severity: 'medium',
           category: 'crypto',
           code_snippet: matches[0],
-          remediation: 'Use strong cryptographic algorithms like SHA-256, SHA-512, bcrypt, or Argon2',
-          references: ['https://owasp.org/www-project-cheat-sheets/cheatsheets/Password_Storage_Cheat_Sheet.html'],
+          remediation:
+            'Use strong cryptographic algorithms like SHA-256, SHA-512, bcrypt, or Argon2',
+          references: [
+            'https://owasp.org/www-project-cheat-sheets/cheatsheets/Password_Storage_Cheat_Sheet.html',
+          ],
           confidence: 90,
           exploitability: 'low',
-          impact: 'medium'
+          impact: 'medium',
         });
       }
     });
@@ -228,7 +245,9 @@ export class SecurityAnalyzer {
     return vulnerabilities;
   }
 
-  private async performAIAnalysis(request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
+  private async performAIAnalysis(
+    request: SecurityAnalysisRequest,
+  ): Promise<SecurityVulnerability[]> {
     try {
       const prompts = [
         `
@@ -244,7 +263,7 @@ Focus on:
 - Session management issues
 
 Provide specific, actionable security findings with severity levels.
-`
+`,
       ];
 
       const aiInsights = await this.aiService.generateInsights(prompts);
@@ -262,28 +281,33 @@ Provide specific, actionable security findings with severity levels.
           references: [],
           confidence: suggestion.confidence,
           exploitability: 'medium' as const,
-          impact: this.mapToImpactLevel(suggestion.impact)
+          impact: this.mapToImpactLevel(suggestion.impact),
         }));
-
     } catch (error) {
       logger.warn('AI security analysis failed, using fallback:', error);
       return [];
     }
   }
 
-  private async performDataFlowAnalysis(_request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
+  private async performDataFlowAnalysis(
+    _request: SecurityAnalysisRequest,
+  ): Promise<SecurityVulnerability[]> {
     // Placeholder for data flow analysis
     // In a real implementation, this would track sensitive data flows
     return [];
   }
 
-  private async analyzeDependencies(_request: SecurityAnalysisRequest): Promise<SecurityVulnerability[]> {
+  private async analyzeDependencies(
+    _request: SecurityAnalysisRequest,
+  ): Promise<SecurityVulnerability[]> {
     // Placeholder for dependency vulnerability analysis
     // In a real implementation, this would check package.json, Cargo.toml, etc.
     return [];
   }
 
-  private deduplicateVulnerabilities(vulnerabilities: SecurityVulnerability[]): SecurityVulnerability[] {
+  private deduplicateVulnerabilities(
+    vulnerabilities: SecurityVulnerability[],
+  ): SecurityVulnerability[] {
     const seen = new Set<string>();
     return vulnerabilities.filter(vuln => {
       const key = `${vuln.title}-${vuln.line_number || 'unknown'}`;
@@ -295,13 +319,16 @@ Provide specific, actionable security findings with severity levels.
     });
   }
 
-  private async generateSecurityReport(vulnerabilities: SecurityVulnerability[], _request: SecurityAnalysisRequest): Promise<SecurityAnalysisResult> {
+  private async generateSecurityReport(
+    vulnerabilities: SecurityVulnerability[],
+    _request: SecurityAnalysisRequest,
+  ): Promise<SecurityAnalysisResult> {
     // Calculate risk assessment
     const riskAssessment = {
       critical_issues: vulnerabilities.filter(v => v.severity === 'critical').length,
       high_issues: vulnerabilities.filter(v => v.severity === 'high').length,
       medium_issues: vulnerabilities.filter(v => v.severity === 'medium').length,
-      low_issues: vulnerabilities.filter(v => v.severity === 'low').length
+      low_issues: vulnerabilities.filter(v => v.severity === 'low').length,
     };
 
     // Calculate overall score
@@ -316,11 +343,17 @@ Provide specific, actionable security findings with severity levels.
 
     // Determine security posture
     let securityPosture: SecurityAnalysisResult['security_posture'];
-    if (overallScore >= 90) {securityPosture = 'excellent';}
-    else if (overallScore >= 75) {securityPosture = 'good';}
-    else if (overallScore >= 60) {securityPosture = 'moderate';}
-    else if (overallScore >= 40) {securityPosture = 'poor';}
-    else {securityPosture = 'critical';}
+    if (overallScore >= 90) {
+      securityPosture = 'excellent';
+    } else if (overallScore >= 75) {
+      securityPosture = 'good';
+    } else if (overallScore >= 60) {
+      securityPosture = 'moderate';
+    } else if (overallScore >= 40) {
+      securityPosture = 'poor';
+    } else {
+      securityPosture = 'critical';
+    }
 
     // Generate recommendations
     const recommendations = this.generateSecurityRecommendations(vulnerabilities, riskAssessment);
@@ -337,11 +370,14 @@ Provide specific, actionable security findings with severity levels.
       risk_assessment: riskAssessment,
       security_posture: securityPosture,
       recommendations,
-      compliance
+      compliance,
     };
   }
 
-  private generateSecurityRecommendations(vulnerabilities: SecurityVulnerability[], riskAssessment: any) {
+  private generateSecurityRecommendations(
+    vulnerabilities: SecurityVulnerability[],
+    riskAssessment: any,
+  ) {
     const recommendations = [];
 
     if (riskAssessment.critical_issues > 0) {
@@ -349,7 +385,7 @@ Provide specific, actionable security findings with severity levels.
         priority: 'immediate' as const,
         action: `Address ${riskAssessment.critical_issues} critical security vulnerabilities`,
         rationale: 'Critical vulnerabilities pose immediate threats to system security',
-        estimated_effort: 'high' as const
+        estimated_effort: 'high' as const,
       });
     }
 
@@ -358,7 +394,7 @@ Provide specific, actionable security findings with severity levels.
         priority: 'short-term' as const,
         action: `Resolve ${riskAssessment.high_issues} high-priority security issues`,
         rationale: 'High-priority issues should be addressed in the next development cycle',
-        estimated_effort: 'medium' as const
+        estimated_effort: 'medium' as const,
       });
     }
 
@@ -368,7 +404,7 @@ Provide specific, actionable security findings with severity levels.
         priority: 'immediate' as const,
         action: 'Implement comprehensive input validation and parameterized queries',
         rationale: 'Injection vulnerabilities are among the most critical security risks',
-        estimated_effort: 'medium' as const
+        estimated_effort: 'medium' as const,
       });
     }
 
@@ -378,7 +414,7 @@ Provide specific, actionable security findings with severity levels.
         priority: 'short-term' as const,
         action: 'Review and secure sensitive data handling',
         rationale: 'Data exposure vulnerabilities can lead to privacy breaches',
-        estimated_effort: 'medium' as const
+        estimated_effort: 'medium' as const,
       });
     }
 
@@ -393,7 +429,9 @@ Provide specific, actionable security findings with severity levels.
       complianceGaps.push('OWASP A03: Injection');
     }
 
-    if (vulnerabilities.some(v => v.category === 'authentication' || v.category === 'authorization')) {
+    if (
+      vulnerabilities.some(v => v.category === 'authentication' || v.category === 'authorization')
+    ) {
       complianceGaps.push('OWASP A07: Identification and Authentication Failures');
     }
 
@@ -401,32 +439,42 @@ Provide specific, actionable security findings with severity levels.
       complianceGaps.push('OWASP A02: Cryptographic Failures');
     }
 
-    const complianceScore = Math.max(0, 100 - (complianceGaps.length * 15));
+    const complianceScore = Math.max(0, 100 - complianceGaps.length * 15);
 
     return {
       standards_checked: standards,
       compliance_score: complianceScore,
-      gaps: complianceGaps
+      gaps: complianceGaps,
     };
   }
 
   private mapImpactToSeverity(impact: string): SecurityVulnerability['severity'] {
     switch (impact) {
-      case 'critical': return 'critical';
-      case 'high': return 'high';
-      case 'medium': return 'medium';
-      case 'low': return 'low';
-      default: return 'medium';
+      case 'critical':
+        return 'critical';
+      case 'high':
+        return 'high';
+      case 'medium':
+        return 'medium';
+      case 'low':
+        return 'low';
+      default:
+        return 'medium';
     }
   }
 
   private mapToImpactLevel(impact: string): SecurityVulnerability['impact'] {
     switch (impact) {
-      case 'critical': return 'high';
-      case 'high': return 'high';
-      case 'medium': return 'medium';
-      case 'low': return 'low';
-      default: return 'medium';
+      case 'critical':
+        return 'high';
+      case 'high':
+        return 'high';
+      case 'medium':
+        return 'medium';
+      case 'low':
+        return 'low';
+      default:
+        return 'medium';
     }
   }
 

@@ -1,8 +1,3 @@
- 
- 
- 
- 
- 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 import { codebaseService } from '../services/codebase-service.js';
 import { duplicationService } from '../services/duplication-service.js';
@@ -229,7 +224,8 @@ export class FindDuplicatesTool {
 
   private generateRefactoringSuggestion(duplicate: unknown): string {
     const instanceCount = (duplicate as any).instances.length;
-    const linesCount = (duplicate as any).instances[0].end_line - (duplicate as any).instances[0].start_line + 1;
+    const linesCount =
+      (duplicate as any).instances[0].end_line - (duplicate as any).instances[0].start_line + 1;
 
     if (linesCount < 10) {
       return `Extract ${instanceCount} similar code blocks into a shared utility function`;
@@ -250,7 +246,11 @@ export class FindDuplicatesTool {
     const totalDuplicateLines = (instanceCount - 1) * linesPerInstance;
 
     let maintenanceEffort: 'low' | 'medium' | 'high' = 'low';
-    if (totalDuplicateLines > 100) {maintenanceEffort = 'high';} else if (totalDuplicateLines > 30) {maintenanceEffort = 'medium';}
+    if (totalDuplicateLines > 100) {
+      maintenanceEffort = 'high';
+    } else if (totalDuplicateLines > 30) {
+      maintenanceEffort = 'medium';
+    }
 
     return {
       lines_of_code: totalDuplicateLines,
@@ -286,9 +286,15 @@ export class FindDuplicatesTool {
   }
 
   private getSimilarityKey(score: number): string {
-    if (score >= 0.95) {return 'exact';}
-    if (score >= 0.85) {return 'very_high';}
-    if (score >= 0.7) {return 'high';}
+    if (score >= 0.95) {
+      return 'exact';
+    }
+    if (score >= 0.85) {
+      return 'very_high';
+    }
+    if (score >= 0.7) {
+      return 'high';
+    }
     return 'medium';
   }
 
@@ -302,7 +308,8 @@ export class FindDuplicatesTool {
       detection_type: groups[0].detection_type,
       instances: allInstances,
       common_pattern: groups[0].common_pattern,
-      refactoring_suggestion: 'Multiple similar patterns detected. Consider unified refactoring approach.',
+      refactoring_suggestion:
+        'Multiple similar patterns detected. Consider unified refactoring approach.',
       estimated_savings: {
         lines_of_code: groups.reduce((sum, g) => sum + g.estimated_savings.lines_of_code, 0),
         maintenance_effort: 'high',

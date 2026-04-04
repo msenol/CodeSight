@@ -1,12 +1,7 @@
- 
- 
- 
- 
- 
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
- 
+
 import { analysisService } from '../services/analysis-service.js';
- 
+
 import { codebaseService } from '../services/codebase-service.js';
 import { z } from 'zod';
 
@@ -195,7 +190,10 @@ export class FindReferencesTool {
   /**
    * Find all references to the entity
    */
-  private async findAllReferences(entity: unknown, input: FindReferencesInput): Promise<Reference[]> {
+  private async findAllReferences(
+    entity: unknown,
+    input: FindReferencesInput,
+  ): Promise<Reference[]> {
     const references: Reference[] = [];
 
     // Find direct references through relationships
@@ -230,14 +228,21 @@ export class FindReferencesTool {
   /**
    * Find references through text search
    */
-  private async findTextReferences(entity: unknown, input: FindReferencesInput): Promise<Reference[]> {
+  private async findTextReferences(
+    entity: unknown,
+    input: FindReferencesInput,
+  ): Promise<Reference[]> {
     const references: Reference[] = [];
 
     // Search for entity name in code
-    const searchResults = await analysisService.searchText((entity as any).codebase_id, (entity as any).name, {
-      file_types: input.file_types,
-      exclude_patterns: input.exclude_patterns,
-    });
+    const searchResults = await analysisService.searchText(
+      (entity as any).codebase_id,
+      (entity as any).name,
+      {
+        file_types: input.file_types,
+        exclude_patterns: input.exclude_patterns,
+      },
+    );
 
     for (const result of searchResults) {
       // Skip the definition itself
@@ -383,14 +388,17 @@ export class FindReferencesTool {
         column_number: (result as any).column_number || 0,
         reference_type: 'direct',
         context,
-        surrounding_code: (result as any). surroundingCode,
+        surrounding_code: (result as any).surroundingCode,
         confidence,
         usage_type: usageType,
         containing_function: await this.findContainingFunction(
           (result as any).file_path,
           (result as any).line_number,
         ),
-        containing_class: await this.findContainingClass((result as any).file_path, (result as any).line_number),
+        containing_class: await this.findContainingClass(
+          (result as any).file_path,
+          (result as any).line_number,
+        ),
         is_modification: this.isModification(context),
         language: this.detectLanguage((result as any).file_path),
       };
@@ -447,7 +455,7 @@ export class FindReferencesTool {
     // Filter by file types
     if (input.file_types && input.file_types.length > 0) {
       filtered = filtered.filter(ref => {
-        const ext = `.${  (ref as any).file_path.split('.').pop()}`;
+        const ext = `.${(ref as any).file_path.split('.').pop()}`;
         return input.file_types!.includes(ext);
       });
     }
@@ -636,7 +644,10 @@ export class FindReferencesTool {
     }
 
     // Property access increases confidence
-    if ((context as any).includes(`${entityName}.`) || (context as any).includes(`.${entityName}`)) {
+    if (
+      (context as any).includes(`${entityName}.`) ||
+      (context as any).includes(`.${entityName}`)
+    ) {
       confidence += 0.15;
     }
 
@@ -701,11 +712,7 @@ export class FindReferencesTool {
     lineNumber: number,
   ): Promise<string | undefined> {
     try {
-      const containingEntity = await analysisService.findContainingEntity(
-        filePath,
-        lineNumber,
-        0,
-      );
+      const containingEntity = await analysisService.findContainingEntity(filePath, lineNumber, 0);
       return (containingEntity as any)?.name;
     } catch (error) {
       return undefined;
@@ -720,11 +727,7 @@ export class FindReferencesTool {
     lineNumber: number,
   ): Promise<string | undefined> {
     try {
-      const containingEntity = await analysisService.findContainingEntity(
-        filePath,
-        lineNumber,
-        0,
-      );
+      const containingEntity = await analysisService.findContainingEntity(filePath, lineNumber, 0);
       return (containingEntity as any)?.name;
     } catch (error) {
       return undefined;
