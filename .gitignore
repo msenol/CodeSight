@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-package-lock.json
+# package-lock.json # Commented out - needed for CI/CD
 yarn.lock
 pnpm-lock.yaml
 
