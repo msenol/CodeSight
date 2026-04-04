@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
- 
- 
- 
- 
 /**
  * Standalone Health Check CLI for CodeSight
  *
@@ -14,7 +10,8 @@
 // Simple logger for CLI health check (Rule 15: no external dependencies)
 const cliLogger = {
   info: (message: string) => console.log(`[${new Date().toISOString()}] INFO: ${message}`),
-  error: (message: string, error?: any) => console.error(`[${new Date().toISOString()}] ERROR: ${message}`, error || ''),
+  error: (message: string, error?: any) =>
+    console.error(`[${new Date().toISOString()}] ERROR: ${message}`, error || ''),
 };
 
 // Simple config for CLI (Rule 15: no external dependencies)

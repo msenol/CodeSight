@@ -87,7 +87,10 @@ async function healthCheck(): Promise<void> {
 
 // Handle uncaught errors
 process.on('uncaughtException', error => {
-  console.error(`[${new Date().toISOString()}] ERROR: Uncaught exception during health check:`, error);
+  console.error(
+    `[${new Date().toISOString()}] ERROR: Uncaught exception during health check:`,
+    error,
+  );
   console.log(
     JSON.stringify(
       {
@@ -104,7 +107,10 @@ process.on('uncaughtException', error => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error(`[${new Date().toISOString()}] ERROR: Unhandled rejection during health check:`, { promise, reason });
+  console.error(`[${new Date().toISOString()}] ERROR: Unhandled rejection during health check:`, {
+    promise,
+    reason,
+  });
   console.log(
     JSON.stringify(
       {

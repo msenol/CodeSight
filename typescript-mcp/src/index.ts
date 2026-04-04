@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
- 
- 
- 
- 
 /**
  * CodeSight MCP Server - TypeScript Interface
  *

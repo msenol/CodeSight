@@ -6,7 +6,6 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './services/logger.js';
 
-
 // __dirname will be defined by the import statement below
 
 const require = createRequire(import.meta.url);
@@ -60,11 +59,11 @@ if (!nativeModule) {
 function createMockModule() {
   return {
     initEngine: () => {
-          logger.warn('[MOCK] Initializing Rust engine');
+      logger.warn('[MOCK] Initializing Rust engine');
       return Promise.resolve();
     },
     parseFile: (_filePath: string, content: string) => {
-        logger.warn(`[MOCK] Parsing file: ${_filePath}, content length: ${content.length}`);
+      logger.warn(`[MOCK] Parsing file: ${_filePath}, content length: ${content.length}`);
       return Promise.resolve([
         {
           id: `${_filePath}:1:mock_function`,
@@ -76,7 +75,6 @@ function createMockModule() {
           content: 'function mock_function() { return "mock"; }',
         },
       ]);
-       
     },
     searchCode: (query: string, codebasePath?: string) => {
       logger.warn(`[MOCK] Searching for: ${query} in ${codebasePath ?? 'default path'}`);
@@ -88,7 +86,6 @@ function createMockModule() {
           score: 0.8,
         },
       ]);
-       
     },
     generateEmbedding: (text: string) => {
       logger.warn(`[MOCK] Generating embedding for: ${text}`);
@@ -346,10 +343,17 @@ export class RustFFIBridge {
       signature: entityData.signature as string | undefined,
       documentation: entityData.documentation as string | undefined,
       visibility: entityData.visibility as string | undefined,
-      parameters: Array.isArray(entityData.parameters) ? entityData.parameters as Parameter[] : [],
+      parameters: Array.isArray(entityData.parameters)
+        ? (entityData.parameters as Parameter[])
+        : [],
       return_type: entityData.return_type as string | undefined,
-      dependencies: Array.isArray(entityData.dependencies) ? entityData.dependencies as string[] : [],
-      metadata: (entityData.metadata && typeof entityData.metadata === 'object') ? entityData.metadata as Record<string, string> : {},
+      dependencies: Array.isArray(entityData.dependencies)
+        ? (entityData.dependencies as string[])
+        : [],
+      metadata:
+        entityData.metadata && typeof entityData.metadata === 'object'
+          ? (entityData.metadata as Record<string, string>)
+          : {},
     };
   }
 
@@ -360,7 +364,7 @@ export class RustFFIBridge {
       line: resultData.line as number,
       content: resultData.content as string,
       score: resultData.score as number,
-      highlights: Array.isArray(resultData.highlights) ? resultData.highlights as string[] : [],
+      highlights: Array.isArray(resultData.highlights) ? (resultData.highlights as string[]) : [],
     };
   }
 }

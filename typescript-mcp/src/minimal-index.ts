@@ -49,7 +49,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 // Simple code search function
-async function searchInCodebase(query: string, basePath: string = 'F:/Development/Projects/ProjectAra/typescript-mcp'): Promise<string> {
+async function searchInCodebase(
+  query: string,
+  basePath: string = 'F:/Development/Projects/ProjectAra/typescript-mcp',
+): Promise<string> {
   try {
     const results: string[] = [];
 
@@ -57,7 +60,7 @@ async function searchInCodebase(query: string, basePath: string = 'F:/Developmen
     const srcPath = join(basePath, 'src');
 
     // Move function declaration outside of try block to fix ESLint error
-    const searchDirectory = async function(dirPath: string, depth = 0): Promise<void> {
+    const searchDirectory = async function (dirPath: string, depth = 0): Promise<void> {
       if (depth > 3) {
         return; // Limit depth to avoid infinite recursion
       }
@@ -70,7 +73,10 @@ async function searchInCodebase(query: string, basePath: string = 'F:/Developmen
 
           if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
             await searchDirectory(fullPath, depth + 1);
-          } else if (entry.isFile() && (extname(entry.name) === '.ts' || extname(entry.name) === '.js')) {
+          } else if (
+            entry.isFile() &&
+            (extname(entry.name) === '.ts' || extname(entry.name) === '.js')
+          ) {
             try {
               const content = await readFile(fullPath, 'utf-8');
               const lines = content.split('\n');
@@ -98,13 +104,12 @@ async function searchInCodebase(query: string, basePath: string = 'F:/Developmen
     }
 
     return `Found ${results.length} match${results.length === 1 ? '' : 'es'}:\n${results.slice(0, 10).join('\n')}${results.length > 10 ? `\n... and ${results.length - 10} more` : ''}`;
-
   } catch (error) {
     return `Search error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async request => {
   const { name, arguments: args } = request.params;
 
   try {

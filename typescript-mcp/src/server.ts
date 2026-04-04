@@ -1,4 +1,3 @@
- 
 /**
  * Fastify server configuration
  */
@@ -64,7 +63,7 @@ export async function createFastifyServer() {
       if (!tool) {
         return reply.code(400).send({
           error: 'Tool name is required',
-          code: 'MISSING_TOOL_NAME'
+          code: 'MISSING_TOOL_NAME',
         });
       }
 
@@ -72,7 +71,7 @@ export async function createFastifyServer() {
       if (!args || typeof args !== 'object') {
         return reply.code(400).send({
           error: 'Tool arguments must be an object',
-          code: 'INVALID_ARGUMENTS'
+          code: 'INVALID_ARGUMENTS',
         });
       }
 
@@ -80,7 +79,7 @@ export async function createFastifyServer() {
       if (tool === 'technical_debt_analysis' && !args.codebase_id) {
         return reply.code(400).send({
           error: 'codebase_id is required for technical_debt_analysis',
-          code: 'MISSING_REQUIRED_FIELD'
+          code: 'MISSING_REQUIRED_FIELD',
         });
       }
 
@@ -94,7 +93,7 @@ export async function createFastifyServer() {
             code_snippet: args.code_snippet,
             review_type: args.review_type || 'basic',
             codebase_id: args.codebase_id || 'test',
-            context: args.context
+            context: args.context,
           });
           break;
         }
@@ -107,7 +106,7 @@ export async function createFastifyServer() {
             scope: args.scope || 'module',
             analysis_depth: args.analysis_depth,
             codebase_id: args.codebase_id || 'test',
-            historical_data: args.historical_data
+            historical_data: args.historical_data,
           });
           break;
         }
@@ -122,11 +121,11 @@ export async function createFastifyServer() {
               project_structure: args.context?.project_structure,
               existing_patterns: args.context?.existing_patterns,
               dependencies: args.context?.dependencies,
-              coding_standards: args.context?.coding_standards
+              coding_standards: args.context?.coding_standards,
             },
             generation_type: args.generation_type || 'function',
             constraints: args.constraints,
-            codebase_id: args.codebase_id || 'test'
+            codebase_id: args.codebase_id || 'test',
           });
           break;
         }
@@ -138,7 +137,7 @@ export async function createFastifyServer() {
             refactoring_type: args.refactoring_type || 'improve-readability',
             target_scope: args.target_scope,
             codebase_id: args.codebase_id || 'test',
-            preferences: args.preferences
+            preferences: args.preferences,
           });
           break;
         }
@@ -150,7 +149,7 @@ export async function createFastifyServer() {
             analysis_depth: args.analysis_depth || 'basic',
             include_recommendations: args.include_recommendations !== false,
             codebase_id: args.codebase_id || 'test',
-            historical_data: args.historical_data
+            historical_data: args.historical_data,
           });
           break;
         }
@@ -158,12 +157,11 @@ export async function createFastifyServer() {
         default:
           return reply.code(404).send({
             error: `Unknown tool: ${tool}`,
-            code: 'UNKNOWN_TOOL'
+            code: 'UNKNOWN_TOOL',
           });
       }
 
       return reply.code(200).send(result);
-
     } catch (error) {
       logger.error('MCP tool call failed:', error);
 
@@ -176,10 +174,20 @@ export async function createFastifyServer() {
       if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
         statusCode = 408;
         errorType = 'TIMEOUT';
-      } else if (errorMessage.includes('not found') || errorMessage.includes('does not exist') || errorMessage.includes('File not found')) {
+      } else if (
+        errorMessage.includes('not found') ||
+        errorMessage.includes('does not exist') ||
+        errorMessage.includes('File not found')
+      ) {
         statusCode = 404;
         errorType = 'NOT_FOUND';
-      } else if (errorMessage.includes('empty') || errorMessage.includes('required') || errorMessage.includes('must be provided') || errorMessage.includes('invalid') || errorMessage.includes('syntax')) {
+      } else if (
+        errorMessage.includes('empty') ||
+        errorMessage.includes('required') ||
+        errorMessage.includes('must be provided') ||
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('syntax')
+      ) {
         statusCode = 400;
         errorType = 'INVALID_REQUEST';
       } else if (errorMessage.includes('too large') || errorMessage.includes('exceeds')) {
@@ -193,7 +201,7 @@ export async function createFastifyServer() {
       return reply.code(statusCode).send({
         error: errorMessage,
         code: errorType,
-        tool: body.tool
+        tool: body.tool,
       });
     }
   });
