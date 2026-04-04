@@ -3,29 +3,29 @@
 //! This module contains all the fundamental data structures used throughout
 //! the system, including entities, relationships, and configuration types.
 
-pub mod codebase;
+pub mod cache_entry;
 pub mod code_entity;
 pub mod code_relationship;
-pub mod index;
-pub mod query;
-pub mod embedding;
-pub mod cache_entry;
-pub mod plugin;
+pub mod codebase;
 pub mod configuration;
+pub mod embedding;
+pub mod index;
 pub mod index_job;
+pub mod plugin;
+pub mod query;
 
 // Re-export all models for convenience
-pub use codebase::*;
 pub use code_entity::*;
 pub use code_relationship::*;
+pub use codebase::*;
+pub use embedding::*;
 pub use index::*;
 pub use query::*;
-pub use embedding::*;
 // Use specific imports to avoid name conflicts
-pub use cache_entry::{CacheEntry, EvictionPolicy as CacheEvictionPolicy, CacheConfig};
-pub use plugin::{Plugin, PluginConfig, PluginConfigValue, PluginStatus};
+pub use cache_entry::{CacheConfig, CacheEntry, EvictionPolicy as CacheEvictionPolicy};
 pub use configuration::*;
 pub use index_job::*;
+pub use plugin::{Plugin, PluginConfig, PluginConfigValue, PluginStatus};
 
 /// Common result type used throughout the models
 pub type ModelResult<T> = Result<T, crate::errors::CoreError>;

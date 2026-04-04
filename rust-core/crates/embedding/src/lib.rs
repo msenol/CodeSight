@@ -15,7 +15,7 @@ impl EmbeddingGenerator {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     pub async fn generate_embedding(&self, _text: &str) -> Result<Vec<f32>> {
         // TODO: Implement embedding generation
         Ok(vec![0.0; 384]) // Mock embedding
@@ -31,7 +31,7 @@ impl Default for EmbeddingGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_embedding_generator() {
         let generator = EmbeddingGenerator::new();

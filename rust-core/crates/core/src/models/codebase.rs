@@ -79,7 +79,12 @@ impl Codebase {
     }
 
     /// Update the codebase with new statistics
-    pub fn update_stats(&mut self, size_bytes: u64, file_count: u32, language_stats: HashMap<String, u32>) {
+    pub fn update_stats(
+        &mut self,
+        size_bytes: u64,
+        file_count: u32,
+        language_stats: HashMap<String, u32>,
+    ) {
         self.size_bytes = size_bytes;
         self.file_count = file_count;
         self.language_stats = language_stats;
@@ -194,7 +199,7 @@ mod tests {
     #[test]
     fn test_new_codebase() {
         let codebase = Codebase::new("test-project".to_string(), "/path/to/project".to_string());
-        
+
         assert_eq!(codebase.name, "test-project");
         assert_eq!(codebase.path, "/path/to/project");
         assert_eq!(codebase.status, CodebaseStatus::Unindexed);
@@ -209,9 +214,9 @@ mod tests {
         let mut stats = HashMap::new();
         stats.insert("rust".to_string(), 10);
         stats.insert("typescript".to_string(), 5);
-        
+
         codebase.update_stats(1024, 15, stats.clone());
-        
+
         assert_eq!(codebase.size_bytes, 1024);
         assert_eq!(codebase.file_count, 15);
         assert_eq!(codebase.language_stats, stats);
@@ -222,7 +227,7 @@ mod tests {
     fn test_mark_indexed() {
         let mut codebase = Codebase::new("test".to_string(), "/test".to_string());
         codebase.mark_indexed("v1.0.0".to_string());
-        
+
         assert_eq!(codebase.status, CodebaseStatus::Indexed);
         assert_eq!(codebase.index_version, Some("v1.0.0".to_string()));
         assert!(codebase.last_indexed.is_some());
@@ -236,22 +241,22 @@ mod tests {
         stats.insert("rust".to_string(), 10);
         stats.insert("typescript".to_string(), 5);
         stats.insert("python".to_string(), 15);
-        
+
         codebase.update_stats(1024, 30, stats);
-        
+
         assert_eq!(codebase.primary_language(), Some(&"python".to_string()));
     }
 
     #[test]
     fn test_size_human_readable() {
         let mut codebase = Codebase::new("test".to_string(), "/test".to_string());
-        
+
         codebase.size_bytes = 1024;
         assert_eq!(codebase.size_human_readable(), "1.0 KB");
-        
+
         codebase.size_bytes = 1024 * 1024;
         assert_eq!(codebase.size_human_readable(), "1.0 MB");
-        
+
         codebase.size_bytes = 1536; // 1.5 KB
         assert_eq!(codebase.size_human_readable(), "1.5 KB");
     }
@@ -267,16 +272,26 @@ mod tests {
 
         let codebase = Codebase::new("test".to_string(), absolute_path.clone());
         let validation_result = codebase.validate();
-        assert!(validation_result.is_ok(), "Valid codebase should pass validation, got error: {:?}", validation_result.err());
+        assert!(
+            validation_result.is_ok(),
+            "Valid codebase should pass validation, got error: {:?}",
+            validation_result.err()
+        );
 
         // Test empty name
         let empty_name_codebase = Codebase::new("".to_string(), absolute_path.clone());
         let validation_result = empty_name_codebase.validate();
-        assert!(validation_result.is_err(), "Empty name should fail validation");
+        assert!(
+            validation_result.is_err(),
+            "Empty name should fail validation"
+        );
 
         // Test relative path
         let relative_path_codebase = Codebase::new("test".to_string(), "relative/path".to_string());
         let validation_result = relative_path_codebase.validate();
-        assert!(validation_result.is_err(), "Relative path should fail validation");
+        assert!(
+            validation_result.is_err(),
+            "Relative path should fail validation"
+        );
     }
 }

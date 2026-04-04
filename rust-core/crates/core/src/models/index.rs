@@ -398,7 +398,7 @@ mod tests {
                 "max_entries": 10000
             }
         });
-        
+
         let index = Index::with_metadata(Uuid::new_v4(), IndexType::Semantic, metadata.clone());
         assert_eq!(index.metadata, metadata);
         assert_eq!(index.get_metadata("version").unwrap(), &json!("1.0"));
@@ -407,20 +407,20 @@ mod tests {
     #[test]
     fn test_index_status_transitions() {
         let mut index = Index::new(Uuid::new_v4(), IndexType::Ast);
-        
+
         assert_eq!(index.status, IndexStatus::Building);
         assert!(index.is_building());
         assert!(!index.is_ready());
-        
+
         index.mark_ready();
         assert_eq!(index.status, IndexStatus::Ready);
         assert!(index.is_ready());
         assert!(!index.is_building());
-        
+
         index.mark_corrupted();
         assert_eq!(index.status, IndexStatus::Corrupted);
         assert!(index.needs_rebuilding());
-        
+
         index.start_rebuilding();
         assert_eq!(index.status, IndexStatus::Rebuilding);
         assert!(index.is_building());
@@ -429,7 +429,7 @@ mod tests {
     #[test]
     fn test_index_stats_update() {
         let mut index = Index::new(Uuid::new_v4(), IndexType::Vector);
-        
+
         index.update_stats(1024 * 1024, 5000); // 1MB, 5000 entries
         assert_eq!(index.size_bytes, 1024 * 1024);
         assert_eq!(index.entry_count, 5000);
@@ -439,13 +439,16 @@ mod tests {
     #[test]
     fn test_index_metadata_operations() {
         let mut index = Index::new(Uuid::new_v4(), IndexType::Keyword);
-        
+
         index.set_metadata("test_key".to_string(), json!("test_value"));
-        assert_eq!(index.get_metadata("test_key").unwrap(), &json!("test_value"));
-        
+        assert_eq!(
+            index.get_metadata("test_key").unwrap(),
+            &json!("test_value")
+        );
+
         index.set_compression_ratio(0.75);
         assert_eq!(index.compression_ratio().unwrap(), 0.75);
-        
+
         let duration = chrono::Duration::seconds(30);
         index.set_build_duration(duration);
         assert_eq!(index.build_duration().unwrap(), duration);
@@ -455,14 +458,9 @@ mod tests {
     fn test_index_entry() {
         let index_id = Uuid::new_v4();
         let entity_id = Uuid::new_v4();
-        
-        let entry = IndexEntry::with_entity(
-            index_id,
-            entity_id,
-            "test content".to_string(),
-            0.8,
-        );
-        
+
+        let entry = IndexEntry::with_entity(index_id, entity_id, "test content".to_string(), 0.8);
+
         assert_eq!(entry.index_id, index_id);
         assert_eq!(entry.entity_id, Some(entity_id));
         assert_eq!(entry.content, "test content");
@@ -474,15 +472,15 @@ mod tests {
     #[test]
     fn test_index_validation() {
         let mut index = Index::new(Uuid::new_v4(), IndexType::Keyword);
-        
+
         // Valid index
         assert!(index.validate().is_ok());
-        
+
         // Invalid: entries without size
         index.entry_count = 100;
         index.size_bytes = 0;
         assert!(index.validate().is_err());
-        
+
         // Fix the issue
         index.size_bytes = 1024;
         assert!(index.validate().is_ok());
@@ -495,7 +493,7 @@ mod tests {
             Index::new(Uuid::new_v4(), IndexType::Keyword),
             Index::new(Uuid::new_v4(), IndexType::Semantic),
         ];
-        
+
         let stats = IndexStats::from_indexes(&indexes);
         assert_eq!(stats.total_indexes, 3);
         assert_eq!(stats.by_type[&IndexType::Keyword], 2);
@@ -506,13 +504,13 @@ mod tests {
     #[test]
     fn test_index_age_and_staleness() {
         let index = Index::new(Uuid::new_v4(), IndexType::Ast);
-        
+
         assert!(index.age().num_milliseconds() >= 0);
         assert!(index.time_since_update().num_milliseconds() >= 0);
-        
+
         // Should not be stale for a very long duration
         assert!(!index.is_stale(chrono::Duration::days(365)));
-        
+
         // Should be stale for a very short duration
         assert!(index.is_stale(chrono::Duration::nanoseconds(1)));
     }

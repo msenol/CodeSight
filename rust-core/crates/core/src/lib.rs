@@ -1,10 +1,10 @@
 //! Core types and traits for Code Intelligence MCP Server
 
-pub mod types;
-pub mod traits;
-pub mod errors;
 pub mod config;
+pub mod errors;
 pub mod models;
+pub mod traits;
+pub mod types;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -95,14 +95,14 @@ pub fn init() -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_config_default() {
         let config = Config::default();
         assert_eq!(config.database_url, "sqlite://./code_intelligence.db");
         assert!(config.max_workers > 0);
     }
-    
+
     #[test]
     fn test_entity_creation() {
         let entity = CodeEntity {
@@ -115,11 +115,11 @@ mod tests {
             content: "fn test_function() {}".to_string(),
             metadata: HashMap::new(),
         };
-        
+
         assert_eq!(entity.name, "test_function");
         assert_eq!(entity.entity_type, EntityType::Function);
     }
-    
+
     #[test]
     fn test_search_query() {
         let query = SearchQuery {
@@ -128,7 +128,7 @@ mod tests {
             limit: 10,
             filters: HashMap::new(),
         };
-        
+
         assert_eq!(query.text, "function");
         assert_eq!(query.limit, 10);
     }

@@ -1,12 +1,12 @@
 //! FFI bindings for Code Intelligence MCP Server
 
+use napi::{Error, Result};
 use napi_derive::napi;
-use napi::{Result, Error};
+use rusqlite::{params, Connection};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
-use rusqlite::{Connection, params};
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[napi(object)]
@@ -53,7 +53,8 @@ pub fn init_engine() -> Result<()> {
             indexed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         [],
-    ).map_err(|e| Error::from_reason(format!("Failed to create table: {}", e)))?;
+    )
+    .map_err(|e| Error::from_reason(format!("Failed to create table: {}", e)))?;
 
     Ok(())
 }
@@ -100,7 +101,10 @@ pub fn parse_file(file_path: String, content: String) -> Result<Vec<CodeEntity>>
         }
 
         // Extract const/let/var declarations
-        if line.trim().starts_with("const ") || line.trim().starts_with("let ") || line.trim().starts_with("var ") {
+        if line.trim().starts_with("const ")
+            || line.trim().starts_with("let ")
+            || line.trim().starts_with("var ")
+        {
             if let Some(name) = extract_variable_name(line) {
                 entities.push(CodeEntity {
                     id: format!("{}:{}:{}", file_path, line_num, name),
@@ -130,28 +134,35 @@ pub fn search_code(query: String, _codebase_path: Option<String>) -> Result<Vec<
 
     // Simple keyword search
     let search_pattern = format!("%{}%", query);
-    let mut stmt = conn.prepare(
-        "SELECT file_path, start_line, content FROM code_entities
+    let mut stmt = conn
+        .prepare(
+            "SELECT file_path, start_line, content FROM code_entities
          WHERE name LIKE ?1 OR content LIKE ?1
          ORDER BY
             CASE WHEN name = ?2 THEN 0
                  WHEN name LIKE ?3 THEN 1
                  ELSE 2 END,
             start_line
-         LIMIT 20"
-    ).map_err(|e| Error::from_reason(format!("Failed to prepare query: {}", e)))?;
+         LIMIT 20",
+        )
+        .map_err(|e| Error::from_reason(format!("Failed to prepare query: {}", e)))?;
 
     let exact_match = query.clone();
     let starts_with = format!("{}%", query);
 
-    let results = stmt.query_map(params![&search_pattern, &exact_match, &starts_with], |row| {
-        Ok(SearchResult {
-            file: row.get(0)?,
-            line: row.get(1)?,
-            content: row.get(2)?,
-            score: calculate_score(&query, &row.get::<_, String>(2)?),
-        })
-    }).map_err(|e| Error::from_reason(format!("Query failed: {}", e)))?;
+    let results = stmt
+        .query_map(
+            params![&search_pattern, &exact_match, &starts_with],
+            |row| {
+                Ok(SearchResult {
+                    file: row.get(0)?,
+                    line: row.get(1)?,
+                    content: row.get(2)?,
+                    score: calculate_score(&query, &row.get::<_, String>(2)?),
+                })
+            },
+        )
+        .map_err(|e| Error::from_reason(format!("Query failed: {}", e)))?;
 
     let mut search_results = Vec::new();
     for r in results.flatten() {
@@ -192,9 +203,11 @@ pub fn index_codebase(path: String) -> Result<String> {
         .map_err(|e| Error::from_reason(format!("Failed to open database: {}", e)))?;
 
     // Clear existing entries for this codebase
-    conn.execute("DELETE FROM code_entities WHERE file_path LIKE ?1",
-                 params![format!("{}%", path)])
-        .map_err(|e| Error::from_reason(format!("Failed to clear old entries: {}", e)))?;
+    conn.execute(
+        "DELETE FROM code_entities WHERE file_path LIKE ?1",
+        params![format!("{}%", path)],
+    )
+    .map_err(|e| Error::from_reason(format!("Failed to clear old entries: {}", e)))?;
 
     let mut indexed_count = 0;
     let extensions = ["js", "ts", "jsx", "tsx", "mjs", "cjs"];
@@ -209,10 +222,11 @@ pub fn index_codebase(path: String) -> Result<String> {
         let path = entry.path();
 
         // Skip node_modules and other ignored paths
-        if path.to_str().unwrap_or("").contains("node_modules") ||
-           path.to_str().unwrap_or("").contains(".git") ||
-           path.to_str().unwrap_or("").contains("dist") ||
-           path.to_str().unwrap_or("").contains("build") {
+        if path.to_str().unwrap_or("").contains("node_modules")
+            || path.to_str().unwrap_or("").contains(".git")
+            || path.to_str().unwrap_or("").contains("dist")
+            || path.to_str().unwrap_or("").contains("build")
+        {
             continue;
         }
 
@@ -337,32 +351,32 @@ fn calculate_score(query: &str, content: &str) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_init_engine() {
         let result = init_engine();
         assert!(result.is_ok());
     }
-    
+
     #[test]
     fn test_parse_file() {
         let result = parse_file("test.ts".to_string(), "console.log('hello');".to_string());
         assert!(result.is_ok());
     }
-    
+
     #[test]
     fn test_search_code() {
         let result = search_code("function".to_string(), None);
         assert!(result.is_ok());
     }
-    
+
     #[test]
     fn test_generate_embedding() {
         let result = generate_embedding("test text".to_string());
         assert!(result.is_ok());
         assert_eq!(result.unwrap().len(), 384);
     }
-    
+
     #[test]
     fn test_index_codebase() {
         let result = index_codebase("/path/to/code".to_string());

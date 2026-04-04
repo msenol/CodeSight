@@ -1,10 +1,10 @@
 //! Task queue for managing indexing operations
 
+use anyhow::Result;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot, Mutex as TokioMutex};
-use anyhow::Result;
 
 use code_intelligence_core::CodeEntity;
 
@@ -75,7 +75,12 @@ impl TaskQueue {
     }
 
     /// Add a task to the queue
-    pub fn add_task(&mut self, file_path: &Path, content: String, priority: TaskPriority) -> Result<String> {
+    pub fn add_task(
+        &mut self,
+        file_path: &Path,
+        content: String,
+        priority: TaskPriority,
+    ) -> Result<String> {
         let task_id = uuid::Uuid::new_v4().to_string();
         let task = IndexingTask {
             id: task_id.clone(),
@@ -87,7 +92,9 @@ impl TaskQueue {
 
         let mut queue = self.queue.lock().unwrap();
         queue.push_back(task.clone());
-        queue.make_contiguous().sort_by(|a, b| b.priority.cmp(&a.priority));
+        queue
+            .make_contiguous()
+            .sort_by(|a, b| b.priority.cmp(&a.priority));
 
         // Send to processor
         if self.task_sender.send(task).is_err() {
@@ -99,7 +106,10 @@ impl TaskQueue {
     }
 
     /// Add multiple tasks to the queue
-    pub fn add_tasks(&mut self, tasks: Vec<(PathBuf, String, TaskPriority)>) -> Result<Vec<String>> {
+    pub fn add_tasks(
+        &mut self,
+        tasks: Vec<(PathBuf, String, TaskPriority)>,
+    ) -> Result<Vec<String>> {
         let mut task_ids = Vec::new();
 
         for (file_path, content, priority) in tasks {
@@ -157,7 +167,8 @@ impl TaskQueue {
     /// Get tasks by priority
     pub fn get_tasks_by_priority(&self, priority: TaskPriority) -> Vec<IndexingTask> {
         let queue = self.queue.lock().unwrap();
-        queue.iter()
+        queue
+            .iter()
             .filter(|task| task.priority == priority)
             .cloned()
             .collect()
@@ -165,7 +176,8 @@ impl TaskQueue {
 
     /// Send a task result
     pub fn send_result(&self, result: TaskResult) -> Result<()> {
-        self.result_sender.send(result)
+        self.result_sender
+            .send(result)
             .map_err(|_| anyhow::anyhow!("Failed to send result"))
     }
 
@@ -187,7 +199,8 @@ impl TaskQueue {
             active_tasks.insert(task_id.to_string(), sender);
         }
 
-        receiver.await
+        receiver
+            .await
             .map_err(|_| anyhow::anyhow!("Failed to receive task result"))
     }
 
@@ -287,7 +300,6 @@ impl TaskProcessor {
         }
     }
 
-  
     /// Check if the processor is running
     pub async fn is_running(&self) -> bool {
         *self.running.lock().await
@@ -308,7 +320,9 @@ mod tests {
         let content = "function test() { return 'hello'; }";
 
         // Add a task
-        let task_id = queue.add_task(&test_file, content.to_string(), TaskPriority::Normal).unwrap();
+        let task_id = queue
+            .add_task(&test_file, content.to_string(), TaskPriority::Normal)
+            .unwrap();
         assert!(!task_id.is_empty());
         assert_eq!(queue.size(), 1);
 
@@ -328,14 +342,35 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
 
         // Add tasks with different priorities
-        queue.add_task(&temp_dir.path().join("low.ts"), "low".to_string(), TaskPriority::Low).unwrap();
-        queue.add_task(&temp_dir.path().join("high.ts"), "high".to_string(), TaskPriority::High).unwrap();
-        queue.add_task(&temp_dir.path().join("normal.ts"), "normal".to_string(), TaskPriority::Normal).unwrap();
+        queue
+            .add_task(
+                &temp_dir.path().join("low.ts"),
+                "low".to_string(),
+                TaskPriority::Low,
+            )
+            .unwrap();
+        queue
+            .add_task(
+                &temp_dir.path().join("high.ts"),
+                "high".to_string(),
+                TaskPriority::High,
+            )
+            .unwrap();
+        queue
+            .add_task(
+                &temp_dir.path().join("normal.ts"),
+                "normal".to_string(),
+                TaskPriority::Normal,
+            )
+            .unwrap();
 
         // High priority should be first
         let tasks = queue.get_tasks_by_priority(TaskPriority::High);
         assert_eq!(tasks.len(), 1);
-        assert_eq!(tasks[0].file_path.file_name().unwrap().to_str().unwrap(), "high.ts");
+        assert_eq!(
+            tasks[0].file_path.file_name().unwrap().to_str().unwrap(),
+            "high.ts"
+        );
     }
 
     #[tokio::test]

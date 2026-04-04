@@ -1,6 +1,6 @@
 //! Plugin model for extensible functionality
 
-use super::{Validate, Timestamped};
+use super::{Timestamped, Validate};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -374,7 +374,8 @@ impl Plugin {
 
     /// Check if the plugin is enabled
     pub fn is_enabled(&self) -> bool {
-        self.config.enabled && !matches!(self.status, PluginStatus::Disabled | PluginStatus::Error(_))
+        self.config.enabled
+            && !matches!(self.status, PluginStatus::Disabled | PluginStatus::Error(_))
     }
 
     /// Check if the plugin is running
@@ -399,52 +400,48 @@ impl Plugin {
         self.stats.execution_count += 1;
         self.stats.total_execution_time_ms += execution_time_ms;
         self.stats.last_execution_time_ms = Some(execution_time_ms);
-        
+
         if success {
             self.stats.success_count += 1;
         } else {
             self.stats.error_count += 1;
             self.stats.last_error = error;
         }
-        
-        self.stats.avg_execution_time_ms = 
+
+        self.stats.avg_execution_time_ms =
             self.stats.total_execution_time_ms as f64 / self.stats.execution_count as f64;
-        
-        self.stats.success_rate = 
+
+        self.stats.success_rate =
             self.stats.success_count as f64 / self.stats.execution_count as f64;
-        
+
         self.record_usage();
     }
 
     /// Check if plugin has a specific capability
     pub fn has_capability(&self, capability_type: &str) -> bool {
-        self.capabilities.iter().any(|cap| {
-            match cap {
-                PluginCapability::ParseFileTypes(_) => capability_type == "parse",
-                PluginCapability::AnalyzePatterns(_) => capability_type == "analyze",
-                PluginCapability::GenerateEmbeddings => capability_type == "embeddings",
-                PluginCapability::EnhanceSearch => capability_type == "search",
-                PluginCapability::FormatCode(_) => capability_type == "format",
-                PluginCapability::LintCode(_) => capability_type == "lint",
-                PluginCapability::GenerateDocumentation => capability_type == "documentation",
-                PluginCapability::CollectMetrics => capability_type == "metrics",
-                PluginCapability::ExportData(_) => capability_type == "export",
-                PluginCapability::AuthenticateUsers => capability_type == "auth",
-                PluginCapability::StoreData => capability_type == "storage",
-                PluginCapability::Custom(name, _) => name == capability_type,
-            }
+        self.capabilities.iter().any(|cap| match cap {
+            PluginCapability::ParseFileTypes(_) => capability_type == "parse",
+            PluginCapability::AnalyzePatterns(_) => capability_type == "analyze",
+            PluginCapability::GenerateEmbeddings => capability_type == "embeddings",
+            PluginCapability::EnhanceSearch => capability_type == "search",
+            PluginCapability::FormatCode(_) => capability_type == "format",
+            PluginCapability::LintCode(_) => capability_type == "lint",
+            PluginCapability::GenerateDocumentation => capability_type == "documentation",
+            PluginCapability::CollectMetrics => capability_type == "metrics",
+            PluginCapability::ExportData(_) => capability_type == "export",
+            PluginCapability::AuthenticateUsers => capability_type == "auth",
+            PluginCapability::StoreData => capability_type == "storage",
+            PluginCapability::Custom(name, _) => name == capability_type,
         })
     }
 
     /// Check if plugin can handle a specific file type
     pub fn can_handle_file_type(&self, file_type: &str) -> bool {
-        self.capabilities.iter().any(|cap| {
-            match cap {
-                PluginCapability::ParseFileTypes(types) => types.contains(&file_type.to_string()),
-                PluginCapability::FormatCode(types) => types.contains(&file_type.to_string()),
-                PluginCapability::LintCode(types) => types.contains(&file_type.to_string()),
-                _ => false,
-            }
+        self.capabilities.iter().any(|cap| match cap {
+            PluginCapability::ParseFileTypes(types) => types.contains(&file_type.to_string()),
+            PluginCapability::FormatCode(types) => types.contains(&file_type.to_string()),
+            PluginCapability::LintCode(types) => types.contains(&file_type.to_string()),
+            _ => false,
         })
     }
 
@@ -465,11 +462,11 @@ impl Plugin {
             if dep.optional {
                 return true;
             }
-            
+
             available_plugins.iter().any(|plugin| {
-                plugin.name == dep.plugin_name && 
-                plugin.is_enabled() &&
-                self.version_satisfies(&plugin.version, &dep.version_requirement)
+                plugin.name == dep.plugin_name
+                    && plugin.is_enabled()
+                    && self.version_satisfies(&plugin.version, &dep.version_requirement)
             })
         })
     }
@@ -538,8 +535,8 @@ impl Default for PluginLimits {
     fn default() -> Self {
         Self {
             max_memory_bytes: Some(100 * 1024 * 1024), // 100MB
-            max_cpu_percent: Some(50.0), // 50%
-            max_execution_time_seconds: Some(300), // 5 minutes
+            max_cpu_percent: Some(50.0),               // 50%
+            max_execution_time_seconds: Some(300),     // 5 minutes
             max_concurrent_operations: Some(10),
             max_file_size_bytes: Some(10 * 1024 * 1024), // 10MB
         }
@@ -682,11 +679,11 @@ mod tests {
         );
 
         assert!(!plugin.is_enabled());
-        
+
         plugin.enable();
         assert!(plugin.is_enabled());
         assert_eq!(plugin.status, PluginStatus::Loaded);
-        
+
         plugin.disable();
         assert!(!plugin.is_enabled());
         assert_eq!(plugin.status, PluginStatus::Disabled);
@@ -733,7 +730,8 @@ mod tests {
             "Advanced parser".to_string(),
             "Author".to_string(),
             PluginType::Parser,
-        ).with_dependency(dependency);
+        )
+        .with_dependency(dependency);
 
         let mut base_plugin = Plugin::new(
             "base-parser".to_string(),
@@ -757,10 +755,7 @@ mod tests {
             PluginType::Parser,
         );
 
-        plugin.set_config_value(
-            "timeout".to_string(),
-            PluginConfigValue::Integer(30),
-        );
+        plugin.set_config_value("timeout".to_string(), PluginConfigValue::Integer(30));
 
         assert!(plugin.get_config_value("timeout").is_some());
         if let Some(PluginConfigValue::Integer(value)) = plugin.get_config_value("timeout") {
@@ -771,7 +766,10 @@ mod tests {
     #[test]
     fn test_plugin_execution_context() {
         let mut input = HashMap::new();
-        input.insert("file_path".to_string(), PluginConfigValue::String("test.rs".to_string()));
+        input.insert(
+            "file_path".to_string(),
+            PluginConfigValue::String("test.rs".to_string()),
+        );
 
         let context = PluginExecutionContext::new("plugin123".to_string(), input)
             .with_timeout(60)

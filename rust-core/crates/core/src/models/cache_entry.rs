@@ -1,6 +1,6 @@
 //! Cache entry model for storing and retrieving cached data
 
-use super::{Validate, Timestamped};
+use super::{Timestamped, Validate};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -236,7 +236,7 @@ impl CacheEntry {
     ) -> Self {
         let size_bytes = data.len();
         let data_hash = Self::calculate_hash(&data);
-        
+
         Self {
             id: Uuid::new_v4().to_string(),
             key,
@@ -326,7 +326,8 @@ impl CacheEntry {
 
     /// Get time since last access
     pub fn time_since_last_access(&self) -> Option<chrono::Duration> {
-        self.last_accessed_at.map(|last_access| Utc::now() - last_access)
+        self.last_accessed_at
+            .map(|last_access| Utc::now() - last_access)
     }
 
     /// Calculate access frequency (accesses per hour)
@@ -402,9 +403,11 @@ impl CacheEntry {
     /// Extend the TTL of this entry
     pub fn extend_ttl(&mut self, additional_seconds: u64) {
         if let Some(expires_at) = self.expires_at {
-            self.expires_at = Some(expires_at + chrono::Duration::seconds(additional_seconds as i64));
+            self.expires_at =
+                Some(expires_at + chrono::Duration::seconds(additional_seconds as i64));
         } else {
-            self.expires_at = Some(Utc::now() + chrono::Duration::seconds(additional_seconds as i64));
+            self.expires_at =
+                Some(Utc::now() + chrono::Duration::seconds(additional_seconds as i64));
         }
         self.updated_at = Utc::now();
     }
@@ -413,7 +416,7 @@ impl CacheEntry {
     fn calculate_hash(data: &[u8]) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         data.hash(&mut hasher);
         format!("{:x}", hasher.finish())
@@ -488,7 +491,7 @@ impl Default for CacheConfig {
         Self {
             max_entries: Some(10000),
             max_size_bytes: Some(100 * 1024 * 1024), // 100MB
-            default_ttl_seconds: Some(3600), // 1 hour
+            default_ttl_seconds: Some(3600),         // 1 hour
             eviction_policy: EvictionPolicy::Lru,
             enable_compression: true,
             compression_type: CompressionType::Gzip,
@@ -655,7 +658,7 @@ mod tests {
 
         assert_eq!(stats.hits, 2);
         assert_eq!(stats.misses, 1);
-        assert!((stats.hit_ratio - 2.0/3.0).abs() < 1e-6);
+        assert!((stats.hit_ratio - 2.0 / 3.0).abs() < 1e-6);
     }
 
     #[test]
@@ -683,7 +686,8 @@ mod tests {
             CacheEntryType::QueryResult,
             b"data".to_vec(),
             "application/json".to_string(),
-        ).with_tags(vec!["search".to_string(), "user123".to_string()]);
+        )
+        .with_tags(vec!["search".to_string(), "user123".to_string()]);
 
         assert!(entry.has_any_tag(&["search".to_string()]));
         assert!(entry.has_all_tags(&["search".to_string(), "user123".to_string()]));
@@ -710,9 +714,9 @@ mod tests {
 
         let old_hash = entry.data_hash.clone();
         let new_data = b"new data".to_vec();
-        
+
         entry.update_data(new_data.clone(), "application/json".to_string());
-        
+
         assert_eq!(entry.data, new_data);
         assert_eq!(entry.content_type, "application/json");
         assert_ne!(entry.data_hash, old_hash);

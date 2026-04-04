@@ -1,11 +1,11 @@
 //! Language-specific parsers for Code Intelligence MCP Server
 
+use crate::CodeEntity;
+use crate::{Language, LanguageParser, ParseResult};
 use anyhow::Result;
 use std::path::Path;
 use std::sync::Mutex;
 use tree_sitter::Parser;
-use crate::{Language, LanguageParser, ParseResult};
-use crate::CodeEntity;
 
 pub struct TypeScriptParser {
     parser: Mutex<Parser>,
@@ -15,7 +15,9 @@ impl TypeScriptParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-typescript is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -27,7 +29,12 @@ impl Default for TypeScriptParser {
 
 impl LanguageParser for TypeScriptParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse TypeScript file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse TypeScript file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -41,7 +48,11 @@ impl LanguageParser for TypeScriptParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement TypeScript entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -60,7 +71,9 @@ impl JavaScriptParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-javascript is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -72,7 +85,12 @@ impl Default for JavaScriptParser {
 
 impl LanguageParser for JavaScriptParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse JavaScript file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse JavaScript file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -86,7 +104,11 @@ impl LanguageParser for JavaScriptParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement JavaScript entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -105,7 +127,9 @@ impl PythonParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-python is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -117,7 +141,12 @@ impl Default for PythonParser {
 
 impl LanguageParser for PythonParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse Python file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse Python file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -131,7 +160,11 @@ impl LanguageParser for PythonParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement Python entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -150,7 +183,9 @@ impl RustParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-rust is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -162,7 +197,12 @@ impl Default for RustParser {
 
 impl LanguageParser for RustParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse Rust file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse Rust file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -176,7 +216,11 @@ impl LanguageParser for RustParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement Rust entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -195,7 +239,9 @@ impl GoParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-go is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -207,7 +253,12 @@ impl Default for GoParser {
 
 impl LanguageParser for GoParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse Go file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse Go file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -221,7 +272,11 @@ impl LanguageParser for GoParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement Go entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -240,7 +295,9 @@ impl JavaParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-java is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -252,7 +309,12 @@ impl Default for JavaParser {
 
 impl LanguageParser for JavaParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse Java file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse Java file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -266,7 +328,11 @@ impl LanguageParser for JavaParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement Java entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -285,7 +351,9 @@ impl CppParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-cpp is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -297,7 +365,12 @@ impl Default for CppParser {
 
 impl LanguageParser for CppParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse C++ file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse C++ file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -311,7 +384,11 @@ impl LanguageParser for CppParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement C++ entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())
@@ -330,7 +407,9 @@ impl CSharpParser {
     pub fn new() -> Self {
         let parser = Parser::new();
         // TODO: Set language when tree-sitter-c-sharp is available
-        Self { parser: Mutex::new(parser) }
+        Self {
+            parser: Mutex::new(parser),
+        }
     }
 }
 
@@ -342,7 +421,12 @@ impl Default for CSharpParser {
 
 impl LanguageParser for CSharpParser {
     fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
-        let tree = self.parser.lock().unwrap().parse(content, None).ok_or_else(|| anyhow::anyhow!("Failed to parse C# file"))?;
+        let tree = self
+            .parser
+            .lock()
+            .unwrap()
+            .parse(content, None)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse C# file"))?;
         let entities = self.extract_entities(&tree, content)?;
 
         Ok(ParseResult {
@@ -356,7 +440,11 @@ impl LanguageParser for CSharpParser {
         })
     }
 
-    fn extract_entities(&self, _tree: &tree_sitter::Tree, _content: &str) -> Result<Vec<CodeEntity>> {
+    fn extract_entities(
+        &self,
+        _tree: &tree_sitter::Tree,
+        _content: &str,
+    ) -> Result<Vec<CodeEntity>> {
         // TODO: Implement C# entity extraction
         // Rule 15: Replace placeholder with proper implementation
         Ok(Vec::new())

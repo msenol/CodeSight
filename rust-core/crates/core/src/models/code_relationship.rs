@@ -78,7 +78,12 @@ impl CodeRelationship {
         confidence: f32,
         context: String,
     ) -> Self {
-        let mut relationship = Self::new(source_entity_id, target_entity_id, relationship_type, confidence);
+        let mut relationship = Self::new(
+            source_entity_id,
+            target_entity_id,
+            relationship_type,
+            confidence,
+        );
         relationship.context = Some(context);
         relationship
     }
@@ -107,7 +112,9 @@ impl CodeRelationship {
 
     /// Check if this relationship has context information
     pub fn has_context(&self) -> bool {
-        self.context.as_ref().is_some_and(|ctx| !ctx.trim().is_empty())
+        self.context
+            .as_ref()
+            .is_some_and(|ctx| !ctx.trim().is_empty())
     }
 
     /// Get a human-readable description of the relationship
@@ -297,12 +304,7 @@ mod tests {
     fn test_new_relationship() {
         let source_id = Uuid::new_v4();
         let target_id = Uuid::new_v4();
-        let rel = CodeRelationship::new(
-            source_id,
-            target_id,
-            RelationshipType::Calls,
-            0.9,
-        );
+        let rel = CodeRelationship::new(source_id, target_id, RelationshipType::Calls, 0.9);
 
         assert_eq!(rel.source_entity_id, source_id);
         assert_eq!(rel.target_entity_id, target_id);
@@ -347,12 +349,8 @@ mod tests {
 
     #[test]
     fn test_relationship_types() {
-        let calls_rel = CodeRelationship::new(
-            Uuid::new_v4(),
-            Uuid::new_v4(),
-            RelationshipType::Calls,
-            0.8,
-        );
+        let calls_rel =
+            CodeRelationship::new(Uuid::new_v4(), Uuid::new_v4(), RelationshipType::Calls, 0.8);
         assert!(calls_rel.is_behavioral());
         assert!(!calls_rel.is_structural());
         assert!(!calls_rel.is_dependency());
@@ -380,12 +378,8 @@ mod tests {
 
     #[test]
     fn test_confidence_levels() {
-        let high_conf = CodeRelationship::new(
-            Uuid::new_v4(),
-            Uuid::new_v4(),
-            RelationshipType::Calls,
-            0.9,
-        );
+        let high_conf =
+            CodeRelationship::new(Uuid::new_v4(), Uuid::new_v4(), RelationshipType::Calls, 0.9);
         assert_eq!(high_conf.confidence_level(), "High");
         assert!(high_conf.is_high_confidence());
 
@@ -403,14 +397,9 @@ mod tests {
     fn test_equivalence_and_merging() {
         let source_id = Uuid::new_v4();
         let target_id = Uuid::new_v4();
-        
-        let mut rel1 = CodeRelationship::new(
-            source_id,
-            target_id,
-            RelationshipType::Calls,
-            0.6,
-        );
-        
+
+        let mut rel1 = CodeRelationship::new(source_id, target_id, RelationshipType::Calls, 0.6);
+
         let rel2 = CodeRelationship::with_context(
             source_id,
             target_id,
@@ -448,18 +437,8 @@ mod tests {
     #[test]
     fn test_relationship_stats() {
         let relationships = vec![
-            CodeRelationship::new(
-                Uuid::new_v4(),
-                Uuid::new_v4(),
-                RelationshipType::Calls,
-                0.9,
-            ),
-            CodeRelationship::new(
-                Uuid::new_v4(),
-                Uuid::new_v4(),
-                RelationshipType::Calls,
-                0.8,
-            ),
+            CodeRelationship::new(Uuid::new_v4(), Uuid::new_v4(), RelationshipType::Calls, 0.9),
+            CodeRelationship::new(Uuid::new_v4(), Uuid::new_v4(), RelationshipType::Calls, 0.8),
             CodeRelationship::new(
                 Uuid::new_v4(),
                 Uuid::new_v4(),

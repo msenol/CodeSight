@@ -1,7 +1,7 @@
 //! Progress tracking for indexing operations
 
+use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
-use serde::{Serialize, Deserialize};
 
 /// Module for serializing Instant types
 mod instant_serde {
@@ -37,7 +37,6 @@ pub struct ProgressTracker {
     pub throughput: f64, // files per second
     pub status: ProgressStatus,
 }
-
 
 /// Progress status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

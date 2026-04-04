@@ -87,7 +87,11 @@ impl Default for IndexingConfig {
         Self {
             max_workers: num_cpus::get(),
             chunk_size: 1000,
-            include_patterns: vec!["**/*.rs".to_string(), "**/*.ts".to_string(), "**/*.js".to_string()],
+            include_patterns: vec![
+                "**/*.rs".to_string(),
+                "**/*.ts".to_string(),
+                "**/*.js".to_string(),
+            ],
             exclude_patterns: vec!["**/node_modules/**".to_string(), "**/target/**".to_string()],
         }
     }

@@ -1,6 +1,6 @@
 //! Index job model for managing indexing operations
 
-use super::{Validate, Timestamped};
+use super::{Timestamped, Validate};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -319,11 +319,7 @@ pub struct ResourceAllocation {
 
 impl IndexJob {
     /// Create a new index job
-    pub fn new(
-        codebase_id: String,
-        job_type: IndexJobType,
-        priority: JobPriority,
-    ) -> Self {
+    pub fn new(codebase_id: String, job_type: IndexJobType, priority: JobPriority) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             codebase_id,
@@ -349,12 +345,20 @@ impl IndexJob {
 
     /// Create an incremental index job
     pub fn incremental_index(codebase_id: String) -> Self {
-        Self::new(codebase_id, IndexJobType::IncrementalIndex, JobPriority::High)
+        Self::new(
+            codebase_id,
+            IndexJobType::IncrementalIndex,
+            JobPriority::High,
+        )
     }
 
     /// Create an embedding generation job
     pub fn embedding_generation(codebase_id: String) -> Self {
-        Self::new(codebase_id, IndexJobType::EmbeddingGeneration, JobPriority::Normal)
+        Self::new(
+            codebase_id,
+            IndexJobType::EmbeddingGeneration,
+            JobPriority::Normal,
+        )
     }
 
     /// Set job configuration
@@ -441,9 +445,9 @@ impl IndexJob {
 
     /// Check if the job can be retried
     pub fn can_retry(&self) -> bool {
-        matches!(self.status, IndexJobStatus::Failed) &&
-        self.stats.retry_count < self.config.max_retries &&
-        self.error.as_ref().map(|e| e.recoverable).unwrap_or(false)
+        matches!(self.status, IndexJobStatus::Failed)
+            && self.stats.retry_count < self.config.max_retries
+            && self.error.as_ref().map(|e| e.recoverable).unwrap_or(false)
     }
 
     /// Update job progress
@@ -456,11 +460,11 @@ impl IndexJob {
         self.progress.processed_items = processed_items;
         self.progress.total_items = total_items;
         self.progress.current_phase = current_phase;
-        
+
         if total_items > 0 {
             self.progress.percentage = (processed_items as f64 / total_items as f64) * 100.0;
         }
-        
+
         self.calculate_processing_rate();
         self.estimate_remaining_time();
         self.updated_at = Utc::now();
@@ -471,7 +475,8 @@ impl IndexJob {
         if let Some(started_at) = self.started_at {
             let elapsed_seconds = (Utc::now() - started_at).num_seconds() as f64;
             if elapsed_seconds > 0.0 {
-                self.progress.processing_rate = self.progress.processed_items as f64 / elapsed_seconds;
+                self.progress.processing_rate =
+                    self.progress.processed_items as f64 / elapsed_seconds;
                 self.stats.avg_processing_rate = self.progress.processing_rate;
             }
         }
@@ -481,7 +486,7 @@ impl IndexJob {
     fn estimate_remaining_time(&mut self) {
         if self.progress.processing_rate > 0.0 {
             let remaining_items = self.progress.total_items - self.progress.processed_items;
-            self.progress.estimated_remaining_seconds = 
+            self.progress.estimated_remaining_seconds =
                 Some((remaining_items as f64 / self.progress.processing_rate) as u64);
         }
     }
@@ -489,14 +494,17 @@ impl IndexJob {
     /// Calculate total execution time
     fn calculate_total_execution_time(&mut self) {
         if let (Some(started_at), Some(completed_at)) = (self.started_at, self.completed_at) {
-            self.stats.total_execution_time_ms = 
+            self.stats.total_execution_time_ms =
                 (completed_at - started_at).num_milliseconds() as u64;
         }
     }
 
     /// Check if the job is running
     pub fn is_running(&self) -> bool {
-        matches!(self.status, IndexJobStatus::Running | IndexJobStatus::Retrying)
+        matches!(
+            self.status,
+            IndexJobStatus::Running | IndexJobStatus::Retrying
+        )
     }
 
     /// Check if the job is completed
@@ -629,7 +637,9 @@ impl JobQueueEntry {
 
     /// Check if all dependencies are satisfied
     pub fn dependencies_satisfied(&self, completed_jobs: &[String]) -> bool {
-        self.dependencies.iter().all(|dep| completed_jobs.contains(dep))
+        self.dependencies
+            .iter()
+            .all(|dep| completed_jobs.contains(dep))
     }
 }
 
@@ -703,22 +713,26 @@ mod tests {
         assert_eq!(job.status, IndexJobStatus::Queued);
 
         let validation_result = job.validate();
-        assert!(validation_result.is_ok(), "Job validation should pass, got error: {:?}", validation_result.err());
+        assert!(
+            validation_result.is_ok(),
+            "Job validation should pass, got error: {:?}",
+            validation_result.err()
+        );
     }
 
     #[test]
     fn test_job_lifecycle() {
         let mut job = IndexJob::full_index("codebase123".to_string());
-        
+
         assert_eq!(job.status, IndexJobStatus::Queued);
         assert!(!job.is_running());
         assert!(!job.is_completed());
-        
+
         job.start();
         assert_eq!(job.status, IndexJobStatus::Running);
         assert!(job.is_running());
         assert!(!job.is_completed());
-        
+
         job.complete();
         assert_eq!(job.status, IndexJobStatus::Completed);
         assert!(!job.is_running());
@@ -730,18 +744,18 @@ mod tests {
     fn test_job_failure_and_retry() {
         let mut job = IndexJob::incremental_index("codebase123".to_string());
         job.config.max_retries = 3;
-        
+
         let error = JobError::recoverable(
             "PARSE_ERROR".to_string(),
             "Failed to parse file".to_string(),
         );
-        
+
         job.start();
         job.fail(error);
-        
+
         assert_eq!(job.status, IndexJobStatus::Failed);
         assert!(job.can_retry());
-        
+
         job.retry();
         assert_eq!(job.status, IndexJobStatus::Retrying);
         assert_eq!(job.stats.retry_count, 1);
@@ -751,9 +765,9 @@ mod tests {
     fn test_job_progress_tracking() {
         let mut job = IndexJob::full_index("codebase123".to_string());
         job.start();
-        
+
         job.update_progress(50, 100, JobPhase::Parsing);
-        
+
         assert_eq!(job.progress.processed_items, 50);
         assert_eq!(job.progress.total_items, 100);
         assert_eq!(job.progress.percentage, 50.0);
@@ -771,15 +785,15 @@ mod tests {
     #[test]
     fn test_job_tags() {
         let mut job = IndexJob::full_index("codebase123".to_string());
-        
+
         assert!(!job.has_tag("urgent"));
-        
+
         job.add_tag("urgent".to_string());
         assert!(job.has_tag("urgent"));
-        
+
         job.add_tag("manual".to_string());
         assert_eq!(job.metadata.tags.len(), 2);
-        
+
         job.remove_tag("urgent");
         assert!(!job.has_tag("urgent"));
         assert!(job.has_tag("manual"));
@@ -788,21 +802,21 @@ mod tests {
     #[test]
     fn test_job_custom_metadata() {
         let mut job = IndexJob::full_index("codebase123".to_string());
-        
+
         job.set_custom_metadata("user_id".to_string(), "user123".to_string());
-        assert_eq!(job.get_custom_metadata("user_id"), Some(&"user123".to_string()));
+        assert_eq!(
+            job.get_custom_metadata("user_id"),
+            Some(&"user123".to_string())
+        );
         assert_eq!(job.get_custom_metadata("nonexistent"), None);
     }
 
     #[test]
     fn test_job_error() {
-        let error = JobError::recoverable(
-            "IO_ERROR".to_string(),
-            "File not found".to_string(),
-        )
-        .with_details("The specified file does not exist".to_string())
-        .with_file_context("src/main.rs".to_string(), Some(42));
-        
+        let error = JobError::recoverable("IO_ERROR".to_string(), "File not found".to_string())
+            .with_details("The specified file does not exist".to_string())
+            .with_file_context("src/main.rs".to_string(), Some(42));
+
         assert_eq!(error.code, "IO_ERROR");
         assert!(error.recoverable);
         assert_eq!(error.file_path, Some("src/main.rs".to_string()));
@@ -814,56 +828,65 @@ mod tests {
         let entry = JobQueueEntry::new("job123".to_string(), JobPriority::High)
             .with_dependencies(vec!["job456".to_string()])
             .with_parallel_execution(false);
-        
+
         assert_eq!(entry.job_id, "job123");
         assert_eq!(entry.priority, JobPriority::High);
         assert!(!entry.parallel_execution);
-        
+
         assert!(!entry.dependencies_satisfied(&[]));
         assert!(entry.dependencies_satisfied(&["job456".to_string()]));
     }
 
     #[test]
     fn test_job_validation() {
-        let mut job = IndexJob::new(
-            "".to_string(),
-            IndexJobType::FullIndex,
-            JobPriority::Normal,
-        );
+        let mut job = IndexJob::new("".to_string(), IndexJobType::FullIndex, JobPriority::Normal);
 
         // Set valid config values initially
         job.config.batch_size = 100;
         job.config.parallel_workers = 4;
 
         let validation_result = job.validate();
-        assert!(validation_result.is_err(), "Empty codebase_id should fail validation");
+        assert!(
+            validation_result.is_err(),
+            "Empty codebase_id should fail validation"
+        );
 
         job.codebase_id = "valid_id".to_string();
         let validation_result = job.validate();
-        assert!(validation_result.is_ok(), "Valid codebase_id should pass validation, got error: {:?}", validation_result.err());
+        assert!(
+            validation_result.is_ok(),
+            "Valid codebase_id should pass validation, got error: {:?}",
+            validation_result.err()
+        );
 
         // Test batch_size validation
         job.config.batch_size = 0;
         let validation_result = job.validate();
-        assert!(validation_result.is_err(), "Zero batch_size should fail validation");
+        assert!(
+            validation_result.is_err(),
+            "Zero batch_size should fail validation"
+        );
 
         job.config.batch_size = 100;
         job.progress.percentage = 150.0;
         let validation_result = job.validate();
-        assert!(validation_result.is_err(), "Progress > 100% should fail validation");
+        assert!(
+            validation_result.is_err(),
+            "Progress > 100% should fail validation"
+        );
     }
 
     #[test]
     fn test_job_duration() {
         let mut job = IndexJob::full_index("codebase123".to_string());
-        
+
         assert!(job.duration().is_none());
-        
+
         job.start();
         let duration = job.duration();
         assert!(duration.is_some());
         assert!(duration.unwrap().num_seconds() >= 0);
-        
+
         job.complete();
         let final_duration = job.duration();
         assert!(final_duration.is_some());
@@ -874,11 +897,11 @@ mod tests {
         let full_job = IndexJob::full_index("codebase123".to_string());
         assert_eq!(full_job.job_type, IndexJobType::FullIndex);
         assert_eq!(full_job.priority, JobPriority::Normal);
-        
+
         let incremental_job = IndexJob::incremental_index("codebase123".to_string());
         assert_eq!(incremental_job.job_type, IndexJobType::IncrementalIndex);
         assert_eq!(incremental_job.priority, JobPriority::High);
-        
+
         let embedding_job = IndexJob::embedding_generation("codebase123".to_string());
         assert_eq!(embedding_job.job_type, IndexJobType::EmbeddingGeneration);
         assert_eq!(embedding_job.priority, JobPriority::Normal);

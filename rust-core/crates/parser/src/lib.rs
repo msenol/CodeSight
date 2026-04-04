@@ -10,9 +10,9 @@ use std::collections::HashMap;
 use std::path::Path;
 use uuid::Uuid;
 
+pub mod extractors;
 pub mod languages;
 pub mod parsers;
-pub mod extractors;
 pub mod utils;
 
 /// Supported programming languages
@@ -133,8 +133,14 @@ impl CodeParser {
         let mut parsers: HashMap<Language, Box<dyn LanguageParser>> = HashMap::new();
 
         // Initialize parsers for each language
-        parsers.insert(Language::TypeScript, Box::new(parsers::TypeScriptParser::new()));
-        parsers.insert(Language::JavaScript, Box::new(parsers::JavaScriptParser::new()));
+        parsers.insert(
+            Language::TypeScript,
+            Box::new(parsers::TypeScriptParser::new()),
+        );
+        parsers.insert(
+            Language::JavaScript,
+            Box::new(parsers::JavaScriptParser::new()),
+        );
         parsers.insert(Language::Python, Box::new(parsers::PythonParser::new()));
         parsers.insert(Language::Rust, Box::new(parsers::RustParser::new()));
         parsers.insert(Language::Go, Box::new(parsers::GoParser::new()));
@@ -144,25 +150,25 @@ impl CodeParser {
 
         Self { parsers }
     }
-    
+
     /// Parse a file and extract code entities
     pub fn parse_file(&self, file_path: &Path, content: &str) -> Result<ParseResult> {
         let language = self.detect_language(file_path)?;
-        
+
         if let Some(parser) = self.parsers.get(&language) {
             parser.parse_file(file_path, content)
         } else {
             anyhow::bail!("Unsupported language: {:?}", language)
         }
     }
-    
+
     /// Detect programming language from file extension
     pub fn detect_language(&self, file_path: &Path) -> Result<Language> {
         let extension = file_path
             .extension()
             .and_then(|ext| ext.to_str())
             .ok_or_else(|| anyhow::anyhow!("No file extension found"))?;
-        
+
         match extension {
             "ts" | "tsx" => Ok(Language::TypeScript),
             "js" | "jsx" | "mjs" => Ok(Language::JavaScript),
@@ -175,7 +181,7 @@ impl CodeParser {
             _ => anyhow::bail!("Unsupported file extension: {}", extension),
         }
     }
-    
+
     /// Get supported languages
     pub fn supported_languages(&self) -> Vec<Language> {
         self.parsers.keys().cloned().collect()
@@ -184,14 +190,14 @@ impl CodeParser {
     /// Get all supported file extensions
     pub fn all_supported_extensions() -> Vec<&'static str> {
         vec![
-            "ts", "tsx",      // TypeScript
+            "ts", "tsx", // TypeScript
             "js", "jsx", "mjs", // JavaScript
-            "py", "pyw",      // Python
-            "rs",             // Rust
-            "go",             // Go
-            "java",           // Java
-            "cpp", "cc", "cxx", "c++", "hpp", "h", // C++
-            "cs",             // C#
+            "py", "pyw",  // Python
+            "rs",   // Rust
+            "go",   // Go
+            "java", // Java
+            "cpp", "cc", "cxx", "c++", "hpp", "h",  // C++
+            "cs", // C#
         ]
     }
 }
@@ -206,21 +212,45 @@ impl Default for CodeParser {
 mod tests {
     use super::*;
     use std::path::PathBuf;
-    
+
     #[test]
     fn test_language_detection() {
         let parser = CodeParser::new();
-        
-        assert_eq!(parser.detect_language(&PathBuf::from("test.ts")).unwrap(), Language::TypeScript);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.js")).unwrap(), Language::JavaScript);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.py")).unwrap(), Language::Python);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.rs")).unwrap(), Language::Rust);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.go")).unwrap(), Language::Go);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.java")).unwrap(), Language::Java);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.cpp")).unwrap(), Language::Cpp);
-        assert_eq!(parser.detect_language(&PathBuf::from("test.cs")).unwrap(), Language::CSharp);
+
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.ts")).unwrap(),
+            Language::TypeScript
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.js")).unwrap(),
+            Language::JavaScript
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.py")).unwrap(),
+            Language::Python
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.rs")).unwrap(),
+            Language::Rust
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.go")).unwrap(),
+            Language::Go
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.java")).unwrap(),
+            Language::Java
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.cpp")).unwrap(),
+            Language::Cpp
+        );
+        assert_eq!(
+            parser.detect_language(&PathBuf::from("test.cs")).unwrap(),
+            Language::CSharp
+        );
     }
-    
+
     #[test]
     fn test_supported_languages() {
         let parser = CodeParser::new();
@@ -276,4 +306,6 @@ pub use languages::all_supported_extensions;
 
 // Type aliases for clarity
 pub type ParserEntityType = EntityType;
-pub use code_intelligence_core::models::code_entity::{EntityType as CoreEntityType, CodeEntity as CoreCodeEntity};
+pub use code_intelligence_core::models::code_entity::{
+    CodeEntity as CoreCodeEntity, EntityType as CoreEntityType,
+};

@@ -1,13 +1,13 @@
 //! Entity extraction from parsed code
 
-use std::collections::HashMap;
-use regex::Regex;
 use anyhow::Result;
-use uuid::Uuid;
 use chrono::Utc;
+use regex::Regex;
+use std::collections::HashMap;
+use uuid::Uuid;
 
-use code_intelligence_core::models::{CodeEntity, EntityType, Visibility};
 use crate::Language;
+use code_intelligence_core::models::{CodeEntity, EntityType, Visibility};
 
 /// Entity extraction patterns for different languages
 pub struct EntityExtractor {
@@ -28,36 +28,49 @@ impl EntityExtractor {
         let mut patterns = HashMap::new();
 
         // TypeScript/JavaScript patterns
-        patterns.insert(Language::TypeScript, LanguagePatterns {
-            function: vec![
-                r"(?m)^(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*(?::\s*\w+\s*)?\{".to_string(),
-                r"(?m)^(\w+)\s*=\s*(?:async\s+)?function\s*\([^)]*\)\s*(?::\s*\w+\s*)?\{".to_string(),
-                r"(?m)^(?:async\s+)?(\w+)\s*\([^)]*\)\s*(?::\s*\w+\s*)?\s*=>".to_string(),
-                r"(?m)^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(\w+)".to_string(),
-            ],
-            class: vec![
-                r"(?m)^class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{".to_string(),
-                r"(?m)^interface\s+(\w+)(?:\s+extends\s+\w+(?:\s*,\s*\w+)*)?\s*\{".to_string(),
-                r"(?m)^type\s+(\w+)\s*=".to_string(),
-                r"(?m)^enum\s+(\w+)\s*\{".to_string(),
-            ],
-            variable: vec![
-                r"(?m)^(?:const|let|var)\s+(\w+)\s*[:=]".to_string(),
-                r"(?m)^(?:private|public|protected)?\s*(?:readonly\s+)?(\w+)\s*[:=]".to_string(),
-            ],
-            imports: vec![
-                r#"import\s+.*?\s+from\s+['"]([^'"]+)['"]"#.to_string(),
-                r#"import\s+['"]([^'"]+)['"]"#.to_string(),
-                r#"require\(['"]([^'"]+)['"]\)"#.to_string(),
-            ],
-        });
+        patterns.insert(
+            Language::TypeScript,
+            LanguagePatterns {
+                function: vec![
+                    r"(?m)^(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*(?::\s*\w+\s*)?\{"
+                        .to_string(),
+                    r"(?m)^(\w+)\s*=\s*(?:async\s+)?function\s*\([^)]*\)\s*(?::\s*\w+\s*)?\{"
+                        .to_string(),
+                    r"(?m)^(?:async\s+)?(\w+)\s*\([^)]*\)\s*(?::\s*\w+\s*)?\s*=>".to_string(),
+                    r"(?m)^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+(\w+)".to_string(),
+                ],
+                class: vec![
+                    r"(?m)^class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{".to_string(),
+                    r"(?m)^interface\s+(\w+)(?:\s+extends\s+\w+(?:\s*,\s*\w+)*)?\s*\{".to_string(),
+                    r"(?m)^type\s+(\w+)\s*=".to_string(),
+                    r"(?m)^enum\s+(\w+)\s*\{".to_string(),
+                ],
+                variable: vec![
+                    r"(?m)^(?:const|let|var)\s+(\w+)\s*[:=]".to_string(),
+                    r"(?m)^(?:private|public|protected)?\s*(?:readonly\s+)?(\w+)\s*[:=]"
+                        .to_string(),
+                ],
+                imports: vec![
+                    r#"import\s+.*?\s+from\s+['"]([^'"]+)['"]"#.to_string(),
+                    r#"import\s+['"]([^'"]+)['"]"#.to_string(),
+                    r#"require\(['"]([^'"]+)['"]\)"#.to_string(),
+                ],
+            },
+        );
 
         Self { patterns }
     }
 
     /// Extract entities from code content
-    pub fn extract_entities(&self, content: &str, language: Language, file_path: &str) -> Result<Vec<CodeEntity>> {
-        let patterns = self.patterns.get(&language)
+    pub fn extract_entities(
+        &self,
+        content: &str,
+        language: Language,
+        file_path: &str,
+    ) -> Result<Vec<CodeEntity>> {
+        let patterns = self
+            .patterns
+            .get(&language)
             .ok_or_else(|| anyhow::anyhow!("Unsupported language: {:?}", language))?;
 
         let mut entities = Vec::new();
@@ -189,7 +202,9 @@ function testFunction(param: string): number {
 }
         "#;
 
-        let entities = extractor.extract_entities(ts_code, Language::TypeScript, "test.ts").unwrap();
+        let entities = extractor
+            .extract_entities(ts_code, Language::TypeScript, "test.ts")
+            .unwrap();
         assert_eq!(entities.len(), 1);
         assert_eq!(entities[0].name, "testFunction");
         assert_eq!(entities[0].entity_type, EntityType::Function);
@@ -208,7 +223,9 @@ class TestClass {
 }
         "#;
 
-        let entities = extractor.extract_entities(ts_code, Language::TypeScript, "test.ts").unwrap();
+        let entities = extractor
+            .extract_entities(ts_code, Language::TypeScript, "test.ts")
+            .unwrap();
         assert_eq!(entities.len(), 1);
         assert_eq!(entities[0].name, "TestClass");
         assert_eq!(entities[0].entity_type, EntityType::Class);
@@ -222,7 +239,9 @@ import { useState } from 'react';
 import axios from 'axios';
         "#;
 
-        let entities = extractor.extract_entities(ts_code, Language::TypeScript, "test.ts").unwrap();
+        let entities = extractor
+            .extract_entities(ts_code, Language::TypeScript, "test.ts")
+            .unwrap();
         assert_eq!(entities.len(), 2);
         assert!(entities.iter().any(|e| e.name == "react"));
         assert!(entities.iter().any(|e| e.name == "axios"));

@@ -1,14 +1,14 @@
 //! Core indexing engine implementation
 
 use anyhow::Result;
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::{IndexingConfig, IndexingProgress};
 use code_intelligence_core::{CodeEntity, EntityType as CoreEntityType};
-use code_intelligence_parser::{CodeParser, CodeEntity as ParserCodeEntity};
+use code_intelligence_parser::{CodeEntity as ParserCodeEntity, CodeParser};
 
 /// Core indexing engine
 pub struct Engine {
@@ -59,7 +59,10 @@ impl Engine {
     }
 
     /// Convert parser entity type to core entity type
-    fn convert_entity_type(&self, parser_type: code_intelligence_parser::EntityType) -> CoreEntityType {
+    fn convert_entity_type(
+        &self,
+        parser_type: code_intelligence_parser::EntityType,
+    ) -> CoreEntityType {
         match parser_type {
             code_intelligence_parser::EntityType::Function => CoreEntityType::Function,
             code_intelligence_parser::EntityType::Class => CoreEntityType::Class,
@@ -73,7 +76,11 @@ impl Engine {
     }
 
     /// Convert parser entity to core entity
-    fn convert_parser_to_core_entity(&self, parser_entity: ParserCodeEntity, file_path: &Path) -> CodeEntity {
+    fn convert_parser_to_core_entity(
+        &self,
+        parser_entity: ParserCodeEntity,
+        file_path: &Path,
+    ) -> CodeEntity {
         // Convert parser entity to core entity using the simpler structure
         CodeEntity {
             id: Uuid::new_v4(),
@@ -91,8 +98,14 @@ impl Engine {
                 if let Some(documentation) = parser_entity.documentation {
                     metadata.insert("documentation".to_string(), documentation);
                 }
-                metadata.insert("start_column".to_string(), parser_entity.start_column.to_string());
-                metadata.insert("end_column".to_string(), parser_entity.end_column.to_string());
+                metadata.insert(
+                    "start_column".to_string(),
+                    parser_entity.start_column.to_string(),
+                );
+                metadata.insert(
+                    "end_column".to_string(),
+                    parser_entity.end_column.to_string(),
+                );
                 metadata
             },
         }
@@ -182,10 +195,15 @@ impl Engine {
 
         for entity in indexed_entities.values() {
             // Count by entity type
-            *by_type.entry(format!("{:?}", entity.entity_type)).or_insert(0) += 1;
+            *by_type
+                .entry(format!("{:?}", entity.entity_type))
+                .or_insert(0) += 1;
 
             // Count by language (simplified - would need to detect from file path)
-            if let Some(extension) = Path::new(&entity.file_path).extension().and_then(|ext| ext.to_str()) {
+            if let Some(extension) = Path::new(&entity.file_path)
+                .extension()
+                .and_then(|ext| ext.to_str())
+            {
                 *by_language.entry(extension.to_string()).or_insert(0) += 1;
             }
         }

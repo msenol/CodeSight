@@ -1,6 +1,6 @@
 //! Query model for search and filtering operations
 
-use super::{Validate, Timestamped};
+use super::{Timestamped, Validate};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -188,11 +188,7 @@ pub struct QueryResponse {
 
 impl Query {
     /// Create a new query
-    pub fn new(
-        text: String,
-        query_type: QueryType,
-        initiator: String,
-    ) -> Self {
+    pub fn new(text: String, query_type: QueryType, initiator: String) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             text,
@@ -361,11 +357,7 @@ impl Default for QueryOptions {
 
 impl QueryResult {
     /// Create a new query result
-    pub fn new(
-        entity_id: String,
-        score: f32,
-        file_path: String,
-    ) -> Self {
+    pub fn new(entity_id: String, score: f32, file_path: String) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             entity_id,
@@ -489,7 +481,7 @@ mod tests {
     #[test]
     fn test_query_creation() {
         let query = Query::semantic("test function".to_string(), "user123".to_string());
-        
+
         assert_eq!(query.text, "test function");
         assert_eq!(query.query_type, QueryType::Semantic);
         assert_eq!(query.context.initiator, "user123");
@@ -505,7 +497,10 @@ mod tests {
             .with_snippets(Some(300))
             .sort_by(SortBy::Relevance);
 
-        assert_eq!(query.filters.languages, Some(vec!["rust".to_string(), "typescript".to_string()]));
+        assert_eq!(
+            query.filters.languages,
+            Some(vec!["rust".to_string(), "typescript".to_string()])
+        );
         assert_eq!(query.limit, Some(100));
         assert!(query.options.include_snippets);
         assert_eq!(query.options.max_snippet_length, Some(300));
@@ -532,7 +527,7 @@ mod tests {
     fn test_query_execution() {
         let mut query = Query::semantic("test".to_string(), "user".to_string());
         assert!(!query.is_executed());
-        
+
         query.mark_executed();
         assert!(query.is_executed());
         assert!(query.age_seconds() >= 0);
@@ -540,14 +535,10 @@ mod tests {
 
     #[test]
     fn test_query_result() {
-        let result = QueryResult::new(
-            "entity123".to_string(),
-            0.95,
-            "src/main.rs".to_string(),
-        )
-        .with_snippet("fn main() {}".to_string())
-        .with_position(10, Some(5))
-        .with_metadata("language".to_string(), "rust".to_string());
+        let result = QueryResult::new("entity123".to_string(), 0.95, "src/main.rs".to_string())
+            .with_snippet("fn main() {}".to_string())
+            .with_position(10, Some(5))
+            .with_metadata("language".to_string(), "rust".to_string());
 
         assert_eq!(result.entity_id, "entity123");
         assert_eq!(result.score, 0.95);
@@ -580,9 +571,18 @@ mod tests {
 
         assert!(query.has_filters());
         assert_eq!(query.filters.languages, Some(vec!["rust".to_string()]));
-        assert_eq!(query.filters.file_paths, Some(vec!["src/**/*.rs".to_string()]));
-        assert_eq!(query.filters.entity_types, Some(vec!["function".to_string()]));
-        assert_eq!(query.filters.codebase_ids, Some(vec!["codebase1".to_string()]));
+        assert_eq!(
+            query.filters.file_paths,
+            Some(vec!["src/**/*.rs".to_string()])
+        );
+        assert_eq!(
+            query.filters.entity_types,
+            Some(vec!["function".to_string()])
+        );
+        assert_eq!(
+            query.filters.codebase_ids,
+            Some(vec!["codebase1".to_string()])
+        );
     }
 
     #[test]

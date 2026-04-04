@@ -1,6 +1,6 @@
 //! Embedding model for vector representations of code
 
-use super::{Validate, Timestamped};
+use super::{Timestamped, Validate};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -240,7 +240,9 @@ impl Embedding {
             ));
         }
 
-        let dot_product: f32 = self.vector.iter()
+        let dot_product: f32 = self
+            .vector
+            .iter()
             .zip(other.vector.iter())
             .map(|(a, b)| a * b)
             .sum();
@@ -263,7 +265,9 @@ impl Embedding {
             ));
         }
 
-        let distance: f32 = self.vector.iter()
+        let distance: f32 = self
+            .vector
+            .iter()
             .zip(other.vector.iter())
             .map(|(a, b)| (a - b).powi(2))
             .sum::<f32>()
@@ -280,7 +284,9 @@ impl Embedding {
             ));
         }
 
-        let dot_product: f32 = self.vector.iter()
+        let dot_product: f32 = self
+            .vector
+            .iter()
             .zip(other.vector.iter())
             .map(|(a, b)| a * b)
             .sum();
@@ -476,9 +482,9 @@ impl EmbeddingRequest {
             return false;
         }
 
-        self.texts.iter().all(|input| {
-            self.model.supports_input_length(input.text.len())
-        })
+        self.texts
+            .iter()
+            .all(|input| self.model.supports_input_length(input.text.len()))
     }
 }
 
@@ -648,10 +654,7 @@ mod tests {
             metadata: EmbeddingMetadata::default(),
         };
 
-        let request = EmbeddingRequest::new(
-            vec![input],
-            EmbeddingModel::openai_ada_002(),
-        );
+        let request = EmbeddingRequest::new(vec![input], EmbeddingModel::openai_ada_002());
 
         assert!(request.is_valid_for_model());
         assert_eq!(request.total_text_length(), 13);
@@ -686,7 +689,7 @@ mod tests {
     fn test_embedding_compatibility() {
         let model1 = EmbeddingModel::openai_ada_002();
         let model2 = EmbeddingModel::openai_3_large();
-        
+
         let embedding = Embedding::new(
             "entity".to_string(),
             EmbeddingEntityType::Function,

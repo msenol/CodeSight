@@ -1,15 +1,15 @@
 //! High-performance indexing engine for Code Intelligence MCP Server
 
 pub mod engine;
-pub mod worker;
 pub mod progress;
 pub mod queue;
+pub mod worker;
 
 use anyhow::Result;
+use code_intelligence_core::CodeEntity;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use code_intelligence_core::CodeEntity;
 
 /// Main indexing engine
 pub struct IndexingEngine {
@@ -80,10 +80,7 @@ impl IndexingEngine {
     pub fn with_config(config: IndexingConfig) -> Self {
         let engine = Arc::new(RwLock::new(engine::Engine::new(config.clone())));
 
-        Self {
-            engine,
-            config,
-        }
+        Self { engine, config }
     }
 
     /// Index a codebase at the given path
@@ -135,13 +132,22 @@ impl IndexingEngine {
 
             // Check ignore patterns
             let path_str = path.to_string_lossy();
-            if self.config.ignore_patterns.iter().any(|pattern| path_str.contains(pattern)) {
+            if self
+                .config
+                .ignore_patterns
+                .iter()
+                .any(|pattern| path_str.contains(pattern))
+            {
                 continue;
             }
 
             // Check file extension
             if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
-                if !self.config.file_extensions.contains(&extension.to_lowercase()) {
+                if !self
+                    .config
+                    .file_extensions
+                    .contains(&extension.to_lowercase())
+                {
                     continue;
                 }
             } else {
@@ -155,7 +161,11 @@ impl IndexingEngine {
     }
 
     /// Process files sequentially
-    async fn process_files_sequential(&self, files: Vec<std::path::PathBuf>, progress: &mut IndexingProgress) -> Result<()> {
+    async fn process_files_sequential(
+        &self,
+        files: Vec<std::path::PathBuf>,
+        progress: &mut IndexingProgress,
+    ) -> Result<()> {
         for file in files {
             progress.current_file = Some(file.to_string_lossy().to_string());
 
@@ -164,7 +174,9 @@ impl IndexingEngine {
                     progress.total_entities += entities.len();
                 }
                 Err(e) => {
-                    progress.errors.push(format!("Failed to process {}: {}", file.display(), e));
+                    progress
+                        .errors
+                        .push(format!("Failed to process {}: {}", file.display(), e));
                 }
             }
 
@@ -176,7 +188,11 @@ impl IndexingEngine {
     }
 
     /// Process files in parallel
-    async fn process_files_parallel(&self, files: Vec<std::path::PathBuf>, progress: &mut IndexingProgress) -> Result<()> {
+    async fn process_files_parallel(
+        &self,
+        files: Vec<std::path::PathBuf>,
+        progress: &mut IndexingProgress,
+    ) -> Result<()> {
         use futures::stream::{self, StreamExt};
 
         let batch_size = self.config.batch_size;
@@ -191,7 +207,14 @@ impl IndexingEngine {
                         let content = match tokio::fs::read_to_string(&file).await {
                             Ok(content) => content,
                             Err(e) => {
-                                results.push((file.clone(), Err(anyhow::anyhow!("Failed to read file {}: {}", file.display(), e))));
+                                results.push((
+                                    file.clone(),
+                                    Err(anyhow::anyhow!(
+                                        "Failed to read file {}: {}",
+                                        file.display(),
+                                        e
+                                    )),
+                                ));
                                 continue;
                             }
                         };
@@ -220,7 +243,11 @@ impl IndexingEngine {
                         progress.total_entities += entities.len();
                     }
                     Err(e) => {
-                        progress.errors.push(format!("Failed to process {}: {}", file.display(), e));
+                        progress.errors.push(format!(
+                            "Failed to process {}: {}",
+                            file.display(),
+                            e
+                        ));
                     }
                 }
 
@@ -234,7 +261,8 @@ impl IndexingEngine {
 
     /// Process a single file
     async fn process_single_file(&self, file_path: &Path) -> Result<Vec<CodeEntity>> {
-        let content = tokio::fs::read_to_string(file_path).await
+        let content = tokio::fs::read_to_string(file_path)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to read file {}: {}", file_path.display(), e))?;
 
         let engine = self.engine.write().await;
@@ -246,7 +274,9 @@ impl IndexingEngine {
         if progress.processed_files > 0 {
             let elapsed = progress.start_time.elapsed();
             let avg_time_per_file = elapsed / progress.processed_files as u32;
-            let remaining_files = progress.total_files.saturating_sub(progress.processed_files);
+            let remaining_files = progress
+                .total_files
+                .saturating_sub(progress.processed_files);
             progress.estimated_time_remaining = Some(avg_time_per_file * remaining_files as u32);
         }
     }
@@ -297,7 +327,9 @@ mod tests {
     async fn test_indexing_engine() {
         let temp_dir = TempDir::new().unwrap();
         let test_file = temp_dir.path().join("test.ts");
-        tokio::fs::write(&test_file, "function test() { return 'hello'; }").await.unwrap();
+        tokio::fs::write(&test_file, "function test() { return 'hello'; }")
+            .await
+            .unwrap();
 
         let engine = IndexingEngine::new();
         let progress = engine.index_codebase(temp_dir.path()).await.unwrap();
@@ -322,7 +354,12 @@ mod tests {
         // Create test files
         for i in 0..20 {
             let test_file = temp_dir.path().join(format!("test_{}.ts", i));
-            tokio::fs::write(&test_file, format!("function test_{}() {{ return 'hello'; }}", i)).await.unwrap();
+            tokio::fs::write(
+                &test_file,
+                format!("function test_{}() {{ return 'hello'; }}", i),
+            )
+            .await
+            .unwrap();
         }
 
         let mut config = IndexingConfig::default();

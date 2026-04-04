@@ -1,8 +1,8 @@
 //! Utility functions for code parsing
 
+use crate::all_supported_extensions;
 use anyhow::Result;
 use std::path::{Path, PathBuf};
-use crate::all_supported_extensions;
 
 /// Check if a file should be ignored based on common ignore patterns
 pub fn should_ignore_file(file_path: &Path) -> bool {
@@ -52,7 +52,8 @@ pub fn is_supported_file(file_path: &Path) -> bool {
 
 /// Get the relative path from a base directory
 pub fn get_relative_path(base: &Path, file_path: &Path) -> Result<PathBuf> {
-    file_path.strip_prefix(base)
+    file_path
+        .strip_prefix(base)
         .map(|p| p.to_path_buf())
         .map_err(|_| anyhow::anyhow!("Failed to get relative path"))
 }
@@ -68,11 +69,11 @@ pub fn normalize_path(path: &Path) -> PathBuf {
                 if let Some(parent) = normalized.parent() {
                     normalized = parent.to_path_buf();
                 }
-            },
+            }
             std::path::Component::CurDir => {
                 // Skip current directory references
                 continue;
-            },
+            }
             _ => {
                 normalized.push(component);
             }
@@ -84,7 +85,7 @@ pub fn normalize_path(path: &Path) -> PathBuf {
 
 /// Calculate file hash for change detection
 pub fn calculate_file_hash(content: &str) -> String {
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(content.as_bytes());
     format!("{:x}", hasher.finalize())
@@ -95,19 +96,19 @@ pub fn extract_file_extension(file_path: &Path) -> Option<String> {
     let file_name = file_path.file_name()?.to_str()?;
 
     // Handle multi-part extensions like .tsx, .test.js, etc.
-    file_name.rfind('.').map(|dot_idx| file_name[dot_idx + 1..].to_lowercase())
+    file_name
+        .rfind('.')
+        .map(|dot_idx| file_name[dot_idx + 1..].to_lowercase())
 }
 
 /// Sanitize string for use in identifiers
 pub fn sanitize_identifier(name: &str) -> String {
     name.chars()
-        .map(|c| {
-            match c {
-                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => c,
-                '-' => '_',
-                ' ' => '_',
-                _ => '_',
-            }
+        .map(|c| match c {
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => c,
+            '-' => '_',
+            ' ' => '_',
+            _ => '_',
         })
         .collect()
 }
@@ -123,16 +124,17 @@ pub fn truncate_string(s: &str, max_len: usize) -> String {
 
 /// Count lines of code (excluding empty lines and comments)
 pub fn count_lines_of_code(content: &str) -> usize {
-    content.lines()
+    content
+        .lines()
         .filter(|line| {
             let trimmed = line.trim();
-            !trimmed.is_empty() &&
-            !trimmed.starts_with("//") &&
-            !trimmed.starts_with("#") &&
-            !trimmed.starts_with("/*") &&
-            !trimmed.starts_with("*") &&
-            !trimmed.starts_with("'''") &&
-            !trimmed.starts_with(r#"""""#)
+            !trimmed.is_empty()
+                && !trimmed.starts_with("//")
+                && !trimmed.starts_with("#")
+                && !trimmed.starts_with("/*")
+                && !trimmed.starts_with("*")
+                && !trimmed.starts_with("'''")
+                && !trimmed.starts_with(r#"""""#)
         })
         .count()
 }
@@ -161,25 +163,27 @@ impl FileStats {
 
             if trimmed.is_empty() {
                 blank_lines += 1;
-            } else if trimmed.starts_with("//") ||
-                     trimmed.starts_with("#") ||
-                     trimmed.starts_with("/*") ||
-                     trimmed.starts_with("*") ||
-                     trimmed.starts_with("'''") ||
-                     trimmed.starts_with(r#"""""#) {
+            } else if trimmed.starts_with("//")
+                || trimmed.starts_with("#")
+                || trimmed.starts_with("/*")
+                || trimmed.starts_with("*")
+                || trimmed.starts_with("'''")
+                || trimmed.starts_with(r#"""""#)
+            {
                 comment_lines += 1;
             } else {
                 code_lines += 1;
 
                 // Calculate complexity (simplified)
-                if trimmed.contains("if") ||
-                   trimmed.contains("else if") ||
-                   trimmed.contains("for") ||
-                   trimmed.contains("while") ||
-                   trimmed.contains("switch") ||
-                   trimmed.contains("case") ||
-                   trimmed.contains("try") ||
-                   trimmed.contains("catch") {
+                if trimmed.contains("if")
+                    || trimmed.contains("else if")
+                    || trimmed.contains("for")
+                    || trimmed.contains("while")
+                    || trimmed.contains("switch")
+                    || trimmed.contains("case")
+                    || trimmed.contains("try")
+                    || trimmed.contains("catch")
+                {
                     complexity += 1;
                 }
             }
@@ -255,7 +259,9 @@ mod tests {
 
     #[test]
     fn test_should_ignore_file() {
-        assert!(should_ignore_file(&PathBuf::from("node_modules/package.json")));
+        assert!(should_ignore_file(&PathBuf::from(
+            "node_modules/package.json"
+        )));
         assert!(should_ignore_file(&PathBuf::from(".git/HEAD")));
         assert!(!should_ignore_file(&PathBuf::from("src/main.ts")));
     }

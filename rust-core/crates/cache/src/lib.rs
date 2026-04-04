@@ -15,17 +15,17 @@ impl CacheManager {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     pub async fn get(&self, _key: &str) -> Result<Option<String>> {
         // TODO: Implement cache get
         Ok(None)
     }
-    
+
     pub async fn set(&self, _key: &str, _value: &str) -> Result<()> {
         // TODO: Implement cache set
         Ok(())
     }
-    
+
     pub async fn invalidate(&self, _key: &str) -> Result<()> {
         // TODO: Implement cache invalidation
         Ok(())
@@ -41,7 +41,7 @@ impl Default for CacheManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_cache_manager() {
         let cache = CacheManager::new();

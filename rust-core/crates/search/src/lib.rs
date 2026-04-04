@@ -15,7 +15,7 @@ impl SearchEngine {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     pub async fn search(&self, _query: &str) -> Result<Vec<String>> {
         // TODO: Implement search logic
         Ok(vec![])
@@ -31,7 +31,7 @@ impl Default for SearchEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_search_engine() {
         let engine = SearchEngine::new();

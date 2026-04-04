@@ -1,6 +1,6 @@
 //! Configuration model for system settings and preferences
 
-use super::{Validate, Timestamped};
+use super::{Timestamped, Validate};
 use crate::errors::CoreError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -572,26 +572,37 @@ impl Configuration {
     /// Merge with another configuration
     pub fn merge(&mut self, other: &Configuration) {
         // Merge non-structural fields
-        if !other.description.as_ref().unwrap_or(&String::new()).is_empty() {
+        if !other
+            .description
+            .as_ref()
+            .unwrap_or(&String::new())
+            .is_empty()
+        {
             self.description = other.description.clone();
         }
-        
+
         // Merge environment variables
         for (key, value) in &other.environment.variables {
-            self.environment.variables.insert(key.clone(), value.clone());
+            self.environment
+                .variables
+                .insert(key.clone(), value.clone());
         }
-        
+
         // Merge feature flags
         for (key, value) in &other.environment.feature_flags {
             self.environment.feature_flags.insert(key.clone(), *value);
         }
-        
+
         self.update();
     }
 
     /// Check if a feature flag is enabled
     pub fn is_feature_enabled(&self, feature: &str) -> bool {
-        self.environment.feature_flags.get(feature).copied().unwrap_or(false)
+        self.environment
+            .feature_flags
+            .get(feature)
+            .copied()
+            .unwrap_or(false)
     }
 
     /// Set a feature flag
@@ -656,7 +667,11 @@ impl Default for IndexingConfig {
             batch_size: 100,
             parallel_workers: 4,
             max_file_size_bytes: 10 * 1024 * 1024, // 10MB
-            include_patterns: vec!["**/*.rs".to_string(), "**/*.ts".to_string(), "**/*.js".to_string()],
+            include_patterns: vec![
+                "**/*.rs".to_string(),
+                "**/*.ts".to_string(),
+                "**/*.js".to_string(),
+            ],
             exclude_patterns: vec!["**/node_modules/**".to_string(), "**/target/**".to_string()],
             follow_symlinks: false,
             index_hidden_files: false,
@@ -945,10 +960,10 @@ mod tests {
     fn test_feature_flags() {
         let mut config = Configuration::new("test".to_string());
         assert!(!config.is_feature_enabled("new_feature"));
-        
+
         config.set_feature_flag("new_feature".to_string(), true);
         assert!(config.is_feature_enabled("new_feature"));
-        
+
         config.set_feature_flag("new_feature".to_string(), false);
         assert!(!config.is_feature_enabled("new_feature"));
     }
@@ -957,24 +972,30 @@ mod tests {
     fn test_environment_variables() {
         let mut config = Configuration::new("test".to_string());
         assert!(config.get_env_var("TEST_VAR").is_none());
-        
+
         config.set_env_var("TEST_VAR".to_string(), "test_value".to_string());
-        assert_eq!(config.get_env_var("TEST_VAR"), Some(&"test_value".to_string()));
+        assert_eq!(
+            config.get_env_var("TEST_VAR"),
+            Some(&"test_value".to_string())
+        );
     }
 
     #[test]
     fn test_configuration_merge() {
         let mut config1 = Configuration::new("config1".to_string());
         let mut config2 = Configuration::new("config2".to_string());
-        
+
         config2.description = Some("Merged config".to_string());
         config2.set_env_var("MERGE_VAR".to_string(), "merged_value".to_string());
         config2.set_feature_flag("merge_feature".to_string(), true);
-        
+
         config1.merge(&config2);
-        
+
         assert_eq!(config1.description, Some("Merged config".to_string()));
-        assert_eq!(config1.get_env_var("MERGE_VAR"), Some(&"merged_value".to_string()));
+        assert_eq!(
+            config1.get_env_var("MERGE_VAR"),
+            Some(&"merged_value".to_string())
+        );
         assert!(config1.is_feature_enabled("merge_feature"));
     }
 
@@ -982,13 +1003,13 @@ mod tests {
     fn test_configuration_validation() {
         let mut config = Configuration::new("".to_string());
         assert!(config.validate().is_err());
-        
+
         config.name = "valid_name".to_string();
         assert!(config.validate().is_ok());
-        
+
         config.server.port = 0;
         assert!(config.validate().is_err());
-        
+
         config.server.port = 8080;
         config.search.default_similarity_threshold = 1.5;
         assert!(config.validate().is_err());
@@ -999,11 +1020,11 @@ mod tests {
         let server_config = ServerConfig::default();
         assert_eq!(server_config.host, "127.0.0.1");
         assert_eq!(server_config.port, 8080);
-        
+
         let indexing_config = IndexingConfig::default();
         assert!(indexing_config.enabled);
         assert_eq!(indexing_config.batch_size, 100);
-        
+
         let search_config = SearchConfig::default();
         assert_eq!(search_config.default_limit, 50);
         assert_eq!(search_config.default_similarity_threshold, 0.7);
@@ -1016,7 +1037,7 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(sqlite_config.backend, StorageBackend::Sqlite);
-        
+
         let postgres_config = StorageConfig {
             backend: StorageBackend::PostgreSQL,
             ..Default::default()
@@ -1031,7 +1052,7 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(memory_cache.backend, CacheBackend::Memory);
-        
+
         let redis_cache = CacheConfig {
             backend: CacheBackend::Redis,
             ..Default::default()
@@ -1046,7 +1067,7 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(no_auth.auth_method, AuthMethod::None);
-        
+
         let api_key_auth = SecurityConfig {
             auth_method: AuthMethod::ApiKey,
             ..Default::default()

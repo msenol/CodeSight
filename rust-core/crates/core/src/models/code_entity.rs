@@ -197,7 +197,9 @@ impl CodeEntity {
 
     /// Check if this entity has documentation
     pub fn has_documentation(&self) -> bool {
-        self.documentation.as_ref().is_some_and(|doc| !doc.trim().is_empty())
+        self.documentation
+            .as_ref()
+            .is_some_and(|doc| !doc.trim().is_empty())
     }
 
     /// Get a short display name for the entity
@@ -210,7 +212,10 @@ impl CodeEntity {
 
     /// Get the entity's location as a string
     pub fn location_string(&self) -> String {
-        format!("{}:{}:{}", self.file_path, self.start_line, self.start_column)
+        format!(
+            "{}:{}:{}",
+            self.file_path, self.start_line, self.start_column
+        )
     }
 
     /// Check if the entity spans multiple lines
@@ -235,7 +240,7 @@ impl CodeEntity {
         if self.file_path != other.file_path {
             return false;
         }
-        
+
         !(self.end_line < other.start_line || other.end_line < self.start_line)
     }
 }
@@ -398,7 +403,8 @@ mod tests {
             10,
             15,
             "rust".to_string(),
-        ).with_columns(4, 20);
+        )
+        .with_columns(4, 20);
 
         assert_eq!(entity.location_string(), "src/lib.rs:10:4");
         assert!(entity.is_multiline());
