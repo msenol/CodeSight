@@ -351,7 +351,9 @@ describe('Phase 4.1 AI Tools', () => {
     it('should analyze technical debt', async () => {
       const request = {
         file_path: '/test/legacy-code.js',
-        scope: 'file' as const,
+        scope: 'module' as const,
+        analysis_depth: 'basic' as const,
+        include_recommendations: true,
         codebase_id: 'test-codebase'
       };
 
@@ -367,12 +369,27 @@ describe('Phase 4.1 AI Tools', () => {
     it('should provide business impact analysis', async () => {
       const request = {
         file_path: '/test/critical-module.js',
-        scope: 'file' as const,
+        scope: 'module' as const,
+        analysis_depth: 'comprehensive' as const,
+        include_recommendations: true,
         codebase_id: 'test-codebase',
-        business_context: {
-          criticality: 'high',
-          team_velocity: 'medium',
-          time_to_market: 'urgent'
+        historical_data: {
+          previous_debt_score: 65,
+          refactoring_history: [
+            {
+              date: '2024-01-15',
+              changes: 'Refactored authentication module',
+              impact: 'Medium improvement in code quality'
+            }
+          ],
+          bug_history: [
+            {
+              date: '2024-02-01',
+              module: 'payment-processing',
+              severity: 'high',
+              root_cause: 'Insufficient input validation'
+            }
+          ]
         }
       };
 
@@ -388,7 +405,9 @@ describe('Phase 4.1 AI Tools', () => {
 
     it('should suggest debt reduction strategies', async () => {
       const request = {
-        scope: 'codebase' as const,
+        scope: 'system' as const,
+        analysis_depth: 'deep' as const,
+        include_recommendations: true,
         codebase_id: 'test-codebase'
       };
 

@@ -3,6 +3,14 @@ import { SuggestRefactoringTool } from '../tools/suggest-refactoring.js';
 import { z } from 'zod';
 import type { RefactoringSuggestion as _RefactoringSuggestion } from '../types/index.js';
 
+// Helper function to safely extract string from req.params
+function getStringParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+}
+
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
 interface RefactoringRequest {
   entity_ids?: string[];
@@ -260,9 +268,10 @@ export class RefactoringController {
   async getRefactoringHistory(req: Request, res: Response): Promise<void> {
     try {
       const { codebaseId } = req.params;
+      const codebaseIdStr = getStringParam(codebaseId);
       const { limit = 50, include_statistics = false, filter_type, date_from, date_to } = req.query;
 
-      if (!codebaseId || !this.isValidUUID(codebaseId)) {
+      if (!codebaseIdStr || !this.isValidUUID(codebaseIdStr)) {
         res.status(400).json({
           success: false,
           error: 'Valid codebase ID is required',
@@ -270,7 +279,7 @@ export class RefactoringController {
         return;
       }
 
-      const history = await this.getRefactoringHistoryData(codebaseId, {
+      const history = await this.getRefactoringHistoryData(codebaseIdStr, {
         limit: parseInt(limit as string, 10) || 50,
         include_statistics: include_statistics === 'true',
         filter_type: filter_type as string,
@@ -331,9 +340,10 @@ export class RefactoringController {
   async getRecommendations(req: Request, res: Response): Promise<void> {
     try {
       const { codebaseId } = req.params;
+      const codebaseIdStr = getStringParam(codebaseId);
       const { priority = 'high', max_recommendations = 20, focus_area } = req.query;
 
-      if (!codebaseId || !this.isValidUUID(codebaseId)) {
+      if (!codebaseIdStr || !this.isValidUUID(codebaseIdStr)) {
         res.status(400).json({
           success: false,
           error: 'Valid codebase ID is required',
@@ -341,7 +351,7 @@ export class RefactoringController {
         return;
       }
 
-      const recommendations = await this.generateRecommendations(codebaseId, {
+      const recommendations = await this.generateRecommendations(codebaseIdStr, {
         priority: priority as string,
         max_recommendations: parseInt(max_recommendations as string, 10) || 20,
         focus_area: focus_area as string,

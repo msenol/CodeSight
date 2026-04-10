@@ -9,6 +9,14 @@ declare const console: {
   error: (...args: unknown[]) => void;
 };
 
+// Helper function to safely extract string from req.params
+function getStringParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+}
+
 // Rule 15: Proper TypeScript interfaces instead of 'any' types
 interface CodebaseOptions {
   page?: number;
@@ -161,9 +169,10 @@ export class CodebaseController {
   async getCodebase(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
       const { include_stats = false, include_entities = false } = req.query;
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -171,7 +180,7 @@ export class CodebaseController {
         return;
       }
 
-      const codebase = await this.fetchCodebaseById(id, {
+      const codebase = await this.fetchCodebaseById(idStr, {
         include_stats: include_stats === 'true',
         include_entities: include_entities === 'true',
       });
@@ -213,8 +222,9 @@ export class CodebaseController {
   async updateCodebase(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -224,7 +234,7 @@ export class CodebaseController {
 
       const validatedData = UpdateCodebaseRequestSchema.parse(req.body);
 
-      const codebase = await this.updateExistingCodebase(id, validatedData);
+      const codebase = await this.updateExistingCodebase(idStr, validatedData);
 
       res.status(200).json({
         success: true,
@@ -243,9 +253,10 @@ export class CodebaseController {
   async deleteCodebase(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
       const { force = false } = req.query;
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -253,7 +264,7 @@ export class CodebaseController {
         return;
       }
 
-      const result = await this.removeCodebase(id, force === 'true');
+      const result = await this.removeCodebase(idStr, force === 'true');
 
       if (!result.success) {
         res.status(404).json({
@@ -280,8 +291,9 @@ export class CodebaseController {
   async indexCodebase(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -291,7 +303,7 @@ export class CodebaseController {
 
       const validatedData = IndexCodebaseRequestSchema.parse(req.body);
 
-      const indexingResult = await this.performCodebaseIndexing(id, validatedData);
+      const indexingResult = await this.performCodebaseIndexing(idStr, validatedData);
 
       res.status(200).json({
         success: true,
@@ -310,8 +322,9 @@ export class CodebaseController {
   async getIndexingStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -319,7 +332,7 @@ export class CodebaseController {
         return;
       }
 
-      const status = await this.getCodebaseIndexingStatus(id);
+      const status = await this.getCodebaseIndexingStatus(idStr);
 
       res.status(200).json({
         success: true,
@@ -338,8 +351,9 @@ export class CodebaseController {
   async syncCodebase(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -349,7 +363,7 @@ export class CodebaseController {
 
       const validatedData = SyncCodebaseRequestSchema.parse(req.body);
 
-      const syncResult = await this.performCodebaseSync(id, validatedData);
+      const syncResult = await this.performCodebaseSync(idStr, validatedData);
 
       res.status(200).json({
         success: true,
@@ -368,13 +382,14 @@ export class CodebaseController {
   async getCodebaseStats(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
       const {
         include_trends = false,
         period = '30d',
         granularity: _granularity = 'daily',
       } = req.query;
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -382,7 +397,7 @@ export class CodebaseController {
         return;
       }
 
-      const stats = await this.getCodebaseStatistics(id, {
+      const stats = await this.getCodebaseStatistics(idStr, {
         include_trends: include_trends === 'true',
         period: period as string,
       });
@@ -404,6 +419,7 @@ export class CodebaseController {
   async getCodebaseEntities(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
       const {
         type,
         page = 1,
@@ -413,7 +429,7 @@ export class CodebaseController {
         sort_order = 'asc',
       } = req.query;
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -421,7 +437,7 @@ export class CodebaseController {
         return;
       }
 
-      const entities = await this.fetchCodebaseEntities(id, {
+      const entities = await this.fetchCodebaseEntities(idStr, {
         type: type as string,
         page: parseInt(page as string, 10),
         limit: parseInt(limit as string, 10),
@@ -447,6 +463,7 @@ export class CodebaseController {
   async exportCodebase(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const idStr = getStringParam(id);
       const {
         format = 'json' as 'json' | 'csv' | 'xml',
         include_entities = true,
@@ -454,7 +471,7 @@ export class CodebaseController {
         compress: _compress = false,
       } = req.query;
 
-      if (!id || !this.isValidUUID(id)) {
+      if (!idStr || !this.isValidUUID(idStr)) {
         res.status(400).json({
           success: false,
           message: 'Valid codebase ID is required',
@@ -462,7 +479,7 @@ export class CodebaseController {
         return;
       }
 
-      const exportData = await this.exportCodebaseData(id, {
+      const exportData = await this.exportCodebaseData(idStr, {
         format: format as 'json' | 'csv' | 'xml',
         include_entities: include_entities === 'true',
         include_analysis: include_analysis === 'true',

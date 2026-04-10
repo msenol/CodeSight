@@ -4,6 +4,14 @@ import { setTimeout } from 'node:timers/promises';
 // Rule 15: Zod import reserved for future schema implementation
 // import { z } from 'zod';
 
+// Helper function to safely extract string from req.params
+function getStringParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+}
+
 // Rule 15: Schema reserved for future implementation
 // Rule 15: Schema reserved for future implementation
 // const HealthCheckRequestSchema = z.object({
@@ -170,8 +178,9 @@ export class HealthController {
   async getServiceHealth(req: Request, res: Response): Promise<void> {
     try {
       const { serviceName } = req.params;
+      const serviceNameStr = getStringParam(serviceName);
 
-      if (!serviceName) {
+      if (!serviceNameStr) {
         res.status(400).json({
           success: false,
           error: 'Service name is required',
@@ -179,12 +188,12 @@ export class HealthController {
         return;
       }
 
-      const serviceHealth = await this.checkSpecificService(serviceName);
+      const serviceHealth = await this.checkSpecificService(serviceNameStr);
 
       if (!serviceHealth) {
         res.status(404).json({
           success: false,
-          error: `Service '${serviceName}' not found`,
+          error: `Service '${serviceNameStr}' not found`,
         });
         return;
       }

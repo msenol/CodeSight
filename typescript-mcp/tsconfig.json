@@ -65,9 +65,11 @@
     "node_modules",
     "dist",
     "coverage",
+    "tests",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "**/*.bench.ts"
+    "**/*.bench.ts",
+    "vitest.config.ts"
   ],
   "ts-node": {
     "esm": true,

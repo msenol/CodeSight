@@ -232,7 +232,7 @@ describe('Local LLM Ollama Integration Scenario (T032)', () => {
           {
             type: 'readability',
             description: 'Add input validation for edge cases',
-            code: 'if (typeof email !== \'string\' || email.trim() === \'\') return false;',
+            code: "if (typeof email !== 'string' || email.trim() === '') return false;",
             impact: 'low'
           }
         ],
