@@ -52,39 +52,6 @@ function getDefaultCodebase(): string | undefined {
 /**
  * Ensure codebase is indexed, auto-index if needed
  */
-async function ensureCodebaseIndexed(codebaseId?: string): Promise<string> {
-  const codebaseService = new DefaultCodebaseService();
-  // DATABASE_PATH is already set in registerMCPTools()
-  const indexingService = new IndexingService();
-
-  // Determine codebase ID and path
-  const actualCodebaseId = codebaseId || path.basename(process.cwd());
-  const codebasePath = process.cwd();
-
-  try {
-    // Check if codebase exists and is indexed
-    const codebase = await codebaseService.getCodebase(actualCodebaseId);
-
-    if (codebase && codebase.status === 'indexed') {
-      logger.info(`Codebase ${actualCodebaseId} already indexed`);
-      return actualCodebaseId;
-    }
-
-    // Auto-index if not indexed
-    logger.info(`Auto-indexing codebase: ${codebasePath}`);
-
-    await indexingService.indexCodebaseWithProgress(codebasePath, undefined, actualCodebaseId);
-    await codebaseService.addCodebase(actualCodebaseId, codebasePath, ['typescript', 'javascript']);
-
-    logger.info(`Auto-indexed ${actualCodebaseId}`);
-    return actualCodebaseId;
-  } catch (error) {
-    logger.error('Auto-indexing failed:', error);
-    // Don't throw - let tools handle missing index gracefully
-    return actualCodebaseId;
-  }
-}
-
 /**
  * Register all MCP tools with the server
  */
@@ -733,7 +700,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const result = await traceDataFlowTool.call({
                 start_point: variable_name,
                 end_point: file_path || 'output',
-                codebase_id: getCodebaseId(codebase_id),
+                codebase_id: getDefaultCodebase() || getCodebaseId(codebase_id),
                 max_depth: 5,
               });
               let text = `🔄 Data flow for "${variable_name}":\n\n`;

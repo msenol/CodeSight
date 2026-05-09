@@ -704,7 +704,7 @@ export class IndexingService {
     const defStmt = this.db.prepare(`
       SELECT file_path, start_line as line, content, entity_type, 'definition' as reference_type
       FROM code_entities
-      WHERE codebase_id = ? AND name = ?
+      WHERE LOWER(codebase_id) = LOWER(?) AND name = ?
       ORDER BY file_path, start_line
     `);
     const definitions = defStmt.all(codebaseId, symbol) as any[];
@@ -713,7 +713,7 @@ export class IndexingService {
     const usageStmt = this.db.prepare(`
       SELECT file_path, start_line as line, content, entity_type, 'usage' as reference_type
       FROM code_entities
-      WHERE codebase_id = ? AND name != ? AND content LIKE ?
+      WHERE LOWER(codebase_id) = LOWER(?) AND name != ? AND content LIKE ?
       ORDER BY file_path, start_line
     `);
     const usages = usageStmt.all(codebaseId, symbol, `%${symbol}%`) as any[];

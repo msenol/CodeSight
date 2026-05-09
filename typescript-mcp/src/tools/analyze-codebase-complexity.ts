@@ -136,7 +136,7 @@ export class AnalyzeCodebaseComplexityTool {
         .prepare(
           `SELECT id, name, file_path, start_line, end_line, entity_type
            FROM code_entities
-           WHERE codebase_id = ?
+           WHERE LOWER(codebase_id) = LOWER(?)
              AND (end_line - start_line) >= ?
              ${typeFilter}
            ORDER BY (end_line - start_line) DESC
