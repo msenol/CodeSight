@@ -149,14 +149,45 @@ export class DefaultCodebaseService implements CodebaseService {
       return codebase;
     }
 
-    // For backward compatibility, accept file paths as codebase IDs
+    // Check persistent codebases table FIRST (most reliable)
     try {
-      await fs.access(id);
-      // Create a temporary codebase info for the path
+      const row = this.db.prepare('SELECT * FROM codebases WHERE LOWER(id) = LOWER(?)').get(id) as
+        | {
+            id: string;
+            name: string;
+            path: string;
+            languages: string;
+            status: string;
+            file_count: number;
+            entity_count: number;
+            indexed_at: string;
+          }
+        | undefined;
+      if (row) {
+        const codebase: CodebaseInfo = {
+          id: row.id,
+          name: row.name,
+          path: row.path,
+          languages: row.languages ? JSON.parse(row.languages) : ['typescript', 'javascript'],
+          createdAt: row.indexed_at,
+          updatedAt: row.indexed_at,
+          fileCount: row.file_count,
+          indexedAt: row.indexed_at,
+          status: row.status as CodebaseInfo['status'],
+        };
+        this.codebases.set(id, codebase);
+        return codebase;
+      }
+    } catch {
+      // codebases table may not exist yet
+    }
+
+    // Fallback: check database for indexed entities
+    if (this.searchService.hasCodebase(id)) {
       const codebase: CodebaseInfo = {
         id,
-        name: path.basename(id),
-        path: id,
+        name: id,
+        path: process.cwd(),
         languages: ['typescript', 'javascript'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -166,58 +197,8 @@ export class DefaultCodebaseService implements CodebaseService {
       };
       this.codebases.set(id, codebase);
       return codebase;
-    } catch {
-      // Check persistent codebases table for real path
-      try {
-        const row = this.db.prepare('SELECT * FROM codebases WHERE LOWER(id) = LOWER(?)').get(id) as
-          | {
-              id: string;
-              name: string;
-              path: string;
-              languages: string;
-              status: string;
-              file_count: number;
-              entity_count: number;
-              indexed_at: string;
-            }
-          | undefined;
-        if (row) {
-          const codebase: CodebaseInfo = {
-            id: row.id,
-            name: row.name,
-            path: row.path,
-            languages: row.languages ? JSON.parse(row.languages) : ['typescript', 'javascript'],
-            createdAt: row.indexed_at,
-            updatedAt: row.indexed_at,
-            fileCount: row.file_count,
-            indexedAt: row.indexed_at,
-            status: row.status as CodebaseInfo['status'],
-          };
-          this.codebases.set(id, codebase);
-          return codebase;
-        }
-      } catch {
-        // codebases table may not exist
-      }
-
-      // Fallback: check database for indexed entities (old behavior)
-      if (this.searchService.hasCodebase(id)) {
-        const codebase: CodebaseInfo = {
-          id,
-          name: id,
-          path: process.cwd(),
-          languages: ['typescript', 'javascript'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          fileCount: 0,
-          indexedAt: new Date().toISOString(),
-          status: 'indexed',
-        };
-        this.codebases.set(id, codebase);
-        return codebase;
-      }
-      return null;
     }
+    return null;
   }
 
   async listCodebases(): Promise<CodebaseInfo[]> {

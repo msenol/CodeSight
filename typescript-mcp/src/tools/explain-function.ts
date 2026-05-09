@@ -118,7 +118,10 @@ export class ExplainFunctionTool {
       // Get codebase info
       // Search for the function by name in the indexed database
       const indexingService = getIndexingService();
-      const searchResults = indexingService.search(input.function_name, { limit: 10 });
+      const searchResults = indexingService.search(input.function_name, {
+        limit: 10,
+        codebaseId: input.codebase_id,
+      });
 
       if (searchResults.length === 0) {
         return {

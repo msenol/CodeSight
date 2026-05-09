@@ -650,12 +650,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'explain_function': {
-            // Use real ExplainFunctionTool instead of mock
             const tool = new ExplainFunctionTool();
             try {
-              // Auto-index if needed and get codebase ID
-              const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
-              await ensureCodebaseIndexed(codebaseId);
+              let codebaseId = (args as { codebase_id?: string }).codebase_id;
+              if (!codebaseId) {
+                codebaseId = getDefaultCodebase() || getCodebaseId();
+              }
 
               const result = await tool.call({
                 ...args,
@@ -683,7 +683,10 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
           case 'find_references': {
             const { symbol_name } = args as { symbol_name: string; codebase_id?: string };
-            const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
+            let codebaseId = (args as { codebase_id?: string }).codebase_id;
+            if (!codebaseId) {
+              codebaseId = getDefaultCodebase() || getCodebaseId();
+            }
             try {
               const refs = await searchCodeTool.findReferences(symbol_name, codebaseId);
               if (refs.length === 0) {
@@ -800,24 +803,27 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'get_api_endpoints': {
-            const { codebase_id, framework } = args as { codebase_id: string; framework?: string };
-            const cbId = getCodebaseId(codebase_id);
-            const endpoints = await apiDiscoveryService.findApiEndpoints(cbId);
+            const { framework } = args as { codebase_id?: string; framework?: string };
+            let codebaseId = (args as { codebase_id?: string }).codebase_id;
+            if (!codebaseId) {
+              codebaseId = getDefaultCodebase() || getCodebaseId();
+            }
+            const endpoints = await apiDiscoveryService.findApiEndpoints(codebaseId);
             const filtered = framework
               ? endpoints.filter(e => e.tags?.includes(framework.toLowerCase()))
               : endpoints;
             if (filtered.length === 0) {
-              const detected = await apiDiscoveryService.detectFrameworks(cbId);
+              const detected = await apiDiscoveryService.detectFrameworks(codebaseId);
               return {
                 content: [
                   {
                     type: 'text',
-                    text: `ℹ️ No API endpoints found in '${cbId}'.\nDetected frameworks: ${detected.length > 0 ? detected.join(', ') : 'none'}`,
+                    text: `ℹ️ No API endpoints found in '${codebaseId}'.\nDetected frameworks: ${detected.length > 0 ? detected.join(', ') : 'none'}`,
                   },
                 ],
               };
             }
-            let text = `🌐 API Endpoints in ${cbId}${framework ? ` (${framework})` : ''}:\n\n`;
+            let text = `🌐 API Endpoints in ${codebaseId}${framework ? ` (${framework})` : ''}:\n\n`;
             for (const ep of filtered) {
               text += `${ep.method} ${ep.path} — ${ep.file_path}:${ep.line_number}\n`;
             }
@@ -858,7 +864,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
           case 'find_duplicates': {
             const findDuplicatesTool = new FindDuplicatesTool();
             try {
-              const result = await findDuplicatesTool.call(args);
+              let codebaseId = (args as { codebase_id?: string }).codebase_id;
+              if (!codebaseId) {
+                codebaseId = getDefaultCodebase() || getCodebaseId();
+              }
+              const result = await findDuplicatesTool.call({ ...args, codebase_id: codebaseId });
               let text = `🔁 Duplicate Code in ${result.codebase_id}:\n\n`;
               text += `Files analyzed: ${result.summary.total_files_analyzed}\n`;
               text += `Files with duplicates: ${result.summary.files_with_duplicates}\n`;
@@ -909,6 +919,25 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const highComplexity = functions.filter(
                 (f: any) => f.complexity?.cyclomaticComplexity > 10,
               );
+              const fileCC = (report as any).cyclomaticComplexity ?? 0;
+              const fileMI = Math.round((report as any).maintainabilityIndex ?? 100);
+              const fileLOC = (report as any).linesOfCode ?? 0;
+
+              // File-level checks
+              if (fileCC > 50 || fileMI < 20) {
+                text += `🔴 File-level complexity is CRITICAL (CC=${fileCC}, MI=${fileMI}, LOC=${fileLOC}):
+`;
+                text += '  💡 This file needs major refactoring — split into multiple modules\n';
+                text += '  💡 Extract related logic into separate services/utilities\n';
+                if (fileLOC > 500) {
+                  text += `  💡 ${fileLOC} lines is too large — target < 300 lines per file\n`;
+                }
+                text += '\n';
+              } else if (fileCC > 20 || fileMI < 40) {
+                text += `🟡 File-level complexity is HIGH (CC=${fileCC}, MI=${fileMI}):\n`;
+                text += '  💡 Consider splitting complex logic into separate functions\n\n';
+              }
+
               if (highComplexity.length > 0) {
                 text += `🔴 High Complexity Functions (${highComplexity.length}):\n`;
                 for (const fn of highComplexity.slice(0, 5)) {
@@ -924,7 +953,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                   text += '    💡 Consider extracting helper methods\n';
                 }
               }
-              if (highComplexity.length === 0 && longFunctions.length === 0) {
+              if (highComplexity.length === 0 && longFunctions.length === 0 && fileCC <= 20 && fileMI >= 40) {
                 text += '✅ Code looks clean! No major refactoring suggestions.\n';
               }
               return { content: [{ type: 'text', text }] };
@@ -1339,17 +1368,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const codebaseService = new DefaultCodebaseService();
 
               // Index the codebase with progress (clears existing entries automatically)
+              // IndexingService also writes to codebases table
               const entityCount = await indexingService.indexCodebaseWithProgress(
                 codebasePath,
                 undefined,
                 codebaseId,
               );
-
-              // Register the codebase
-              await codebaseService.addCodebase(codebaseId, codebasePath, [
-                'typescript',
-                'javascript',
-              ]);
 
               const resultText =
                 '✅ Codebase indexed successfully!\n\n' +
