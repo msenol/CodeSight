@@ -922,6 +922,7 @@ docs/              # ✅ Comprehensive documentation
 
 - [Architecture Overview](./docs/adrs/0001-hybrid-architecture.md) - Hybrid TypeScript/Rust architecture
 - [Development Guide](./docs/development.md) - Complete development standards and workflows
+- [**User Guide**](./docs/USER-GUIDE.md) - Setup, MCP clients, use cases, AI features, CLI, REST API, Docker
 - [MCP Tools Documentation](./docs/MCP-TOOLS.md) - Complete MCP tools reference
 - [Docker Testing Guide](./QUICKSTART-Docker-Testing.md) - Real-project testing infrastructure
 - [TypeScript MCP Implementation](./typescript-mcp/README.md) - Implementation details
