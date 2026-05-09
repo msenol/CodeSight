@@ -1,21 +1,32 @@
 # CodeSight MCP Server - Production Dockerfile
 # Based on Distroless for maximum security
 
-# Stage 1: Prepare optional files
-FROM alpine:3.19 AS builder
+# Stage 1: Build application
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /build
 
-# Copy entire project for Rust FFI (if built)
-COPY . ./project/
+# Copy package files first for better caching
+COPY typescript-mcp/package*.json ./typescript-mcp/
 
-# Extract Rust FFI if it exists
+# Install production dependencies
+RUN cd typescript-mcp && npm ci --omit=dev
+
+# Copy application source and build
+COPY typescript-mcp/ ./typescript-mcp/
+RUN cd typescript-mcp && npm run build 2>/dev/null || echo "Using pre-built dist"
+
+# Stage 2: Prepare optional Rust FFI
+FROM alpine:3.19 AS rust-builder
+
+WORKDIR /build
+COPY . ./project/
 RUN mkdir -p ./lib && \
     if [ -f ./project/rust-core/target/release/libcode_intelligence_core.so ]; then \
         cp ./project/rust-core/target/release/libcode_intelligence_core.so ./lib/; \
     fi
 
-# Stage 2: Production image
+# Stage 3: Production image
 FROM gcr.io/distroless/nodejs20-debian12
 
 LABEL maintainer="CodeSight Team"
@@ -28,13 +39,13 @@ LABEL org.opencontainers.image.vendor="CodeSight"
 
 WORKDIR /app
 
-# Copy application
-COPY typescript-mcp/dist ./dist
-COPY typescript-mcp/node_modules ./node_modules
-COPY typescript-mcp/package.json ./
+# Copy built application from builder
+COPY --from=builder /build/typescript-mcp/dist ./dist
+COPY --from=builder /build/typescript-mcp/node_modules ./node_modules
+COPY --from=builder /build/typescript-mcp/package.json ./
 
-# Copy Rust FFI from builder (if built)
-COPY --from=builder /build/lib/ ./lib/
+# Copy Rust FFI from rust-builder (if built)
+COPY --from=rust-builder /build/lib/ ./lib/
 
 # Copy entrypoint
 COPY docker/entrypoint-prod.sh ./entrypoint.sh
