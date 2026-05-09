@@ -5,6 +5,7 @@
   "description": "CodeSight MCP Server - Working TypeScript implementation with real SQLite indexing and Claude Desktop integration",
   "type": "module",
   "scripts": {
+    "setup": "npm install && cd typescript-mcp && npm install && npm run build:full",
     "client:dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

@@ -163,40 +163,52 @@
 
 ## 🚀 Installation
 
-### Quick Start
-
-**Note**: The project is in excellent condition with zero ESLint errors and 95% TypeScript error reduction. Some TypeScript compilation errors remain (~95) but don't affect core functionality.
+**Prerequisites**: [Node.js](https://nodejs.org/) v20+ and [Rust](https://www.rust-lang.org/) 1.75+
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/codesight-mcp.git
-cd codesight-mcp
+git clone https://github.com/msenol/CodeSight.git
+cd CodeSight
+npm run setup
+```
 
-# Install root dependencies and TypeScript MCP server
-npm install
-cd typescript-mcp && npm install
+That's it. `npm run setup` installs all dependencies, compiles the Rust native module, and builds TypeScript.
 
-# Build Rust FFI bridge (recommended for production performance)
-cd ../rust-core
-cargo build --release
-cd ../typescript-mcp
+### Use as MCP Server (Claude Desktop)
 
-# Note: TypeScript build may show some remaining compilation errors
-# Core functionality works despite these errors
-npm run build 2>/dev/null || echo "Build completed with some TypeScript errors"
+Add to `claude_desktop_config.json`:
 
-# Index your JavaScript/TypeScript codebase
+```json
+{
+  "mcpServers": {
+    "codesight": {
+      "command": "node",
+      "args": ["/path/to/CodeSight/typescript-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Use as CLI
+
+```bash
+cd typescript-mcp
+
+# Index a codebase
 node dist/cli/index.js index /path/to/your/project
 
-# View indexing results
-node dist/cli/index.js stats
-# Example output: Total entities: 377 (class: 48, function: 175, interface: 140, type: 14)
-
-# Test natural language search
+# Search
 node dist/cli/index.js search "authentication functions"
 
-# Test FFI bridge integration
-node dist/cli/index.js test-ffi
+# Stats
+node dist/cli/index.js stats
+```
+
+### AI Features (Optional)
+
+```bash
+cd typescript-mcp
+cp .env.example .env
+# Edit .env and set OPENROUTER_API_KEY
 ```
 
 ### Docker Development

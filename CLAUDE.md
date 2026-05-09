@@ -45,56 +45,33 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 
 ## Essential Commands
 
-### CLI (Enterprise-Ready)
+### Setup
 
 ```bash
-# Build and setup
-cd typescript-mcp && npm install && npm run build
+# One-command setup (install + build everything)
+npm run setup
+```
 
-# Build Rust FFI bridge (native NAPI-RS module)
-cd rust-core/crates/ffi && npx napi build --platform --release
+### CLI
 
-# Or from TypeScript root:
-cd typescript-mcp && npm run build:native
+```bash
+cd typescript-mcp
 
-# Full build (TypeScript + native)
-npm run build:full
-
-# Index codebase (JS/TS, with multi-language support)
+# Index, search, stats
 node dist/cli/index.js index /path/to/project
-
-# Search and stats
 node dist/cli/index.js search "query"
 node dist/cli/index.js stats
 
-# Test FFI bridge integration
-node dist/cli/index.js test-ffi
+# Build
+npm run build:full       # TypeScript + native
+npm run build:native      # Native module only
+npm run build             # TypeScript only
 
-# Run comprehensive tests
-npm test
-npm run test:contract
-npm run test:ai-tools
-npm run test:performance
-
-# AI tool tests (Phase 4.1)
-npm run test:ai-tools
-npm run test:ai-providers
-npm run test:ai-performance
-
-# REST API contract tests (T018-T028)
-npm run test:contract:api
-
-# Integration test scenarios (T029-T033)
-npm run test:integration:scenarios
-
-# Performance benchmarking (T084-T088)
-npm run test:benchmark
-
-# Docker-based real project testing
-npm run test:docker
-
-# Full TDD test suite
-npm run test:tdd
+# Tests
+npm test                  # Unit tests
+npm run test:contract     # Contract tests
+npm run test:integration  # Integration tests
+cd ../rust-core && cargo test  # Rust tests
 ```
 
 ### Docker Testing Infrastructure (New)
@@ -122,13 +99,14 @@ curl -X POST http://localhost:4000/api/search -H "Content-Type: application/json
 
 ### Claude Desktop Integration
 
+Add to `claude_desktop_config.json`:
+
 ```json
 {
   "mcpServers": {
     "codesight": {
       "command": "node",
-      "args": ["F:/path/to/codesight-mcp/typescript-mcp/dist/index.js"],
-      "cwd": "F:/path/to/codesight-mcp/typescript-mcp"
+      "args": ["/path/to/CodeSight/typescript-mcp/dist/index.js"]
     }
   }
 }
