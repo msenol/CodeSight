@@ -171,8 +171,9 @@ impl ProgressTracker {
     /// Update time estimates and throughput
     fn update_estimates(&mut self) {
         let elapsed = self.elapsed_time();
-        if elapsed.as_secs() > 0 {
-            self.throughput = self.processed_files as f64 / elapsed.as_secs_f64();
+        let elapsed_secs = elapsed.as_secs_f64();
+        if elapsed_secs > 0.0 {
+            self.throughput = self.processed_files as f64 / elapsed_secs;
         }
 
         if self.processed_files > 0 {
