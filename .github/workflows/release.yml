@@ -6,7 +6,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: '1.88'
   NODE_VERSION: '20'
 
 jobs:
@@ -21,8 +20,6 @@ jobs:
           fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
 
       - uses: actions/setup-node@v4
         with:

@@ -174,7 +174,7 @@ impl IndexingEngine {
                 Result::<(), anyhow::Error>::Ok(())
             })
             .await
-            .map_err(|e| anyhow::anyhow!("SQLite persistence task failed: {}", e))??;
+            .map_err(|e| anyhow::anyhow!("SQLite persistence task failed: {e}"))??;
         }
 
         tracing::info!("Indexing completed in {:?}", start_time.elapsed());
@@ -331,7 +331,7 @@ impl IndexingEngine {
     async fn process_single_file(&self, file_path: &Path) -> Result<Vec<CodeEntity>> {
         let content = tokio::fs::read_to_string(file_path)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to read file {}: {}", file_path.display(), e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to read file {}: {e}", file_path.display()))?;
 
         let engine = self.engine.write().await;
         engine.process_file(file_path, &content).await
