@@ -102,27 +102,19 @@ export class SearchCodeTool {
 
       logger.debug('[DEBUG] Search input:', JSON.stringify(input, null, 2));
 
-      // Verify codebase exists and is indexed
-      const codebase = await this.codebaseService.getCodebase(input.codebase_id);
-      logger.debug('[DEBUG] Found codebase:', JSON.stringify(codebase, null, 2));
-
-      if (!codebase) {
-        throw new Error(`Codebase with ID ${input.codebase_id} not found`);
-      }
-
-      if (codebase.status !== 'indexed') {
-        throw new Error(
-          `Codebase ${codebase.name} is not indexed. Current status: ${codebase.status}`,
-        );
-      }
+      // Perform search with codebase ID filtering
+      logger.debug(
+        '[DEBUG] Starting search with codebase ID filtering:',
+        input.codebase_id,
+      );
 
       // Perform search with codebase ID filtering (Rule 15: Validate before use)
       logger.debug(
-        `[DEBUG] Starting search with query: "${input.query}" in codebase: ${codebase.id}`,
+        `[DEBUG] Starting search with query: "${input.query}" in codebase: ${input.codebase_id}`,
       );
       const searchResults = this.searchService.search(input.query, {
         limit: input.max_results,
-        codebaseId: codebase.id, // Pass codebase ID for filtering
+        codebaseId: input.codebase_id, // Pass codebase ID for filtering
       });
       logger.debug(
         '[DEBUG] Raw search results:',

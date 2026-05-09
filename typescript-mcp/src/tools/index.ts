@@ -580,21 +580,18 @@ export async function registerMCPTools(server: Server): Promise<void> {
             logger.debug('[DEBUG] search_code tool called with args:', args);
 
             try {
-              // Auto-index if needed and get codebase ID
+              // Resolve codebase ID: explicit > most recent indexed
               let codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
               
-              // If codebase not found, try the most recently indexed one
-              const codebaseService = new DefaultCodebaseService();
-              let codebase = await codebaseService.getCodebase(codebaseId);
-              if (!codebase) {
+              // If not explicitly provided, use most recently indexed codebase
+              if (!(args as { codebase_id?: string }).codebase_id) {
                 const defaultCb = getDefaultCodebase();
-                if (defaultCb && defaultCb !== codebaseId) {
-                  logger.info(`Codebase '${codebaseId}' not found, using most recent: '${defaultCb}'`);
+                if (defaultCb) {
                   codebaseId = defaultCb;
                 }
               }
               
-              await ensureCodebaseIndexed(codebaseId);
+              logger.info(`Searching in codebase: ${codebaseId}`);
 
               logger.debug('[DEBUG] Calling SearchCodeTool with proper services');
               // Use the proper SearchCodeTool with database integration
