@@ -5,7 +5,7 @@ import { codebaseService } from '../services/codebase-service.js';
 const TraceDataFlowInputSchema = z.object({
   start_point: z.string().min(1, 'Start point cannot be empty'),
   end_point: z.string().min(1, 'End point cannot be empty'),
-  codebase_id: z.string().uuid('Invalid codebase ID'),
+  codebase_id: z.string().min(1, 'Codebase ID is required'),
   max_depth: z.number().int().min(1).max(20).default(10),
   include_external: z.boolean().default(false),
   trace_direction: z.enum(['forward', 'backward', 'bidirectional']).default('forward'),

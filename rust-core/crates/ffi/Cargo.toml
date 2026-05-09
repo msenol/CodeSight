@@ -30,6 +30,7 @@ napi-derive.workspace = true
 
 # Async runtime
 tokio.workspace = true
+once_cell.workspace = true
 
 # File system and database
 walkdir = "2.4"
@@ -38,6 +39,10 @@ regex = "1.10"
 
 # Local dependencies
 code-intelligence-core = { path = "../core" }
+code-intelligence-parser = { path = "../parser" }
+code-intelligence-indexer = { path = "../indexer" }
+code-intelligence-analyzer = { path = "../analyzer" }
+code-intelligence-embedding = { path = "../embedding" }
 
 [dev-dependencies]
 tempfile.workspace = true

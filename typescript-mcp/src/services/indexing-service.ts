@@ -51,6 +51,20 @@ export class IndexingService {
       CREATE INDEX IF NOT EXISTS idx_entity_type ON code_entities(entity_type);
       CREATE INDEX IF NOT EXISTS idx_codebase_id ON code_entities(codebase_id);
     `);
+
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS codebases (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        path TEXT NOT NULL,
+        languages TEXT,
+        status TEXT DEFAULT 'indexed',
+        file_count INTEGER DEFAULT 0,
+        entity_count INTEGER DEFAULT 0,
+        indexed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
   }
 
   async indexCodebase(codebasePath: string, codebaseId?: string): Promise<number> {
@@ -81,6 +95,13 @@ export class IndexingService {
         fileCount++;
       }
     }
+
+    // Persist codebase metadata
+    const entityCount = this.db.prepare('SELECT COUNT(*) as count FROM code_entities WHERE codebase_id = ?').get(actualCodebaseId) as { count: number };
+    this.db.prepare(`
+      INSERT OR REPLACE INTO codebases (id, name, path, status, file_count, entity_count, indexed_at, updated_at)
+      VALUES (?, ?, ?, 'indexed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).run(actualCodebaseId, actualCodebaseId, codebasePath, fileCount, entityCount.count);
 
     logger.info(`Indexed ${fileCount} files from ${codebasePath} as ${actualCodebaseId}`);
     return fileCount;
@@ -129,13 +150,13 @@ export class IndexingService {
       // This keeps the main loop clean and maintainable
 
       // Extract functions
-      this.extractFunction(entities, line, filePath, lineNum);
+      this.extractFunction(entities, line, filePath, lineNum, lines, index);
 
       // Extract classes
-      this.extractClass(entities, line, filePath, lineNum);
+      this.extractClass(entities, line, filePath, lineNum, lines, index);
 
       // Extract arrow functions assigned to const
-      this.extractArrowFunction(entities, line, filePath, lineNum);
+      this.extractArrowFunction(entities, line, filePath, lineNum, lines, index);
 
       // Extract interfaces (TypeScript)
       this.extractInterface(entities, line, filePath, lineNum);
@@ -194,25 +215,43 @@ export class IndexingService {
   }
 
   // DRY: Individual extractors use the helper
-  private extractFunction(entities: any[], line: string, filePath: string, lineNum: number): void {
+  private extractFunction(
+    entities: any[],
+    line: string,
+    filePath: string,
+    lineNum: number,
+    lines: string[],
+    lineIndex: number,
+  ): void {
     const functionMatch = line.match(
-      /(?:async]+)?function]+(\w+)|(?:const|let|var)]+(\w+)]*=]*(?:async]*)?\(/,
+      /(?:async\s+)?function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(/,
     );
     if (functionMatch) {
       const name = functionMatch[1] ?? functionMatch[2];
       if (name) {
-        this.addEntity(entities, filePath, lineNum, name, 'function', line.trim(), {
-          end_line: lineNum + 5,
+        const endLine = this.findMethodEnd(lines, lineIndex);
+        const content = lines.slice(lineIndex, endLine).join('\n');
+        this.addEntity(entities, filePath, lineNum, name, 'function', content, {
+          end_line: endLine,
         });
       }
     }
   }
 
-  private extractClass(entities: any[], line: string, filePath: string, lineNum: number): void {
-    const classMatch = line.match(/(?:export]+)?(?:default]+)?class]+(\w+)/);
+  private extractClass(
+    entities: any[],
+    line: string,
+    filePath: string,
+    lineNum: number,
+    lines: string[],
+    lineIndex: number,
+  ): void {
+    const classMatch = line.match(/(?:export\s+)?(?:default\s+)?class\s+(\w+)/);
     if (classMatch && classMatch[1]) {
-      this.addEntity(entities, filePath, lineNum, classMatch[1], 'class', line.trim(), {
-        end_line: lineNum + 10,
+      const endLine = this.findMethodEnd(lines, lineIndex);
+      const content = lines.slice(lineIndex, endLine).join('\n');
+      this.addEntity(entities, filePath, lineNum, classMatch[1], 'class', content, {
+        end_line: endLine,
       });
     }
   }
@@ -222,13 +261,17 @@ export class IndexingService {
     line: string,
     filePath: string,
     lineNum: number,
+    lines: string[],
+    lineIndex: number,
   ): void {
     const arrowMatch = line.match(
       /(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=]+)\s*=>/,
     );
     if (arrowMatch && arrowMatch[1]) {
-      this.addEntity(entities, filePath, lineNum, arrowMatch[1], 'function', line.trim(), {
-        end_line: lineNum + 3,
+      const endLine = this.findMethodEnd(lines, lineIndex);
+      const content = lines.slice(lineIndex, endLine).join('\n');
+      this.addEntity(entities, filePath, lineNum, arrowMatch[1], 'function', content, {
+        end_line: endLine,
       });
     }
   }
@@ -277,9 +320,11 @@ export class IndexingService {
       const isMethod = this.isInsideClass(lines, lineIndex);
 
       if (isMethod) {
-        this.addEntity(entities, filePath, lineNum, methodName, 'method', line.trim(), {
+        const endLine = this.findMethodEnd(lines, lineIndex);
+        const content = lines.slice(lineIndex, endLine).join('\n');
+        this.addEntity(entities, filePath, lineNum, methodName, 'method', content, {
           parameters: methodMatch[2] || '',
-          end_line: this.findMethodEnd(lines, lineIndex),
+          end_line: endLine,
         });
       }
     }
@@ -603,6 +648,13 @@ export class IndexingService {
       onProgress(totalFiles, totalFiles, 'Indexing complete!');
     }
 
+    // Persist codebase metadata
+    const entityCount = this.db.prepare('SELECT COUNT(*) as count FROM code_entities WHERE codebase_id = ?').get(actualCodebaseId) as { count: number };
+    this.db.prepare(`
+      INSERT OR REPLACE INTO codebases (id, name, path, status, file_count, entity_count, indexed_at, updated_at)
+      VALUES (?, ?, ?, 'indexed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).run(actualCodebaseId, actualCodebaseId, codebasePath, fileCount, entityCount.count);
+
     logger.info(`Indexed ${fileCount} files from ${codebasePath} as ${actualCodebaseId}`);
     return fileCount;
   }
@@ -622,6 +674,34 @@ export class IndexingService {
   }
   getContextLines(_filePath: string, _line: number, _count?: number): string[] {
     return [];
+  }
+
+  async findReferences(symbol: string, codebaseId: string): Promise<Array<{
+    file_path: string;
+    line: number;
+    content: string;
+    entity_type: string;
+    reference_type: 'definition' | 'usage';
+  }>> {
+    // 1. Find exact definitions (name match)
+    const defStmt = this.db.prepare(`
+      SELECT file_path, start_line as line, content, entity_type, 'definition' as reference_type
+      FROM code_entities
+      WHERE codebase_id = ? AND name = ?
+      ORDER BY file_path, start_line
+    `);
+    const definitions = defStmt.all(codebaseId, symbol) as any[];
+
+    // 2. Find usages in other entities' content
+    const usageStmt = this.db.prepare(`
+      SELECT file_path, start_line as line, content, entity_type, 'usage' as reference_type
+      FROM code_entities
+      WHERE codebase_id = ? AND name != ? AND content LIKE ?
+      ORDER BY file_path, start_line
+    `);
+    const usages = usageStmt.all(codebaseId, symbol, `%${symbol}%`) as any[];
+
+    return [...definitions, ...usages];
   }
 
   close(): void {

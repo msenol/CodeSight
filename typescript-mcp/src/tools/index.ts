@@ -4,6 +4,7 @@
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from '../services/logger.js';
 import { IndexingService } from '../services/indexing-service.js';
 import { DefaultCodebaseService } from '../services/codebase-service.js';
@@ -14,6 +15,12 @@ import { IntelligentRefactoringTool } from './intelligent-refactoring.js';
 import { BugPredictionTool } from './bug-prediction.js';
 import { ContextAwareCodegenTool } from './context-aware-codegen.js';
 import { TechnicalDebtAnalysisTool } from './technical-debt-analysis.js';
+import { AnalyzeCodebaseComplexityTool } from './analyze-codebase-complexity.js';
+import { AnalyzeSecurityTool } from './analyze-security.js';
+import { apiDiscoveryService } from '../services/api-discovery-service.js';
+import { complexityService } from '../services/complexity-service.js';
+import { FindDuplicatesTool } from './find-duplicates.js';
+import { TraceDataFlowTool } from './trace-data-flow.js';
 
 /**
  * Get or create codebase ID from current context
@@ -69,9 +76,13 @@ export async function registerMCPTools(server: Server): Promise<void> {
     // Set consistent DATABASE_PATH for all services
     // This ensures indexing and search use the same database file
     if (!process.env.DATABASE_PATH) {
-      process.env.DATABASE_PATH = path.join(process.cwd(), 'data', 'code-intelligence.db');
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      process.env.DATABASE_PATH = path.join(__dirname, '..', '..', 'code-intelligence.db');
       logger.info(`DATABASE_PATH set to: ${process.env.DATABASE_PATH}`);
     }
+
+    // Configure OpenRouter AI provider (key must be set via environment variable)
+    process.env.PREFERRED_AI_PROVIDER = 'openrouter';
 
     // Initialize Phase 4.1 AI-powered services
     const searchCodeTool = new SearchCodeTool();
@@ -80,6 +91,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
     const bugPredictionTool = new BugPredictionTool();
     const contextAwareCodegenTool = new ContextAwareCodegenTool();
     const technicalDebtTool = new TechnicalDebtAnalysisTool();
+    const analyzeSecurityTool = new AnalyzeSecurityTool();
 
     logger.debug('[DEBUG] Services initialized for MCP tools');
     // Register list_tools handler
@@ -478,6 +490,43 @@ export async function registerMCPTools(server: Server): Promise<void> {
             },
           },
           {
+            name: 'analyze_codebase_complexity',
+            description:
+              'Analyze all functions/methods in a codebase and return the most complex ones sorted by cyclomatic complexity. Use this to find refactoring candidates, detect high-risk areas, and measure code quality.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                codebase_id: {
+                  type: 'string',
+                  description: 'Codebase identifier to analyze',
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of results to return (1-100, default: 10)',
+                },
+                min_cyclomatic: {
+                  type: 'number',
+                  description: 'Minimum cyclomatic complexity threshold (default: 10)',
+                },
+                min_lines: {
+                  type: 'number',
+                  description: 'Minimum raw line count to consider (default: 30)',
+                },
+                entity_type: {
+                  type: 'string',
+                  enum: ['function', 'method', 'all'],
+                  description: 'Type of entities to analyze (default: all)',
+                },
+                exclude_patterns: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'Path patterns to exclude (default: build artifacts)',
+                },
+              },
+              required: ['codebase_id'],
+            },
+          },
+          {
             name: 'index_codebase',
             description:
               'Index a codebase for code intelligence. Parse all TypeScript/JavaScript files and store code entities in the database for search and analysis.',
@@ -609,177 +658,248 @@ export async function registerMCPTools(server: Server): Promise<void> {
           case 'find_references': {
             const { symbol_name } = args as { symbol_name: string; codebase_id?: string };
             const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
-            return {
-              content: [
-                {
+            try {
+              const refs = await searchCodeTool.findReferences(symbol_name, codebaseId);
+              if (refs.length === 0) {
+                return {
+                  content: [{
+                    type: 'text',
+                    text: `ℹ️ No references found for "${symbol_name}" in '${codebaseId}'.`,
+                  }],
+                };
+              }
+              let text = `🔍 References for "${symbol_name}" in ${codebaseId}:\n\n`;
+              for (const ref of refs.slice(0, 50)) {
+                const type = ref.reference_type === 'definition' ? '📍 Def' : '👉 Use';
+                text += `${type} — ${ref.file_path}:${ref.line} (${ref.entity_type})\n`;
+              }
+              if (refs.length > 50) {
+                text += `\n... and ${refs.length - 50} more references`;
+              }
+              text += `\nTotal: ${refs.length} references found`;
+              return { content: [{ type: 'text', text }] };
+            } catch (error) {
+              return {
+                content: [{
                   type: 'text',
-                  text:
-                    `🔍 References for "${symbol_name}" in ${codebaseId}:\n\n` +
-                    '- src/index.ts:15 - Import statement\n' +
-                    '- src/index.ts:45 - Function call\n' +
-                    '- src/utils.ts:23 - Variable assignment\n' +
-                    '- tests/index.test.ts:10 - Test usage\n\n' +
-                    'Total: 4 references found',
-                },
-              ],
-            };
+                  text: `❌ find_references failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                }],
+                isError: true,
+              };
+            }
           }
 
           case 'trace_data_flow': {
-            // codebase_id reserved for future use
             const {
               variable_name,
               file_path,
-              codebase_id: _codebase_id,
+              codebase_id,
             } = args as {
               variable_name: string;
               file_path: string;
               codebase_id: string;
             };
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text:
-                    `🔄 Data flow for "${variable_name}" in ${file_path}:\n\n` +
-                    `1. Initialized at line 10: const ${variable_name} = getData();\n` +
-                    `2. Modified at line 25: ${variable_name} = transform(${variable_name});\n` +
-                    `3. Passed to function at line 30: processData(${variable_name});\n` +
-                    `4. Returned at line 45: return { result: ${variable_name} };\n\n` +
-                    'Flow type: Linear with 1 branch',
-                },
-              ],
-            };
+            try {
+              const traceDataFlowTool = new TraceDataFlowTool();
+              const result = await traceDataFlowTool.call({
+                start_point: variable_name,
+                end_point: file_path || 'output',
+                codebase_id: getCodebaseId(codebase_id),
+                max_depth: 5,
+              });
+              let text = `🔄 Data flow for "${variable_name}":\n\n`;
+              text += `Direction: ${result.trace_direction}\n`;
+              text += `Total steps: ${result.total_steps}\n`;
+              text += `Nodes: ${result.nodes.length}\n`;
+              text += `Edges: ${result.edges.length}\n`;
+              text += `Paths: ${result.paths.length}\n\n`;
+              if (result.paths.length > 0) {
+                text += `Paths found:\n`;
+                for (const p of result.paths.slice(0, 5)) {
+                  text += `- ${p.description}\n`;
+                }
+              }
+              if (result.security_checkpoints.length > 0) {
+                text += `\nSecurity checkpoints: ${result.security_checkpoints.length}\n`;
+              }
+              return { content: [{ type: 'text', text }] };
+            } catch (error) {
+              return {
+                content: [{ type: 'text', text: `❌ trace_data_flow failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                isError: true,
+              };
+            }
           }
 
           case 'analyze_security': {
-            // codebase_id reserved for future use
-            const { file_path, codebase_id } = args as {
-              file_path?: string;
-              codebase_id: string;
-            };
-            const scope = file_path ? `File: ${file_path}` : `Entire codebase: ${codebase_id}`;
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text:
-                    `🔒 Security Analysis for ${scope}:\n\n` +
-                    '⚠️ Medium Risk:\n' +
-                    '- Potential SQL injection at line 45 (use parameterized queries)\n' +
-                    '- Missing input validation at line 78\n\n' +
-                    'ℹ️ Low Risk:\n' +
-                    '- Consider using environment variables for API keys (line 12)\n' +
-                    '- Add rate limiting to public endpoints\n\n' +
-                    '✅ Good Practices Found:\n' +
-                    '- Proper JWT validation\n' +
-                    '- HTTPS enforcement\n' +
-                    '- Input sanitization in most endpoints',
-                },
-              ],
-            };
+            try {
+              const result = await analyzeSecurityTool.call(args);
+              const vulnText = result.vulnerabilities.length
+                ? result.vulnerabilities
+                    .map(
+                      (v) =>
+                        `[${v.severity.toUpperCase()}] ${v.type}: ${v.title}\n` +
+                        `  File: ${v.file_path}:${v.line_number}\n` +
+                        `  ${v.description}\n` +
+                        `  Recommendation: ${v.recommendation}\n`,
+                    )
+                    .join('\n')
+                : 'No vulnerabilities found.';
+
+              const text =
+                `🔒 Security Analysis for ${result.codebase_id}:\n\n` +
+                `Score: ${result.security_score}/100\n` +
+                `Total: ${result.total_vulnerabilities} vulnerabilities\n` +
+                `Critical: ${result.summary.critical} | High: ${result.summary.high} | Medium: ${result.summary.medium} | Low: ${result.summary.low}\n\n` +
+                `${vulnText}\n\n` +
+                `Recommendations:\n` +
+                result.recommendations.map((r) => `- ${r}`).join('\n');
+
+              return { content: [{ type: 'text', text }] };
+            } catch (error) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Security analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
+              };
+            }
           }
 
           case 'get_api_endpoints': {
             const { codebase_id, framework } = args as { codebase_id: string; framework?: string };
-            return {
-              content: [
-                {
+            const cbId = getCodebaseId(codebase_id);
+            const cbService = new DefaultCodebaseService();
+            const codebase = await cbService.getCodebase(cbId);
+            if (!codebase) {
+              return {
+                content: [{
                   type: 'text',
-                  text:
-                    `🌐 API Endpoints in ${codebase_id}${framework ? ` (${framework})` : ''}:\n\n` +
-                    'GET /api/users - Get all users\n' +
-                    'GET /api/users/:id - Get user by ID\n' +
-                    'POST /api/users - Create new user\n' +
-                    'PUT /api/users/:id - Update user\n' +
-                    'DELETE /api/users/:id - Delete user\n' +
-                    'GET /api/health - Health check\n' +
-                    'POST /api/auth/login - User login\n' +
-                    'POST /api/auth/logout - User logout\n\n' +
-                    'Total: 8 endpoints',
-                },
-              ],
-            };
+                  text: `❌ Codebase '${cbId}' not found. Please index it first using index_codebase.`,
+                }],
+                isError: true,
+              };
+            }
+            const endpoints = await apiDiscoveryService.findApiEndpoints(cbId);
+            const filtered = framework
+              ? endpoints.filter(e => e.tags?.includes(framework.toLowerCase()))
+              : endpoints;
+            if (filtered.length === 0) {
+              const detected = await apiDiscoveryService.detectFrameworks(cbId);
+              return {
+                content: [{
+                  type: 'text',
+                  text: `ℹ️ No API endpoints found in '${cbId}'.\nDetected frameworks: ${detected.length > 0 ? detected.join(', ') : 'none'}`,
+                }],
+              };
+            }
+            let text = `🌐 API Endpoints in ${cbId}${framework ? ` (${framework})` : ''}:\n\n`;
+            for (const ep of filtered) {
+              text += `${ep.method} ${ep.path} — ${ep.file_path}:${ep.line_number}\n`;
+            }
+            text += `\nTotal: ${filtered.length} endpoints`;
+            return { content: [{ type: 'text', text }] };
           }
 
           case 'check_complexity': {
             const { file_path } = args as { file_path: string };
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text:
-                    `📊 Complexity Analysis for ${file_path}:\n\n` +
-                    'Overall Metrics:\n' +
-                    '- Cyclomatic Complexity: 12 (Moderate)\n' +
-                    '- Cognitive Complexity: 8 (Low)\n' +
-                    '- Lines of Code: 245\n' +
-                    '- Functions: 15\n\n' +
-                    'Complex Functions:\n' +
-                    '1. processData() - Complexity: 8 (line 45)\n' +
-                    '2. validateInput() - Complexity: 6 (line 120)\n' +
-                    '3. transformResult() - Complexity: 5 (line 180)\n\n' +
-                    'Recommendation: Consider refactoring processData() function',
-                },
-              ],
-            };
+            try {
+              const report = await complexityService.calculateFileComplexity(file_path);
+              let text = `📊 Complexity Analysis for ${file_path}:\n\n`;
+              text += `Overall Metrics:\n`;
+              text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
+              text += `- Cognitive Complexity: ${(report as any).cognitiveComplexity ?? 'N/A'}\n`;
+              text += `- Lines of Code: ${(report as any).linesOfCode ?? 'N/A'}\n`;
+              text += `- Maintainability Index: ${(report as any).maintainabilityIndex ?? 'N/A'}\n\n`;
+              if ((report as any).functions?.length) {
+                text += `Functions (${(report as any).functions.length}):\n`;
+                for (const fn of (report as any).functions.slice(0, 10)) {
+                  text += `- ${fn.name} (line ${fn.line}): complexity ${fn.complexity?.cyclomaticComplexity ?? '?'} (${fn.riskLevel})\n`;
+                }
+              }
+              return { content: [{ type: 'text', text }] };
+            } catch (error) {
+              return {
+                content: [{ type: 'text', text: `❌ Complexity analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                isError: true,
+              };
+            }
           }
 
           case 'find_duplicates': {
-            // codebase_id reserved for future use
-            const {
-              file_path: _file_path,
-              min_lines,
-              codebase_id,
-            } = args as {
-              file_path?: string;
-              min_lines?: number;
-              codebase_id: string;
-            };
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text:
-                    `🔁 Duplicate Code in ${codebase_id} (min ${min_lines} lines):\n\n` +
-                    'Duplicate Block 1 (12 lines):\n' +
-                    '- src/utils.ts:45-57\n' +
-                    '- src/helpers.ts:23-35\n' +
-                    'Similarity: 95%\n\n' +
-                    'Duplicate Block 2 (8 lines):\n' +
-                    '- src/api/users.ts:78-86\n' +
-                    '- src/api/products.ts:92-100\n' +
-                    'Similarity: 88%\n\n' +
-                    'Total: 2 duplicate blocks found\n' +
-                    'Potential lines saved: 20',
-                },
-              ],
-            };
+            const findDuplicatesTool = new FindDuplicatesTool();
+            try {
+              const result = await findDuplicatesTool.call(args);
+              let text = `🔁 Duplicate Code in ${result.codebase_id}:\n\n`;
+              text += `Files analyzed: ${result.summary.total_files_analyzed}\n`;
+              text += `Files with duplicates: ${result.summary.files_with_duplicates}\n`;
+              text += `Duplication percentage: ${result.summary.duplication_percentage}%\n`;
+              text += `Potential code reduction: ${result.summary.potential_code_reduction} lines\n\n`;
+              if (result.duplicate_groups.length > 0) {
+                text += `Duplicate Groups (${result.duplicate_groups.length}):\n`;
+                for (const group of result.duplicate_groups.slice(0, 10)) {
+                  text += `\n[${group.detection_type}] Similarity: ${Math.round(group.similarity_score * 100)}%\n`;
+                  for (const inst of group.instances) {
+                    text += `  - ${inst.file_path}:${inst.start_line}-${inst.end_line}\n`;
+                  }
+                  if (group.refactoring_suggestion) {
+                    text += `  💡 ${group.refactoring_suggestion}\n`;
+                  }
+                }
+              }
+              if (result.recommendations.length > 0) {
+                text += `\nRecommendations:\n`;
+                for (const rec of result.recommendations) {
+                  text += `- ${rec}\n`;
+                }
+              }
+              return { content: [{ type: 'text', text }] };
+            } catch (error) {
+              return {
+                content: [{ type: 'text', text: `❌ find_duplicates failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                isError: true,
+              };
+            }
           }
 
           case 'suggest_refactoring': {
             const { file_path } = args as { file_path: string };
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text:
-                    `♻️ Refactoring Suggestions for ${file_path}:\n\n` +
-                    '1. Extract Method (High Priority):\n' +
-                    '   - Lines 45-78: Extract validation logic into separate function\n' +
-                    '   - Lines 120-145: Create reusable data transformer\n\n' +
-                    '2. Reduce Complexity:\n' +
-                    '   - Function processData() has 8 conditional branches\n' +
-                    '   - Consider using strategy pattern or lookup table\n\n' +
-                    '3. Remove Dead Code:\n' +
-                    "   - Unused variable 'tempData' at line 92\n" +
-                    '   - Commented code block at lines 156-168\n\n' +
-                    '4. Improve Naming:\n' +
-                    "   - Rename 'x' to 'userData' (line 34)\n" +
-                    "   - Rename 'proc' to 'processedResult' (line 67)",
-                },
-              ],
-            };
+            try {
+              const report = await complexityService.calculateFileComplexity(file_path);
+              const functions = (report as any).functions || [];
+              let text = `♻️ Refactoring Suggestions for ${file_path}:\n\n`;
+              text += `Overall Metrics:\n`;
+              text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
+              text += `- Lines of Code: ${(report as any).linesOfCode ?? 'N/A'}\n`;
+              text += `- Maintainability Index: ${Math.round((report as any).maintainabilityIndex ?? 0)}\n\n`;
+              const highComplexity = functions.filter((f: any) => f.complexity?.cyclomaticComplexity > 10);
+              if (highComplexity.length > 0) {
+                text += `🔴 High Complexity Functions (${highComplexity.length}):\n`;
+                for (const fn of highComplexity.slice(0, 5)) {
+                  text += `  - ${fn.name} (line ${fn.line}): complexity ${fn.complexity?.cyclomaticComplexity} (${fn.riskLevel})\n`;
+                  text += `    💡 Consider breaking into smaller functions\n`;
+                }
+              }
+              const longFunctions = functions.filter((f: any) => f.complexity?.linesOfCode > 50);
+              if (longFunctions.length > 0) {
+                text += `\n📏 Long Functions (${longFunctions.length}):\n`;
+                for (const fn of longFunctions.slice(0, 5)) {
+                  text += `  - ${fn.name} (line ${fn.line}): ${fn.complexity?.linesOfCode} lines\n`;
+                  text += `    💡 Consider extracting helper methods\n`;
+                }
+              }
+              if (highComplexity.length === 0 && longFunctions.length === 0) {
+                text += `✅ Code looks clean! No major refactoring suggestions.\n`;
+              }
+              return { content: [{ type: 'text', text }] };
+            } catch (error) {
+              return {
+                content: [{ type: 'text', text: `❌ suggest_refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                isError: true,
+              };
+            }
           }
 
           // Phase 4.1 AI-Powered Tools
@@ -1097,6 +1217,69 @@ export async function registerMCPTools(server: Server): Promise<void> {
                   {
                     type: 'text',
                     text: `Technical Debt Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
+              };
+            }
+          }
+
+          case 'analyze_codebase_complexity': {
+            const { codebase_id, limit, min_cyclomatic, min_lines, entity_type, exclude_patterns } =
+              args as {
+                codebase_id: string;
+                limit?: number;
+                min_cyclomatic?: number;
+                min_lines?: number;
+                entity_type?: 'function' | 'method' | 'all';
+                exclude_patterns?: string[];
+              };
+
+            try {
+              const tool = new AnalyzeCodebaseComplexityTool();
+              const result = await tool.call({
+                codebase_id,
+                limit: limit ?? 10,
+                min_cyclomatic: min_cyclomatic ?? 10,
+                min_lines: min_lines ?? 30,
+                entity_type: entity_type ?? 'all',
+                exclude_patterns: exclude_patterns ?? [
+                  'node_modules',
+                  'dist',
+                  'build',
+                  '.next',
+                  'storybook-static',
+                  'coverage',
+                  'out',
+                  'min.js',
+                  'bundle.js',
+                ],
+              });
+
+              const resultText =
+                `📊 Codebase Complexity Analysis for "${result.codebase_id}"\n\n` +
+                `Total entities scanned: ${result.total_entities_scanned}\n` +
+                `Entities meeting threshold: ${result.total_analyzed}\n\n` +
+                `=== TOP ${result.results.length} MOST COMPLEX FUNCTIONS/METHODS ===\n\n` +
+                result.results
+                  .map(
+                    (r) =>
+                      `${r.rank}. ${r.name} (${r.entity_type})\n` +
+                      `   File: ${r.file_path}:${r.start_line}-${r.end_line}\n` +
+                      `   Raw Lines: ${r.raw_lines} | LOC: ${r.lines_of_code}\n` +
+                      `   Cyclomatic: ${r.cyclomatic_complexity} | Cognitive: ${r.cognitive_complexity} | MI: ${r.maintainability_index}\n` +
+                      `   Preview: ${r.preview.substring(0, 120)}...\n`,
+                  )
+                  .join('\n');
+
+              return {
+                content: [{ type: 'text', text: resultText }],
+              };
+            } catch (error) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Complexity analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                   },
                 ],
               };

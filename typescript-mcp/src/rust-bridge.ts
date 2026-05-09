@@ -18,6 +18,8 @@ interface NativeModule {
   searchCode(query: string, codebasePath?: string): Promise<SearchResult[]>;
   generateEmbedding(text: string): Promise<Float32Array>;
   indexCodebase(path: string, forceReindex?: boolean): Promise<string>;
+  analyzeComplexity(content: string, filePath: string): Promise<ComplexityMetricsNative>;
+  findDuplicates(filePaths: string[], contents: string[], minLines: number): Promise<DuplicateResultNative[]>;
   getStatistics?(): Promise<{
     total_entities: number;
     by_type: Record<string, number>;
@@ -26,13 +28,32 @@ interface NativeModule {
   clear?(): Promise<void>;
 }
 
+interface ComplexityMetricsNative {
+  cyclomatic: number;
+  cognitive: number;
+  linesOfCode: number;
+  maintainabilityIndex: number;
+}
+
+interface DuplicateResultNative {
+  fileA: string;
+  fileB: string;
+  startLineA: number;
+  startLineB: number;
+  length: number;
+  content: string;
+}
+
 // Try to load the native addon
 let nativeModule: NativeModule | null = null;
 
 // Development mode - try to load from build directories first
 const possiblePaths = [
-  join(__dirname, '..', 'rust-core', 'target', 'release', 'code_intelligence_ffi.node'),
-  join(__dirname, '..', 'rust-core', 'target', 'debug', 'code_intelligence_ffi.node'),
+  // NAPI-RS build output (preferred — platform-aware loader)
+  join(__dirname, '..', '..', 'rust-core', 'crates', 'ffi', 'index.js'),
+  // Fallback: manually-renamed cdylib
+  join(__dirname, '..', '..', 'rust-core', 'target', 'release', 'code_intelligence_ffi.node'),
+  join(__dirname, '..', '..', 'rust-core', 'target', 'debug', 'code_intelligence_ffi.node'),
   join(__dirname, '..', 'native', 'code_intelligence_ffi.node'),
   join(__dirname, 'code_intelligence_ffi.node'),
 ];
@@ -99,6 +120,14 @@ function createMockModule() {
     indexCodebase: (path: string) => {
       logger.warn(`[MOCK] Indexing codebase: ${path}`);
       return Promise.resolve(`Indexed 1 files in ${path}`);
+    },
+    analyzeComplexity: (_content: string, _filePath: string) => {
+      logger.warn('[MOCK] Analyzing complexity');
+      return Promise.resolve({ cyclomatic: 1, cognitive: 0, linesOfCode: 1, maintainabilityIndex: 100 });
+    },
+    findDuplicates: (_paths: string[], _contents: string[], _minLines: number) => {
+      logger.warn('[MOCK] Finding duplicates');
+      return Promise.resolve([]);
     },
   };
 }
@@ -196,7 +225,7 @@ export class RustFFIBridge {
    * Parse a file and extract code entities
    */
   async parseFile(filePath: string, content: string): Promise<CodeEntity[]> {
-    this.ensureInitialized();
+    await this.ensureInitialized();
 
     try {
       const entities = await (nativeModule as NativeModule).parseFile(filePath, content);
@@ -211,7 +240,7 @@ export class RustFFIBridge {
    * Search for code entities
    */
   async searchCode(query: string, codebasePath?: string): Promise<SearchResult[]> {
-    this.ensureInitialized();
+    await this.ensureInitialized();
 
     try {
       const results = await (nativeModule as NativeModule).searchCode(query, codebasePath);
@@ -226,7 +255,7 @@ export class RustFFIBridge {
    * Generate embeddings for text
    */
   async generateEmbedding(text: string): Promise<Float32Array> {
-    this.ensureInitialized();
+    await this.ensureInitialized();
 
     try {
       return await (nativeModule as NativeModule).generateEmbedding(text);
@@ -240,7 +269,7 @@ export class RustFFIBridge {
    * Index a codebase
    */
   async indexCodebase(path: string): Promise<string> {
-    this.ensureInitialized();
+    await this.ensureInitialized();
 
     try {
       return await (nativeModule as NativeModule).indexCodebase(path);
@@ -251,6 +280,55 @@ export class RustFFIBridge {
   }
 
   /**
+   * Analyze complexity for a code snippet.
+   */
+  async analyzeComplexity(content: string, filePath: string): Promise<{
+    cyclomaticComplexity: number;
+    cognitiveComplexity: number;
+    linesOfCode: number;
+    maintainabilityIndex: number;
+  }> {
+    await this.ensureInitialized();
+    const raw = await (nativeModule as NativeModule).analyzeComplexity(content, filePath);
+    return {
+      cyclomaticComplexity: raw.cyclomatic,
+      cognitiveComplexity: raw.cognitive,
+      linesOfCode: raw.linesOfCode,
+      maintainabilityIndex: raw.maintainabilityIndex,
+    };
+  }
+
+  /**
+   * Find duplicate code blocks across files.
+   */
+  async findDuplicates(
+    files: { path: string; content: string }[],
+    minLines: number,
+  ): Promise<
+    {
+      fileA: string;
+      fileB: string;
+      startLineA: number;
+      startLineB: number;
+      length: number;
+      content: string;
+    }[]
+  > {
+    await this.ensureInitialized();
+    const paths = files.map((f) => f.path);
+    const contents = files.map((f) => f.content);
+    const raw = await (nativeModule as NativeModule).findDuplicates(paths, contents, minLines);
+    return raw.map((r) => ({
+      fileA: r.fileA,
+      fileB: r.fileB,
+      startLineA: r.startLineA,
+      startLineB: r.startLineB,
+      length: r.length,
+      content: r.content,
+    }));
+  }
+
+  /**
    * Get indexing statistics
    */
   async getStatistics(): Promise<{
@@ -258,7 +336,7 @@ export class RustFFIBridge {
     by_type: Record<string, number>;
     by_language: Record<string, number>;
   }> {
-    this.ensureInitialized();
+    await this.ensureInitialized();
 
     try {
       return (
@@ -278,7 +356,7 @@ export class RustFFIBridge {
    * Clear all indexed data
    */
   async clear(): Promise<void> {
-    this.ensureInitialized();
+    await this.ensureInitialized();
 
     try {
       await (nativeModule as NativeModule).clear?.();
@@ -324,35 +402,36 @@ export class RustFFIBridge {
     this.config = { ...this.config, ...newConfig };
   }
 
-  private ensureInitialized(): void {
+  private async ensureInitialized(): Promise<void> {
     if (!this.isInitialized) {
-      throw new Error('Rust FFI bridge is not initialized. Call initialize() first.');
+      await this.initialize();
     }
   }
 
   private normalizeEntity(entity: unknown): CodeEntity {
-    const entityData = entity as Record<string, unknown>;
+    const d = entity as Record<string, unknown>;
+    // NAPI-RS serializes snake_case Rust fields to camelCase JS properties
     return {
-      id: entityData.id as string,
-      name: entityData.name as string,
-      file_path: entityData.file_path as string,
-      entity_type: entityData.entity_type as string,
-      start_line: entityData.start_line as number,
-      end_line: entityData.end_line as number,
-      content: entityData.content as string,
-      signature: entityData.signature as string | undefined,
-      documentation: entityData.documentation as string | undefined,
-      visibility: entityData.visibility as string | undefined,
-      parameters: Array.isArray(entityData.parameters)
-        ? (entityData.parameters as Parameter[])
+      id: d.id as string,
+      name: d.name as string,
+      file_path: (d.filePath ?? d.file_path) as string,
+      entity_type: (d.entityType ?? d.entity_type) as string,
+      start_line: (d.startLine ?? d.start_line) as number,
+      end_line: (d.endLine ?? d.end_line) as number,
+      content: d.content as string,
+      signature: (d.signature ?? d.signature) as string | undefined,
+      documentation: (d.documentation ?? d.documentation) as string | undefined,
+      visibility: (d.visibility ?? d.visibility) as string | undefined,
+      parameters: Array.isArray(d.parameters)
+        ? (d.parameters as Parameter[])
         : [],
-      return_type: entityData.return_type as string | undefined,
-      dependencies: Array.isArray(entityData.dependencies)
-        ? (entityData.dependencies as string[])
+      return_type: (d.returnType ?? d.return_type) as string | undefined,
+      dependencies: Array.isArray(d.dependencies)
+        ? (d.dependencies as string[])
         : [],
       metadata:
-        entityData.metadata && typeof entityData.metadata === 'object'
-          ? (entityData.metadata as Record<string, string>)
+        d.metadata && typeof d.metadata === 'object'
+          ? (d.metadata as Record<string, string>)
           : {},
     };
   }

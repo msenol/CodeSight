@@ -169,6 +169,19 @@ export class SearchCodeTool {
   }
 
   /**
+   * Find all references to a symbol (definitions and usages)
+   */
+  async findReferences(symbol: string, codebaseId: string): Promise<Array<{
+    file_path: string;
+    line: number;
+    content: string;
+    entity_type: string;
+    reference_type: 'definition' | 'usage';
+  }>> {
+    return this.searchService.findReferences(symbol, codebaseId);
+  }
+
+  /**
    * Detect the intent of the natural language query
    */
   private detectQueryIntent(query: string): string {

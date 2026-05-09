@@ -1,11 +1,11 @@
 // import type { Tool } from '@modelcontextprotocol/sdk/types.js'; // Rule 15: Import reserved for future implementation
 
 import { codebaseService } from '../services/codebase-service.js';
-// import { securityService } from '../services/security-service.js'; // Unused import
+import { securityService } from '../services/security-service.js';
 import { z } from 'zod';
 
 const AnalyzeSecurityInputSchema = z.object({
-  codebase_id: z.string().uuid('Invalid codebase ID'),
+  codebase_id: z.string().min(1, 'Codebase ID is required'),
   patterns: z
     .array(z.enum(['sql_injection', 'xss', 'csrf', 'path_traversal', 'command_injection', 'all']))
     .default(['all']),
@@ -103,32 +103,15 @@ export class AnalyzeSecurityTool {
         throw new Error(`Codebase with ID ${input.codebase_id} not found`);
       }
 
-      // Mock implementation for now - analyzeVulnerabilities expects different input format
-      // TODO: Implement proper codebase security analysis
-      const securityIssues: any[] = [
-        {
-          id: 'mock_1',
-          type: 'sql_injection',
-          severity: 'high',
-          message: 'Potential SQL injection vulnerability detected',
-          file: '/mock/file.ts',
-          line: 10,
-          column: 5,
-          code: 'SELECT * FROM users WHERE id = ' + 'userId',
-          suggestion: 'Use parameterized queries instead',
-        },
-        {
-          id: 'mock_2',
-          type: 'hardcoded_secrets',
-          severity: 'critical',
-          message: 'Hardcoded API key detected',
-          file: '/mock/config.ts',
-          line: 5,
-          column: 15,
-          code: 'const API_KEY = "sk-1234567890abcdef"',
-          suggestion: 'Move API keys to environment variables',
-        },
-      ];
+      const scanOptions = {
+        minSeverity: input.severity_threshold,
+        includePatterns: input.patterns.includes('all') ? undefined : input.patterns,
+        excludePatterns: input.exclude_patterns,
+      };
+      const securityIssues = await securityService.scanForVulnerabilities(
+        input.codebase_id,
+        scanOptions,
+      );
       const vulnerabilities = this.convertToVulnerabilities(securityIssues);
       const summary = this.calculateSummary(vulnerabilities);
       const securityScore = this.calculateSecurityScore(summary, vulnerabilities.length);

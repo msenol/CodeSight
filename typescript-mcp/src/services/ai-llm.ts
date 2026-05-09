@@ -188,8 +188,7 @@ class ClaudeProvider implements LLMProvider {
   }
 
   isAvailable(): boolean {
-    // Check for ANTHROPIC_API_KEY
-    return !!process.env.ANTHROPIC_API_KEY || true; // Temporarily true for demo
+    return !!process.env.ANTHROPIC_API_KEY;
   }
 
   getCapabilities(): LLMCapabilities {
@@ -314,7 +313,7 @@ class OpenAIProvider implements LLMProvider {
   }
 
   isAvailable(): boolean {
-    return !!process.env.OPENAI_API_KEY || true; // Temporarily true for demo
+    return !!process.env.OPENAI_API_KEY;
   }
 
   getCapabilities(): LLMCapabilities {
@@ -341,8 +340,7 @@ class OllamaProvider implements LLMProvider {
   }
 
   isAvailable(): boolean {
-    // Check if Ollama is running locally
-    return true; // Simplified for demo
+    return !!process.env.OLLAMA_URL;
   }
 
   getCapabilities(): LLMCapabilities {

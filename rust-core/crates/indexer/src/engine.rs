@@ -163,6 +163,13 @@ impl Engine {
         indexed_entities.values().cloned().collect()
     }
 
+    /// Drain all indexed entities (clears the internal map and returns them).
+    pub async fn drain_entities(&self) -> Vec<CodeEntity> {
+        let mut indexed_entities = self.indexed_entities.write().await;
+        let values: Vec<CodeEntity> = indexed_entities.drain().map(|(_, v)| v).collect();
+        values
+    }
+
     /// Search for entities by name
     pub async fn search_entities(&self, query: &str) -> Vec<CodeEntity> {
         let indexed_entities = self.indexed_entities.read().await;

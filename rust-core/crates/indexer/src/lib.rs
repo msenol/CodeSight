@@ -3,18 +3,22 @@
 pub mod engine;
 pub mod progress;
 pub mod queue;
+pub mod storage;
 pub mod worker;
 
 use anyhow::Result;
 use code_intelligence_core::CodeEntity;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+use crate::storage::{EntityRow, Storage};
 
 /// Main indexing engine
 pub struct IndexingEngine {
     engine: Arc<RwLock<engine::Engine>>,
     config: IndexingConfig,
+    db_path: Option<PathBuf>,
 }
 
 /// Indexing configuration
@@ -80,7 +84,18 @@ impl IndexingEngine {
     pub fn with_config(config: IndexingConfig) -> Self {
         let engine = Arc::new(RwLock::new(engine::Engine::new(config.clone())));
 
-        Self { engine, config }
+        Self {
+            engine,
+            config,
+            db_path: None,
+        }
+    }
+
+    /// Set the SQLite database path for persistence.
+    /// If unset, indexing is memory-only.
+    pub fn with_db_path(mut self, path: impl Into<PathBuf>) -> Self {
+        self.db_path = Some(path.into());
+        self
     }
 
     /// Index a codebase at the given path
@@ -107,6 +122,56 @@ impl IndexingEngine {
             self.process_files_parallel(files, &mut progress).await?;
         } else {
             self.process_files_sequential(files, &mut progress).await?;
+        }
+
+        // Persist to SQLite if a DB path is configured
+        if let Some(ref db_path) = self.db_path {
+            let path = path.to_path_buf();
+            let db_path = db_path.clone();
+            let total_entities = progress.total_entities;
+            let processed_files = progress.processed_files;
+
+            // Drain in-memory entities before moving to blocking task
+            let engine = self.engine.write().await;
+            let core_entities = engine.drain_entities().await;
+            drop(engine);
+
+            let entities: Vec<EntityRow> = core_entities
+                .into_iter()
+                .map(|e| EntityRow {
+                    id: e.id.to_string(),
+                    name: e.name,
+                    file_path: e.file_path.clone(),
+                    entity_type: format!("{:?}", e.entity_type),
+                    start_line: e.start_line,
+                    end_line: e.end_line,
+                    content: e.content,
+                    codebase_id: path.to_string_lossy().to_string(),
+                })
+                .collect();
+
+            tokio::task::spawn_blocking(move || {
+                let mut storage = Storage::new(&db_path)?;
+                let codebase_id = path.to_string_lossy().to_string();
+                storage.clear_codebase_entities(&codebase_id)?;
+
+                if !entities.is_empty() {
+                    storage.insert_entities_batch(&entities)?;
+                }
+
+                storage.upsert_codebase(
+                    &codebase_id,
+                    &path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "unknown".to_string()),
+                    &codebase_id,
+                    None,
+                    processed_files,
+                    total_entities,
+                )?;
+
+                Result::<(), anyhow::Error>::Ok(())
+            })
+            .await
+            .map_err(|e| anyhow::anyhow!("SQLite persistence task failed: {}", e))??;
         }
 
         tracing::info!("Indexing completed in {:?}", start_time.elapsed());

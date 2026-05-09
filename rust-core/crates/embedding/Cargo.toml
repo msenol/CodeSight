@@ -21,16 +21,15 @@ anyhow.workspace = true
 chrono.workspace = true
 tracing.workspace = true
 
-# ONNX Runtime (disabled for testing)
-# ort.workspace = true
-# ndarray.workspace = true
-
 # Async runtime
 tokio.workspace = true
 
 # Utilities
 lru.workspace = true
 dashmap.workspace = true
+
+# Embedding model — FastEmbed with ONNX Runtime
+fastembed = "5"
 
 # Local dependencies
 code-intelligence-core = { path = "../core" }

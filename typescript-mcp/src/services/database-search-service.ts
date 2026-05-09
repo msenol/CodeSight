@@ -43,17 +43,17 @@ export class DatabaseSearchService implements SearchService {
     const dbDir = path.dirname(this.databasePath);
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
-      console.log(`[DEBUG] Created database directory: ${dbDir}`);
+      // console.log(`[DEBUG] Created database directory: ${dbDir}`);
     }
 
-    console.log('[DEBUG] DatabaseSearchService using path:', this.databasePath);
+    // console.log('[DEBUG] DatabaseSearchService using path:', this.databasePath);
     this.db = new Database(this.databasePath);
 
     // Test database connection
     try {
       const test = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").get();
 
-      console.log('[DEBUG] Database tables found:', test);
+      // console.log('[DEBUG] Database tables found:', test);
     } catch (error) {
       console.error('[DEBUG] Database connection error:', error);
     }
@@ -63,9 +63,9 @@ export class DatabaseSearchService implements SearchService {
     const maxResults = options.max_results || 10;
     const searchQuery = query.toLowerCase();
 
-    console.log(
-      `[DEBUG] keywordSearch called with query: "${searchQuery}", codebase_id: "${options.codebase_id}"`,
-    );
+    // console.log(
+    //   `[DEBUG] keywordSearch called with query: "${searchQuery}", codebase_id: "${options.codebase_id}"`,
+    // );
 
     // First check if table exists and has data
     try {
@@ -73,7 +73,7 @@ export class DatabaseSearchService implements SearchService {
         count: number;
       };
 
-      console.log(`[DEBUG] Database has ${count.count} entities`);
+      // console.log(`[DEBUG] Database has ${count.count} entities`);
     } catch (error) {
       console.error('[DEBUG] Error checking entity count:', error);
     }
@@ -109,7 +109,7 @@ export class DatabaseSearchService implements SearchService {
       maxResults,
     );
 
-    console.log(`[DEBUG] Found ${rows.length} raw results for query "${searchQuery}"`);
+    // console.log(`[DEBUG] Found ${rows.length} raw results for query "${searchQuery}"`);
 
     const results = rows.map(row => ({
       file: (row as any).file_path,
@@ -119,7 +119,7 @@ export class DatabaseSearchService implements SearchService {
       score: this.calculateRelevanceScore((row as any).name, (row as any).content, searchQuery),
     }));
 
-    console.log(`[DEBUG] Returning ${results.length} formatted results`);
+    // console.log(`[DEBUG] Returning ${results.length} formatted results`);
 
     return results;
   }
@@ -308,5 +308,20 @@ export class DatabaseSearchService implements SearchService {
     };
 
     return languageMap[ext || ''] || 'unknown';
+  }
+
+  /**
+   * Check if a codebase exists in the database by looking for any entities
+   * with the given codebase_id.
+   */
+  hasCodebase(codebaseId: string): boolean {
+    try {
+      const result = this.db
+        .prepare('SELECT 1 FROM code_entities WHERE codebase_id = ? LIMIT 1')
+        .get(codebaseId);
+      return !!result;
+    } catch {
+      return false;
+    }
   }
 }

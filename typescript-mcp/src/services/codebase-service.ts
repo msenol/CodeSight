@@ -2,6 +2,7 @@ import type { CodebaseInfo, FileInfo, SearchResult } from '../types/index.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
+import Database from 'better-sqlite3';
 import { DatabaseSearchService } from './database-search-service.js';
 import { parse } from '@typescript-eslint/typescript-estree';
 import * as acorn from 'acorn';
@@ -33,10 +34,13 @@ export class DefaultCodebaseService implements CodebaseService {
   private codebases = new Map<string, CodebaseInfo>();
   private searchService: DatabaseSearchService;
   private aliases: Map<string, string>;
+  private db: Database.Database;
 
   constructor() {
     this.searchService = new DatabaseSearchService();
     this.aliases = this.loadAliases();
+    const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'code-intelligence.db');
+    this.db = new Database(dbPath);
   }
 
   private loadAliases(): Map<string, string> {
@@ -75,6 +79,17 @@ export class DefaultCodebaseService implements CodebaseService {
       status: 'indexed',
     };
     this.codebases.set(id, codebase);
+
+    // Persist to SQLite
+    try {
+      this.db.prepare(`
+        INSERT OR REPLACE INTO codebases (id, name, path, languages, status, file_count, indexed_at, updated_at)
+        VALUES (?, ?, ?, ?, 'indexed', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(id, name, path, JSON.stringify(languages), 0);
+    } catch (e) {
+      // Table may not exist yet (older indexer)
+    }
+
     return id;
   }
 
@@ -148,9 +163,53 @@ export class DefaultCodebaseService implements CodebaseService {
       this.codebases.set(id, codebase);
       return codebase;
     } catch {
-      // Not a valid path, check memory only
-      // TODO: Replace with proper logger when available
-      // logger.debug('[DEBUG] Codebase not found for ID:', id);
+      // Check persistent codebases table for real path
+      try {
+        const row = this.db.prepare('SELECT * FROM codebases WHERE id = ?').get(id) as {
+          id: string;
+          name: string;
+          path: string;
+          languages: string;
+          status: string;
+          file_count: number;
+          entity_count: number;
+          indexed_at: string;
+        } | undefined;
+        if (row) {
+          const codebase: CodebaseInfo = {
+            id: row.id,
+            name: row.name,
+            path: row.path,
+            languages: row.languages ? JSON.parse(row.languages) : ['typescript', 'javascript'],
+            createdAt: row.indexed_at,
+            updatedAt: row.indexed_at,
+            fileCount: row.file_count,
+            indexedAt: row.indexed_at,
+            status: row.status as CodebaseInfo['status'],
+          };
+          this.codebases.set(id, codebase);
+          return codebase;
+        }
+      } catch {
+        // codebases table may not exist
+      }
+
+      // Fallback: check database for indexed entities (old behavior)
+      if (this.searchService.hasCodebase(id)) {
+        const codebase: CodebaseInfo = {
+          id,
+          name: id,
+          path: process.cwd(),
+          languages: ['typescript', 'javascript'],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          fileCount: 0,
+          indexedAt: new Date().toISOString(),
+          status: 'indexed',
+        };
+        this.codebases.set(id, codebase);
+        return codebase;
+      }
       return null;
     }
   }
@@ -179,7 +238,8 @@ export class DefaultCodebaseService implements CodebaseService {
       // Filter only actual files (not directories)
       const actualFiles = [];
       for (const file of files) {
-        const fullPath = path.join(codebase.path, file);
+        // absolute: true returns full paths, no need to join with codebase.path
+        const fullPath = file;
         try {
           const stat = await fs.stat(fullPath);
           if (stat.isFile()) {
@@ -635,7 +695,10 @@ export class DefaultCodebaseService implements CodebaseService {
   }
 
   async getFiles(codebaseId: string): Promise<string[]> {
-    const codebase = this.codebases.get(codebaseId);
+    let codebase = this.codebases.get(codebaseId);
+    if (!codebase) {
+      codebase = await this.getCodebase(codebaseId);
+    }
     if (!codebase) {
       throw new Error(`Codebase with id ${codebaseId} not found`);
     }
@@ -647,7 +710,7 @@ export class DefaultCodebaseService implements CodebaseService {
       // Get all files using glob
       const files = await glob('**/*', {
         cwd: codebase.path,
-        absolute: false,
+        absolute: true,
         ignore: [
           '**/node_modules/**',
           '**/dist/**',
@@ -664,7 +727,8 @@ export class DefaultCodebaseService implements CodebaseService {
       // Filter only actual files (not directories)
       const actualFiles = [];
       for (const file of files) {
-        const fullPath = path.join(codebase.path, file);
+        // glob with absolute:true already returns full paths
+        const fullPath = file;
         try {
           const stat = await fs.stat(fullPath);
           if (stat.isFile()) {

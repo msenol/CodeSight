@@ -1,0 +1,24 @@
+[package]
+name = "code-intelligence-analyzer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Code analysis engine for complexity and duplication detection"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+code-intelligence-core = { path = "../core" }
+code-intelligence-parser = { path = "../parser" }
+rayon.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true

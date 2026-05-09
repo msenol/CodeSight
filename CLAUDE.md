@@ -2,23 +2,26 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version: v0.1.0**
-**Last Updated: January 7, 2026**
+**Version: v0.1.1**
+**Last Updated: May 9, 2026**
 
 ## Project Overview
 
 CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation** with comprehensive AI-powered code intelligence platform and exceptional code quality:
 
-- **✅ TypeScript MCP Server** (`typescript-mcp/`): Full MCP protocol with 14 tools (9 core + 5 AI-powered), 377+ entities indexed in SQLite
+- **✅ TypeScript MCP Server** (`typescript-mcp/`): Full MCP protocol with 16 tools (11 core + 5 AI-powered), SQLite with shared TS/Rust read/write
 - **✅ React Frontend** (`src/`): Web UI with Vite and TypeScript
 - **✅ Express API** (`api/`): REST API server with WebSocket support
-- **✅ Rust FFI Bridge** (`rust-core/`): Complete NAPI-RS implementation with Tree-sitter parsers
-- **✅ Multi-Language Support**: 15+ programming languages with real-time parsing
+- **✅ Rust FFI Bridge** (`rust-core/`): NAPI-RS implementation with 8 exports (Parser, Indexer, Analyzer, Embedding crates)
+- **✅ Multi-Language Support**: 8 programming languages with Tree-sitter
+- **✅ ONNX Embeddings**: Real 384-dim sentence embeddings via `all-MiniLM-L6-v2`
+- **✅ Rust Analyzer**: AST-based complexity analysis and Rabin-Karp duplicate detection
 - **✅ Enterprise CI/CD**: 7 GitHub Actions workflows with comprehensive testing
 - **✅ Production Docker**: Complete containerization with PostgreSQL, Redis, monitoring
 - **✅ Professional Tooling**: Unified ESLint, TypeScript configs, security scanning
 - **✅ Phase 3.4 Integration**: Advanced LLM integration, database adapters, security middleware
 - **✅ Phase 4.1 AI Features**: 5 advanced AI-powered tools with comprehensive LLM integration
+- **✅ Phase 5 Complete**: Rust FFI bridge with 8 NAPI exports, 10/10 MCP integration test pass
 - **✅ Message Queuing**: BullMQ with Redis backend for background job processing
 - **✅ LLM Integration**: llama.cpp, Ollama, HuggingFace with intelligent fallback routing
 - **✅ Database Layer**: SQLite, PostgreSQL, DuckDB vector store with unified interfaces
@@ -38,7 +41,7 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 - 🏆 **AI Tool Testing**: 5 comprehensive AI tool test suites with full integration coverage
 - 🏆 **Enhanced Test Coverage**: 72 comprehensive tests with 100% pass rate including AI validation
 - 🏆 **TDD Framework Excellence**: Complete test-driven development with contract testing methodology
-- 🏆 **Phase 5 Validation Complete**: All test failures resolved with Rule 15 compliance (23 → 0 failures)
+- 🏆 **Phase 5 Complete**: Rust FFI bridge with 8 NAPI exports, 10/10 MCP integration test pass
 
 ## Essential Commands
 
@@ -48,8 +51,14 @@ CodeSight MCP Server - **Enterprise-grade hybrid TypeScript/Rust implementation*
 # Build and setup
 cd typescript-mcp && npm install && npm run build
 
-# Build Rust FFI bridge (recommended for production performance)
-cd ../rust-core && cargo build --release && cd ../typescript-mcp
+# Build Rust FFI bridge (native NAPI-RS module)
+cd rust-core/crates/ffi && npx napi build --platform --release
+
+# Or from TypeScript root:
+cd typescript-mcp && npm run build:native
+
+# Full build (TypeScript + native)
+npm run build:full
 
 # Index codebase (JS/TS, with multi-language support)
 node dist/cli/index.js index /path/to/project
@@ -159,17 +168,19 @@ docker-compose -f docker-compose.dev.yml up -d
 
 ## MCP Tools Status
 
-**✅ Core Tools (Phase 3.3 Complete):**
+**✅ Core Tools (Phase 5 Complete — 11 Rust-Backed Tools):**
 
-- `search_code`: Natural language search with SQLite results
+- `search_code`: SQLite-backed keyword search via Rust (~4ms)
 - `explain_function`: Function explanation with codebase lookup
 - `find_references`: Find all references to a symbol with cross-file analysis
 - `trace_data_flow`: Trace data flow through the code with variable tracking
-- `analyze_security`: Analyze code for security vulnerabilities with comprehensive checks
-- `get_api_endpoints`: List all API endpoints in the codebase with HTTP methods
-- `check_complexity`: Analyze code complexity metrics with detailed breakdown
-- `find_duplicates`: Detect duplicate code patterns with similarity scoring
+- `analyze_security`: Analyze code for security vulnerabilities
+- `get_api_endpoints`: List all API endpoints in the codebase
+- `check_complexity`: AST-based complexity analysis via Rust
+- `find_duplicates`: Rabin-Karp rolling hash detection via Rust
 - `suggest_refactoring`: Provide refactoring suggestions with implementation guidance
+- `index_codebase`: Parallel codebase indexing with SQLite persistence (Rust)
+- `analyze_codebase_complexity`: System-wide complexity analysis
 
 **🤖 AI-Powered Tools (Phase 4.1 Complete):**
 
@@ -204,9 +215,9 @@ docker-compose -f docker-compose.dev.yml up -d
 - ✅ **Memory Optimization**: Memory usage and leak detection (T087)
 - ✅ **Monitoring Dashboard**: Real-time performance monitoring (T088)
 
-**🔧 Current Implementation Status (Phase 4.1 Complete + Phase 5 Validation Complete):**
+**🔧 Current Implementation Status (Phase 5 Complete):**
 
-- ✅ **All 14 MCP Tools Fully Implemented**: 9 core + 5 AI-powered tools with comprehensive testing
+- ✅ **All 16 MCP Tools Fully Implemented**: 11 core + 5 AI-powered tools with comprehensive testing
 - ✅ **Enhanced Test Coverage**: 72 comprehensive tests with 100% pass rate including AI validation
 - ✅ **Zero Compilation Errors**: Perfect TypeScript and Rust compilation status
 - ✅ **Zero ESLint Errors**: Perfect lint compliance across entire codebase (0 errors, 38 pre-existing warnings)
@@ -219,6 +230,9 @@ docker-compose -f docker-compose.dev.yml up -d
 - ✅ **AI Provider Testing**: Comprehensive testing for Claude, GPT-4, Ollama, and rule-based fallbacks
 - ✅ **REST API Endpoint**: `/mcp/call` HTTP endpoint for non-MCP client access
 - ✅ **Edge Case Handling**: Comprehensive edge case testing with proper error status codes (400, 404, 408, 413, 500)
+- ✅ **Rust Compute Layer**: 4 crates — Parser, Indexer, Analyzer, Embedding
+- ✅ **ONNX Embeddings**: Real 384-dim vectors via `all-MiniLM-L6-v2` (~23MB model)
+- ✅ **FFI Bridge**: 8 NAPI exports with lazy init and graceful fallback
 
 ## AI Development Guidelines (Phase 4.1)
 
@@ -433,22 +447,25 @@ Never duplicate code. Extract common logic into reusable utilities/components.
 
 **Rust/TypeScript Integration Best Practices:**
 
-- Always implement graceful fallback when calling Rust functions from TypeScript
+- Use NAPI-RS for Node.js native modules via `npx napi build --platform --release`
+- Build produces `index.js`, `index.d.ts`, and `.node` binary in `rust-core/crates/ffi/`
+- TypeScript loads the native module via `createRequire` in `typescript-mcp/src/rust-bridge.ts`
+- 8 NAPI exports: `init_engine`, `parse_file`, `index_codebase`, `search_code`, `analyze_complexity`, `find_duplicates`, `generate_embedding`, `get_statistics`, `clear`
+- Lazy initialization pattern — no manual `initEngine()` call required
+- Graceful fallback to TypeScript when native module unavailable
 - Use proper error handling across FFI boundaries (Result<T, Error> types)
-- Minimize data serialization overhead between languages
+- Data structures: `CodeEntity`, `SearchResult`, `ComplexityMetrics`, `DuplicateResult`
 - Batch operations when possible to reduce FFI call overhead
 - Test both Rust-only and TypeScript-only paths independently
-- Validate data structures at FFI boundaries using serde/zod
-- Handle platform-specific compilation issues gracefully
-- Use NAPI-RS for Node.js native modules (not direct FFI)
 
 **Development Workflow:**
 
-1. Develop Rust functionality with comprehensive tests
-2. Expose functions via NAPI-RS with proper error handling
-3. Implement TypeScript wrapper with fallback logic
-4. Test both integrated and fallback scenarios
-5. Profile performance and optimize critical paths
+1. Develop Rust functionality in `rust-core/crates/` (parser, indexer, analyzer, embedding)
+2. Expose functions via NAPI-RS with `#[napi]` macro and proper error handling
+3. Build with `npx napi build --platform --release` from `rust-core/crates/ffi/`
+4. TypeScript wrapper in `typescript-mcp/src/rust-bridge.ts` with lazy init
+5. Test both integrated (`cargo test`, `npm test`) and fallback scenarios
+6. Profile performance and optimize critical paths
 
 ### 7. **English-Only Documentation** (CRITICAL)
 

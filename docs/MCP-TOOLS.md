@@ -1,8 +1,8 @@
 # MCP Tools Documentation
 
-**Generated**: February 11, 2026
+**Generated**: April 21, 2026
 **Version**: v0.1.1
-**Implementation Status**: Phase 5 Validation Complete - 100% Test Pass Rate with Rule 15 Compliance
+**Implementation Status**: Phase 5 Complete — 16 Tools Production-Ready
 
 ## Overview
 
@@ -10,27 +10,29 @@ The CodeSight MCP Server implements a comprehensive set of MCP (Model Context Pr
 
 ## Tool Status
 
-### ✅ All 14 Tools Fully Implemented (Phase 4.1 Complete - Advanced AI Features)
+### ✅ All 16 Tools Fully Implemented (Phase 5 Complete)
 
-**Core Tools (9):**
-- `search_code` - Natural language code search with real database results
-- `explain_function` - Function explanation and comprehensive code analysis
-- `find_references` - Find all references to a symbol with cross-file analysis
-- `trace_data_flow` - Trace data flow through the code with variable tracking
-- `analyze_security` - Analyze code for security vulnerabilities with comprehensive checks
-- `get_api_endpoints` - List all API endpoints in the codebase with HTTP methods
-- `check_complexity` - Analyze code complexity metrics with detailed breakdown
-- `find_duplicates` - Detect duplicate code patterns with similarity scoring
-- `suggest_refactoring` - Provide refactoring suggestions with implementation guidance
+**Core Tools (11):**
+- `search_code` — Natural language code search with SQLite-backed results (Rust)
+- `explain_function` — Function explanation and comprehensive code analysis
+- `find_references` — Find all references to a symbol with cross-file analysis
+- `trace_data_flow` — Trace data flow through the code with variable tracking
+- `analyze_security` — Analyze code for security vulnerabilities
+- `get_api_endpoints` — List all API endpoints in the codebase
+- `check_complexity` — Analyze code complexity metrics via Rust AST traversal
+- `find_duplicates` — Detect duplicate code via Rabin-Karp rolling hash (Rust)
+- `suggest_refactoring` — Provide refactoring suggestions with implementation guidance
+- `index_codebase` — Parallel codebase indexing with SQLite persistence (Rust)
+- `analyze_codebase_complexity` — System-wide complexity analysis
 
-**AI-Powered Tools (5) - New in Phase 4.1:**
-- `ai_code_review` - Comprehensive AI-powered code review with intelligent suggestions and quality analysis
-- `intelligent_refactoring` - AI-driven refactoring recommendations with code transformation suggestions
-- `bug_prediction` - Proactive bug prediction and risk assessment using ML-enhanced analysis
-- `context_aware_code_generation` - Context-aware code generation with project understanding and style compliance
-- `technical_debt_analysis` - Comprehensive technical debt assessment with business impact analysis and prioritization
+**AI-Powered Tools (5):**
+- `ai_code_review` — AI-powered code review with intelligent suggestions
+- `intelligent_refactoring` — AI-driven refactoring recommendations
+- `bug_prediction` — Proactive bug prediction and risk assessment
+- `context_aware_code_generation` — Context-aware code generation
+- `technical_debt_analysis` — Technical debt assessment with prioritization
 
-🏆 **Complete MCP Implementation** - All 14 tools (9 core + 5 AI-powered) are fully functional with comprehensive implementations and integration testing.
+🏆 **Complete MCP Implementation** — All 16 tools are fully functional. 8 tools delegate to the Rust compute layer via NAPI-RS.
 
 ### 🚀 Phase 3.5 Polish Enhancements (Enterprise Ready)
 

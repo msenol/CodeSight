@@ -252,3 +252,6 @@ test-rag-full.js
 test-projects/
 LOCAL_TEST_REPORT.md
 data/*.rag.db
+
+# ONNX model cache
+.fastembed_cache/

@@ -9,6 +9,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as acorn from 'acorn';
 import * as walk from 'acorn-walk';
+import { rustBridge } from '../rust-bridge.js';
 
 export interface ComplexityService {
   calculateFileComplexity(_filePath: string): Promise<ComplexityMetrics>;
@@ -91,6 +92,23 @@ export class DefaultComplexityService implements ComplexityService {
     code: string,
     _language = 'typescript',
   ): Promise<ComplexityMetrics> {
+    // Prefer Rust FFI when available (Phase 4)
+    if (rustBridge.isRustAvailable()) {
+      const ext =
+        { typescript: 'ts', javascript: 'js', python: 'py', rust: 'rs', go: 'go', java: 'java', cpp: 'cpp', csharp: 'cs' }[_language] || 'ts';
+      try {
+        const raw = await rustBridge.analyzeComplexity(code, `temp.${ext}`);
+        return {
+          cyclomaticComplexity: raw.cyclomaticComplexity,
+          cognitiveComplexity: raw.cognitiveComplexity,
+          linesOfCode: raw.linesOfCode,
+          maintainabilityIndex: raw.maintainabilityIndex,
+        };
+      } catch (err) {
+        console.warn('[ComplexityService] Rust FFI failed, falling back to TS:', err);
+      }
+    }
+
     const cyclomaticComplexity = await this.analyzeCyclomaticComplexity(code);
     const cognitiveComplexity = await this.analyzeCognitiveComplexity(code);
     const linesOfCode = this.countLinesOfCode(code);

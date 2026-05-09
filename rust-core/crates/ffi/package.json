@@ -1,0 +1,12 @@
+{
+  "name": "code-intelligence-ffi",
+  "version": "0.1.0",
+  "private": true,
+  "napi": {
+    "name": "code_intelligence_ffi",
+    "triples": {
+      "default": true,
+      "additional": []
+    }
+  }
+}

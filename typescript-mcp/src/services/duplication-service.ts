@@ -4,6 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { glob } from 'glob';
 import levenshtein from 'fast-levenshtein';
+import { rustBridge } from '../rust-bridge.js';
 
 // import * as acorn from 'acorn'; // Unused import
 
@@ -364,18 +365,76 @@ export class DuplicationServiceImpl implements DuplicationService {
 
   async findDuplicates(
     files: string[],
-    _options: Record<string, unknown>,
+    options: Record<string, unknown>,
   ): Promise<DuplicateCode[]> {
-    const allDuplicates: DuplicateCode[] = [];
+    const maxFiles = Math.min(files.length, (options.max_files as number) || 100);
+    const limitedFiles = files
+      .filter(f => this.fileExtensions.some(ext => f.endsWith(ext)))
+      .slice(0, maxFiles);
+    const minLines = (options.min_lines as number) || this.minLines;
+    const maxResults = (options.max_results as number) || 50;
 
-    for (let i = 0; i < files.length; i++) {
-      for (let j = i + 1; j < files.length; j++) {
-        const duplicates = await this.compareFiles(files[i], files[j]);
-        allDuplicates.push(...duplicates);
+    // Hash-based duplicate detection: O(n*m) instead of O(n²*m²)
+    const blockMap = new Map<string, Array<{file: string; startLine: number; endLine: number}>>();
+
+    for (const file of limitedFiles) {
+      try {
+        const content = await fs.readFile(file, 'utf-8');
+        const lines = content.split('\n');
+        if (lines.length < minLines) continue;
+
+        for (let i = 0; i <= lines.length - minLines; i++) {
+          const block = lines.slice(i, i + minLines).join('\n');
+          const normalized = this.normalizeBlock(block);
+          const hash = this.hashContent(normalized);
+          if (!blockMap.has(hash)) blockMap.set(hash, []);
+          blockMap.get(hash)!.push({ file, startLine: i + 1, endLine: i + minLines });
+        }
+      } catch {
+        // skip unreadable files
       }
     }
 
-    return allDuplicates;
+    const duplicates: DuplicateCode[] = [];
+    for (const [hash, instances] of blockMap) {
+      if (instances.length < 2) continue;
+
+      // Deduplicate by file+startLine
+      const uniqueInstances: typeof instances = [];
+      const seen = new Set<string>();
+      for (const inst of instances) {
+        const key = `${inst.file}:${inst.startLine}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueInstances.push(inst);
+        }
+      }
+      if (uniqueInstances.length < 2) continue;
+
+      duplicates.push({
+        id: `dup-${hash.slice(0, 16)}`,
+        locations: uniqueInstances.map(inst => ({
+          file: inst.file,
+          startLine: inst.startLine,
+          endLine: inst.endLine,
+        })),
+        similarity: 1.0,
+        linesAffected: minLines,
+        suggestion: 'Consider extracting common code to a shared module',
+      });
+
+      if (duplicates.length >= maxResults) break;
+    }
+
+    return duplicates;
+  }
+
+  private normalizeBlock(block: string): string {
+    // Keep empty lines to avoid false positives from different alignments
+    return block
+      .split('\n')
+      .map(line => line.trim().replace(/\s+/g, ' '))
+      .join('\n');
   }
 
   // Private helper methods
