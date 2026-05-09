@@ -44,21 +44,22 @@ pub fn find_duplicates(files: &[(&str, &str)], min_lines: usize) -> Result<Vec<D
         // Precompute powers
         let mut pow = 1u64;
         for _ in 0..min_lines {
-            pow = (pow * base) % modulus;
+            pow = pow.wrapping_mul(base) % modulus;
         }
 
         let mut window_hash = 0u64;
         for line in lines.iter().take(min_lines) {
             let line_hash = fast_hash(line);
-            window_hash = (window_hash * base + line_hash) % modulus;
+            window_hash = window_hash.wrapping_mul(base).wrapping_add(line_hash) % modulus;
         }
         hash_map.entry(window_hash).or_default().push((file_idx, 0));
 
         for start in 1..=lines.len() - min_lines {
             let outgoing = fast_hash(&lines[start - 1]);
             let incoming = fast_hash(&lines[start + min_lines - 1]);
-            window_hash = (window_hash + modulus - (outgoing * pow) % modulus) % modulus;
-            window_hash = (window_hash * base + incoming) % modulus;
+            window_hash =
+                (window_hash + modulus - (outgoing.wrapping_mul(pow) % modulus)) % modulus;
+            window_hash = window_hash.wrapping_mul(base).wrapping_add(incoming) % modulus;
 
             hash_map
                 .entry(window_hash)
