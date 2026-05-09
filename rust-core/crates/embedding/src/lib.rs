@@ -4,7 +4,7 @@
 //! Default model: all-MiniLM-L6-v2 (384-dim, ~23MB download on first use).
 
 use anyhow::Result;
-use fastembed::{InitOptions, TextEmbedding, EmbeddingModel};
+use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use std::sync::Mutex;
 
 static EMBEDDING_MODEL: Mutex<Option<TextEmbedding>> = Mutex::new(None);
@@ -53,7 +53,11 @@ mod tests {
         let a = generate_embedding("hello world").unwrap();
         let b = generate_embedding("hello world").unwrap();
         let sim = cosine_similarity(&a, &b);
-        assert!(sim > 0.99, "identical texts should have similarity > 0.99, got {}", sim);
+        assert!(
+            sim > 0.99,
+            "identical texts should have similarity > 0.99, got {}",
+            sim
+        );
     }
 
     fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {

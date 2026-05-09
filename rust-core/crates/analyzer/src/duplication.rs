@@ -18,10 +18,7 @@ pub struct DuplicateBlock {
 ///
 /// `files` — slice of `(file_path, content)` pairs.
 /// `min_lines` — minimum block length to consider a duplicate.
-pub fn find_duplicates(
-    files: &[(&str, &str)],
-    min_lines: usize,
-) -> Result<Vec<DuplicateBlock>> {
+pub fn find_duplicates(files: &[(&str, &str)], min_lines: usize) -> Result<Vec<DuplicateBlock>> {
     if min_lines == 0 || files.is_empty() {
         return Ok(vec![]);
     }
@@ -32,10 +29,7 @@ pub fn find_duplicates(
 
     let mut file_lines: Vec<(String, Vec<String>)> = Vec::with_capacity(files.len());
     for (path, content) in files {
-        let lines: Vec<String> = content
-            .lines()
-            .map(|l| l.trim().to_lowercase())
-            .collect();
+        let lines: Vec<String> = content.lines().map(|l| l.trim().to_lowercase()).collect();
         file_lines.push((path.to_string(), lines));
     }
 
@@ -58,10 +52,7 @@ pub fn find_duplicates(
             let line_hash = fast_hash(&lines[i]);
             window_hash = (window_hash * base + line_hash) % modulus;
         }
-        hash_map
-            .entry(window_hash)
-            .or_default()
-            .push((file_idx, 0));
+        hash_map.entry(window_hash).or_default().push((file_idx, 0));
 
         for start in 1..=lines.len() - min_lines {
             let outgoing = fast_hash(&lines[start - 1]);
@@ -158,14 +149,8 @@ mod tests {
     #[test]
     fn test_exact_duplicate() {
         let files = vec![
-            (
-                "a.ts",
-                "function helper() {\n  return 42;\n}\n",
-            ),
-            (
-                "b.ts",
-                "function helper() {\n  return 42;\n}\n",
-            ),
+            ("a.ts", "function helper() {\n  return 42;\n}\n"),
+            ("b.ts", "function helper() {\n  return 42;\n}\n"),
         ];
         let dups = find_duplicates(&files, 2).unwrap();
         assert!(!dups.is_empty());

@@ -96,8 +96,10 @@ impl Storage {
 
     /// Remove all entity rows belonging to a given codebase.
     pub fn clear_codebase_entities(&mut self, codebase_id: &str) -> Result<()> {
-        self.conn
-            .execute("DELETE FROM code_entities WHERE codebase_id = ?1", [codebase_id])?;
+        self.conn.execute(
+            "DELETE FROM code_entities WHERE codebase_id = ?1",
+            [codebase_id],
+        )?;
         Ok(())
     }
 
@@ -146,10 +148,7 @@ impl Storage {
     }
 
     /// Bulk-insert entities inside a single transaction.
-    pub fn insert_entities_batch(
-        &mut self,
-        entities: &[EntityRow],
-    ) -> Result<()> {
+    pub fn insert_entities_batch(&mut self, entities: &[EntityRow]) -> Result<()> {
         let tx = self.conn.transaction()?;
         {
             let mut stmt = tx.prepare_cached(
@@ -169,9 +168,14 @@ impl Storage {
             )?;
             for e in entities {
                 stmt.execute(params![
-                    e.id, e.name, e.file_path, e.entity_type,
-                    e.start_line as i64, e.end_line as i64,
-                    e.content, e.codebase_id
+                    e.id,
+                    e.name,
+                    e.file_path,
+                    e.entity_type,
+                    e.start_line as i64,
+                    e.end_line as i64,
+                    e.content,
+                    e.codebase_id
                 ])?;
             }
         }

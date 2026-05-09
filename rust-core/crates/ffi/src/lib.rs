@@ -11,8 +11,8 @@ use std::path::Path;
 use tokio::runtime::Runtime;
 
 // Re-export from workspace crates — these are the single source of truth
-use code_intelligence_parser::CodeParser;
 use code_intelligence_indexer::IndexingEngine;
+use code_intelligence_parser::CodeParser;
 
 /// Default SQLite database shared with the TypeScript side.
 fn db_path() -> std::path::PathBuf {
@@ -140,8 +140,16 @@ pub fn search_code(query: String, codebase_path: Option<String>) -> Result<Vec<S
     let codebase_id = codebase_path.unwrap_or_default();
 
     let results = std::thread::spawn(move || {
-        let storage = Storage::new(&db).map_err(|e| Error::from_reason(format!("DB open error: {}", e)))?;
-        let rows = storage.search_entities(&query, Some(&codebase_id).filter(|s| !s.is_empty()).map(|s| s.as_str()), 50)
+        let storage =
+            Storage::new(&db).map_err(|e| Error::from_reason(format!("DB open error: {}", e)))?;
+        let rows = storage
+            .search_entities(
+                &query,
+                Some(&codebase_id)
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.as_str()),
+                50,
+            )
             .map_err(|e| Error::from_reason(format!("Search error: {}", e)))?;
         Ok::<_, Error>(rows)
     })

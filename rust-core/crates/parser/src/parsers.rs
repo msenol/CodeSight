@@ -16,7 +16,8 @@ pub struct TypeScriptParser {
 impl TypeScriptParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_typescript::language_typescript().into())
+        parser
+            .set_language(tree_sitter_typescript::language_typescript().into())
             .expect("Failed to set TypeScript language");
         Self {
             parser: Mutex::new(parser),
@@ -67,7 +68,9 @@ pub struct JavaScriptParser {
 impl JavaScriptParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_javascript::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_javascript::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -117,7 +120,9 @@ pub struct PythonParser {
 impl PythonParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_python::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_python::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -167,7 +172,9 @@ pub struct RustParser {
 impl RustParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_rust::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_rust::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -217,7 +224,9 @@ pub struct GoParser {
 impl GoParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_go::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_go::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -267,7 +276,9 @@ pub struct JavaParser {
 impl JavaParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_java::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_java::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -317,7 +328,9 @@ pub struct CppParser {
 impl CppParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_cpp::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_cpp::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -367,7 +380,9 @@ pub struct CSharpParser {
 impl CSharpParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_c_sharp::language().into()).expect("Failed to set parser language");
+        parser
+            .set_language(tree_sitter_c_sharp::language().into())
+            .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
         }
@@ -427,18 +442,11 @@ fn extract_entities_from_tree(
     Ok(entities)
 }
 
-fn traverse_node(
-    node: &tree_sitter::Node,
-    content: &str,
-    entities: &mut Vec<CodeEntity>,
-) {
+fn traverse_node(node: &tree_sitter::Node, content: &str, entities: &mut Vec<CodeEntity>) {
     let kind = node.kind();
 
     match kind {
-        "function_declaration"
-        | "function"
-        | "method_definition"
-        | "method_declaration" => {
+        "function_declaration" | "function" | "method_definition" | "method_declaration" => {
             if let Some(name) = node_name(node, content) {
                 entities.push(build_entity(name, EntityType::Function, node, content));
             }
@@ -457,12 +465,7 @@ fn traverse_node(
             if let Some(parent) = node.parent() {
                 if parent.kind() == "variable_declarator" {
                     if let Some(name) = node_name(&parent, content) {
-                        entities.push(build_entity(
-                            name,
-                            EntityType::Function,
-                            node,
-                            content,
-                        ));
+                        entities.push(build_entity(name, EntityType::Function, node, content));
                     }
                 }
             }

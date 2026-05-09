@@ -37,11 +37,8 @@ pub fn analyze_complexity(content: &str, _language: Language) -> Result<Complexi
 /// Nesting (brace depth) increases cognitive weight.
 fn line_based_complexity(content: &str) -> (u32, u32) {
     let decision_keywords = [
-        "if", "else if", "elif",
-        "for", "while", "do",
-        "switch", "case",
-        "catch", "try",
-        "&&", "||", "?",
+        "if", "else if", "elif", "for", "while", "do", "switch", "case", "catch", "try", "&&",
+        "||", "?",
     ];
 
     let mut cyclomatic = 1u32;

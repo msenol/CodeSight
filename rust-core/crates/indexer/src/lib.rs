@@ -161,7 +161,10 @@ impl IndexingEngine {
 
                 storage.upsert_codebase(
                     &codebase_id,
-                    &path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "unknown".to_string()),
+                    &path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "unknown".to_string()),
                     &codebase_id,
                     None,
                     processed_files,
