@@ -221,7 +221,7 @@ export class FindDuplicatesTool {
 
   private generateRefactoringSuggestion(duplicate: unknown): string {
     const instances = (duplicate as any).instances || [];
-    if (instances.length === 0) return 'Review duplicate code for refactoring opportunities';
+    if (instances.length === 0) {return 'Review duplicate code for refactoring opportunities';}
     const instanceCount = instances.length;
     const linesCount = instances[0].end_line - instances[0].start_line + 1;
 
@@ -239,7 +239,7 @@ export class FindDuplicatesTool {
     maintenance_effort: 'low' | 'medium' | 'high';
   } {
     const instances = (duplicate as any).instances || [];
-    if (instances.length === 0) return { lines_of_code: 0, maintenance_effort: 'low' };
+    if (instances.length === 0) {return { lines_of_code: 0, maintenance_effort: 'low' };}
     const instanceCount = instances.length;
     const linesPerInstance =
       instances[0].end_line - instances[0].start_line + 1;

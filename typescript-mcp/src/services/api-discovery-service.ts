@@ -205,7 +205,7 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
 
         if (hasQuery) {
           endpoints.push({
-            id: `GRAPHQL:/graphql`,
+            id: 'GRAPHQL:/graphql',
             method: 'GRAPHQL',
             path: '/graphql',
             file: path.basename(filePath),
@@ -266,7 +266,7 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     const byTag = new Map<string, APIEndpoint[]>();
     for (const ep of endpoints) {
       const tag = ep.tags?.[0] || 'general';
-      if (!byTag.has(tag)) byTag.set(tag, []);
+      if (!byTag.has(tag)) {byTag.set(tag, []);}
       byTag.get(tag)!.push(ep);
     }
 
@@ -278,8 +278,8 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
       for (const ep of eps) {
         doc += `### ${ep.method} ${ep.path}\n`;
         doc += `- File: \`${ep.file_path}:${ep.line_number}\`\n`;
-        if (ep.description) doc += `- Description: ${ep.description}\n`;
-        if (ep.authentication_required) doc += `- Authentication: Required\n`;
+        if (ep.description) {doc += `- Description: ${ep.description}\n`;}
+        if (ep.authentication_required) {doc += '- Authentication: Required\n';}
         doc += '\n';
       }
     }
@@ -307,13 +307,13 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
 
   async findApiEndpoints(codebaseId: string): Promise<APIEndpoint[]> {
     const codebase = await codebaseService.getCodebase(codebaseId);
-    if (!codebase) return [];
+    if (!codebase) {return [];}
     return this.discoverEndpoints(codebase.path);
   }
 
   async detectFrameworks(codebaseId: string): Promise<string[]> {
     const codebase = await codebaseService.getCodebase(codebaseId);
-    if (!codebase) return [];
+    if (!codebase) {return [];}
 
     const frameworks = new Set<string>();
     const files = await glob('**/{package.json,*.config.*}', {
@@ -328,14 +328,14 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
           const content = await readFile(file, 'utf-8');
           const pkg = JSON.parse(content);
           const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-          if (deps.express) frameworks.add('express');
-          if (deps['@nestjs/core']) frameworks.add('nestjs');
-          if (deps.fastify || deps['@fastify']) frameworks.add('fastify');
-          if (deps.next) frameworks.add('nextjs');
-          if (deps['@apollo/server'] || deps.graphql) frameworks.add('graphql');
-          if (deps['socket.io'] || deps.ws) frameworks.add('websocket');
-          if (deps.hapi || deps['@hapi/hapi']) frameworks.add('hapi');
-          if (deps.koa) frameworks.add('koa');
+          if (deps.express) {frameworks.add('express');}
+          if (deps['@nestjs/core']) {frameworks.add('nestjs');}
+          if (deps.fastify || deps['@fastify']) {frameworks.add('fastify');}
+          if (deps.next) {frameworks.add('nextjs');}
+          if (deps['@apollo/server'] || deps.graphql) {frameworks.add('graphql');}
+          if (deps['socket.io'] || deps.ws) {frameworks.add('websocket');}
+          if (deps.hapi || deps['@hapi/hapi']) {frameworks.add('hapi');}
+          if (deps.koa) {frameworks.add('koa');}
         }
       } catch {
         // ignore
@@ -384,7 +384,7 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
   private extractNextJsPath(filePath: string): string | null {
     const normalized = filePath.replace(/\\/g, '/');
     const apiIdx = normalized.indexOf('/api/');
-    if (apiIdx === -1) return null;
+    if (apiIdx === -1) {return null;}
 
     let routePath = normalized.slice(apiIdx + 4); // starts with /api/...
     // Remove route.ts or page.tsx

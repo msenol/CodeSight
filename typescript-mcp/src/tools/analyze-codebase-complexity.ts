@@ -135,7 +135,7 @@ export class AnalyzeCodebaseComplexityTool {
 
       // Filter reserved names and excluded paths
       const filtered = rows.filter((r) => {
-        if (RESERVED_NAMES.has(r.name)) return false;
+        if (RESERVED_NAMES.has(r.name)) { return false; }
         return !input.exclude_patterns.some((p) => r.file_path.includes(p));
       });
 
@@ -146,7 +146,7 @@ export class AnalyzeCodebaseComplexityTool {
       const results: ComplexityItem[] = [];
 
       const getFileLines = async (filePath: string): Promise<string[] | null> => {
-        if (fileCache.has(filePath)) return fileCache.get(filePath)!;
+        if (fileCache.has(filePath)) { return fileCache.get(filePath)!; }
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const lines = content.split('\n');
@@ -164,16 +164,16 @@ export class AnalyzeCodebaseComplexityTool {
         const batchResults = await Promise.all(
           batch.map(async (entity) => {
             const lines = await getFileLines(entity.file_path);
-            if (!lines) return null;
+            if (!lines) { return null; }
 
             const start = Math.max(0, (entity.start_line || 1) - 1);
             const end = Math.min(lines.length, entity.end_line || lines.length);
             const code = lines.slice(start, end).join('\n');
-            if (!code.trim()) return null;
+            if (!code.trim()) { return null; }
 
             try {
               const metrics = await complexityService.calculateCodeComplexity(code, 'typescript');
-              if (metrics.cyclomaticComplexity < input.min_cyclomatic) return null;
+              if (metrics.cyclomaticComplexity < input.min_cyclomatic) { return null; }
 
               return {
                 name: entity.name,
@@ -195,7 +195,7 @@ export class AnalyzeCodebaseComplexityTool {
         );
 
         for (const r of batchResults) {
-          if (r) results.push(r);
+          if (r) {results.push(r);}
         }
       }
 

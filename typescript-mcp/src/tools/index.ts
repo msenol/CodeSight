@@ -714,7 +714,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
               text += `Edges: ${result.edges.length}\n`;
               text += `Paths: ${result.paths.length}\n\n`;
               if (result.paths.length > 0) {
-                text += `Paths found:\n`;
+                text += 'Paths found:\n';
                 for (const p of result.paths.slice(0, 5)) {
                   text += `- ${p.description}\n`;
                 }
@@ -752,7 +752,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 `Total: ${result.total_vulnerabilities} vulnerabilities\n` +
                 `Critical: ${result.summary.critical} | High: ${result.summary.high} | Medium: ${result.summary.medium} | Low: ${result.summary.low}\n\n` +
                 `${vulnText}\n\n` +
-                `Recommendations:\n` +
+                'Recommendations:\n' +
                 result.recommendations.map((r) => `- ${r}`).join('\n');
 
               return { content: [{ type: 'text', text }] };
@@ -808,7 +808,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
             try {
               const report = await complexityService.calculateFileComplexity(file_path);
               let text = `📊 Complexity Analysis for ${file_path}:\n\n`;
-              text += `Overall Metrics:\n`;
+              text += 'Overall Metrics:\n';
               text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
               text += `- Cognitive Complexity: ${(report as any).cognitiveComplexity ?? 'N/A'}\n`;
               text += `- Lines of Code: ${(report as any).linesOfCode ?? 'N/A'}\n`;
@@ -850,7 +850,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 }
               }
               if (result.recommendations.length > 0) {
-                text += `\nRecommendations:\n`;
+                text += '\nRecommendations:\n';
                 for (const rec of result.recommendations) {
                   text += `- ${rec}\n`;
                 }
@@ -870,7 +870,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const report = await complexityService.calculateFileComplexity(file_path);
               const functions = (report as any).functions || [];
               let text = `♻️ Refactoring Suggestions for ${file_path}:\n\n`;
-              text += `Overall Metrics:\n`;
+              text += 'Overall Metrics:\n';
               text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
               text += `- Lines of Code: ${(report as any).linesOfCode ?? 'N/A'}\n`;
               text += `- Maintainability Index: ${Math.round((report as any).maintainabilityIndex ?? 0)}\n\n`;
@@ -879,7 +879,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 text += `🔴 High Complexity Functions (${highComplexity.length}):\n`;
                 for (const fn of highComplexity.slice(0, 5)) {
                   text += `  - ${fn.name} (line ${fn.line}): complexity ${fn.complexity?.cyclomaticComplexity} (${fn.riskLevel})\n`;
-                  text += `    💡 Consider breaking into smaller functions\n`;
+                  text += '    💡 Consider breaking into smaller functions\n';
                 }
               }
               const longFunctions = functions.filter((f: any) => f.complexity?.linesOfCode > 50);
@@ -887,11 +887,11 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 text += `\n📏 Long Functions (${longFunctions.length}):\n`;
                 for (const fn of longFunctions.slice(0, 5)) {
                   text += `  - ${fn.name} (line ${fn.line}): ${fn.complexity?.linesOfCode} lines\n`;
-                  text += `    💡 Consider extracting helper methods\n`;
+                  text += '    💡 Consider extracting helper methods\n';
                 }
               }
               if (highComplexity.length === 0 && longFunctions.length === 0) {
-                text += `✅ Code looks clean! No major refactoring suggestions.\n`;
+                text += '✅ Code looks clean! No major refactoring suggestions.\n';
               }
               return { content: [{ type: 'text', text }] };
             } catch (error) {
