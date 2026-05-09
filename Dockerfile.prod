@@ -6,11 +6,13 @@ FROM alpine:3.19 AS builder
 
 WORKDIR /build
 
-# Copy Rust FFI if it exists
-COPY rust-core/target/release/ ./rust-lib/
+# Copy entire project for Rust FFI (if built)
+COPY . ./project/
+
+# Extract Rust FFI if it exists
 RUN mkdir -p ./lib && \
-    if [ -f ./rust-lib/libcode_intelligence_core.so ]; then \
-        cp ./rust-lib/libcode_intelligence_core.so ./lib/; \
+    if [ -f ./project/rust-core/target/release/libcode_intelligence_core.so ]; then \
+        cp ./project/rust-core/target/release/libcode_intelligence_core.so ./lib/; \
     fi
 
 # Stage 2: Production image
