@@ -82,7 +82,7 @@ export class DatabaseSearchService implements SearchService {
     const stmt = this.db.prepare(`
       SELECT id, name, file_path, entity_type, start_line, end_line, content
       FROM code_entities
-      WHERE (LOWER(name) LIKE ? OR LOWER(content) LIKE ?) AND codebase_id = ?
+      WHERE (LOWER(name) LIKE ? OR LOWER(content) LIKE ?) AND LOWER(codebase_id) = LOWER(?)
       ORDER BY
         CASE
           WHEN LOWER(name) = ? THEN 1
@@ -142,7 +142,7 @@ export class DatabaseSearchService implements SearchService {
       const stmt = this.db.prepare(`
         SELECT id, name, file_path, entity_type, start_line, end_line, content
         FROM code_entities
-        WHERE (name REGEXP ? OR content REGEXP ?) AND codebase_id = ?
+        WHERE (name REGEXP ? OR content REGEXP ?) AND LOWER(codebase_id) = LOWER(?)
         ORDER BY name
         LIMIT ?
       `);
@@ -170,7 +170,7 @@ export class DatabaseSearchService implements SearchService {
     const stmt = this.db.prepare(`
       SELECT id, name, file_path, entity_type, start_line, end_line, content
       FROM code_entities
-      WHERE codebase_id = ?
+      WHERE LOWER(codebase_id) = LOWER(?)
       ORDER BY name
       LIMIT 100
     `);
@@ -317,7 +317,7 @@ export class DatabaseSearchService implements SearchService {
   hasCodebase(codebaseId: string): boolean {
     try {
       const result = this.db
-        .prepare('SELECT 1 FROM code_entities WHERE codebase_id = ? LIMIT 1')
+        .prepare('SELECT 1 FROM code_entities WHERE LOWER(codebase_id) = LOWER(?) LIMIT 1')
         .get(codebaseId);
       return !!result;
     } catch {

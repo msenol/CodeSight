@@ -409,7 +409,7 @@ export class IndexingService {
       stmt = this.db.prepare(`
         SELECT file_path, start_line, content, name, entity_type
         FROM code_entities
-        WHERE (name LIKE ? OR content LIKE ?) AND codebase_id = ?
+        WHERE (name LIKE ? OR content LIKE ?) AND LOWER(codebase_id) = LOWER(?)
         ORDER BY
           CASE
             WHEN name = ? THEN 0

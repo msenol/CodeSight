@@ -169,7 +169,7 @@ export class DefaultCodebaseService implements CodebaseService {
     } catch {
       // Check persistent codebases table for real path
       try {
-        const row = this.db.prepare('SELECT * FROM codebases WHERE id = ?').get(id) as
+        const row = this.db.prepare('SELECT * FROM codebases WHERE LOWER(id) = LOWER(?)').get(id) as
           | {
               id: string;
               name: string;
