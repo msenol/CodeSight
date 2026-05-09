@@ -160,7 +160,7 @@ pub fn search_code(query: String, codebase_path: Option<String>) -> Result<Vec<S
         .into_iter()
         .map(|r| SearchResult {
             file: r.file_path,
-            line: r.start_line as u32,
+            line: r.start_line,
             content: format!("{} ({})", r.name, r.entity_type),
             score: 1.0,
         })

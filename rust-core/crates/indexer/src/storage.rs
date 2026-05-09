@@ -108,6 +108,7 @@ impl Storage {
     // ------------------------------------------------------------------
 
     /// Insert a single code entity.
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_entity(
         &mut self,
         id: &str,

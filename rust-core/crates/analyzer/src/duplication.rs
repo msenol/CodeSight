@@ -48,8 +48,8 @@ pub fn find_duplicates(files: &[(&str, &str)], min_lines: usize) -> Result<Vec<D
         }
 
         let mut window_hash = 0u64;
-        for i in 0..min_lines {
-            let line_hash = fast_hash(&lines[i]);
+        for line in lines.iter().take(min_lines) {
+            let line_hash = fast_hash(line);
             window_hash = (window_hash * base + line_hash) % modulus;
         }
         hash_map.entry(window_hash).or_default().push((file_idx, 0));

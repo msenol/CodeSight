@@ -35,7 +35,7 @@ pub fn generate_embedding(text: &str) -> Result<Vec<f32>> {
 
 /// Generate embeddings for multiple texts in one batch (more efficient).
 pub fn generate_embeddings_batch(texts: &[&str]) -> Result<Vec<Vec<f32>>> {
-    with_model(|model| model.embed(texts.to_vec(), None))
+    with_model(|model| model.embed(texts, None))
 }
 
 #[cfg(test)]

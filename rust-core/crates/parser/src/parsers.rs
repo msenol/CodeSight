@@ -17,7 +17,7 @@ impl TypeScriptParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_typescript::language_typescript().into())
+            .set_language(tree_sitter_typescript::language_typescript())
             .expect("Failed to set TypeScript language");
         Self {
             parser: Mutex::new(parser),
@@ -69,7 +69,7 @@ impl JavaScriptParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_javascript::language().into())
+            .set_language(tree_sitter_javascript::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
@@ -121,7 +121,7 @@ impl PythonParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_python::language().into())
+            .set_language(tree_sitter_python::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
@@ -173,7 +173,7 @@ impl RustParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_rust::language().into())
+            .set_language(tree_sitter_rust::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
@@ -225,7 +225,7 @@ impl GoParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_go::language().into())
+            .set_language(tree_sitter_go::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
@@ -277,7 +277,7 @@ impl JavaParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_java::language().into())
+            .set_language(tree_sitter_java::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
@@ -329,7 +329,7 @@ impl CppParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_cpp::language().into())
+            .set_language(tree_sitter_cpp::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
@@ -381,7 +381,7 @@ impl CSharpParser {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         parser
-            .set_language(tree_sitter_c_sharp::language().into())
+            .set_language(tree_sitter_c_sharp::language())
             .expect("Failed to set parser language");
         Self {
             parser: Mutex::new(parser),
