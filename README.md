@@ -3,7 +3,7 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/msenol/CodeSight/ci.yml?branch=main)](https://github.com/msenol/CodeSight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
-[![Rust Version](https://img.shields.io/badge/rust-%3E%3D1.85-orange)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/rust-%3E%3D1.88-orange)](https://www.rust-lang.org/)
 
 > AI-powered code intelligence for your IDE. Index any codebase, then ask questions about it in natural language via Claude, Cursor, VS Code, or any MCP client.
 
@@ -15,7 +15,7 @@
 
 ## Install
 
-**Prerequisites**: [Node.js](https://nodejs.org/) v20+ and [Rust](https://www.rust-lang.org/) 1.85+
+**Prerequisites**: [Node.js](https://nodejs.org/) v20+ and [Rust](https://www.rust-lang.org/) 1.88+
 
 ```bash
 git clone https://github.com/msenol/CodeSight.git

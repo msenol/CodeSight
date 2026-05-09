@@ -514,7 +514,7 @@ This guide will help you get up and running with CodeSight quickly.
 
 ## Prerequisites
 - Node.js v20 or higher
-- Rust 1.85 or higher (for FFI bridge)
+- Rust 1.88 or higher (for FFI bridge)
 - Git
 
 ## Installation
@@ -600,7 +600,7 @@ The FFI (Foreign Function Interface) bridge allows CodeSight to use Rust's high-
 ## Troubleshooting
 
 ### Installation fails
-Make sure you have Node.js v20+ and Rust 1.85+ installed. Check the [troubleshooting guide](Troubleshooting) for detailed solutions.
+Make sure you have Node.js v20+ and Rust 1.88+ installed. Check the [troubleshooting guide](Troubleshooting) for detailed solutions.
 
 ### Performance is slow
 Enable the Rust FFI bridge for better performance. See the performance documentation in the main README.
