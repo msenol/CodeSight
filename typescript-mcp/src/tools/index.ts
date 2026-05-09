@@ -33,6 +33,23 @@ function getCodebaseId(providedId?: string): string {
 }
 
 /**
+ * Get default codebase - the most recently indexed one
+ */
+function getDefaultCodebase(): string | undefined {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Database = require('better-sqlite3');
+    const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'code-intelligence.db');
+    const db = new Database(dbPath);
+    const row = db.prepare('SELECT id FROM codebases ORDER BY indexed_at DESC LIMIT 1').get() as { id: string } | undefined;
+    db.close();
+    return row?.id;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Ensure codebase is indexed, auto-index if needed
  */
 async function ensureCodebaseIndexed(codebaseId?: string): Promise<string> {
@@ -564,7 +581,19 @@ export async function registerMCPTools(server: Server): Promise<void> {
 
             try {
               // Auto-index if needed and get codebase ID
-              const codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
+              let codebaseId = getCodebaseId((args as { codebase_id?: string }).codebase_id);
+              
+              // If codebase not found, try the most recently indexed one
+              const codebaseService = new DefaultCodebaseService();
+              let codebase = await codebaseService.getCodebase(codebaseId);
+              if (!codebase) {
+                const defaultCb = getDefaultCodebase();
+                if (defaultCb && defaultCb !== codebaseId) {
+                  logger.info(`Codebase '${codebaseId}' not found, using most recent: '${defaultCb}'`);
+                  codebaseId = defaultCb;
+                }
+              }
+              
               await ensureCodebaseIndexed(codebaseId);
 
               logger.debug('[DEBUG] Calling SearchCodeTool with proper services');
