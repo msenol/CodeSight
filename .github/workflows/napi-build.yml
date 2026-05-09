@@ -126,6 +126,7 @@ jobs:
 
       - name: Rename binary
         working-directory: rust-core
+        shell: bash
         run: |
           # Rename the binary to match the expected naming convention
           if [ "${{ runner.os }}" = "Windows" ]; then
