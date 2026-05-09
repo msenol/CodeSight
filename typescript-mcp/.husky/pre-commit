@@ -2,10 +2,7 @@
 
 echo "🔒 Running security checks..."
 
-# Check for API keys and secrets
-echo "🔍 Scanning for sensitive data..."
-
-# Simple grep-based detection
+# Check for .mcp.json files
 if git diff --cached --name-only | grep -q "\.mcp\.json"; then
   echo ""
   echo "❌ .mcp.json should not be committed (contains API keys)"
@@ -25,18 +22,52 @@ if [ -n "$STAGED_ENVS" ]; then
   exit 1
 fi
 
-# Run security scan script on staged files
-echo "✅ Security check passed"
-echo ""
+# Scan staged content for secrets (only added lines, not existing code)
+echo "🔍 Scanning staged changes for secrets..."
 
-# Run npm security check if available
-if command -v npm >/dev/null 2>&1; then
-  cd typescript-mcp
-  if [ -f "scripts/security-scan.js" ]; then
-    npm run security:check --silent 2>/dev/null || true
-  fi
-  cd ..
+STAGED_DIFF=$(git diff --cached --diff-filter=ACM -U0)
+
+SECRETS_FOUND=0
+
+# Check for common secret patterns in staged additions
+if echo "$STAGED_DIFF" | grep -qE '^\+.*(OPENROUTER_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GROQ_API_KEY)\s*=\s*['\''"][a-zA-Z0-9_-]{20,}'; then
+  echo "❌ Hardcoded API key detected in staged changes"
+  SECRETS_FOUND=1
 fi
 
+if echo "$STAGED_DIFF" | grep -qE '^\+.*sk-or-v1-[a-zA-Z0-9]{20,}'; then
+  echo "❌ OpenRouter API key detected in staged changes"
+  SECRETS_FOUND=1
+fi
+
+if echo "$STAGED_DIFF" | grep -qE '^\+.*sk-ant-[a-zA-Z0-9]{20,}'; then
+  echo "❌ Anthropic API key detected in staged changes"
+  SECRETS_FOUND=1
+fi
+
+if echo "$STAGED_DIFF" | grep -qE '^\+.*sk-[a-zA-Z0-9]{20,}'; then
+  echo "❌ OpenAI API key detected in staged changes"
+  SECRETS_FOUND=1
+fi
+
+if echo "$STAGED_DIFF" | grep -qE '^\+.*ghp_[a-zA-Z0-9]{36}'; then
+  echo "❌ GitHub token detected in staged changes"
+  SECRETS_FOUND=1
+fi
+
+if echo "$STAGED_DIFF" | grep -qE '^\+.*-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'; then
+  echo "❌ Private key detected in staged changes"
+  SECRETS_FOUND=1
+fi
+
+if [ "$SECRETS_FOUND" -ne 0 ]; then
+  echo ""
+  echo "💡 Use environment variables instead of hardcoded secrets."
+  echo "   Example: process.env.OPENROUTER_API_KEY"
+  echo ""
+  exit 1
+fi
+
+echo "✅ No secrets detected in staged changes"
 echo "✅ All pre-commit checks passed"
 exit 0
