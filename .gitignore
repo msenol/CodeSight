@@ -49,7 +49,6 @@ coverage/
 # Rust
 rust-core/target/
 rust-core/**/*.rs.bk
-rust-core/Cargo.lock
 *.pdb
 
 # NAPI-RS Native Modules
