@@ -9,8 +9,9 @@ WORKDIR /build
 # Copy package files first for better caching
 COPY typescript-mcp/package*.json ./typescript-mcp/
 
-# Install production dependencies
-RUN cd typescript-mcp && npm ci --omit=dev
+# Install production dependencies (skip husky - no .git in Docker)
+ENV HUSKY=0
+RUN cd typescript-mcp && npm ci --omit=dev --ignore-scripts
 
 # Copy application source and build
 COPY typescript-mcp/ ./typescript-mcp/
