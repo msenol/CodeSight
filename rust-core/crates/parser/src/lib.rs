@@ -158,7 +158,7 @@ impl CodeParser {
         if let Some(parser) = self.parsers.get(&language) {
             parser.parse_file(file_path, content)
         } else {
-            anyhow::bail!("Unsupported language: {:?}", language)
+            anyhow::bail!("Unsupported language: {language:?}")
         }
     }
 
@@ -178,7 +178,7 @@ impl CodeParser {
             "java" => Ok(Language::Java),
             "cpp" | "cc" | "cxx" | "c++" | "hpp" | "h" => Ok(Language::Cpp),
             "cs" => Ok(Language::CSharp),
-            _ => anyhow::bail!("Unsupported file extension: {}", extension),
+            _ => anyhow::bail!("Unsupported file extension: {extension}"),
         }
     }
 

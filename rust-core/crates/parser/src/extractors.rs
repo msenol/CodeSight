@@ -71,7 +71,7 @@ impl EntityExtractor {
         let patterns = self
             .patterns
             .get(&language)
-            .ok_or_else(|| anyhow::anyhow!("Unsupported language: {:?}", language))?;
+            .ok_or_else(|| anyhow::anyhow!("Unsupported language: {language:?}"))?;
 
         let mut entities = Vec::new();
         let codebase_id = Uuid::new_v4();
