@@ -97,11 +97,17 @@ export class IndexingService {
     }
 
     // Persist codebase metadata
-    const entityCount = this.db.prepare('SELECT COUNT(*) as count FROM code_entities WHERE codebase_id = ?').get(actualCodebaseId) as { count: number };
-    this.db.prepare(`
+    const entityCount = this.db
+      .prepare('SELECT COUNT(*) as count FROM code_entities WHERE codebase_id = ?')
+      .get(actualCodebaseId) as { count: number };
+    this.db
+      .prepare(
+        `
       INSERT OR REPLACE INTO codebases (id, name, path, status, file_count, entity_count, indexed_at, updated_at)
       VALUES (?, ?, ?, 'indexed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `).run(actualCodebaseId, actualCodebaseId, codebasePath, fileCount, entityCount.count);
+    `,
+      )
+      .run(actualCodebaseId, actualCodebaseId, codebasePath, fileCount, entityCount.count);
 
     logger.info(`Indexed ${fileCount} files from ${codebasePath} as ${actualCodebaseId}`);
     return fileCount;
@@ -649,11 +655,17 @@ export class IndexingService {
     }
 
     // Persist codebase metadata
-    const entityCount = this.db.prepare('SELECT COUNT(*) as count FROM code_entities WHERE codebase_id = ?').get(actualCodebaseId) as { count: number };
-    this.db.prepare(`
+    const entityCount = this.db
+      .prepare('SELECT COUNT(*) as count FROM code_entities WHERE codebase_id = ?')
+      .get(actualCodebaseId) as { count: number };
+    this.db
+      .prepare(
+        `
       INSERT OR REPLACE INTO codebases (id, name, path, status, file_count, entity_count, indexed_at, updated_at)
       VALUES (?, ?, ?, 'indexed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `).run(actualCodebaseId, actualCodebaseId, codebasePath, fileCount, entityCount.count);
+    `,
+      )
+      .run(actualCodebaseId, actualCodebaseId, codebasePath, fileCount, entityCount.count);
 
     logger.info(`Indexed ${fileCount} files from ${codebasePath} as ${actualCodebaseId}`);
     return fileCount;
@@ -676,13 +688,18 @@ export class IndexingService {
     return [];
   }
 
-  async findReferences(symbol: string, codebaseId: string): Promise<Array<{
-    file_path: string;
-    line: number;
-    content: string;
-    entity_type: string;
-    reference_type: 'definition' | 'usage';
-  }>> {
+  async findReferences(
+    symbol: string,
+    codebaseId: string,
+  ): Promise<
+    Array<{
+      file_path: string;
+      line: number;
+      content: string;
+      entity_type: string;
+      reference_type: 'definition' | 'usage';
+    }>
+  > {
     // 1. Find exact definitions (name match)
     const defStmt = this.db.prepare(`
       SELECT file_path, start_line as line, content, entity_type, 'definition' as reference_type

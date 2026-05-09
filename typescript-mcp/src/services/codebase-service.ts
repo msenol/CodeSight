@@ -82,10 +82,14 @@ export class DefaultCodebaseService implements CodebaseService {
 
     // Persist to SQLite
     try {
-      this.db.prepare(`
+      this.db
+        .prepare(
+          `
         INSERT OR REPLACE INTO codebases (id, name, path, languages, status, file_count, indexed_at, updated_at)
         VALUES (?, ?, ?, ?, 'indexed', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `).run(id, name, path, JSON.stringify(languages), 0);
+      `,
+        )
+        .run(id, name, path, JSON.stringify(languages), 0);
     } catch (e) {
       // Table may not exist yet (older indexer)
     }
@@ -165,16 +169,18 @@ export class DefaultCodebaseService implements CodebaseService {
     } catch {
       // Check persistent codebases table for real path
       try {
-        const row = this.db.prepare('SELECT * FROM codebases WHERE id = ?').get(id) as {
-          id: string;
-          name: string;
-          path: string;
-          languages: string;
-          status: string;
-          file_count: number;
-          entity_count: number;
-          indexed_at: string;
-        } | undefined;
+        const row = this.db.prepare('SELECT * FROM codebases WHERE id = ?').get(id) as
+          | {
+              id: string;
+              name: string;
+              path: string;
+              languages: string;
+              status: string;
+              file_count: number;
+              entity_count: number;
+              indexed_at: string;
+            }
+          | undefined;
         if (row) {
           const codebase: CodebaseInfo = {
             id: row.id,

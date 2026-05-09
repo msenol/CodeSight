@@ -122,7 +122,7 @@ jobs:
         working-directory: rust-core
         run: |
           # Use NAPI-RS CLI to package the built module
-          napi build --platform --target ${{ matrix.triple }}
+          napi build --platform --target ${{ matrix.triple }} --package code-intelligence-ffi
 
       - name: Rename binary
         working-directory: rust-core

@@ -662,10 +662,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const refs = await searchCodeTool.findReferences(symbol_name, codebaseId);
               if (refs.length === 0) {
                 return {
-                  content: [{
-                    type: 'text',
-                    text: `ℹ️ No references found for "${symbol_name}" in '${codebaseId}'.`,
-                  }],
+                  content: [
+                    {
+                      type: 'text',
+                      text: `ℹ️ No references found for "${symbol_name}" in '${codebaseId}'.`,
+                    },
+                  ],
                 };
               }
               let text = `🔍 References for "${symbol_name}" in ${codebaseId}:\n\n`;
@@ -680,21 +682,19 @@ export async function registerMCPTools(server: Server): Promise<void> {
               return { content: [{ type: 'text', text }] };
             } catch (error) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `❌ find_references failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ find_references failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
                 isError: true,
               };
             }
           }
 
           case 'trace_data_flow': {
-            const {
-              variable_name,
-              file_path,
-              codebase_id,
-            } = args as {
+            const { variable_name, file_path, codebase_id } = args as {
               variable_name: string;
               file_path: string;
               codebase_id: string;
@@ -725,7 +725,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
               return { content: [{ type: 'text', text }] };
             } catch (error) {
               return {
-                content: [{ type: 'text', text: `❌ trace_data_flow failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ trace_data_flow failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
                 isError: true,
               };
             }
@@ -737,7 +742,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
               const vulnText = result.vulnerabilities.length
                 ? result.vulnerabilities
                     .map(
-                      (v) =>
+                      v =>
                         `[${v.severity.toUpperCase()}] ${v.type}: ${v.title}\n` +
                         `  File: ${v.file_path}:${v.line_number}\n` +
                         `  ${v.description}\n` +
@@ -753,7 +758,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 `Critical: ${result.summary.critical} | High: ${result.summary.high} | Medium: ${result.summary.medium} | Low: ${result.summary.low}\n\n` +
                 `${vulnText}\n\n` +
                 'Recommendations:\n' +
-                result.recommendations.map((r) => `- ${r}`).join('\n');
+                result.recommendations.map(r => `- ${r}`).join('\n');
 
               return { content: [{ type: 'text', text }] };
             } catch (error) {
@@ -775,10 +780,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
             const codebase = await cbService.getCodebase(cbId);
             if (!codebase) {
               return {
-                content: [{
-                  type: 'text',
-                  text: `❌ Codebase '${cbId}' not found. Please index it first using index_codebase.`,
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ Codebase '${cbId}' not found. Please index it first using index_codebase.`,
+                  },
+                ],
                 isError: true,
               };
             }
@@ -789,10 +796,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
             if (filtered.length === 0) {
               const detected = await apiDiscoveryService.detectFrameworks(cbId);
               return {
-                content: [{
-                  type: 'text',
-                  text: `ℹ️ No API endpoints found in '${cbId}'.\nDetected frameworks: ${detected.length > 0 ? detected.join(', ') : 'none'}`,
-                }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `ℹ️ No API endpoints found in '${cbId}'.\nDetected frameworks: ${detected.length > 0 ? detected.join(', ') : 'none'}`,
+                  },
+                ],
               };
             }
             let text = `🌐 API Endpoints in ${cbId}${framework ? ` (${framework})` : ''}:\n\n`;
@@ -822,7 +831,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
               return { content: [{ type: 'text', text }] };
             } catch (error) {
               return {
-                content: [{ type: 'text', text: `❌ Complexity analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ Complexity analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
                 isError: true,
               };
             }
@@ -858,7 +872,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
               return { content: [{ type: 'text', text }] };
             } catch (error) {
               return {
-                content: [{ type: 'text', text: `❌ find_duplicates failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ find_duplicates failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
                 isError: true,
               };
             }
@@ -874,7 +893,9 @@ export async function registerMCPTools(server: Server): Promise<void> {
               text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
               text += `- Lines of Code: ${(report as any).linesOfCode ?? 'N/A'}\n`;
               text += `- Maintainability Index: ${Math.round((report as any).maintainabilityIndex ?? 0)}\n\n`;
-              const highComplexity = functions.filter((f: any) => f.complexity?.cyclomaticComplexity > 10);
+              const highComplexity = functions.filter(
+                (f: any) => f.complexity?.cyclomaticComplexity > 10,
+              );
               if (highComplexity.length > 0) {
                 text += `🔴 High Complexity Functions (${highComplexity.length}):\n`;
                 for (const fn of highComplexity.slice(0, 5)) {
@@ -896,7 +917,12 @@ export async function registerMCPTools(server: Server): Promise<void> {
               return { content: [{ type: 'text', text }] };
             } catch (error) {
               return {
-                content: [{ type: 'text', text: `❌ suggest_refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}` }],
+                content: [
+                  {
+                    type: 'text',
+                    text: `❌ suggest_refactoring failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  },
+                ],
                 isError: true,
               };
             }
@@ -1262,7 +1288,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
                 `=== TOP ${result.results.length} MOST COMPLEX FUNCTIONS/METHODS ===\n\n` +
                 result.results
                   .map(
-                    (r) =>
+                    r =>
                       `${r.rank}. ${r.name} (${r.entity_type})\n` +
                       `   File: ${r.file_path}:${r.start_line}-${r.end_line}\n` +
                       `   Raw Lines: ${r.raw_lines} | LOC: ${r.lines_of_code}\n` +

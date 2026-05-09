@@ -375,19 +375,23 @@ export class DuplicationServiceImpl implements DuplicationService {
     const maxResults = (options.max_results as number) || 50;
 
     // Hash-based duplicate detection: O(n*m) instead of O(n²*m²)
-    const blockMap = new Map<string, Array<{file: string; startLine: number; endLine: number}>>();
+    const blockMap = new Map<string, Array<{ file: string; startLine: number; endLine: number }>>();
 
     for (const file of limitedFiles) {
       try {
         const content = await fs.readFile(file, 'utf-8');
         const lines = content.split('\n');
-        if (lines.length < minLines) {continue;}
+        if (lines.length < minLines) {
+          continue;
+        }
 
         for (let i = 0; i <= lines.length - minLines; i++) {
           const block = lines.slice(i, i + minLines).join('\n');
           const normalized = this.normalizeBlock(block);
           const hash = this.hashContent(normalized);
-          if (!blockMap.has(hash)) {blockMap.set(hash, []);}
+          if (!blockMap.has(hash)) {
+            blockMap.set(hash, []);
+          }
           blockMap.get(hash)!.push({ file, startLine: i + 1, endLine: i + minLines });
         }
       } catch {
@@ -397,7 +401,9 @@ export class DuplicationServiceImpl implements DuplicationService {
 
     const duplicates: DuplicateCode[] = [];
     for (const [hash, instances] of blockMap) {
-      if (instances.length < 2) {continue;}
+      if (instances.length < 2) {
+        continue;
+      }
 
       // Deduplicate by file+startLine
       const uniqueInstances: typeof instances = [];
@@ -409,7 +415,9 @@ export class DuplicationServiceImpl implements DuplicationService {
           uniqueInstances.push(inst);
         }
       }
-      if (uniqueInstances.length < 2) {continue;}
+      if (uniqueInstances.length < 2) {
+        continue;
+      }
 
       duplicates.push({
         id: `dup-${hash.slice(0, 16)}`,
@@ -423,7 +431,9 @@ export class DuplicationServiceImpl implements DuplicationService {
         suggestion: 'Consider extracting common code to a shared module',
       });
 
-      if (duplicates.length >= maxResults) {break;}
+      if (duplicates.length >= maxResults) {
+        break;
+      }
     }
 
     return duplicates;

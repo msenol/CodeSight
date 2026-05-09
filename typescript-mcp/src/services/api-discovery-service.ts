@@ -87,7 +87,8 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
       const endpoints: APIEndpoint[] = [];
 
       // Express patterns: app.get('/path', ...), router.post('/path', ...)
-      const expressPattern = /(?:app|router|express)\.(get|post|put|delete|patch|all|use)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
+      const expressPattern =
+        /(?:app|router|express)\.(get|post|put|delete|patch|all|use)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
       let match: RegExpExecArray | null;
       while ((match = expressPattern.exec(content)) !== null) {
         const line = this.getLineNumber(content, match.index);
@@ -95,14 +96,16 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
       }
 
       // Fastify patterns: fastify.get('/path', ...), server.post('/path', ...)
-      const fastifyPattern = /(?:fastify|server|instance)\.(get|post|put|delete|patch|all|route)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
+      const fastifyPattern =
+        /(?:fastify|server|instance)\.(get|post|put|delete|patch|all|route)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
       while ((match = fastifyPattern.exec(content)) !== null) {
         const line = this.getLineNumber(content, match.index);
         endpoints.push(this.createEndpoint(match, filePath, line, 'fastify'));
       }
 
       // NestJS method decorators: @Get(), @Post(), @Put(), etc.
-      const nestMethodPattern = /@(Get|Post|Put|Delete|Patch|All|Options|Head)\s*(?:\(\s*['"`]([^'"`]+)['"`]\s*\))?/gi;
+      const nestMethodPattern =
+        /@(Get|Post|Put|Delete|Patch|All|Options|Head)\s*(?:\(\s*['"`]([^'"`]+)['"`]\s*\))?/gi;
       // Find controller prefix if any
       const controllerMatch = /@Controller\s*\(\s*['"`]([^'"`]+)['"`]\s*\)/i.exec(content);
       const prefix = controllerMatch ? controllerMatch[1].replace(/\/$/, '') : '';
@@ -121,7 +124,8 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
           handler: '',
           parameters: [],
           responses: [],
-          authentication_required: content.toLowerCase().includes('auth') || content.toLowerCase().includes('guard'),
+          authentication_required:
+            content.toLowerCase().includes('auth') || content.toLowerCase().includes('guard'),
           handler_function: '',
           file_path: filePath,
           line_number: line,
@@ -137,8 +141,10 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
           // Check for exported HTTP methods
           const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
           for (const method of methods) {
-            if (new RegExp(`export\\s+(?:async\\s+)?function\\s+${method}\\b`, 'i').test(content) ||
-                new RegExp(`export\\s+\\{[^}]*\\b${method}\\b[^}]*\\}`, 'i').test(content)) {
+            if (
+              new RegExp(`export\\s+(?:async\\s+)?function\\s+${method}\\b`, 'i').test(content) ||
+              new RegExp(`export\\s+\\{[^}]*\\b${method}\\b[^}]*\\}`, 'i').test(content)
+            ) {
               endpoints.push({
                 id: `${method}:${nextPath}`,
                 method,
@@ -186,7 +192,7 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
   async findRestEndpoints(filePath: string): Promise<APIEndpoint[]> {
     const endpoints = await this.analyzeFile(filePath);
     return endpoints.filter(e =>
-      ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'].includes(e.method.toUpperCase())
+      ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'].includes(e.method.toUpperCase()),
     );
   }
 
@@ -196,12 +202,18 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
       const endpoints: APIEndpoint[] = [];
 
       // GraphQL schema or resolver files
-      if (filePath.endsWith('.graphql') || filePath.endsWith('.gql') ||
-          content.includes('type Query') || content.includes('type Mutation') ||
-          content.includes('GraphQLObjectType') || content.includes('@Resolver')) {
+      if (
+        filePath.endsWith('.graphql') ||
+        filePath.endsWith('.gql') ||
+        content.includes('type Query') ||
+        content.includes('type Mutation') ||
+        content.includes('GraphQLObjectType') ||
+        content.includes('@Resolver')
+      ) {
         const hasQuery = content.includes('type Query') || content.includes('Query:');
         const hasMutation = content.includes('type Mutation') || content.includes('Mutation:');
-        const hasSubscription = content.includes('type Subscription') || content.includes('Subscription:');
+        const hasSubscription =
+          content.includes('type Subscription') || content.includes('Subscription:');
 
         if (hasQuery) {
           endpoints.push({
@@ -266,7 +278,9 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
     const byTag = new Map<string, APIEndpoint[]>();
     for (const ep of endpoints) {
       const tag = ep.tags?.[0] || 'general';
-      if (!byTag.has(tag)) {byTag.set(tag, []);}
+      if (!byTag.has(tag)) {
+        byTag.set(tag, []);
+      }
       byTag.get(tag)!.push(ep);
     }
 
@@ -278,8 +292,12 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
       for (const ep of eps) {
         doc += `### ${ep.method} ${ep.path}\n`;
         doc += `- File: \`${ep.file_path}:${ep.line_number}\`\n`;
-        if (ep.description) {doc += `- Description: ${ep.description}\n`;}
-        if (ep.authentication_required) {doc += '- Authentication: Required\n';}
+        if (ep.description) {
+          doc += `- Description: ${ep.description}\n`;
+        }
+        if (ep.authentication_required) {
+          doc += '- Authentication: Required\n';
+        }
         doc += '\n';
       }
     }
@@ -294,7 +312,11 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
       if (!endpoint.path || endpoint.path === '/') {
         warnings.push('Endpoint path is root or empty');
       }
-      if (!this.isValidHttpMethod(endpoint.method) && endpoint.method !== 'GRAPHQL' && endpoint.method !== 'WEBSOCKET') {
+      if (
+        !this.isValidHttpMethod(endpoint.method) &&
+        endpoint.method !== 'GRAPHQL' &&
+        endpoint.method !== 'WEBSOCKET'
+      ) {
         errors.push(`Invalid HTTP method: ${endpoint.method}`);
       }
       if (!endpoint.handler_function && !endpoint.handler) {
@@ -307,13 +329,17 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
 
   async findApiEndpoints(codebaseId: string): Promise<APIEndpoint[]> {
     const codebase = await codebaseService.getCodebase(codebaseId);
-    if (!codebase) {return [];}
+    if (!codebase) {
+      return [];
+    }
     return this.discoverEndpoints(codebase.path);
   }
 
   async detectFrameworks(codebaseId: string): Promise<string[]> {
     const codebase = await codebaseService.getCodebase(codebaseId);
-    if (!codebase) {return [];}
+    if (!codebase) {
+      return [];
+    }
 
     const frameworks = new Set<string>();
     const files = await glob('**/{package.json,*.config.*}', {
@@ -328,14 +354,30 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
           const content = await readFile(file, 'utf-8');
           const pkg = JSON.parse(content);
           const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-          if (deps.express) {frameworks.add('express');}
-          if (deps['@nestjs/core']) {frameworks.add('nestjs');}
-          if (deps.fastify || deps['@fastify']) {frameworks.add('fastify');}
-          if (deps.next) {frameworks.add('nextjs');}
-          if (deps['@apollo/server'] || deps.graphql) {frameworks.add('graphql');}
-          if (deps['socket.io'] || deps.ws) {frameworks.add('websocket');}
-          if (deps.hapi || deps['@hapi/hapi']) {frameworks.add('hapi');}
-          if (deps.koa) {frameworks.add('koa');}
+          if (deps.express) {
+            frameworks.add('express');
+          }
+          if (deps['@nestjs/core']) {
+            frameworks.add('nestjs');
+          }
+          if (deps.fastify || deps['@fastify']) {
+            frameworks.add('fastify');
+          }
+          if (deps.next) {
+            frameworks.add('nextjs');
+          }
+          if (deps['@apollo/server'] || deps.graphql) {
+            frameworks.add('graphql');
+          }
+          if (deps['socket.io'] || deps.ws) {
+            frameworks.add('websocket');
+          }
+          if (deps.hapi || deps['@hapi/hapi']) {
+            frameworks.add('hapi');
+          }
+          if (deps.koa) {
+            frameworks.add('koa');
+          }
         }
       } catch {
         // ignore
@@ -384,7 +426,9 @@ export class DefaultApiDiscoveryService implements ApiDiscoveryService {
   private extractNextJsPath(filePath: string): string | null {
     const normalized = filePath.replace(/\\/g, '/');
     const apiIdx = normalized.indexOf('/api/');
-    if (apiIdx === -1) {return null;}
+    if (apiIdx === -1) {
+      return null;
+    }
 
     let routePath = normalized.slice(apiIdx + 4); // starts with /api/...
     // Remove route.ts or page.tsx

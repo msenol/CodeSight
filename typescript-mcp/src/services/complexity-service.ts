@@ -95,7 +95,16 @@ export class DefaultComplexityService implements ComplexityService {
     // Prefer Rust FFI when available (Phase 4)
     if (rustBridge.isRustAvailable()) {
       const ext =
-        { typescript: 'ts', javascript: 'js', python: 'py', rust: 'rs', go: 'go', java: 'java', cpp: 'cpp', csharp: 'cs' }[_language] || 'ts';
+        {
+          typescript: 'ts',
+          javascript: 'js',
+          python: 'py',
+          rust: 'rs',
+          go: 'go',
+          java: 'java',
+          cpp: 'cpp',
+          csharp: 'cs',
+        }[_language] || 'ts';
       try {
         const raw = await rustBridge.analyzeComplexity(code, `temp.${ext}`);
         return {
