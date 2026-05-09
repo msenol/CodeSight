@@ -802,19 +802,6 @@ export async function registerMCPTools(server: Server): Promise<void> {
           case 'get_api_endpoints': {
             const { codebase_id, framework } = args as { codebase_id: string; framework?: string };
             const cbId = getCodebaseId(codebase_id);
-            const cbService = new DefaultCodebaseService();
-            const codebase = await cbService.getCodebase(cbId);
-            if (!codebase) {
-              return {
-                content: [
-                  {
-                    type: 'text',
-                    text: `❌ Codebase '${cbId}' not found. Please index it first using index_codebase.`,
-                  },
-                ],
-                isError: true,
-              };
-            }
             const endpoints = await apiDiscoveryService.findApiEndpoints(cbId);
             const filtered = framework
               ? endpoints.filter(e => e.tags?.includes(framework.toLowerCase()))

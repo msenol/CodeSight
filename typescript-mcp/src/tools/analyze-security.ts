@@ -98,11 +98,6 @@ export class AnalyzeSecurityTool {
     try {
       const input = AnalyzeSecurityInputSchema.parse(args);
 
-      const codebase = await codebaseService.getCodebase(input.codebase_id);
-      if (!codebase) {
-        throw new Error(`Codebase with ID ${input.codebase_id} not found`);
-      }
-
       const scanOptions = {
         minSeverity: input.severity_threshold,
         includePatterns: input.patterns.includes('all') ? undefined : input.patterns,

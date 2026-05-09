@@ -116,11 +116,6 @@ export class ExplainFunctionTool {
       const input = ExplainFunctionInputSchema.parse(args);
 
       // Get codebase info
-      const codebase = await codebaseService.getCodebase(input.codebase_id);
-      if (!codebase) {
-        throw new Error(`Codebase with ID ${input.codebase_id} not found`);
-      }
-
       // Search for the function by name in the indexed database
       const indexingService = getIndexingService();
       const searchResults = indexingService.search(input.function_name, { limit: 10 });
@@ -135,7 +130,7 @@ export class ExplainFunctionTool {
           end_line: 0,
           language: 'unknown',
           signature: 'N/A',
-          description: `Function "${input.function_name}" not found in codebase "${codebase.name}"`,
+          description: `Function "${input.function_name}" not found in codebase "${input.codebase_id}"`,
           purpose: `No function named "${input.function_name}" was found in the indexed code. The function may not exist or may not have been indexed.`,
           parameters: [],
           return_info: { type: 'unknown', description: 'Unknown - function not found' },
@@ -149,7 +144,7 @@ export class ExplainFunctionTool {
           security_considerations: [],
           usage_examples: [],
           related_functions: [],
-          documentation: `Function "${input.function_name}" was not found in the codebase "${codebase.name}". Make sure the codebase has been indexed and the function name is correct.`,
+          documentation: `Function "${input.function_name}" was not found in the codebase "${input.codebase_id}". Make sure the codebase has been indexed and the function name is correct.`,
           code_snippet: '',
           ai_explanation: 'Function not found in the indexed codebase.',
         } as FunctionExplanation;

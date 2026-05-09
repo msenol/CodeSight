@@ -120,11 +120,6 @@ export class FindDuplicatesTool {
     try {
       const input = FindDuplicatesInputSchema.parse(args);
 
-      const codebase = await codebaseService.getCodebase(input.codebase_id);
-      if (!codebase) {
-        throw new Error(`Codebase with ID ${input.codebase_id} not found`);
-      }
-
       const files = await this.getFilesToAnalyze(input);
       const duplicateGroups = await this.findDuplicateGroups(files, input);
       const summary = this.calculateSummary(files, duplicateGroups);

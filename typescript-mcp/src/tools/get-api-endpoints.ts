@@ -79,11 +79,6 @@ export class GetApiEndpointsTool {
     try {
       const input = GetApiEndpointsInputSchema.parse(args);
 
-      const codebase = await codebaseService.getCodebase(input.codebase_id);
-      if (!codebase) {
-        throw new Error(`Codebase with ID ${input.codebase_id} not found`);
-      }
-
       const endpoints = await apiDiscoveryService.findApiEndpoints(input.codebase_id);
       const methodsSummary = this.calculateMethodsSummary(endpoints);
       const authSummary = this.calculateAuthSummary(endpoints);

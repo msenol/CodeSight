@@ -180,11 +180,6 @@ export class TraceDataFlowTool {
       const input = TraceDataFlowInputSchema.parse(args);
 
       // Verify codebase exists
-      const codebase = await this.codebaseService.getCodebase(input.codebase_id);
-      if (!codebase) {
-        throw new Error(`Codebase with ID ${input.codebase_id} not found`);
-      }
-
       // Parse start and end points
       const startNode = await this.parseDataFlowPoint(input.start_point, input.codebase_id);
       const endNode = await this.parseDataFlowPoint(input.end_point, input.codebase_id);
