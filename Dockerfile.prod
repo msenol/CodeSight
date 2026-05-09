@@ -1,6 +1,19 @@
 # CodeSight MCP Server - Production Dockerfile
 # Based on Distroless for maximum security
 
+# Stage 1: Prepare optional files
+FROM alpine:3.19 AS builder
+
+WORKDIR /build
+
+# Copy Rust FFI if it exists
+COPY rust-core/target/release/ ./rust-lib/
+RUN mkdir -p ./lib && \
+    if [ -f ./rust-lib/libcode_intelligence_core.so ]; then \
+        cp ./rust-lib/libcode_intelligence_core.so ./lib/; \
+    fi
+
+# Stage 2: Production image
 FROM gcr.io/distroless/nodejs20-debian12
 
 LABEL maintainer="CodeSight Team"
@@ -18,8 +31,8 @@ COPY typescript-mcp/dist ./dist
 COPY typescript-mcp/node_modules ./node_modules
 COPY typescript-mcp/package.json ./
 
-# Copy Rust FFI (if built)
-COPY --chown=nobody:nogroup rust-core/target/release/libcode_intelligence_core.so ./lib/ 2>/dev/null || true
+# Copy Rust FFI from builder (if built)
+COPY --from=builder /build/lib/ ./lib/
 
 # Copy entrypoint
 COPY docker/entrypoint-prod.sh ./entrypoint.sh

@@ -10,7 +10,7 @@ use super::{ModelResult, Timestamped, Validate};
 use crate::errors::CoreError;
 
 /// Type of code entity
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EntityType {
     /// Function or procedure

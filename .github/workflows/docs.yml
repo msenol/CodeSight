@@ -59,43 +59,43 @@ jobs:
 
           # Generate API documentation
           mkdir -p docs-site/api
-          cd typescript-mcp
-          npm run docs 2>/dev/null || echo "Documentation generation completed"
+          cd typescript-mcp && npm run docs 2>/dev/null || echo "Documentation generation completed"
+          cd ..
 
           # Create site configuration
-          cat > docs-site/vuepress.config.js << EOF
-          module.exports = {
-            title: 'CodeSight Documentation',
-            description: 'Intelligent code analysis tool documentation',
-            base: '/codesight/',
-            head: [
-              ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1,user-scalable=no' }],
-              ['meta', { name: 'theme-color', content: '#3eaf7c' }]
-            ],
-            themeConfig: {
-              repo: 'msenol/CodeSight',
-              editLinks: true,
-              docsDir: 'docs-site',
-              docsBranch: 'main',
-              editLinkText: 'Help us improve this page!',
-              lastUpdated: 'Last Updated',
-              nav: [
-                { text: 'Guide', link: '/' },
-                { text: 'API', link: '/api/' },
-                { text: 'GitHub', link: 'https://github.com/msenol/CodeSight' }
-              ],
-              sidebar: {
-                '/api/': [
-                  '',
-                  'getting-started',
-                  'mcp-protocol',
-                  'cli-reference',
-                  'configuration'
-                ]
-              }
-            }
-          }
-          EOF
+          cat > docs-site/vuepress.config.js <<'ENDOFCONFIG'
+module.exports = {
+  title: 'CodeSight Documentation',
+  description: 'Intelligent code analysis tool documentation',
+  base: '/codesight/',
+  head: [
+    ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1,user-scalable=no' }],
+    ['meta', { name: 'theme-color', content: '#3eaf7c' }]
+  ],
+  themeConfig: {
+    repo: 'msenol/CodeSight',
+    editLinks: true,
+    docsDir: 'docs-site',
+    docsBranch: 'main',
+    editLinkText: 'Help us improve this page!',
+    lastUpdated: 'Last Updated',
+    nav: [
+      { text: 'Guide', link: '/' },
+      { text: 'API', link: '/api/' },
+      { text: 'GitHub', link: 'https://github.com/msenol/CodeSight' }
+    ],
+    sidebar: {
+      '/api/': [
+        '',
+        'getting-started',
+        'mcp-protocol',
+        'cli-reference',
+        'configuration'
+      ]
+    }
+  }
+}
+ENDOFCONFIG
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

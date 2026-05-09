@@ -3,7 +3,7 @@
 use anyhow::Result;
 use chrono::Utc;
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
 use crate::Language;
@@ -178,6 +178,18 @@ impl EntityExtractor {
                 }
             }
         }
+
+        // Deduplicate entities (multiple patterns may match the same entity)
+        let mut seen = HashSet::new();
+        entities.retain(|e| {
+            let key = (
+                e.entity_type.clone(),
+                e.name.clone(),
+                e.start_line,
+                e.file_path.clone(),
+            );
+            seen.insert(key)
+        });
 
         Ok(entities)
     }
