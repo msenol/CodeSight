@@ -19,7 +19,11 @@ interface NativeModule {
   generateEmbedding(text: string): Promise<Float32Array>;
   indexCodebase(path: string, forceReindex?: boolean): Promise<string>;
   analyzeComplexity(content: string, filePath: string): Promise<ComplexityMetricsNative>;
-  findDuplicates(filePaths: string[], contents: string[], minLines: number): Promise<DuplicateResultNative[]>;
+  findDuplicates(
+    filePaths: string[],
+    contents: string[],
+    minLines: number,
+  ): Promise<DuplicateResultNative[]>;
   getStatistics?(): Promise<{
     total_entities: number;
     by_type: Record<string, number>;
@@ -123,7 +127,12 @@ function createMockModule() {
     },
     analyzeComplexity: (_content: string, _filePath: string) => {
       logger.warn('[MOCK] Analyzing complexity');
-      return Promise.resolve({ cyclomatic: 1, cognitive: 0, linesOfCode: 1, maintainabilityIndex: 100 });
+      return Promise.resolve({
+        cyclomatic: 1,
+        cognitive: 0,
+        linesOfCode: 1,
+        maintainabilityIndex: 100,
+      });
     },
     findDuplicates: (_paths: string[], _contents: string[], _minLines: number) => {
       logger.warn('[MOCK] Finding duplicates');
@@ -282,7 +291,10 @@ export class RustFFIBridge {
   /**
    * Analyze complexity for a code snippet.
    */
-  async analyzeComplexity(content: string, filePath: string): Promise<{
+  async analyzeComplexity(
+    content: string,
+    filePath: string,
+  ): Promise<{
     cyclomaticComplexity: number;
     cognitiveComplexity: number;
     linesOfCode: number;
@@ -315,10 +327,10 @@ export class RustFFIBridge {
     }[]
   > {
     await this.ensureInitialized();
-    const paths = files.map((f) => f.path);
-    const contents = files.map((f) => f.content);
+    const paths = files.map(f => f.path);
+    const contents = files.map(f => f.content);
     const raw = await (nativeModule as NativeModule).findDuplicates(paths, contents, minLines);
-    return raw.map((r) => ({
+    return raw.map(r => ({
       fileA: r.fileA,
       fileB: r.fileB,
       startLineA: r.startLineA,
@@ -422,17 +434,11 @@ export class RustFFIBridge {
       signature: (d.signature ?? d.signature) as string | undefined,
       documentation: (d.documentation ?? d.documentation) as string | undefined,
       visibility: (d.visibility ?? d.visibility) as string | undefined,
-      parameters: Array.isArray(d.parameters)
-        ? (d.parameters as Parameter[])
-        : [],
+      parameters: Array.isArray(d.parameters) ? (d.parameters as Parameter[]) : [],
       return_type: (d.returnType ?? d.return_type) as string | undefined,
-      dependencies: Array.isArray(d.dependencies)
-        ? (d.dependencies as string[])
-        : [],
+      dependencies: Array.isArray(d.dependencies) ? (d.dependencies as string[]) : [],
       metadata:
-        d.metadata && typeof d.metadata === 'object'
-          ? (d.metadata as Record<string, string>)
-          : {},
+        d.metadata && typeof d.metadata === 'object' ? (d.metadata as Record<string, string>) : {},
     };
   }
 
