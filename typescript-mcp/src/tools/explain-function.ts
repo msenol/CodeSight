@@ -118,10 +118,31 @@ export class ExplainFunctionTool {
       // Get codebase info
       // Search for the function by name in the indexed database
       const indexingService = getIndexingService();
-      const searchResults = indexingService.search(input.function_name, {
+      let searchResults = indexingService.search(input.function_name, {
         limit: 10,
         codebaseId: input.codebase_id,
       });
+
+      // If not found and name contains dots (e.g., "AuthController.login"), try the short name
+      if (searchResults.length === 0 && input.function_name.includes('.')) {
+        const shortName = input.function_name.split('.').pop()!;
+        searchResults = indexingService.search(shortName, {
+          limit: 10,
+          codebaseId: input.codebase_id,
+        });
+      }
+
+      // If still not found, try fuzzy match — search for any part of the name
+      if (searchResults.length === 0) {
+        const parts = input.function_name.split(/[._-]/);
+        for (const part of parts.filter(p => p.length > 2)) {
+          searchResults = indexingService.search(part, {
+            limit: 5,
+            codebaseId: input.codebase_id,
+          });
+          if (searchResults.length > 0) {break;}
+        }
+      }
 
       if (searchResults.length === 0) {
         return {

@@ -45,6 +45,42 @@ function getDefaultCodebase(): string | undefined {
 }
 
 /**
+ * Resolve a file path against the codebase root directory.
+ * If the path is relative or just a filename, look it up in the DB entities.
+ */
+async function resolveFilePath(filePath: string, codebaseId?: string): Promise<string | null> {
+  const { promises: fsp } = await import('fs');
+  // 1. Try absolute path as-is
+  if (path.isAbsolute(filePath)) {
+    try { await fsp.access(filePath); return filePath; } catch { /* not found */ }
+  }
+  // 2. Try relative to CWD
+  const cwdPath = path.resolve(process.cwd(), filePath);
+  try { await fsp.access(cwdPath); return cwdPath; } catch { /* not found */ }
+  // 3. Look up in DB entities
+  try {
+    const db = getIndexingService().db;
+    const cbId = codebaseId || getDefaultCodebase();
+    if (cbId) {
+      const row = db.prepare('SELECT path FROM codebases WHERE LOWER(id) = LOWER(?)').get(cbId) as { path: string } | undefined;
+      if (row?.path) {
+        // Try relative to codebase root
+        const fullPath = path.resolve(row.path, filePath);
+        try { await fsp.access(fullPath); return fullPath; } catch { /* not found */ }
+      }
+      // Search entities for matching filename
+      const entity = db.prepare(
+        "SELECT file_path FROM code_entities WHERE LOWER(codebase_id) = LOWER(?) AND (file_path LIKE '%' || ? || '%' OR file_path LIKE '%' || ?) LIMIT 1"
+      ).get(cbId, filePath, path.basename(filePath)) as { file_path: string } | undefined;
+      if (entity?.file_path) {
+        try { await fsp.access(entity.file_path); return entity.file_path; } catch { /* not found */ }
+      }
+    }
+  } catch { /* DB not available */ }
+  return null;
+}
+
+/**
  * Ensure codebase is indexed, auto-index if needed
  */
 /**
@@ -685,34 +721,70 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'trace_data_flow': {
-            const { variable_name, file_path, codebase_id } = args as {
+            const { variable_name, codebase_id } = args as {
               variable_name: string;
-              file_path: string;
+              file_path?: string;
               codebase_id: string;
             };
             try {
               const traceDataFlowTool = new TraceDataFlowTool();
-              const result = await traceDataFlowTool.call({
-                start_point: variable_name,
-                end_point: file_path || 'output',
-                codebase_id: getDefaultCodebase() || getCodebaseId(codebase_id),
-                max_depth: 5,
-              });
-              let text = `🔄 Data flow for "${variable_name}":\n\n`;
-              text += `Direction: ${result.trace_direction}\n`;
-              text += `Total steps: ${result.total_steps}\n`;
-              text += `Nodes: ${result.nodes.length}\n`;
-              text += `Edges: ${result.edges.length}\n`;
-              text += `Paths: ${result.paths.length}\n\n`;
-              if (result.paths.length > 0) {
-                text += 'Paths found:\n';
-                for (const p of result.paths.slice(0, 5)) {
-                  text += `- ${p.description}\n`;
+              const cbId = codebase_id || getDefaultCodebase() || getCodebaseId();
+
+              // Search for the variable across the codebase to build start/end points
+              const db = getIndexingService().db;
+              const entities = db.prepare(
+                'SELECT file_path, start_line, content, name, entity_type FROM code_entities WHERE (content LIKE ? OR name LIKE ?) AND LOWER(codebase_id) = LOWER(?) ORDER BY start_line LIMIT 30'
+              ).all(`%${variable_name}%`, `%${variable_name}%`, cbId) as { file_path: string; start_line: number; content: string; name: string; entity_type: string }[];
+
+              if (entities.length === 0) {
+                return {
+                  content: [{ type: 'text', text: `ℹ️ No occurrences of "${variable_name}" found in '${cbId}'.` }],
+                };
+              }
+
+              // Build data flow from entities
+              let text = `🔄 Data flow for "${variable_name}" in ${cbId}:\n\n`;
+              text += `Found in ${entities.length} locations:\n\n`;
+
+              // Group by file
+              const byFile = new Map<string, typeof entities>();
+              for (const e of entities) {
+                if (!byFile.has(e.file_path)) {byFile.set(e.file_path, []);}
+                byFile.get(e.file_path)!.push(e);
+              }
+
+              for (const [fp, ents] of byFile) {
+                const short = fp.split('/').slice(-2).join('/');
+                text += `📄 ${short}:\n`;
+                for (const e of ents.slice(0, 5)) {
+                  const line = e.content.split('\n').find(l => l.includes(variable_name));
+                  if (line) {
+                    text += `  L${e.start_line}: ${line.trim().substring(0, 120)}\n`;
+                  }
                 }
+                text += '\n';
               }
-              if (result.security_checkpoints.length > 0) {
-                text += `\nSecurity checkpoints: ${result.security_checkpoints.length}\n`;
-              }
+
+              text += `\nTotal: ${entities.length} occurrences across ${byFile.size} files`;
+
+              // Also run the tool if we have enough context
+              try {
+                const firstEntity = entities[0];
+                const lastEntity = entities[entities.length - 1];
+                const result = await traceDataFlowTool.call({
+                  start_point: `${firstEntity.entity_type} ${firstEntity.name}`,
+                  end_point: `${lastEntity.entity_type} ${lastEntity.name}`,
+                  codebase_id: cbId,
+                  max_depth: 5,
+                });
+                if (result.edges.length > 0) {
+                  text += `\n\n📊 Flow graph: ${result.nodes.length} nodes, ${result.edges.length} edges, ${result.paths.length} paths`;
+                }
+                if (result.security_checkpoints.length > 0) {
+                  text += `\n🔒 Security checkpoints: ${result.security_checkpoints.length}`;
+                }
+              } catch { /* tool trace optional */ }
+
               return { content: [{ type: 'text', text }] };
             } catch (error) {
               return {
@@ -794,10 +866,17 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'check_complexity': {
-            const { file_path } = args as { file_path: string };
+            const { file_path, codebase_id } = args as { file_path: string; codebase_id?: string };
             try {
-              const report = await complexityService.calculateFileComplexity(file_path);
-              let text = `📊 Complexity Analysis for ${file_path}:\n\n`;
+              const resolved = await resolveFilePath(file_path, codebase_id);
+              if (!resolved) {
+                return {
+                  content: [{ type: 'text', text: `❌ File not found: ${file_path}\nTip: Provide a full path or make sure the codebase is indexed.` }],
+                  isError: true,
+                };
+              }
+              const report = await complexityService.calculateFileComplexity(resolved);
+              let text = `📊 Complexity Analysis for ${resolved}:\n\n`;
               text += 'Overall Metrics:\n';
               text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
               text += `- Cognitive Complexity: ${(report as any).cognitiveComplexity ?? 'N/A'}\n`;
@@ -869,11 +948,18 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'suggest_refactoring': {
-            const { file_path } = args as { file_path: string };
+            const { file_path, codebase_id } = args as { file_path: string; codebase_id?: string };
             try {
-              const report = await complexityService.calculateFileComplexity(file_path);
+              const resolved = await resolveFilePath(file_path, codebase_id);
+              if (!resolved) {
+                return {
+                  content: [{ type: 'text', text: `❌ File not found: ${file_path}\nTip: Provide a full path or make sure the codebase is indexed.` }],
+                  isError: true,
+                };
+              }
+              const report = await complexityService.calculateFileComplexity(resolved);
               const functions = (report as any).functions || [];
-              let text = `♻️ Refactoring Suggestions for ${file_path}:\n\n`;
+              let text = `♻️ Refactoring Suggestions for ${resolved}:\n\n`;
               text += 'Overall Metrics:\n';
               text += `- Cyclomatic Complexity: ${(report as any).cyclomaticComplexity ?? 'N/A'}\n`;
               text += `- Lines of Code: ${(report as any).linesOfCode ?? 'N/A'}\n`;
@@ -1060,7 +1146,7 @@ export async function registerMCPTools(server: Server): Promise<void> {
           }
 
           case 'bug_prediction': {
-            const {
+            let {
               file_path,
               code_snippet,
               prediction_type,
@@ -1077,6 +1163,18 @@ export async function registerMCPTools(server: Server): Promise<void> {
             };
 
             try {
+              // Resolve file_path and read code if code_snippet not provided
+              if (!code_snippet && file_path) {
+                const resolved = await resolveFilePath(file_path, codebase_id);
+                if (resolved) {
+                  try {
+                    const { promises: fsp } = await import('fs');
+                    code_snippet = await fsp.readFile(resolved, 'utf-8');
+                    file_path = resolved;
+                  } catch { /* keep original path */ }
+                }
+              }
+
               const predictionResult = await bugPredictionTool.call({
                 file_path,
                 code_snippet,
