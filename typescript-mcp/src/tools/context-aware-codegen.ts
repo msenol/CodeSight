@@ -466,38 +466,29 @@ function generatedFunction() {
 
   private generateFunction(prompt: string, _args: CodeGenerationRequest): string {
     const functionName = this.extractFunctionName(prompt) || 'newFunction';
-    const hasAsync =
-      prompt.toLowerCase().includes('async') || prompt.toLowerCase().includes('await');
-    const hasError =
-      prompt.toLowerCase().includes('error') || prompt.toLowerCase().includes('exception');
+    const hasAsync = prompt.toLowerCase().includes('async') || prompt.toLowerCase().includes('await');
+    const hasValidation = prompt.toLowerCase().includes('valid');
+    const hasEmail = prompt.toLowerCase().includes('email');
+    const hasIban = prompt.toLowerCase().includes('iban');
+    const hasError = prompt.toLowerCase().includes('error') || prompt.toLowerCase().includes('exception');
 
-    let code = '';
+    let body: string;
 
-    if (hasAsync) {
-      code += `/**
- * ${this.generateFunctionDescription(prompt)}
- * @returns Promise with function result
- */
-export async function ${functionName}() {\n`;
+    if (hasEmail || hasValidation) {
+      const v = hasEmail ? 'email' : 'value';
+      body = `  const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  return regex.test(${v});`;
+    } else if (hasIban) {
+      body = '  const cleaned = iban.replace(/\\s/g, \'\').toUpperCase();\n  const ibanRegex = /^[A-Z]{2}\\d{2}[A-Z0-9]{4,30}$/;\n  if (!ibanRegex.test(cleaned)) return false;\n  const rearranged = cleaned.slice(4) + cleaned.slice(0, 4);\n  const numeric = rearranged.replace(/[A-Z]/g, ch => (ch.charCodeAt(0) - 55).toString());\n  return BigInt(numeric) % 97n === 1n;';
+    } else if (hasError) {
+      body = `  try {\n    return ${hasAsync ? 'await ' : ''}processData(input);\n  } catch (error) {\n    throw new Error(\`${functionName} failed: \${error instanceof Error ? error.message : String(error)}\`);\n  }`;
     } else {
-      code += `/**
- * ${this.generateFunctionDescription(prompt)}
- * @returns Function result
- */
-export function ${functionName}() {\n`;
+      body = `  return ${hasAsync ? 'await ' : ''}processData(input);`;
     }
 
-    if (hasError) {
-      code += `  try {\n    // TODO: Implement main logic\n    const result = await processData();\n    return result;\n  } catch (error) {\n    console.error('Error in ${functionName}:', error);\n    throw error;\n  }\n`;
-    } else {
-      code +=
-        '  // TODO: Implement main logic\n  const result = processData();\n  return result;\n';
-    }
+    const params = (hasValidation || hasEmail) ? 'email: string' : hasIban ? 'iban: string' : 'input: unknown';
+    const retType = (hasValidation || hasIban || hasEmail) ? 'boolean' : 'unknown';
 
-    code +=
-      '}\n\n// Helper function (to be implemented)\nfunction processData() {\n  // Implementation needed\n  return null;\n}';
-
-    return code;
+    return `/**\n * ${this.generateFunctionDescription(prompt)}\n */\nexport ${hasAsync ? 'async ' : ''}function ${functionName}(${params}): ${retType} {\n${body}\n}\n`;
   }
 
   private generateClass(prompt: string, _args: CodeGenerationRequest): string {
@@ -594,8 +585,29 @@ function functionToTest(input: any): any {
   }
 
   private extractFunctionName(prompt: string): string | null {
-    const match = prompt.match(/function\s+(\w+)/i) || prompt.match(/(\w+)\s+function/i);
-    return match ? match[1] : null;
+    // Try explicit patterns first
+    const patterns = [
+      /function\s+(?:named\s+)?(?:called\s+)?['"]?(\w+)['"]?/i,
+      /named\s+['"]?(\w+)['"]?/i,
+      /called\s+['"]?(\w+)['"]?/i,
+      /(?:create|write|implement|generate|build)\s+(?:a\s+)?(?:typescript\s+|javascript\s+)?(?:async\s+)?function\s+(?:that\s+)?(?:is\s+)?(?:called\s+|named\s+)?['"]?(\w+)['"]?/i,
+      /^['"]?(\w+)['"]?$/,
+    ];
+    for (const pattern of patterns) {
+      const match = prompt.match(pattern);
+      if (match && match[1] && !['a', 'the', 'that', 'named', 'called', 'function', 'create', 'write', 'implement'].includes(match[1].toLowerCase())) {
+        return match[1];
+      }
+    }
+    // Fallback: last camelCase/PascalCase word in prompt
+    const words = prompt.match(/\b[A-Z][a-zA-Z]+\b/g);
+    if (words && words.length > 0) {
+      return words[words.length - 1];
+    }
+    // Fallback: extract meaningful word before common suffixes
+    const nameMatch = prompt.match(/(\w+)(?:Function|Handler|Helper|Util|Service|Validator|Parser|Formatter|Builder|Factory)/i);
+    if (nameMatch) {return nameMatch[0];}
+    return null;
   }
 
   private extractClassName(prompt: string): string | null {

@@ -119,10 +119,41 @@ export class TraceDataFlowTool {
 
   private codebaseService = codebaseService;
   private analysisService = {
-    findApiEndpoints: async (_codebaseId: string, _options: any) => [],
-    searchEntities: async (_codebaseId: string, _options: any) => [],
-    findCallees: async (_functionName: string) => [],
-    findCallers: async (_functionName: string) => [],
+    findApiEndpoints: async (codebaseId: string, options: any) => {
+      try {
+        const { getIndexingService } = await import('../services/indexing-service.js');
+        const db = getIndexingService().db;
+        const rows = db.prepare(
+          'SELECT name, file_path, start_line, content FROM code_entities WHERE LOWER(codebase_id) = LOWER(?) AND (content LIKE \'%@Get%\' OR content LIKE \'%@Post%\' OR content LIKE \'%@Put%\' OR content LIKE \'%@Delete%\' OR content LIKE \'%@Patch%\' OR content LIKE \'%@Controller%\' OR content LIKE \'%@RequestMapping%\') AND name = ?',
+        ).all(codebaseId, options?.path || '%') as any[];
+        return rows.map(r => ({ ...r, method: 'GET', path: options?.path || r.name, id: r.name }));
+      } catch { return []; }
+    },
+    searchEntities: async (codebaseId: string, options: any) => {
+      try {
+        const { getIndexingService } = await import('../services/indexing-service.js');
+        const db = getIndexingService().db;
+        const pattern = options?.name ? `%${options.name}%` : '%';
+        const rows = db.prepare(
+          'SELECT id, name, file_path, start_line, end_line, entity_type, content FROM code_entities WHERE LOWER(codebase_id) = LOWER(?) AND (name LIKE ? OR content LIKE ?) LIMIT 20',
+        ).all(codebaseId, pattern, pattern) as any[];
+        return rows.map(r => ({ ...r, qualified_name: r.name }));
+      } catch { return []; }
+    },
+    findCallees: async (functionName: string) => {
+      try {
+        const { getIndexingService } = await import('../services/indexing-service.js');
+        const refs = await getIndexingService().findReferences(functionName, '');
+        return refs.filter(r => r.reference_type === 'usage');
+      } catch { return []; }
+    },
+    findCallers: async (functionName: string) => {
+      try {
+        const { getIndexingService } = await import('../services/indexing-service.js');
+        const refs = await getIndexingService().findReferences(functionName, '');
+        return refs.filter(r => r.reference_type === 'definition');
+      } catch { return []; }
+    },
   };
 
   inputSchema = {
@@ -524,14 +555,14 @@ export class TraceDataFlowTool {
     if (currentNode.type === 'function' && currentNode.file_path) {
       const callees = await this.analysisService.findCallees(currentNode.id.replace('func_', ''));
 
-      for (const callee of callees) {
+      for (const callee of callees as any[]) {
         const calleeNode: DataFlowNode = {
-          id: `func_${callee.entity_id}`,
-          name: callee.name,
+          id: `func_${callee.file_path}_${callee.line}`,
+          name: callee.content?.split('(')[0]?.trim() || callee.entity_type,
           type: 'function',
           file_path: callee.file_path,
-          line_number: callee.line_number,
-          description: `Function: ${callee.qualified_name}`,
+          line_number: callee.line,
+          description: `${callee.entity_type}: ${callee.content?.substring(0, 100)}`,
           data_format: 'parameters',
           transformations: [],
           side_effects: [],
