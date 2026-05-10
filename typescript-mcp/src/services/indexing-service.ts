@@ -12,7 +12,7 @@ import { logger } from './logger.js';
 import type { DatabaseRow, Statistics, SearchResult } from '../types/index.js';
 
 export class IndexingService {
-  private db: Database.Database;
+  db: Database.Database;
   private readonly extensions = ['.js', '.ts', '.jsx', '.tsx', '.mjs', '.cjs'];
 
   constructor(dbPath?: string) {

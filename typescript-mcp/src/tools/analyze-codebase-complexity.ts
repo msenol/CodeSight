@@ -3,10 +3,10 @@
  * Scans all functions/methods and returns top complex ones sorted by cyclomatic complexity.
  */
 import { z } from 'zod';
-import Database from 'better-sqlite3';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { complexityService } from '../services/complexity-service.js';
+import { getIndexingService } from '../services/indexing-service.js';
 import { logger } from '../services/logger.js';
 
 const AnalyzeCodebaseComplexityInputSchema = z.object({
@@ -114,9 +114,7 @@ export class AnalyzeCodebaseComplexityTool {
   async call(args: unknown): Promise<AnalysisOutput> {
     const input = AnalyzeCodebaseComplexityInputSchema.parse(args);
 
-    const dbPath =
-      process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'code-intelligence.db');
-    const db = new Database(dbPath);
+    const db = getIndexingService().db;
 
     try {
       // Build SQL query
@@ -243,8 +241,9 @@ export class AnalyzeCodebaseComplexityTool {
         total_entities_scanned: filtered.length,
         results: topResults,
       };
-    } finally {
-      db.close();
+    } catch (error) {
+      logger.error('Complexity analysis failed:', error);
+      throw error;
     }
   }
 }

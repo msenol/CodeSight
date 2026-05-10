@@ -6,8 +6,7 @@ import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprot
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logger } from '../services/logger.js';
-import { IndexingService } from '../services/indexing-service.js';
-import { DefaultCodebaseService } from '../services/codebase-service.js';
+import { IndexingService, getIndexingService } from '../services/indexing-service.js';
 import { SearchCodeTool } from './search-code.js';
 import { ExplainFunctionTool } from './explain-function.js';
 import { AICodeReviewTool } from './ai-code-review.js';
@@ -37,12 +36,8 @@ function getCodebaseId(providedId?: string): string {
  */
 function getDefaultCodebase(): string | undefined {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Database = require('better-sqlite3');
-    const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'code-intelligence.db');
-    const db = new Database(dbPath);
+    const db = getIndexingService().db;
     const row = db.prepare('SELECT id FROM codebases ORDER BY indexed_at DESC LIMIT 1').get() as { id: string } | undefined;
-    db.close();
     return row?.id;
   } catch {
     return undefined;
@@ -1330,12 +1325,10 @@ export async function registerMCPTools(server: Server): Promise<void> {
             logger.info(`Indexing codebase: ${codebasePath} as ${codebaseId}`);
 
             try {
-              // DATABASE_PATH is already set in registerMCPTools()
-              const indexingService = new IndexingService();
-              const codebaseService = new DefaultCodebaseService();
+              // Use shared singleton — same DB connection as all other tools
+              const indexingService = getIndexingService();
 
               // Index the codebase with progress (clears existing entries automatically)
-              // IndexingService also writes to codebases table
               const entityCount = await indexingService.indexCodebaseWithProgress(
                 codebasePath,
                 undefined,
