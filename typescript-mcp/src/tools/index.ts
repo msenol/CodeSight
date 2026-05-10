@@ -60,8 +60,8 @@ export async function registerMCPTools(server: Server): Promise<void> {
       logger.info(`DATABASE_PATH set to: ${process.env.DATABASE_PATH}`);
     }
 
-    // Configure OpenRouter AI provider (key must be set via environment variable)
-    process.env.PREFERRED_AI_PROVIDER = 'openrouter';
+    // Configure AI provider (set via .env: minimax, openrouter, etc.)
+    // PREFERRED_AI_PROVIDER is loaded from .env by dotenv in config.ts
 
     // Initialize Phase 4.1 AI-powered services
     const searchCodeTool = new SearchCodeTool();

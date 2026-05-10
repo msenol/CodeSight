@@ -68,6 +68,9 @@ export class AILLMService {
     // Initialize Ollama (Local)
     this.providers.set('ollama-local', new OllamaProvider());
 
+    // Initialize MiniMax (direct API)
+    this.providers.set('minimax', new MiniMaxProvider());
+
     // Initialize OpenRouter with user-configurable API key and model
     this.providers.set('openrouter', new OpenRouterProvider());
 
@@ -526,6 +529,199 @@ IMPORTANT: Return ONLY the JSON. No markdown, no code blocks, no explanations.`;
         main_concerns: ['Failed to parse AI response'],
         positive_aspects: [],
         next_steps: ['Check AI provider configuration or try a different model'],
+      },
+    };
+  }
+}
+
+/**
+ * MiniMax Provider - Direct API access to MiniMax models
+ * Uses OpenAI-compatible API format
+ * https://platform.minimax.io/docs/guides/text-ai-coding-tools
+ */
+class MiniMaxProvider implements LLMProvider {
+  name = 'minimax';
+  private client: OpenAI | null = null;
+  private modelName: string;
+
+  constructor() {
+    const apiKey = process.env.MINIMAX_API_KEY || '';
+    const baseURL = process.env.MINIMAX_BASE_URL || 'https://api.minimax.chat/v1';
+    this.modelName = process.env.MINIMAX_MODEL || 'MiniMax-Text-01';
+
+    if (apiKey) {
+      this.client = new OpenAI({
+        apiKey,
+        baseURL,
+      });
+      logger.info('MiniMax provider initialized', { model: this.modelName });
+    }
+  }
+
+  async generateInsights(prompts: string[]): Promise<AIInsights> {
+    if (!this.client) {
+      throw new Error('MiniMax client not initialized. Set MINIMAX_API_KEY environment variable.');
+    }
+
+    const systemPrompt = this.buildSystemPrompt();
+    const userPrompt = prompts.join('\n\n');
+
+    try {
+      const response = await this.client.chat.completions.create({
+        model: this.modelName,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 8000,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      return this.parseAIResponse(content);
+    } catch (error) {
+      logger.error('MiniMax API error:', error);
+      throw new Error(
+        `MiniMax request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  isAvailable(): boolean {
+    return !!this.client;
+  }
+
+  getCapabilities(): LLMCapabilities {
+    return {
+      maxTokens: 1000000, // MiniMax-Text-01 supports 1M tokens
+      supportsCodeAnalysis: true,
+      supportsMultiModal: false,
+      latency: 'fast',
+      costPerToken: 0,
+    };
+  }
+
+  private buildSystemPrompt(): string {
+    return `You are an expert code analyst. Analyze the provided code and return ONLY a valid JSON object. Do NOT include any text outside the JSON.
+
+Return exactly this JSON structure:
+{
+  "suggestions": [
+    {
+      "title": "string",
+      "description": "string",
+      "category": "security|performance|maintainability|readability|best-practices",
+      "impact": "critical|high|medium|low",
+      "confidence": 80,
+      "suggestion": "string",
+      "line_number": 0,
+      "code_example": "string"
+    }
+  ],
+  "patterns": [
+    {
+      "name": "string",
+      "description": "string",
+      "type": "anti-pattern|best-practice|design-pattern",
+      "frequency": 1,
+      "locations": [{ "file": "string", "line": 0 }]
+    }
+  ],
+  "summary": {
+    "overall_quality": 75,
+    "main_concerns": ["string"],
+    "positive_aspects": ["string"],
+    "next_steps": ["string"]
+  }
+}
+
+IMPORTANT: Return ONLY the JSON. No markdown, no code blocks, no explanations.`;
+  }
+
+  private parseAIResponse(content: string): AIInsights {
+    const parseAttempts = [
+      () => JSON.parse(content),
+      () => {
+        let cleaned = content.trim();
+        cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        return JSON.parse(cleaned);
+      },
+      () => {
+        const firstBrace = content.indexOf('{');
+        const lastBrace = content.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          return JSON.parse(content.substring(firstBrace, lastBrace + 1));
+        }
+        throw new Error('No JSON object found');
+      },
+      () => {
+        let cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
+        cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+        return JSON.parse(cleaned);
+      },
+    ];
+
+    let lastError: Error | null = null;
+    for (const attempt of parseAttempts) {
+      try {
+        const parsed = attempt() as any;
+        return {
+          suggestions: (parsed.suggestions || []).map((s: any) => ({
+            title: s.title || 'Code Suggestion',
+            description: s.description || '',
+            category: s.category || 'best-practices',
+            impact: s.impact || 'medium',
+            confidence: Math.min(100, Math.max(0, Number(s.confidence) || 70)),
+            suggestion: s.suggestion || '',
+            line_number: s.line_number,
+            code_example: s.code_example,
+          })),
+          patterns: (parsed.patterns || []).map((p: any) => ({
+            name: p.name || 'Pattern',
+            description: p.description || '',
+            type: p.type || 'anti-pattern',
+            frequency: Number(p.frequency) || 1,
+            locations: (p.locations || []).map((l: any) => ({
+              file: l.file || '',
+              line: Number(l.line) || 0,
+            })),
+          })),
+          summary: {
+            overall_quality: Math.min(100, Math.max(0, Number(parsed.summary?.overall_quality) || 50)),
+            main_concerns: parsed.summary?.main_concerns || [],
+            positive_aspects: parsed.summary?.positive_aspects || [],
+            next_steps: parsed.summary?.next_steps || [],
+          },
+        };
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e));
+      }
+    }
+
+    logger.warn('Failed to parse MiniMax response, returning structured fallback', {
+      error: lastError?.message,
+      contentPreview: content.substring(0, 200),
+    });
+    return {
+      suggestions: [{
+        title: 'Analysis Complete',
+        description: 'Code analysis was performed but the response could not be fully parsed.',
+        category: 'best-practices',
+        impact: 'low',
+        confidence: 50,
+        suggestion: content.substring(0, 500),
+      }],
+      patterns: [],
+      summary: {
+        overall_quality: 50,
+        main_concerns: ['AI response parsing failed'],
+        positive_aspects: [],
+        next_steps: ['Review the raw AI output in the suggestion field'],
       },
     };
   }
