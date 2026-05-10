@@ -4,7 +4,7 @@ import type { DatabaseRow, SignatureAnalysis } from '../types/index.js';
 import { codebaseService } from '../services/codebase-service.js';
 // analysisService placeholder for future use
 const _analysisService = null;
-import { llmService } from '../services/llm-service.js';
+import { AILLMService } from '../services/ai-llm.js';
 import { getIndexingService } from '../services/indexing-service.js';
 import { astParserService, type ASTParseResult } from '../services/ast-parser-service.js';
 import { z } from 'zod';
@@ -334,7 +334,13 @@ export class ExplainFunctionTool {
     );
 
     try {
-      return await llmService.generateExplanation(prompt);
+      const aiService = new AILLMService();
+      const insights = await aiService.generateInsights([prompt]);
+      // Extract explanation from AI insights
+      if (insights.suggestions && insights.suggestions.length > 0) {
+        return insights.suggestions.map(s => `${s.title}: ${s.description}\n\n${s.suggestion}`).join('\n\n---\n\n');
+      }
+      return `Quality: ${insights.summary.overall_quality}/100. ${insights.summary.main_concerns.join(', ')}`;
     } catch (error) {
       // Fallback to static analysis if LLM fails
       return this.generateStaticExplanation(entity, codeSnippet, signatureAnalysis);

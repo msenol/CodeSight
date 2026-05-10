@@ -1,5 +1,4 @@
 import type { SecurityIssue, SecurityPattern, SecurityScanOptions } from '../types/index.js';
-// import { z } from 'zod'; // Unused import
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
@@ -18,129 +17,106 @@ export interface SecurityService {
 }
 
 export class DefaultSecurityService implements SecurityService {
-  private patterns: SecurityPattern[] = [
-    {
-      id: 'sql_injection',
-      name: 'SQL Injection',
-      description: 'Potential SQL injection vulnerability',
-      severity: 'high',
-      pattern: /(?:SELECT|INSERT|UPDATE|DELETE).*(?:WHERE|SET).*\$\{|\+.*\}/gi,
-    },
-    {
-      id: 'xss',
-      name: 'Cross-Site Scripting',
-      description: 'Potential XSS vulnerability',
-      severity: 'medium',
-      pattern: /innerHTML|outerHTML|document\.write/gi,
-    },
-    {
-      id: 'hardcoded_secret',
-      name: 'Hardcoded Secret',
-      description: 'Potential hardcoded secret or API key',
-      severity: 'high',
-      pattern: /(?:api[_-]?key|password|secret|token)]*[=:]]*['"][^'"]{8,}/gi,
-    },
-  ];
-
-  async analyzeCode(code: string, _language: string): Promise<SecurityIssue[]> {
-    const issues: SecurityIssue[] = [];
-    const lines = code.split('\n');
-
-    for (const pattern of this.patterns) {
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const matches = line.match(pattern.pattern);
-        if (matches) {
-          issues.push({
-            id: `${pattern.id}_${i}`,
-            type: pattern.id,
-            severity: pattern.severity,
-            message: pattern.description,
-            file: 'current_file',
-            line: i + 1,
-            column: line.indexOf(matches[0]) + 1,
-            code: line.trim(),
-            suggestion: `Review and fix ${pattern.name.toLowerCase()}`,
-          });
-        }
-      }
-    }
-
-    return issues;
+  async analyzeCode(_code: string, _language: string): Promise<SecurityIssue[]> {
+    return [];
   }
 
   async scanFile(filePath: string, _codebaseId: string): Promise<SecurityIssue[]> {
-    // Mock implementation - would read file and analyze
-    return [
-      {
-        id: 'mock_issue',
-        type: 'info',
-        severity: 'low',
-        message: `Security scan completed for ${filePath}`,
-        file: filePath,
-        line: 1,
-        column: 1,
-        code: '// No issues found',
-        suggestion: 'File appears secure',
-      },
-    ];
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      return await this.analyzeFileForVulnerabilities(filePath, content);
+    } catch {
+      return [];
+    }
   }
 
   getSecurityPatterns(): SecurityPattern[] {
-    return this.patterns;
+    return [];
   }
 
   validateInput(input: string): boolean {
-    // Basic input validation
-    const dangerousPatterns = [/<script/gi, /javascript:/gi, /on\w+]*=/gi, /eval]*\(/gi];
-
+    const dangerousPatterns = [/<script/gi, /javascript:/gi, /\bon\w+\s*=/gi, /\beval\s*\(/gi];
     return !dangerousPatterns.some(pattern => pattern.test(input));
   }
 
-  async analyzeVulnerabilities(_input: {
+  async analyzeVulnerabilities(input: {
     code: string;
     language: string;
   }): Promise<SecurityIssue[]> {
-    // Mock implementation
-    return [
-      {
-        id: 'vuln_1',
-        type: 'sql_injection',
-        severity: 'high',
-        message: 'Potential SQL injection vulnerability detected',
-        file: '/src/example.ts',
-        line: 10,
-        column: 5,
-        code: 'SELECT * FROM users WHERE id = ' + 'userId',
-        suggestion: 'Use parameterized queries instead',
-      },
-    ];
+    return this.analyzeFileForVulnerabilities('input', input.code);
   }
 
   async scanForVulnerabilities(
     codebaseId: string,
-    options?: SecurityScanOptions,
+    _options?: SecurityScanOptions,
   ): Promise<SecurityIssue[]> {
     const issues: SecurityIssue[] = [];
 
     try {
-      const files = await glob('**/*.{ts,tsx,js,jsx}', {
-        cwd: codebaseId,
+      // Resolve codebase path from DB if codebaseId is not a valid directory
+      let codebasePath = codebaseId;
+      try {
+        await fs.access(codebaseId);
+      } catch {
+        // Not a path — look up in database
+        try {
+          const { getIndexingService } = await import('./indexing-service.js');
+          const db = getIndexingService().db;
+          const row = db
+            .prepare('SELECT path FROM codebases WHERE LOWER(id) = LOWER(?)')
+            .get(codebaseId) as { path: string } | undefined;
+          if (row?.path) {
+            codebasePath = row.path;
+          } else {
+            // Fallback: scan files from indexed entities
+            const entities = db
+              .prepare(
+                'SELECT DISTINCT file_path FROM code_entities WHERE LOWER(codebase_id) = LOWER(?) LIMIT 200',
+              )
+              .all(codebaseId) as { file_path: string }[];
+            for (const entity of entities) {
+              try {
+                const content = await fs.readFile(entity.file_path, 'utf-8');
+                const fileIssues = await this.analyzeFileForVulnerabilities(
+                  entity.file_path,
+                  content,
+                );
+                issues.push(...fileIssues);
+              } catch {
+                /* skip */
+              }
+            }
+            return this.sortIssuesBySeverity(issues);
+          }
+        } catch {
+          /* DB not available */
+        }
+      }
+
+      const files = await glob('**/*.{ts,tsx,js,jsx,py,java,go,rs}', {
+        cwd: codebasePath,
         absolute: true,
-        ignore: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
+        ignore: [
+          '**/node_modules/**',
+          '**/dist/**',
+          '**/.git/**',
+          '**/coverage/**',
+          '**/*.test.*',
+          '**/*.spec.*',
+          '**/vendor/**',
+        ],
       });
 
       for (const filePath of files) {
         try {
           const content = await fs.readFile(filePath, 'utf-8');
-          const fileIssues = await this.analyzeFileForVulnerabilities(filePath, content, options);
+          const fileIssues = await this.analyzeFileForVulnerabilities(filePath, content);
           issues.push(...fileIssues);
-        } catch (error) {
-          console.warn(`Failed to analyze ${filePath}:`, error);
+        } catch {
+          /* skip unreadable files */
         }
       }
 
-      // Sort by severity
       return this.sortIssuesBySeverity(issues);
     } catch (error) {
       console.error('Failed to scan for vulnerabilities:', error);
@@ -149,330 +125,207 @@ export class DefaultSecurityService implements SecurityService {
   }
 
   async analyzeSecurityPatterns(codebaseId: string): Promise<SecurityPattern[]> {
-    const patterns: SecurityPattern[] = [];
+    const results = await this.scanForVulnerabilities(codebaseId);
+    const grouped = new Map<string, SecurityPattern>();
 
-    try {
-      const files = await glob('**/*.{ts,tsx,js,jsx,json,env}', {
-        cwd: codebaseId,
-        absolute: true,
-        ignore: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
-      });
-
-      const patternResults = new Map<string, { count: number; matches: SecurityPattern[] }>();
-
-      for (const filePath of files) {
-        try {
-          const content = await fs.readFile(filePath, 'utf-8');
-          this.detectSecurityPatterns(filePath, content, patternResults);
-        } catch (error) {
-          console.warn(`Failed to analyze patterns in ${filePath}:`, error);
+    for (const issue of results) {
+      const key = issue.type;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          id: key,
+          name: issue.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          pattern: new RegExp(issue.type.replace(/_/g, '_'), 'gi'),
+          matches: 1,
+          severity: issue.severity,
+          description: issue.message,
+          files: [issue.file],
+        });
+      } else {
+        const existing = grouped.get(key)!;
+        existing.matches++;
+        if (!existing.files?.includes(issue.file)) {
+          existing.files?.push(issue.file);
         }
       }
-
-      // Convert map to array
-      for (const [patternName, data] of patternResults) {
-        // Get the first match as representative for severity and description
-        const representative = data.matches[0];
-        if (representative) {
-          patterns.push({
-            id: patternName,
-            name: patternName,
-            pattern: representative.pattern,
-            matches: data.count,
-            severity: representative.severity,
-            description: representative.description,
-            files: representative.files || [],
-          });
-        }
-      }
-
-      return patterns.sort(
-        (a, b) => this.getSeverityWeight(b.severity) - this.getSeverityWeight(a.severity),
-      );
-    } catch (error) {
-      console.error('Failed to analyze security patterns:', error);
-      return [];
     }
+
+    return Array.from(grouped.values()).sort(
+      (a, b) => this.getSeverityWeight(b.severity) - this.getSeverityWeight(a.severity),
+    );
   }
 
   private async analyzeFileForVulnerabilities(
     filePath: string,
     content: string,
-    _options?: SecurityScanOptions,
   ): Promise<SecurityIssue[]> {
     const issues: SecurityIssue[] = [];
     const relativePath = path.relative(process.cwd(), filePath);
+    const lines = content.split('\n');
 
-    // SQL Injection patterns
-    this.detectSQLInjection(content, issues, relativePath);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineNum = i + 1;
+      const trimmed = line.trim();
 
-    // XSS patterns
-    this.detectXSS(content, issues, relativePath);
-
-    // Hardcoded secrets
-    this.detectHardcodedSecrets(content, issues, relativePath);
-
-    // Insecure random
-    this.detectInsecureRandom(content, issues, relativePath);
-
-    // Path traversal
-    this.detectPathTraversal(content, issues, relativePath);
-
-    // Weak crypto
-    this.detectWeakCrypto(content, issues, relativePath);
-
-    return issues;
-  }
-
-  private detectSQLInjection(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [
-      /query\s*\(\s*['"`].*\$\{.*\}.*['"`]\s*\)/g,
-      /execute\s*\(\s*['"`].*\+.*['"`]\s*\)/g,
-      /SELECT\s+.*\+.*FROM/gi,
-      /INSERT\s+.*\+.*VALUES/gi,
-      /UPDATE\s+.*\+.*SET/gi,
-      /DELETE\s+.*\+.*WHERE/gi,
-    ];
-
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const lineNumber = content.substring(0, match.index).split('\n').length;
-
+      // SQL Injection — string concatenation in SQL queries
+      if (
+        /\bSELECT\b.*\+\s*\w/i.test(trimmed) ||
+        /\bINSERT\b.*\+\s*\w/i.test(trimmed) ||
+        /\bUPDATE\b.*\+\s*\w/i.test(trimmed) ||
+        /\bDELETE\b.*\+\s*\w/i.test(trimmed) ||
+        /['"`]SELECT\s/i.test(trimmed) ||
+        /['"`]INSERT\s/i.test(trimmed) ||
+        /['"`]UPDATE\s/i.test(trimmed) ||
+        /['"`]DELETE\s/i.test(trimmed)
+      ) {
         issues.push({
-          id: `sql_${issues.length}`,
+          id: `sql_${lineNum}`,
           type: 'sql_injection',
           severity: 'high',
-          message: 'Potential SQL injection vulnerability detected',
-          file: filePath,
-          line: lineNumber,
+          message: 'SQL injection: string concatenation in SQL query',
+          file: relativePath,
+          line: lineNum,
           column: 0,
-          code: match[0],
+          code: trimmed.substring(0, 100),
           suggestion: 'Use parameterized queries or prepared statements',
         });
       }
-    });
-  }
 
-  private detectXSS(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [
-      /innerHTML]*=]*.*\+/g,
-      /document\.write]*\(/g,
-      /eval]*\(/g,
-      /dangerouslySetInnerHTML/g,
-    ];
-
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const lineNumber = content.substring(0, match.index).split('\n').length;
-
+      // eval() / Function() — RCE
+      if (/\beval\s*\(/.test(trimmed) || /\bnew\s+Function\s*\(/.test(trimmed)) {
         issues.push({
-          id: `xss_${issues.length}`,
-          type: 'xss',
-          severity: 'medium',
-          message: 'Potential XSS vulnerability detected',
-          file: filePath,
-          line: lineNumber,
+          id: `eval_${lineNum}`,
+          type: 'remote_code_execution',
+          severity: 'critical',
+          message: 'Remote code execution: eval() or Function() usage',
+          file: relativePath,
+          line: lineNum,
           column: 0,
-          code: match[0],
-          suggestion: 'Sanitize user input and use safe DOM manipulation methods',
+          code: trimmed.substring(0, 100),
+          suggestion: 'Avoid eval() and new Function(). Use safe alternatives.',
         });
       }
-    });
-  }
 
-  private detectHardcodedSecrets(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [
-      /(?:password|pwd|pass)\s*[=:]\s*['"`][^'"` ]{8,}['"`]/gi,
-      /(?:api[_-]?key|apikey)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
-      /(?:secret|token)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
-      /(?:private[_-]?key|privatekey)\s*[=:]\s*['"`][^'"` ]{32,}['"`]/gi,
-    ];
-
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const lineNumber = content.substring(0, match.index).split('\n').length;
-
+      // Command injection
+      if (
+        /\bexec\s*\([^)]*\+/i.test(trimmed) ||
+        /\bexecSync\s*\([^)]*\+/i.test(trimmed) ||
+        /\bspawn\s*\([^)]*\+/i.test(trimmed) ||
+        /\bsystem\s*\([^)]*\+/i.test(trimmed)
+      ) {
         issues.push({
-          id: `secret_${issues.length}`,
+          id: `cmdi_${lineNum}`,
+          type: 'command_injection',
+          severity: 'critical',
+          message: 'Command injection: dynamic input in shell command',
+          file: relativePath,
+          line: lineNum,
+          column: 0,
+          code: trimmed.substring(0, 100),
+          suggestion: 'Use child_process.execFile with arguments array, never shell strings.',
+        });
+      }
+
+      // Hardcoded secrets
+      if (
+        /(?:password|pwd|secret|api_?key|apikey|aws_secret|db_password|access_token)\s*[=:]\s*['"][^'"]{4,}['"]/i.test(
+          trimmed,
+        )
+      ) {
+        issues.push({
+          id: `secret_${lineNum}`,
           type: 'hardcoded_secret',
           severity: 'critical',
-          message: 'Hardcoded secret detected',
-          file: filePath,
-          line: lineNumber,
+          message: 'Hardcoded secret/API key detected',
+          file: relativePath,
+          line: lineNum,
           column: 0,
-          code: match[0],
-          suggestion: 'Move secrets to environment variables or secure configuration',
+          code: trimmed.replace(/['"][^'"]{8,}['"]/g, "'***REDACTED***'").substring(0, 100),
+          suggestion: 'Move secrets to environment variables or vault.',
         });
       }
-    });
-  }
 
-  private detectInsecureRandom(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [/Math\.random\s*\(\s*\)/g, /new\s+Date\s*\(\s*\)\.getTime\s*\(\s*\)/g];
-
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const lineNumber = content.substring(0, match.index).split('\n').length;
-
+      // Weak crypto: MD5, SHA1, DES
+      if (/\bmd5\b/i.test(trimmed) || /\bsha1\b/i.test(trimmed) || /\bDES\b/.test(trimmed)) {
         issues.push({
-          id: `random_${issues.length}`,
-          type: 'insecure_random',
-          severity: 'medium',
-          message: 'Insecure random number generation',
-          file: filePath,
-          line: lineNumber,
-          column: 0,
-          code: match[0],
-          suggestion: 'Use cryptographically secure random number generators',
-        });
-      }
-    });
-  }
-
-  private detectPathTraversal(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [/readFile\s*\([^)]*\+.*\)/g, /writeFile\s*\([^)]*\+.*\)/g, /\.\.[/\\]/g];
-
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const lineNumber = content.substring(0, match.index).split('\n').length;
-
-        issues.push({
-          id: `path_${issues.length}`,
-          type: 'path_traversal',
-          severity: 'high',
-          message: 'Potential path traversal vulnerability',
-          file: filePath,
-          line: lineNumber,
-          column: 0,
-          code: match[0],
-          suggestion: 'Validate and sanitize file paths',
-        });
-      }
-    });
-  }
-
-  private detectWeakCrypto(content: string, issues: SecurityIssue[], filePath: string): void {
-    const patterns = [/md5|sha1/gi, /DES|3DES/gi, /RC4/gi];
-
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const lineNumber = content.substring(0, match.index).split('\n').length;
-
-        issues.push({
-          id: `crypto_${issues.length}`,
+          id: `crypto_${lineNum}`,
           type: 'weak_crypto',
           severity: 'medium',
-          message: 'Weak cryptographic algorithm detected',
-          file: filePath,
-          line: lineNumber,
+          message: 'Weak cryptographic algorithm detected (MD5/SHA1/DES)',
+          file: relativePath,
+          line: lineNum,
           column: 0,
-          code: match[0],
-          suggestion: 'Use strong cryptographic algorithms like SHA-256 or AES',
+          code: trimmed.substring(0, 100),
+          suggestion: 'Use SHA-256 or stronger algorithms.',
         });
       }
-    });
-  }
 
-  private detectSecurityPatterns(
-    filePath: string,
-    content: string,
-    patternResults: Map<string, { count: number; matches: SecurityPattern[] }>,
-  ): void {
-    // Hardcoded secrets pattern
-    const secretPatterns = [
-      /(?:password|pwd|pass)\s*[=:]\s*['"`][^'"` ]{8,}['"`]/gi,
-      /(?:api[_-]?key|apikey)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
-      /(?:secret|token)\s*[=:]\s*['"`][^'"` ]{16,}['"`]/gi,
-    ];
-
-    let secretMatches = 0;
-    secretPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches) {
-        secretMatches += matches.length;
+      // Insecure random
+      if (/\bMath\.random\s*\(\s*\)/.test(trimmed)) {
+        issues.push({
+          id: `random_${lineNum}`,
+          type: 'insecure_random',
+          severity: 'medium',
+          message: 'Insecure random: Math.random() not cryptographically secure',
+          file: relativePath,
+          line: lineNum,
+          column: 0,
+          code: trimmed.substring(0, 100),
+          suggestion: 'Use crypto.randomBytes() or window.crypto.getRandomValues().',
+        });
       }
-    });
 
-    if (secretMatches > 0) {
-      this.updatePatternResult(patternResults, 'hardcoded_secrets', {
-        id: 'hardcoded_secrets',
-        name: 'Hardcoded Secrets',
-        pattern: /(?:password|pwd|pass)\s*[=:]\s*['"`][^'"` ]{8,}['"`]/gi,
-        matches: secretMatches,
-        severity: 'critical',
-        description: 'Hardcoded API keys or passwords found',
-        files: [filePath],
-      });
-    }
-
-    // SQL injection patterns
-    const sqlPatterns = [/query\s*\(\s*['"`].*\$\{.*\}.*['"`]\s*\)/g, /SELECT\s+.*\+.*FROM/gi];
-
-    let sqlMatches = 0;
-    sqlPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches) {
-        sqlMatches += matches.length;
+      // Path traversal
+      if (
+        /\breadFile\s*\([^)]*\+\s*\w/.test(trimmed) ||
+        /\bwriteFile\s*\([^)]*\+\s*\w/.test(trimmed) ||
+        /\.\.[/\\]/.test(trimmed)
+      ) {
+        issues.push({
+          id: `path_${lineNum}`,
+          type: 'path_traversal',
+          severity: 'high',
+          message: 'Path traversal: dynamic path construction',
+          file: relativePath,
+          line: lineNum,
+          column: 0,
+          code: trimmed.substring(0, 100),
+          suggestion: 'Validate and sanitize file paths. Use path.resolve() and check boundaries.',
+        });
       }
-    });
 
-    if (sqlMatches > 0) {
-      this.updatePatternResult(patternResults, 'sql_injection', {
-        id: 'sql_injection',
-        name: 'SQL Injection',
-        pattern: /SELECT\s+.*\+.*FROM/gi,
-        matches: sqlMatches,
-        severity: 'high',
-        description: 'Potential SQL injection vulnerabilities',
-        files: [filePath],
-      });
-    }
-
-    // XSS patterns
-    const xssPatterns = [/innerHTML\s*=.*\+/g, /dangerouslySetInnerHTML/g];
-
-    let xssMatches = 0;
-    xssPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches) {
-        xssMatches += matches.length;
+      // Open redirect
+      if (/redirect\s*\([^)]*\breq\.|res\.redirect\s*\([^)]*\breq\./i.test(trimmed)) {
+        issues.push({
+          id: `redirect_${lineNum}`,
+          type: 'open_redirect',
+          severity: 'medium',
+          message: 'Open redirect: unvalidated redirect target',
+          file: relativePath,
+          line: lineNum,
+          column: 0,
+          code: trimmed.substring(0, 100),
+          suggestion: 'Whitelist allowed redirect URLs.',
+        });
       }
-    });
 
-    if (xssMatches > 0) {
-      this.updatePatternResult(patternResults, 'xss_vulnerabilities', {
-        id: 'xss_vulnerabilities',
-        name: 'XSS Vulnerabilities',
-        pattern: /innerHTML\s*=.*\+/g,
-        matches: xssMatches,
-        severity: 'medium',
-        description: 'Potential XSS vulnerabilities',
-        files: [filePath],
-      });
+      // innerHTML / document.write
+      if (/\.innerHTML\s*=/.test(trimmed) || /document\.write\s*\(/.test(trimmed)) {
+        issues.push({
+          id: `xss_${lineNum}`,
+          type: 'xss',
+          severity: 'medium',
+          message: 'XSS: unsafe DOM manipulation',
+          file: relativePath,
+          line: lineNum,
+          column: 0,
+          code: trimmed.substring(0, 100),
+          suggestion: 'Use textContent or DOMPurify.sanitize() for user content.',
+        });
+      }
     }
-  }
 
-  private updatePatternResult(
-    patternResults: Map<string, { count: number; matches: SecurityPattern[] }>,
-    pattern: string,
-    data: SecurityPattern,
-  ): void {
-    if (patternResults.has(pattern)) {
-      const existing = patternResults.get(pattern)!;
-      existing.count += 1;
-      existing.matches.push(data);
-    } else {
-      patternResults.set(pattern, {
-        count: 1,
-        matches: [data],
-      });
-    }
+    return issues;
   }
 
   private sortIssuesBySeverity(issues: SecurityIssue[]): SecurityIssue[] {
