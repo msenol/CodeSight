@@ -2,7 +2,7 @@
 # Based on Distroless for maximum security
 
 # Stage 1: Build application
-FROM node:20-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 
 WORKDIR /build
 
