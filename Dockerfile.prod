@@ -18,7 +18,7 @@ COPY typescript-mcp/ ./typescript-mcp/
 RUN cd typescript-mcp && npm run build 2>/dev/null || echo "Using pre-built dist"
 
 # Stage 2: Prepare optional Rust FFI
-FROM alpine:3.19 AS rust-builder
+FROM alpine:3.23 AS rust-builder
 
 WORKDIR /build
 COPY . ./project/
